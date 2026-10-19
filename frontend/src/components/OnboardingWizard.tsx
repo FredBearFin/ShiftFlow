@@ -5,6 +5,7 @@ import {
   ShiftTemplate,
 } from '../types';
 import { DAYS_OF_WEEK, interpolateBeckerTable7 } from '../services/api';
+import { Button } from './ui/Button';
 
 interface OnboardingWizardProps {
   isOpen: boolean;
@@ -711,33 +712,31 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
         {/* Wizard Footer Controls */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             disabled={currentStep === 1}
             onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
-            className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-xs font-semibold text-slate-700"
           >
             ← Back
-          </button>
+          </Button>
 
           <div className="flex items-center gap-2.5">
             {currentStep < 5 ? (
-              <button
-                type="button"
+              <Button
+                variant="primary"
+                size="lg"
                 onClick={() => setCurrentStep((s) => Math.min(5, s + 1))}
-                className="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs"
               >
                 Next ({currentStep} of 5) →
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="accent"
                 onClick={onCompleteWizard}
-                className="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm flex items-center gap-2"
               >
                 <span>Create my schedule</span>
                 <span>→</span>
-              </button>
+              </Button>
             )}
           </div>
         </div>
