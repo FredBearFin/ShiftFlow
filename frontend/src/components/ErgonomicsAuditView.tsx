@@ -147,7 +147,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           <p className="text-xs text-slate-500 mt-0.5">
             Verifies equal in-degree and out-degree across all 7 work nodes{' '}
             <span className="font-mono-tabular">(g, work)</span> and 7 rest nodes{' '}
-            <span className="font-mono-tabular">continuous rest required for zero-clopening line rotations.
+            <span className="font-mono-tabular">continuous rest required for zero-clopening line rotations.</span>
           </p>
         </div>
 
