@@ -175,21 +175,23 @@ export function App() {
   };
 
   const handleAddEmployee = (newEmpData: NewEmployeeInput) => {
-    const newId = `EMP-${String(employees.length + 1).padStart(2, '0')}`;
-    const newEmp: EmployeeRecord = {
-      employee_id: newId,
-      name: newEmpData.name,
-      role: newEmpData.role,
-      hourly_wage: newEmpData.wage,
-      max_weekly_hours: 40,
-      is_active: true,
-      available_days: newEmpData.days,
-      preferred_shifts: ['M', 'D', 'E'],
-      assigned_line_id: null,
-      accommodation_type: newEmpData.accommodation_type,
-      statutory_notes: newEmpData.statutory_notes ?? null,
-    };
-    setEmployees((prev) => [...prev, newEmp]);
+    setEmployees((prev) => {
+      const n = prev.reduce((m, e) => Math.max(m, parseInt(e.employee_id.replace(/\D/g, ''), 10) || 0), 0) + 1;
+      const newEmp: EmployeeRecord = {
+        employee_id: `EMP-${String(n).padStart(2, '0')}`,
+        name: newEmpData.name,
+        role: newEmpData.role,
+        hourly_wage: newEmpData.wage,
+        max_weekly_hours: 40,
+        is_active: true,
+        available_days: newEmpData.days,
+        preferred_shifts: ['M', 'D', 'E'],
+        assigned_line_id: null,
+        accommodation_type: newEmpData.accommodation_type ?? 'none',
+        statutory_notes: newEmpData.statutory_notes ?? null,
+      };
+      return [...prev, newEmp];
+    });
   };
 
   const handleToggleEmployeeStatus = (empId: string) => {

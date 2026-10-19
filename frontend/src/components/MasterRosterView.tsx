@@ -684,7 +684,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
             </div>
 
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-              <strong>Frontline Absence:</strong> Cashier Elena Rodriguez called out of Saturday Evening (16:00–24:00). ShiftFlow evaluated all associates to prevent clopenings and unauthorized[...]
+              <strong>Frontline Absence:</strong> Cashier Elena Rodriguez called out of Saturday Evening (16:00–24:00). ShiftFlow evaluated all associates to prevent clopenings and unauthorized overtime.
             </div>
 
             <div className="space-y-2.5">

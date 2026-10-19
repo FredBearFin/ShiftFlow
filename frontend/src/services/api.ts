@@ -226,7 +226,7 @@ export function exportRosterToCsvString(solution: SolveResponse): string {
   const header = ['Line', 'Cohort', 'Assigned Person', 'Qualification', 'Hourly Wage', 'Weekly Hours', 'Overtime Hours', 'Weekly Payroll', ...dayHeaders];
   const escape = (v: string | number | null) => {
     const s = v === null ? '' : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const rows = solution.roster_lines.map((line) => [
     line.line_number,
