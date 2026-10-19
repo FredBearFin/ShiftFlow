@@ -4,6 +4,7 @@ import {
   ArchetypePreset,
   EmployeeRecord,
   ErgonomicGuardrails,
+  NewEmployeeInput,
   ShiftTemplate,
   SolveResponse,
   StaffMemberAssignment,
@@ -173,12 +174,7 @@ export function App() {
     setStaffAssignments([]);
   };
 
-  const handleAddEmployee = (newEmpData: {
-    name: string;
-    role: string;
-    wage: number;
-    days: number[];
-  }) => {
+  const handleAddEmployee = (newEmpData: NewEmployeeInput) => {
     const newId = `EMP-${String(employees.length + 1).padStart(2, '0')}`;
     const newEmp: EmployeeRecord = {
       employee_id: newId,
@@ -190,6 +186,8 @@ export function App() {
       available_days: newEmpData.days,
       preferred_shifts: ['M', 'D', 'E'],
       assigned_line_id: null,
+      accommodation_type: newEmpData.accommodation_type,
+      statutory_notes: newEmpData.statutory_notes ?? null,
     };
     setEmployees((prev) => [...prev, newEmp]);
   };

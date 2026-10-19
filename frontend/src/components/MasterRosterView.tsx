@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   EmployeeRecord,
+  NewEmployeeInput,
   RosterLine,
   SolveResponse,
   StaffMemberAssignment,
@@ -15,7 +16,7 @@ interface MasterRosterViewProps {
   onAdvanceWeek: (delta: number) => void;
   onResetWeek: () => void;
   onUpdateStaffAssignments: (assignments: StaffMemberAssignment[]) => void;
-  onAddEmployee: (emp: Omit<EmployeeRecord, 'employee_id'>) => void;
+  onAddEmployee: (emp: NewEmployeeInput) => void;
   onToggleEmployeeStatus: (empId: string) => void;
   onUpdateEmployee: (emp: EmployeeRecord) => void;
   onExportCsv: () => void;
@@ -93,11 +94,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
     onAddEmployee({
       name: newName.trim(),
       role: newRole,
-      hourly_wage: parseFloat(newWage) || 16.50,
-      max_weekly_hours: 40,
-      is_active: true,
-      available_days: newAvailDays,
-      preferred_shifts: ['M', 'D', 'E'],
+      wage: parseFloat(newWage) || 16.50,
+      days: newAvailDays,
     });
     setNewName('');
     setNewWage('16.50');
@@ -263,7 +261,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
             <button
               type="button"
-              onClick={() => setShowDirectoryDrawer((v) => !v)}
+              onClick={() => setShowDirectoryDrawer(!showDirectoryDrawer)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 showDirectoryDrawer
                   ? 'bg-slate-900 text-white border-slate-900'
