@@ -1,0 +1,51 @@
+Store ID,Store Name,Category,Street Address,City,State,Zip,Daily Operating Hours,Estimated Staff,Current Scheduling Method,Estimated OT Leakage ($/yr),Primary Decision Maker,Pitch Angle
+TGT-001,Midlands Smoke & Vape Lounge,Vape / Smoke,4820 S 135th St,Omaha,NE,68137,10am–10pm,6,Whiteboard & Texts,$2450,Dave K. (Owner),Zero-clopening guarantee for weekend night closers
+TGT-002,West Omaha Wine & Spirits,Liquor Store,14450 West Center Rd,Omaha,NE,68144,9am–11pm,9,Excel Template,$3820,Brian M. (GM),Automated 1-click Monday rotation rollover
+TGT-003,Cloud 9 Vapor Emporium,Vape / Smoke,7412 Dodge St,Omaha,NE,68114,9am–9pm,5,Paper Clipboard,$1900,Ashley T. (Owner),Eliminate clerk burnout & callouts
+TGT-004,Cornhusker Beverage & Spirits,Liquor Store,8404 L St,Omaha,NE,68127,8am–12am,12,Excel Template,$5100,Greg W. (Owner),Full weekend rest consolidation & overtime control
+TGT-005,Benson Vapors & Glass,Vape / Smoke,6115 Maple St,Omaha,NE,68104,11am–11pm,4,Group SMS Texts,$1650,Marcus H. (Owner),Self-driving rotation without managerial Sunday prep
+TGT-006,Dundee Corner Liquor,Liquor Store,4920 Underwood Ave,Omaha,NE,68132,10am–10pm,6,Excel Template,$2200,Sarah P. (Store Mgr),Fixed rotation lines with zero favoritism
+TGT-007,Metro Smoke & Tobacco Mart,Smoke Shop,3120 N 90th St,Omaha,NE,68134,8am–11pm,7,Dry-Erase Board,$2800,Samir A. (Owner),16h minimum rest between shifts
+TGT-008,Spirit World Wine & Gourmet,Liquor / Specialty,6680 Center St,Omaha,NE,68106,9am–9pm,10,7shifts (Overpaying),$3400,Elena R. (Operations),Cut software cost 50% while getting mathematical ergonomics
+TGT-009,Vapor World West Maple,Vape / Smoke,15615 W Maple Rd,Omaha,NE,68116,10am–9pm,5,Paper Clipboard,$1800,Tyler B. (Owner),Predictable schedule reducing cashier turnover
+TGT-010,Rockbrook Wine & Spirits,Liquor Store,2811 S 110th St,Omaha,NE,68144,9am–10pm,8,Excel Template,$3100,Kevin S. (GM),Gusto 1-click payroll integration
+TGT-011,Capital City Vape Lounge,Vape / Smoke,2601 O St,Lincoln,NE,68510,10am–10pm,5,GroupMe Chat,$1950,Jordan L. (Owner),Automatic conflict detection for student availability
+TGT-012,Haymarket Spirits & Beer,Liquor Store,801 P St,Lincoln,NE,68508,10am–12am,8,Excel Template,$3600,Matt D. (Owner),Gameday surge demand matching without clopening
+TGT-013,The Glass & Vape Hub,Smoke / Vape,1420 N 48th St,Lincoln,NE,68504,9am–10pm,6,Whiteboard,$2300,Chloe M. (Owner),Equitable weekend distribution across lines
+TGT-014,Bluffs Bottle & Cask,Liquor Store,1920 W Broadway,Council Bluffs,IA,51501,8am–11pm,9,Paper Clipboard,$3700,Robert T. (GM),ADP payroll export and overtime elimination
+TGT-015,River City Vapor Depot,Vape / Smoke,3215 5th Ave,Council Bluffs,IA,51501,10am–9pm,4,Group SMS,$1400,Nick P. (Owner),Stop managers spending 5 hours drafting rosters
+TGT-016,Papillion Spirits Mart,Liquor Store,801 S Washington St,Papillion,NE,68046,9am–10pm,7,Excel Template,$2750,Daniel K. (Owner),Consolidate rest into 2–3 day weekends
+TGT-017,Sarpy County Vape & Tobacco,Vape / Smoke,11425 S 72nd St,Papillion,NE,68046,10am–9pm,5,Whiteboard,$1850,Alicia G. (Owner),Zero-clopening guarantee to stop callouts
+TGT-018,Bellevue Beer & Wine Depot,Liquor Store,1001 Fort Crook Rd N,Bellevue,NE,68005,9am–11pm,10,Excel Template,$4200,Steve H. (GM),Manage military spouse availability with 1 click
+TGT-019,Old Towne Vapor Bar,Vape / Smoke,2105 Franklin St,Bellevue,NE,68005,10am–8pm,4,Paper Sheet,$1300,Cody W. (Owner),Save $7,400/yr in cashier turnover
+TGT-020,La Vista Wine & Spirits,Liquor Store,8410 Brentwood Dr,La Vista,NE,68128,9am–10pm,8,When I Work,$3100,Laura B. (Owner),Eliminate manager scheduling burnout
+TGT-021,Millard Smoke & Gift,Smoke Shop,13410 L St,Omaha,NE,68137,8am–10pm,6,Excel Template,$2400,Tariq M. (Owner),Forward circadian rotation (Morning -> Day -> Evening)
+TGT-022,Oakview Wine Cellar,Liquor Store,3001 S 144th St,Omaha,NE,68144,10am–9pm,7,Whiteboard,$2600,Rachel F. (GM),Fair shift allocation avoiding employee drama
+TGT-023,Downtown Cigars & Vapor,Vape / Smoke,1408 Farnam St,Omaha,NE,68102,9am–11pm,5,Group SMS,$2100,Amir N. (Owner),30-minute shift leeway unlocks +27% ergo gain
+TGT-024,Old Market Liquor Mart,Liquor Store,1019 Howard St,Omaha,NE,68102,10am–1am,11,Excel Template,$4900,Chris C. (Owner),Late night 1am closers protected from 8am open
+TGT-025,Maple Street Spirits,Liquor Store,16811 W Maple Rd,Omaha,NE,68116,9am–10pm,8,Excel Template,$3300,Heather V. (Owner),Automatic POS demand sync via Square
+TGT-026,Gretna Wine & Beverage,Liquor Store,11840 S 216th St,Gretna,NE,68028,9am–10pm,6,Paper Clipboard,$2150,Tom E. (GM),Instant line re-assignment when an employee quits
+TGT-027,Gretna Vape Shack,Vape / Smoke,202 N McKenna Ave,Gretna,NE,68028,10am–8pm,4,Group SMS,$1250,Brandon S. (Owner),Free up 4 hours every Sunday evening
+TGT-028,Fremont Bottle Shop,Liquor Store,1245 E 23rd St,Fremont,NE,68025,8am–11pm,9,Excel Template,$3650,Gary L. (Owner),Overtime alert flags before schedule is published
+TGT-029,Fremont Cloud Haven,Vape / Smoke,748 N Broad St,Fremont,NE,68025,10am–9pm,5,Whiteboard,$1750,Sean M. (Owner),Zero clopenings to keep frontline clerks happy
+TGT-030,Platte Valley Beverage,Liquor Store,2814 23rd St,Columbus,NE,68601,9am–11pm,10,Excel Template,$4100,Kurt Z. (GM),Gusto payroll CSV export in 1 click
+TGT-031,Grand Island Liquor Warehouse,Liquor Store,2222 W 2nd St,Grand Island,NE,68803,8am–12am,14,Excel Template,$5800,Brad J. (Owner),Centralized cyclic rosters across 14 lines
+TGT-032,Pioneer Vape Lounge,Vape / Smoke,1811 W 2nd St,Grand Island,NE,68803,10am–9pm,5,Paper Sheet,$1600,Trevor B. (Owner),Stop scheduling disputes between shifts
+TGT-033,Kearney Wine & Spirits,Liquor Store,3907 6th Ave,Kearney,NE,68845,9am–11pm,8,Excel Template,$3200,Derek N. (Owner),Match register coverage to foot traffic surges
+TGT-034,Tri-City Vapor Co,Vape / Smoke,112 W 24th St,Kearney,NE,68847,10am–9pm,4,Group SMS,$1450,Justin R. (Owner),Dynamic line assignment with student availability
+TGT-035,Sioux City Spirits & Tobacco,Liquor / Smoke,1801 Hamilton Blvd,Sioux City,IA,51103,8am–11pm,11,Excel Template,$4700,Wayne O. (Owner),Overtime elimination saving $4,000+ annually
+TGT-036,Loess Hills Vapor Lounge,Vape / Smoke,2910 Gordon Dr,Sioux City,IA,51106,10am–9pm,5,Whiteboard,$1900,Kyle C. (Owner),Simple 90-second iPad setup for owner
+TGT-037,Ames Wine & Spirits Depot,Liquor Store,111 S Duff Ave,Ames,IA,50010,9am–11pm,9,Excel Template,$3900,Nathan G. (GM),College staff availability management
+TGT-038,Cyclone Vapor Bar,Vape / Smoke,2500 Lincoln Way,Ames,IA,50014,10am–10pm,6,GroupMe,$2250,Alex B. (Owner),Forward circadian shifts for part-time clerks
+TGT-039,Des Moines Bottle & Tap,Liquor Store,3801 Ingersoll Ave,Des Moines,IA,50312,9am–11pm,10,Excel Template,$4300,Phillip W. (Owner),Becker Table 7 Pareto knee point scheduling
+TGT-040,East Village Smoke & Vape,Vape / Smoke,505 E Locust St,Des Moines,IA,50309,11am–11pm,5,Paper Sheet,$1850,Maya S. (Owner),Zero-clopening shield to eliminate clerk turnover
+TGT-041,Court Ave Beverage Co,Liquor Store,300 Court Ave,Des Moines,IA,50309,10am–2am,13,Excel Template,$5600,Chad M. (Owner),2am closing shifts with guaranteed 16h rest
+TGT-042,West Glen Spirits & Wine,Liquor Store,5525 Mills Civic Pkwy,West Des Moines,IA,50266,9am–10pm,8,7shifts,$3100,Kelly P. (GM),Replace expensive restaurant app with retail engine
+TGT-043,Valley Junction Vapor Hub,Vape / Smoke,215 5th St,West Des Moines,IA,50265,10am–8pm,4,Whiteboard,$1350,Eric D. (Owner),Stop Sunday scheduling anxiety permanently
+TGT-044,Ankeny Spirits & Wine,Liquor Store,1802 N Ankeny Blvd,Ankeny,IA,50023,9am–10pm,8,Excel Template,$3250,Scott T. (Owner),Clover POS transaction sync
+TGT-045,Ankeny Vapor Depot,Vape / Smoke,1210 S Ankeny Blvd,Ankeny,IA,50023,10am–9pm,5,Group SMS,$1700,Jason V. (Owner),Automated Monday morning line rollover
+TGT-046,Iowa City Wine & Provisions,Liquor Store,201 S Clinton St,Iowa City,IA,52240,9am–11pm,10,Excel Template,$4400,Morgan F. (GM),High student churn stabilization
+TGT-047,Ped Mall Vape & Tobacco,Vape / Smoke,112 E Washington St,Iowa City,IA,52240,10am–10pm,6,GroupMe,$2100,Dylan K. (Owner),Zero clopenings between exam weeks
+TGT-048,Cedar Rapids Spirits Express,Liquor Store,3315 1st Ave SE,Cedar Rapids,IA,52402,8am–11pm,11,Excel Template,$4600,Brian H. (Owner),Full weekend rest consolidation (Sat+Sun off)
+TGT-049,Cedar River Smoke Shop,Vape / Smoke,1444 1st Ave NE,Cedar Rapids,IA,52402,10am–9pm,5,Whiteboard,$1800,Victor S. (Owner),30-day free zero-clopening guarantee
+TGT-050,Midwest Bottle & Smoke Fleet,Multi-Unit (4 Stores),7200 L St,Omaha,NE,68127,8am–11pm,28,Excel + Emails,$14200,Sanjay Patel (Franchisee),Fleet Tier ($39/store/mo) with centralized multi-store view
