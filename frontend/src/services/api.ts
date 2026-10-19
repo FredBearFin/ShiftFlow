@@ -9,6 +9,7 @@ import {
   ArchetypePreset,
   EmployeeRecord,
   ErgonomicCriterionBreakdown,
+  ErgonomicGuardrails,
   ErgonomicsAudit,
   IntervalCoverageCell,
   LaborAnalysis,
@@ -18,6 +19,7 @@ import {
   RosterCell,
   RosterLine,
   ShiftOrOffCode,
+  ShiftTemplate,
   ShiftTypeResult,
   SolveRequest,
   SolveResponse,
@@ -211,6 +213,34 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
     },
   },
 ];
+
+const DEFAULT_PRESET = DEFAULT_ARCHETYPES[0];
+export const DEFAULT_TEMPLATES: ShiftTemplate[] = DEFAULT_PRESET.templates;
+export const DEFAULT_GUARDRAILS: ErgonomicGuardrails = DEFAULT_PRESET.guardrails;
+export const DEFAULT_DEMAND_MATRIX: number[][] = DEFAULT_PRESET.demand_matrix;
+export const INITIAL_STORE_EMPLOYEES: EmployeeRecord[] = [];
+
+/** Serialises the roster grid (one row per rotation line, one column per day). */
+export function exportRosterToCsvString(solution: SolveResponse): string {
+  const dayHeaders = DAYS_OF_WEEK.map((d) => `${d} Shift`);
+  const header = ['Line', 'Cohort', 'Assigned Person', 'Qualification', 'Hourly Wage', 'Weekly Hours', 'Overtime Hours', 'Weekly Payroll', ...dayHeaders];
+  const escape = (v: string | number | null) => {
+    const s = v === null ? '' : String(v);
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const rows = solution.roster_lines.map((line) => [
+    line.line_number,
+    line.cohort_id,
+    line.assigned_person ?? '',
+    line.qualification_tier,
+    line.hourly_wage.toFixed(2),
+    line.weekly_hours,
+    line.overtime_hours,
+    line.estimated_weekly_payroll.toFixed(2),
+    ...line.days.map((cell) => cell.shift_code),
+  ]);
+  return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
+}
 
 const BECKER_TABLE7_ANCHORS: [number, number][] = [
   [0.0, 1.80],

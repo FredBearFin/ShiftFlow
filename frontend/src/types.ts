@@ -53,6 +53,16 @@ export interface EmployeeRecord {
   recorded_by?: string | null;
 }
 
+/** Payload for adding a staff member from either the roster modal or the directory. */
+export interface NewEmployeeInput {
+  name: string;
+  role: string;
+  wage: number;
+  days: number[];
+  accommodation_type?: AccommodationType;
+  statutory_notes?: string;
+}
+
 export interface StaffMemberAssignment {
   line_id: number;
   cohort_label: string;
