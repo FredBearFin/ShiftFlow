@@ -26,11 +26,11 @@ interface OnboardingWizardProps {
 }
 
 const STEP_LABELS = [
-  { step: 1, title: 'Industry Archetype', subtitle: 'Select operational sector preset' },
-  { step: 2, title: 'Daily Demand Matrix', subtitle: '24-hour staffing requirements R_gi' },
-  { step: 3, title: 'Shift Design Templates', subtitle: 'Configure M, D, E, N windows' },
-  { step: 4, title: 'Ergonomic Guardrails', subtitle: 'Nurmi/Becker occupational policies' },
-  { step: 5, title: 'Flexibility Calibration', subtitle: 'Balance staff rest with $0 overtime' },
+  { step: 1, title: 'Business type', subtitle: 'Start from a close match' },
+  { step: 2, title: 'Staffing needs', subtitle: 'How many people, each hour' },
+  { step: 3, title: 'Shift times', subtitle: 'When shifts start and end' },
+  { step: 4, title: 'Scheduling rules', subtitle: 'Rest and fairness for staff' },
+  { step: 5, title: 'Cost vs. fairness', subtitle: 'Choose your balance' },
 ];
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
@@ -99,14 +99,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-[10px] font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
-                5-Step Configuration Wizard
+                5 quick steps
               </span>
               <span className="text-xs text-slate-400">
-                Automated Store Policy & Scheduling Setup
+                Tell us how your store runs. We'll build the schedule.
               </span>
             </div>
             <h2 className="text-lg font-bold tracking-tight mt-1">
-              ShiftFlow Studio — Workforce Optimization Setup
+              Set up your schedule
             </h2>
           </div>
           <button
@@ -114,7 +114,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             onClick={onClose}
             className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
           >
-            Skip to Workspace ✕
+            Skip setup ✕
           </button>
         </div>
 
@@ -168,23 +168,22 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Step 1: Select Industry Operational Archetype
+                    Pick the closest match
                   </h3>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Choose an operational baseline to pre-populate the 7×24 staffing demand matrix{' '}
-                    <span className="font-mono-tabular">R_gi</span>, shift templates, and ergonomic guardrails.
+                    We'll fill in typical hours, shift times and rules. You can change any of them in the next steps.
                   </p>
                 </div>
                 <div className="w-full sm:w-72">
                   <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                    Facility / Unit Identifier
+                    Store or unit name
                   </label>
                   <input
                     type="text"
                     value={facilityName}
                     onChange={(e) => onChangeFacilityName(e.target.value)}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-indigo-600 focus:outline-none font-medium text-slate-900"
-                    placeholder="e.g., Regional Medical Center — ICU"
+                    placeholder="e.g., Main Street Store"
                   />
                 </div>
               </div>
@@ -243,12 +242,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Step 2: Operating Schedule & Daily Interval Demand Matrix (R_gi)
+                    How many people you need
                   </h3>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Specify required concurrent staff headcount for each hour{' '}
-                    <span className="font-mono-tabular">i ∈ &#123;0..23&#125;</span> across planning days{' '}
-                    <span className="font-mono-tabular">g ∈ &#123;0..6&#125;</span>.
+                    Enter how many people you need working each hour, for each day of the week.
                   </p>
                 </div>
 
@@ -258,21 +255,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     onClick={() => adjustDayWindowDemand(6, 14, 1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    +1 Morning (06–14h)
+                    +1 person, 6am–2pm
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(14, 22, 1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    +1 Evening (14–22h)
+                    +1 person, 2pm–10pm
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(0, 24, -1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    −1 All Intervals
+                    −1 person, all hours
                   </button>
                 </div>
               </div>
@@ -299,10 +296,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    {DAYS_OF_WEEK[selectedDayTab]} — 24-Hour Interval Demand (R_{selectedDayTab},i)
+                    {DAYS_OF_WEEK[selectedDayTab]} — people needed each hour
                   </span>
                   <span className="text-xs text-slate-500 font-mono-tabular">
-                    Total weekly staffing volume:{' '}
+                    Total for the week:{' '}
                     <strong className="text-slate-900">
                       {demandMatrix.reduce(
                         (acc, r) => acc + r.reduce((a, b) => a + b, 0),
@@ -350,11 +347,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             <div className="space-y-4">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
-                  Step 3: Shift Design Templates (s ∈ S) & Admissible Shift Types (t ∈ T)
+                  Shift times
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Configure the four canonical shift templates from Becker (2026) Section 2.1: Morning (M),
-                  Day/Mid (D), Evening (E), and Night (N).
+                  Set when each shift starts and how long it runs. Morning (M), Midday (D), Evening (E) and Night (N).
                 </p>
               </div>
 
@@ -395,7 +391,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
                         <label className="block text-[11px] text-slate-500 font-medium mb-1">
-                          Preferred Start Hour (0–23)
+                          Usual start (hour, 0–23)
                         </label>
                         <input
                           type="number"
@@ -415,7 +411,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       </div>
                       <div>
                         <label className="block text-[11px] text-slate-500 font-medium mb-1">
-                          Shift Duration (7–9 hrs)
+                          Usual length (hours)
                         </label>
                         <input
                           type="number"
@@ -435,7 +431,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       </div>
                       <div>
                         <label className="block text-[11px] text-slate-500 font-medium mb-1">
-                          Earliest Start Bound
+                          Earliest allowed start
                         </label>
                         <input
                           type="number"
@@ -455,7 +451,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       </div>
                       <div>
                         <label className="block text-[11px] text-slate-500 font-medium mb-1">
-                          Max Duration Ceiling
+                          Longest allowed (hours)
                         </label>
                         <input
                           type="number"
@@ -485,17 +481,17 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             <div className="space-y-4">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
-                  Step 4: Occupational Health & Ergonomic Guardrail Policies
+                  Scheduling rules
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Configure the 8 Nurmi et al. (2024) / Becker (2026) ergonomic constraints and hard safety rules.
+                  Set limits that protect staff health and give everyone fair rest. Defaults are a good starting point.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Sequence Length Bounds (Work B & Rest H)
+                    How long stretches can run
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
@@ -536,7 +532,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     </div>
                     <div>
                       <label className="block text-slate-600 mb-1 font-medium">
-                        Max Consecutive Nights (W^CN)
+                        Max nights in a row
                       </label>
                       <input
                         type="number"
@@ -554,7 +550,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     </div>
                     <div>
                       <label className="block text-slate-600 mb-1 font-medium">
-                        Max Consecutive Evenings (W^CE)
+                        Max evenings in a row
                       </label>
                       <input
                         type="number"
@@ -575,33 +571,33 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Circadian & Recovery Guardrails
+                    Rest and recovery rules
                   </h4>
                   {[
                     {
                       field: 'enforce_forward_rotation' as const,
-                      label: 'Strict Circadian Forward Rotation (M → D → E → N)',
-                      desc: 'Forbids backward phase transitions inside work sequences.',
+                      label: 'Shifts move forward through the day',
+                      desc: 'Morning, then midday, then evening, then night. Never backwards.',
                     },
                     {
                       field: 'enforce_zero_clopening' as const,
-                      label: 'Zero-Clopening Mandate (≥ 16h Rest Between Shifts)',
-                      desc: 'Prevents Evening/Night shifts followed by Morning shifts.',
+                      label: 'At least 16 hours between shifts',
+                      desc: 'No closing shift followed directly by an opening shift.',
                     },
                     {
                       field: 'avoid_single_rest_days' as const,
-                      label: 'Rest Consolidation (Ban Single Split Days Off — W^SR_h)',
-                      desc: 'Groups recovery periods into ≥ 2 consecutive days off.',
+                      label: 'Days off come in pairs',
+                      desc: 'Avoids lone days off between work days.',
                     },
                     {
                       field: 'avoid_single_night_shifts' as const,
-                      label: 'Ban Isolated Single Night Shifts (W^SN_b)',
-                      desc: 'Prevents solitary 1-night circadian shocks.',
+                      label: 'No lone night shifts',
+                      desc: 'Avoids a single night shift on its own.',
                     },
                     {
                       field: 'prioritize_free_weekends' as const,
-                      label: 'Maximize Full Weekends Off (Sat + Sun Together — W^WW)',
-                      desc: 'Aligns rest arcs with Saturday/Sunday weekend windows.',
+                      label: 'Full weekends off when possible',
+                      desc: 'Gives staff Saturday and Sunday off together.',
                     },
                   ].map((item) => (
                     <label
@@ -636,13 +632,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             <div className="space-y-4">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
-                  Step 5: Bi-Objective Optimization Bias on the Becker (2026) Pareto Frontier
+                  Cost vs. fairness
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Calibrate the allowed percentage leeway in the Shift Design Objective (
-                  <span className="font-mono-tabular">obj^shift</span>) to unlock substantial reductions in the
-                  Ergonomics Penalty Objective (<span className="font-mono-tabular">obj^ergo</span>) per Becker
-                  (2026) Table 7.
+                  Allowing a little more cost can make schedules noticeably fairer for staff. Pick the balance that suits you.
                 </p>
               </div>
 
@@ -650,21 +643,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                      Selected Shift Design Leeway
+                      Extra cost allowed
                     </span>
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
-                      +{leewayPct}% Shift Design Leeway →{' '}
+                      +{leewayPct}% cost →{' '}
                       <span className="text-emerald-700">
-                        +{expectedErgoGain}% Ergonomic Gain
+                        +{expectedErgoGain}% staff comfort
                       </span>
                     </div>
                   </div>
                   <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
                     {leewayPct === 5
-                      ? '★ Becker Table 7 Knee Point (Recommended)'
+                      ? '★ Recommended'
                       : leewayPct === 10
-                      ? 'Zero-Payroll Sweet Spot (+39.46% Ergo)'
-                      : 'Custom Pareto Calibration'}
+                      ? 'No extra payroll'
+                      : 'Custom balance'}
                   </span>
                 </div>
 
@@ -681,12 +674,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 {/* Quick Preset Anchors from Becker (2026) Table 7 */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2">
                   {[
-                    { lw: 0, gain: '1.80%', tag: 'Min SD (0%)' },
-                    { lw: 1, gain: '8.37%', tag: '+1% Leeway' },
-                    { lw: 5, gain: '27.34%', tag: '★ 5% Knee Point' },
-                    { lw: 10, gain: '39.46%', tag: '+10% ($0 Payroll)' },
-                    { lw: 20, gain: '54.64%', tag: '+20% Leeway' },
-                    { lw: 50, gain: '79.06%', tag: '+50% Max Ergo' },
+                    { lw: 0, gain: '1.80%', tag: 'No extra cost' },
+                    { lw: 1, gain: '8.37%', tag: '+1% cost' },
+                    { lw: 5, gain: '27.34%', tag: '★ Recommended' },
+                    { lw: 10, gain: '39.46%', tag: '+10% cost' },
+                    { lw: 20, gain: '54.64%', tag: '+20% cost' },
+                    { lw: 50, gain: '79.06%', tag: '+50% cost' },
                   ].map((pt) => (
                     <button
                       key={pt.lw}
@@ -706,7 +699,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             : 'text-emerald-700 font-semibold'
                         }`}
                       >
-                        +{pt.gain} Ergo
+                        +{pt.gain} staff comfort
                       </div>
                     </button>
                   ))}
@@ -724,7 +717,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             onClick={() => setCurrentStep((s) => Math.max(1, s - 1))}
             className="px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 disabled:opacity-40 text-xs font-semibold text-slate-700"
           >
-            ← Previous Step
+            ← Back
           </button>
 
           <div className="flex items-center gap-2.5">
@@ -734,7 +727,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 onClick={() => setCurrentStep((s) => Math.min(5, s + 1))}
                 className="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs"
               >
-                Next Step ({currentStep}/5) →
+                Next ({currentStep} of 5) →
               </button>
             ) : (
               <button
@@ -742,7 +735,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 onClick={onCompleteWizard}
                 className="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm flex items-center gap-2"
               >
-                <span>Generate Conflict-Free Schedule & Launch</span>
+                <span>Create my schedule</span>
                 <span>→</span>
               </button>
             )}
