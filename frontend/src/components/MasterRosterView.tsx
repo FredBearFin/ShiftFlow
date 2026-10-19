@@ -491,6 +491,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                           {line.availability_conflicts_count} Avail Alert
                         </span>
+                      )}
                       {line.statutory_accommodation_violation && (
                         <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
                           Title VII / ADA Sabbath Alert
@@ -500,7 +501,6 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
                           Predictability Pay Risk
                         </span>
-                      )}
                       )}
                     </div>
                     <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
@@ -686,7 +686,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
             </div>
 
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-              <strong>Frontline Absence:</strong> Cashier Elena Rodriguez called out of Saturday Evening (16:00–24:00). ShiftFlow evaluated all associates to prevent clopenings and unauthorized overtime.
+              <strong>Frontline Absence:</strong> Cashier Elena Rodriguez called out of Saturday Evening (16:00–24:00). ShiftFlow evaluated all associates to prevent clopenings and unauthorized[...]
             </div>
 
             <div className="space-y-2.5">
