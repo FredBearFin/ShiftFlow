@@ -221,7 +221,7 @@ export const DEFAULT_DEMAND_MATRIX: number[][] = DEFAULT_PRESET.demand_matrix;
 export const INITIAL_STORE_EMPLOYEES: EmployeeRecord[] = [];
 
 /** Serialises the roster grid (one row per rotation line, one column per day). */
-export function exportRosterToCsvString(solution: SolveResponse, rotationWeekOffset: number): string {
+export function exportRosterToCsvString(solution: SolveResponse): string {
   const dayHeaders = DAYS_OF_WEEK.map((d) => `${d} Shift`);
   const header = ['Line', 'Cohort', 'Assigned Person', 'Qualification', 'Hourly Wage', 'Weekly Hours', 'Overtime Hours', 'Weekly Payroll', ...dayHeaders];
   const escape = (v: string | number | null) => {

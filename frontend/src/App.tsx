@@ -222,7 +222,7 @@ export function App() {
 
   const handleExportCsv = () => {
     if (!solution) return;
-    const csvData = exportRosterToCsvString(solution, rotationWeekOffset);
+    const csvData = exportRosterToCsvString(solution);
     const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
