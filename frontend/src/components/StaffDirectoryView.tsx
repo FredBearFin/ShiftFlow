@@ -179,7 +179,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                       {emp.is_active ? 'Active' : 'Separated'}
                     </span>
                     {emp.accommodation_type && emp.accommodation_type !== 'none' && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-300 capitalize">
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92] capitalize">
                         {emp.accommodation_type === 'religious' ? 'Title VII Sabbath' : `${emp.accommodation_type} Accom.`}
                       </span>
                     )}
@@ -211,7 +211,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                       Available Days (Mon – Sun):
                     </span>
                     {emp.accommodation_type === 'religious' && (
-                      <span className="text-[10px] text-purple-700 font-semibold">Protected Exclusion</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92]">Protected Exclusion</span>
                     )}
                   </div>
                   <div className="grid grid-cols-7 gap-1">
@@ -357,7 +357,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     placeholder="e.g., Friday sundown to Saturday sundown Sabbath observance approved"
                     value={newStatNotes}
                     onChange={(e) => setNewStatNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-purple-300 bg-purple-50/50 rounded-lg text-xs text-purple-950"
+                    className="w-full px-3 py-2 border border-[#7F8A92] bg-[#FFFFFF] rounded-lg text-xs text-[#2B3A42] placeholder:text-[#5C6770]"
                   />
                 </div>
               )}
