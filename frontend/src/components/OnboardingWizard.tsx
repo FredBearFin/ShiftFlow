@@ -7,6 +7,7 @@ import {
 import { DAYS_OF_WEEK, interpolateBeckerTable7 } from '../services/api';
 import { Button } from './ui/Button';
 import { BardPanel } from './onboarding/BardPanel';
+import { ExplainThis } from './onboarding/ExplainThis';
 import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
 import {
   FirstRunTour,
@@ -200,6 +201,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
         {/* Wizard Body Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-5">
+          <ExplainThis stepId={currentStep} />
           {/* STEP 1: INDUSTRY ARCHETYPE SELECTION */}
           {currentStep === 1 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
