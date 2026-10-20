@@ -154,9 +154,32 @@ class IdempotencyMiddleware:
             await self.app(scope, receive, send)
             return
 
+        # Buffer the incoming request body and hash it, so a replay can be checked against the stored request
+        body_messages = []
+        request_body = b""
+        more_body = True
+        while more_body:
+            msg = await receive()
+            body_messages.append(msg)
+            request_body += msg.get("body", b"")
+            more_body = msg.get("more_body", False)
+
+        body_hash = hashlib.sha256(request_body).hexdigest()
+
         # Check existing record in persistence store
         record = IdempotencyStore.get_record(idempotency_key)
         if record:
+            if record["request_hash"] != body_hash:
+                resp = JSONResponse(
+                    status_code=422,
+                    content={
+                        "error": "IdempotencyKeyReuseMismatch",
+                        "detail": f"Idempotency-Key '{idempotency_key}' was already used with a different request body.",
+                    },
+                )
+                await resp(scope, receive, send)
+                return
+
             if record["in_flight"] == 1:
                 resp = JSONResponse(
                     status_code=409,
@@ -182,17 +205,6 @@ class IdempotencyMiddleware:
             await resp(scope, receive, send)
             return
 
-        # Buffer the incoming request body
-        body_messages = []
-        request_body = b""
-        more_body = True
-        while more_body:
-            msg = await receive()
-            body_messages.append(msg)
-            request_body += msg.get("body", b"")
-            more_body = msg.get("more_body", False)
-
-        body_hash = hashlib.sha256(request_body).hexdigest()
         started = IdempotencyStore.start_request(
             key=idempotency_key,
             method=method,

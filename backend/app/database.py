@@ -112,6 +112,19 @@ def init_db() -> None:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (facility_id) REFERENCES facilities(id)
     );
+
+    CREATE TABLE IF NOT EXISTS idempotency_records (
+        key TEXT PRIMARY KEY,
+        method TEXT NOT NULL,
+        path TEXT NOT NULL,
+        request_hash TEXT NOT NULL,
+        status_code INTEGER,
+        response_headers_json TEXT,
+        response_body TEXT,
+        in_flight INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at REAL
+    );
     """)
 
     conn.commit()
