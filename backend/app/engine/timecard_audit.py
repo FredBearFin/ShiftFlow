@@ -156,11 +156,25 @@ class TimecardAuditor:
             "timestamp",
         ]
 
+        if not records:
+            # No source data: this module is not called from a route, so it cannot raise HTTP 501.
+            # Return an explicitly unverified result with no PASS verdict instead.
+            return {
+                "records_audited": 0,
+                "compliant_records": 0,
+                "deficiency_count": 0,
+                "cfr_516_5_compliant": None,
+                "audit_readiness_verdict": None,
+                "status": "NOT_IMPLEMENTED",
+                "detail": "not implemented: no source data",
+                "deficiencies": [],
+            }
+
         deficiencies = []
         compliant_count = 0
 
         for idx, rec in enumerate(records):
-            missing = [f for f in required_fields if f not in rec]
+            missing = [f for f in required_fields if rec.get(f) is None]
             if missing:
                 deficiencies.append({
                     "record_index": idx,
