@@ -30,6 +30,7 @@ from app.engine.ergonomics import (
 )
 from app.engine.isd_rwsp_solver import (
     ISDRWSPSolver,
+    SolverInfeasibleError,
     extract_eulerian_cycle_hierholzer,
     verify_multigraph_eulerian_conditions,
 )
@@ -155,7 +156,13 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
             self.assertNotEqual(curr_arc["arc_type"], next_arc["arc_type"])
 
     def test_05_all_five_archetypes_solve_and_satisfy_constraints(self) -> None:
-        """Verify all industry archetypes solve to Eulerian-valid, zero-clopening schedules."""
+        """Verify each archetype either solves to a valid schedule or is reported infeasible.
+
+        Healthcare and manufacturing templates cannot meet the rest and rotation rules for
+        their demand. The solver now reports that instead of relaxing the rules, so those two
+        must raise SolverInfeasibleError.
+        """
+        infeasible_archetypes = {"healthcare_24_7", "manufacturing_24_7"}
         for arch_id, preset in ARCHETYPE_PRESETS.items():
             req = SolveRequestSchema(
                 archetype_id=arch_id,
@@ -165,6 +172,10 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
                 guardrails=preset.guardrails,
                 pareto_leeway_pct=preset.default_leeway_pct,
             )
+            if arch_id in infeasible_archetypes:
+                with self.assertRaises(SolverInfeasibleError):
+                    ISDRWSPSolver(req).solve()
+                continue
             sol = ISDRWSPSolver(req).solve()
             self.assertTrue(sol.eulerian_valid, f"Archetype {arch_id} failed Eulerian check")
             self.assertEqual(sol.ergonomics_audit.clopening_violations, 0)
@@ -188,7 +199,7 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         self.assertAlmostEqual(interpolate_becker_table7(50.0), 79.06, places=2)
         self.assertAlmostEqual(interpolate_becker_table7(75.0), 89.71, places=2)
 
-        preset = ARCHETYPE_PRESETS["healthcare_24_7"]
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
         req = SolveRequestSchema(
             archetype_id=preset.id,
             facility_name=preset.name,
@@ -209,7 +220,7 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
 
     def test_07_rotation_week_advancement_and_staff_mapping(self) -> None:
         """Verify weekly rotation advancement and optional workforce line assignment."""
-        preset = ARCHETYPE_PRESETS["manufacturing_24_7"]
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
         staff = [
             StaffMemberAssignment(
                 line_id=1,

@@ -172,6 +172,10 @@ def extract_eulerian_cycle_hierholzer(arcs: List[Dict]) -> List[Dict]:
     return ordered_arcs
 
 
+class SolverInfeasibleError(Exception):
+    """Raised when the generator cannot satisfy a hard constraint, or the cycle is incomplete."""
+
+
 class ISDRWSPSolver:
     """Integrated Shift Design and Rotating Workforce Scheduling Solver (Becker, EJOR 2026)."""
 
@@ -203,8 +207,6 @@ class ISDRWSPSolver:
                 start_hr = 6
 
             dur = max(tpl.min_duration, min(tpl.max_duration, tpl.preferred_duration))
-            if dur > 8 and tpl.min_duration <= 8:
-                dur = 8
 
             end_hr = (start_hr + dur) % 24
             w_sl, w_ms = evaluate_shift_type_penalties(tpl.code, start_hr, dur)
@@ -441,8 +443,10 @@ class ISDRWSPSolver:
                     valid_candidates.append(cand)
 
                 if not valid_candidates:
-                    non_n = [c for c in candidates if c != "N"]
-                    valid_candidates = non_n if non_n else candidates
+                    raise SolverInfeasibleError(
+                        "No template satisfies the rest and rotation rules for this demand. "
+                        "Add templates or relax the guardrails."
+                    )
 
                 best_code = valid_candidates[0]
                 best_demand_score = -1e9
@@ -533,7 +537,14 @@ class ISDRWSPSolver:
         eulerian_valid, multigraph_nodes = verify_multigraph_eulerian_conditions(
             raw_arcs
         )
+        if not eulerian_valid:
+            raise SolverInfeasibleError("The generated multigraph is not balanced, so no cycle exists.")
         ordered_arcs_dicts = extract_eulerian_cycle_hierholzer(raw_arcs)
+        if len(ordered_arcs_dicts) != len(raw_arcs):
+            raise SolverInfeasibleError(
+                f"The cycle covers {len(ordered_arcs_dicts)} of {len(raw_arcs)} arcs, "
+                "so the schedule is not one connected rotation."
+            )
         multigraph_arcs = [MultigraphArcSchema(**a) for a in ordered_arcs_dicts]
 
         g_start = ordered_arcs_dicts[0]["start_day"] if ordered_arcs_dicts else 0
@@ -550,6 +561,17 @@ class ISDRWSPSolver:
         for step_idx, s_code in enumerate(flat_cycle_shifts):
             aligned_pos = (g_start + step_idx) % total_slots
             aligned_shifts[aligned_pos] = s_code
+
+        if self.guardrails.enforce_zero_clopening:
+            for line_idx in range(employee_count):
+                for d in range(7):
+                    today = aligned_shifts[line_idx * 7 + d]
+                    tomorrow = aligned_shifts[line_idx * 7 + (d + 1) % 7]
+                    if today == "E" and tomorrow == "M":
+                        raise SolverInfeasibleError(
+                            "The rotation has a closing shift followed by an opening shift, "
+                            "which zero-clopening forbids."
+                        )
 
         actual_daily_counts: Dict[Tuple[int, str], int] = defaultdict(int)
         for line_idx in range(employee_count):

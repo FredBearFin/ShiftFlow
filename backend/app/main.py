@@ -16,6 +16,8 @@ from app.api.handover_routes import router as handover_router
 from app.auth import require_api_key
 from app.config import settings
 from app.database import init_db, get_db_connection
+from fastapi.responses import JSONResponse
+from app.engine.isd_rwsp_solver import SolverInfeasibleError
 from app.middleware import IdempotencyMiddleware
 
 APP_START_TIME = time.time()
@@ -47,6 +49,12 @@ app.add_middleware(
 
 # Idempotency Middleware for exactly-once mutation semantics
 app.add_middleware(IdempotencyMiddleware)
+
+
+@app.exception_handler(SolverInfeasibleError)
+def solver_infeasible_handler(request, exc: SolverInfeasibleError):
+    """Reports a schedule the solver cannot build from the given constraints, instead of relaxing them."""
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
 # Startup event to ensure SQLite database schema is initialized
