@@ -66,7 +66,7 @@ OPERATING EBITDA MARGIN EXPANSION                                   : +182.1 Bas
 
 ### 2.2 Direct Cashier Separation & Churn Avoidance (SHRM Standard)
 - **The Empirical Baseline**: According to the Society for Human Resource Management (SHRM) and the National Retail Federation (NRF), the average replacement cost for an hourly retail associate is **$4,129.00** (recruiting job posts, vetting, manager interview hours, background checks, initial 2-week shadowing, and cashier register transaction speed deficit).
-- **Baseline Retail Turnover**: Shift-based retail stores experience an average annual clerk turnover rate of **110%** (6.6 quits per year for a 6-associate crew).
+- **Baseline Retail Turnover**: Shift-based retail stores experience an average annual clerk turnover rate of **65%** (3.9 quits per year for a 6-associate crew).
 - **Circadian Burnout Elimination**: Close-open shifts ("clopenings") and backward circadian rotations ($E \to M$ or $N \to D$) are the primary driver of employee burnout, sickness, and sudden resignations. ShiftFlow mathematically guarantees **$\ge 16$ hours of rest** and strict forward rotation ($M \preceq D \preceq E \preceq N$), reducing voluntary separations by an **assumed 35%** (1.8 fewer quits annually, per gtm/roi_calculator.md).
 - **Audit Valuation Formula**:
   $$\text{Separation Cost Savings} = 1.8 \text{ avoided quits} \times \$4,129.00 = \$7,432.00 / \text{year}$$ (1.8 × $4,129 = $7,432, as in gtm/roi_calculator.md)
