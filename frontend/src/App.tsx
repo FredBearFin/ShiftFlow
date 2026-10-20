@@ -79,6 +79,13 @@ export function App() {
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState<boolean>(false);
+  const [singleKeyEnabled, setSingleKeyEnabled] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('shiftflow.singleKeyShortcuts') !== 'off';
+    } catch {
+      return true;
+    }
+  });
   const [isAddEmpOpen, setIsAddEmpOpen] = useState<boolean>(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false);
 
@@ -159,8 +166,9 @@ export function App() {
   // Global Keyboard Navigation Engine (Hands-on-keyboard retail backroom drivability)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const activeTag = document.activeElement ? document.activeElement.tagName : '';
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+      const activeEl = document.activeElement as HTMLElement | null;
+      const activeTag = activeEl ? activeEl.tagName : '';
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || activeEl?.isContentEditable) {
         if (e.key === 'Escape') {
           setIsShortcutsOpen(false);
           setIsAddEmpOpen(false);
@@ -168,14 +176,21 @@ export function App() {
         }
         return;
       }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const dialogOpen = isShortcutsOpen || isAddEmpOpen || isWizardOpen;
+      if (e.key === 'Escape') {
+        setIsShortcutsOpen(false);
+        setIsAddEmpOpen(false);
+        setIsWizardOpen(false);
+        return;
+      }
+      if (!singleKeyEnabled && e.key !== '?') return;
+      if (dialogOpen && e.key !== '?') return;
 
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault();
         setIsShortcutsOpen((prev) => !prev);
-      } else if (e.key === 'Escape') {
-        setIsShortcutsOpen(false);
-        setIsAddEmpOpen(false);
-        setIsWizardOpen(false);
       } else if (e.key === ' ' || e.key === 'ArrowRight') {
         e.preventDefault();
         advanceWeek(1);
@@ -209,7 +224,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [advanceWeek]);
+  }, [advanceWeek, singleKeyEnabled, isShortcutsOpen, isAddEmpOpen, isWizardOpen]);
 
   const handleSelectArchetype = (preset: ArchetypePreset) => {
     setSelectedArchetypeId(preset.id);
@@ -432,6 +447,15 @@ export function App() {
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+        singleKeyEnabled={singleKeyEnabled}
+        onToggleSingleKey={(enabled) => {
+          setSingleKeyEnabled(enabled);
+          try {
+            window.localStorage.setItem('shiftflow.singleKeyShortcuts', enabled ? 'on' : 'off');
+          } catch {
+            // Storage can be blocked; the choice then lasts for this visit only.
+          }
+        }}
       />
     </div>
   );

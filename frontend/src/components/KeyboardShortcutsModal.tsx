@@ -1,14 +1,22 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import { useDialogFocus } from './ui/useDialogFocus';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  singleKeyEnabled: boolean;
+  onToggleSingleKey: (enabled: boolean) => void;
 }
 
 export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   isOpen,
   onClose,
+  singleKeyEnabled,
+  onToggleSingleKey,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, isOpen, onClose);
+
   if (!isOpen) return null;
 
   const shortcutGroups = [
@@ -52,6 +60,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="shortcuts-title"
@@ -73,6 +82,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
               <p className="text-xs text-slate-400 mt-0.5">
                 Engineered for hands-on-keyboard operation in loud, high-distraction retail backrooms.
               </p>
+              <label className="mt-2 flex items-center gap-2 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={singleKeyEnabled}
+                  onChange={(e) => onToggleSingleKey(e.target.checked)}
+                />
+                Single-key shortcuts on
+              </label>
             </div>
           </div>
           <button

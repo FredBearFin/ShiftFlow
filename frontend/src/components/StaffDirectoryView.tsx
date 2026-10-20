@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useDialogFocus } from './ui/useDialogFocus';
 import { AccommodationType, EmployeeRecord, RosterLine, SeparationCategory } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 
@@ -44,6 +45,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
   // Structured Separation Modal State
   const [separatingEmp, setSeparatingEmp] = useState<EmployeeRecord | null>(null);
+  const addDialogRef = useRef<HTMLDivElement>(null);
+  const separationDialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(addDialogRef, showAddModal, () => setShowAddModal(false));
+  useDialogFocus(separationDialogRef, separatingEmp !== null, () => setSeparatingEmp(null));
   const [sepCategory, setSepCategory] = useState<SeparationCategory>('voluntary_resignation');
   const [sepReason, setSepReason] = useState('Employee tendered voluntary resignation notice.');
   const [recordedBy, setRecordedBy] = useState('Store General Manager');
@@ -267,9 +272,9 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       {/* Add Employee Modal with Title VII/ADA Selector */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 className="text-base font-bold text-slate-900">Add New Workforce Associate</h3>
+              <h3 id="add-staff-title" className="text-base font-bold text-slate-900">Add New Workforce Associate</h3>
               <button type="button" aria-label="Close" onClick={() => setShowAddModal(false)} className="text-slate-400 font-bold">
                 ✕
               </button>
@@ -385,13 +390,13 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       {/* Structured Legal Separation Modal (Retaliation Defense) */}
       {separatingEmp && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+          <div ref={separationDialogRef} role="dialog" aria-modal="true" aria-labelledby="separation-title" className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 block">
                   Contemporaneous HR Separation Audit
                 </span>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 id="separation-title" className="text-base font-bold text-slate-900">
                   Deactivate / Separate: {separatingEmp.name}
                 </h3>
               </div>
