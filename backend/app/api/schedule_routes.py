@@ -2,12 +2,14 @@
 
 import csv
 import io
+import sqlite3
 from typing import List
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
 from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.config import DAYS_OF_WEEK
+from app.database import get_db, ShiftFlowRepository
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
 from app.schemas import (
     ParetoPointSchema,
@@ -36,17 +38,28 @@ def solve_schedule(request: SolveRequestSchema) -> SolveResponseSchema:
 
 @router.get("/default-solution/{archetype_id}", response_model=SolveResponseSchema)
 def solve_default_archetype(
-    archetype_id: str = "healthcare_24_7", leeway_pct: float = 5.0
+    archetype_id: str = "healthcare_24_7",
+    leeway_pct: float = 5.0,
+    facility_id: str = Query(default="FAC-OMAHA-01", max_length=64),
+    db: sqlite3.Connection = Depends(get_db),
 ) -> SolveResponseSchema:
-    """Solve and return the full I-SD-RWSP schedule for a named industry archetype."""
+    """Solve and return the full I-SD-RWSP schedule for a named industry archetype.
+
+    The facility name comes from the facility record, not from the archetype preset.
+    """
     preset = ARCHETYPE_PRESETS.get(archetype_id)
     if not preset:
         raise HTTPException(
             status_code=404, detail=f"Archetype '{archetype_id}' not found."
         )
+    fac = ShiftFlowRepository(db).get_facility(facility_id)
+    if not fac:
+        raise HTTPException(
+            status_code=404, detail=f"Facility '{facility_id}' not found."
+        )
     req = SolveRequestSchema(
         archetype_id=preset.id,
-        facility_name=preset.name,
+        facility_name=fac["name"],
         demand_matrix=preset.demand_matrix,
         templates=preset.templates,
         guardrails=preset.guardrails,

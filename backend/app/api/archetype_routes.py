@@ -73,14 +73,14 @@ def _build_24_7_demand(
 
 FOODMART_PRESET = ArchetypePresetSchema(
     id="downtown_foodmart_omaha",
-    name="Downtown Foodmart — 16th & Farnam (Omaha, NE)",
+    name="Downtown Grocery Store (Sample Profile)",
     sector="Urban Retail & Convenience",
     tagline="18-hour daily grocery/market floor (6am–12am) with CHI Arena & CWS event presets",
     description=(
-        "Primary customer profile for Downtown Foodmart at 16th & Farnam in Omaha. "
+        "Sample profile for a downtown grocery and market floor. "
         "Operates daily from 06:00 unlock to 12:00 AM midnight. Integrates Opening (6a–2p), "
         "Midday Rush (11a–7p), and Closing (4p–12a) shifts into a continuous forward rotation. "
-        "Guarantees 16+ hours between shifts, eliminating midnight-to-6am clopenings forever."
+        "The zero-clopening guardrail is enabled."
     ),
     operating_hours_label="06:00–12:00 AM Daily (126 hrs/wk)",
     typical_crew_size="6–8 Rotation Lines",
