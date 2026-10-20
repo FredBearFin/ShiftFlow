@@ -22,10 +22,3 @@ ShiftFlow Studio monetizes on a per-location recurring SaaS model, aligning soft
 * **LTV / CAC Ratio**: **17.5×** (exceptionally strong capital efficiency).
 * **Payback Period**: **2.5 months**.
 
----
-
-## 3. Commercial Add-Ons & Expansion Revenue
-
-1. **Automated SMS Shift Dispatch & Broadcast**: $15/month per store (instant text alerts for open shift claims).
-2. **Point-of-Sale Real-Time Labor Sync**: $25/month per store (pulls hourly sales volume directly from Square/Clover/Toast to dynamically auto-adjust the demand matrix $R_{gi}$).
-3. **Multi-Store Float Pool**: $35/month per store (enables sharing cross-trained staff across nearby stores to fill emergency vacancies).
