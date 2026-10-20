@@ -221,3 +221,9 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Coverage recount.** For every one of the 168 interval cells, scheduled minus required equals overstaffing minus understaffing.
   - **Idempotency conflict.** A second request with the same key while the first is still in flight returns 409 with Retry-After.
   - **Acceptance.** `cd backend && python run_all_tests.py` exits 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 19: frontend service tests (King).** Files: `frontend/src/services/api.test.ts` (new), and no other file. Tests only.
+  - **Failure path.** `solveScheduleApi` rejects with the unavailable message when the request throws and when the response is not OK, and resolves when the response is OK.
+  - **CSV escaping.** Commas, quotes and newlines in a roster name are quoted, and embedded quotes are doubled.
+  - **Table 7 parity.** `interpolateBeckerTable7` returns the same anchor values as `backend/app/config.py`.
+  - **Not in this PR.** An App-level test of the solve effect is deferred; `App.tsx` pulls in the whole wizard and needs a larger harness.
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
