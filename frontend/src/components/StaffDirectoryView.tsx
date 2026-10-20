@@ -105,9 +105,6 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
             <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">
               Workforce Management
             </span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-              Title VII / ADA Protected
-            </span>
           </div>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
             Staff Directory, Availability Matrix & Statutory Protections

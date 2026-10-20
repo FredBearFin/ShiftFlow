@@ -109,9 +109,9 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
               const cells = byDay[g] || [];
               return (
                 <tr key={dayName}>
-                  <td className="py-2.5 px-3 text-left font-sans font-bold text-slate-900 bg-slate-50/80 whitespace-nowrap">
+                  <th scope="row" className="py-2.5 px-3 text-left font-sans font-bold text-slate-900 bg-slate-50/80 whitespace-nowrap">
                     {dayName}
-                  </td>
+                  </th>
                   {cells.map((c) => {
                     const diff = c.scheduled_staff - c.required_staff;
                     let cellStyle = 'bg-emerald-50 text-emerald-900 border-emerald-200';
@@ -122,8 +122,17 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                     } else if (diff > 0) {
                       cellStyle = 'bg-indigo-50 text-indigo-900 border-indigo-200';
                     }
+                    const stateLabel =
+                      c.required_staff === 0 && c.scheduled_staff === 0
+                        ? 'no staffing required'
+                        : diff < 0
+                        ? `understaffed by ${-diff}`
+                        : diff > 0
+                        ? `overstaffed by ${diff}`
+                        : 'on target';
+                    const cellLabel = `${dayName} ${String(c.hour).padStart(2, '0')}:00, ${stateLabel}`;
                     return (
-                      <td key={c.hour} className="p-0.5">
+                      <td key={c.hour} className="p-0.5" aria-label={cellLabel}>
                         <div
                           className={`rounded border py-1.5 px-0.5 ${cellStyle}`}
                           title={`${dayName} ${c.hour_label}: Scheduled=${c.scheduled_staff}, Required=${c.required_staff} (τ=${c.understaffing}, ω=${c.overstaffing})`}

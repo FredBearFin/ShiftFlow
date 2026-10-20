@@ -40,9 +40,11 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             <span className="text-3xl font-bold font-mono-tabular text-slate-900">
               {audit.min_rest_hours_observed}h
             </span>
-            <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              {audit.clopening_violations === 0 ? '100% Compliant' : `${audit.clopening_violations} Alerts`}
-            </span>
+            {audit.clopening_violations > 0 && (
+              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {audit.clopening_violations} Alerts
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
             Minimum rest between consecutive shifts (≥16h required; 0 backward rotations).
@@ -56,9 +58,6 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-indigo-700">
               {solution.multigraph_nodes.filter((n) => n.is_balanced).length}/14
-            </span>
-            <span className="px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              Balanced Roster Verified
             </span>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
@@ -166,9 +165,6 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
               >
                 <div className="font-bold text-slate-900 flex items-center justify-between">
                   <span>{wNode?.day_name}</span>
-                  <span className="text-[10px] font-mono-tabular text-emerald-700 font-semibold">
-                    Balanced ✓
-                  </span>
                 </div>
                 <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-[11px] flex justify-between">
                   <span className="text-slate-600">(g, work)</span>

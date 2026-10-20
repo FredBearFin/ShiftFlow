@@ -205,7 +205,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Why the 5% Knee Point Matters
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Across 279 benchmark instances (620,730 MILP solves), the <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> frontier descends
+              The <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> frontier descends
               steeply at first before flattening:
             </p>
 
