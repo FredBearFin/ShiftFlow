@@ -207,3 +207,7 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Dialogs.** Each dialog has `role="dialog"`, `aria-modal`, and a label. Focus moves into the dialog on open, Tab stays inside it, Escape closes it, and focus returns to the trigger on close.
   - **Shortcuts.** Single-key shortcuts are ignored while any dialog is open, when Ctrl, Alt or Meta is held, and in editable fields. A switch in the shortcuts dialog turns single-key shortcuts off; the choice is kept in localStorage inside try/catch.
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 16: accessibility semantics and contrast (King).** Files: `frontend/src/components/MasterRosterView.tsx` (the two availability day toggles), `frontend/src/components/StaffDirectoryView.tsx` (the two day toggles), `frontend/src/index.css` (reduced-motion rule only), and no other file. Presentation and semantics only; behavior unchanged.
+  - **Day toggles.** Each toggle has `aria-pressed` and a full day name in `aria-label`, so its state is not shown by colour alone. Targets are 24 px, up from 20 px. Inactive toggles use `text-slate-600` on `bg-slate-200`, which passes contrast where `text-slate-400` did not.
+  - **Motion.** Users who ask for reduced motion get no animation from `animate-pulse` and similar classes.
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
