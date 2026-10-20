@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ArchetypePreset,
   ErgonomicGuardrails,
@@ -8,6 +8,12 @@ import { DAYS_OF_WEEK, interpolateBeckerTable7 } from '../services/api';
 import { Button } from './ui/Button';
 import { BardPanel } from './onboarding/BardPanel';
 import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
+import {
+  FirstRunTour,
+  clearTourDone,
+  markTourDone,
+  readTourDone,
+} from './onboarding/FirstRunTour';
 
 interface OnboardingWizardProps {
   isOpen: boolean;
@@ -63,8 +69,20 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedDayTab, setSelectedDayTab] = useState<number>(0);
+  const [tourOpen, setTourOpen] = useState<boolean>(() => !readTourDone());
+  const showTourAgainRef = useRef<HTMLButtonElement>(null);
 
   if (!isOpen) return null;
+
+  const handleTourDone = () => {
+    markTourDone();
+    setTourOpen(false);
+  };
+
+  const handleShowTourAgain = () => {
+    clearTourDone();
+    setTourOpen(true);
+  };
 
   const updateDemandCell = (dayIdx: number, hourIdx: number, val: number) => {
     const clamped = Math.max(0, Math.min(40, val));
@@ -119,13 +137,23 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               Set up your schedule
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
-          >
-            Skip setup ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              ref={showTourAgainRef}
+              onClick={handleShowTourAgain}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              Show the tour again
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              Skip setup ✕
+            </button>
+          </div>
         </div>
 
         {/* 5-Step Progress Stepper */}
@@ -800,6 +828,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           </div>
         </div>
       </div>
+      {tourOpen && (
+        <FirstRunTour onDone={handleTourDone} returnFocusTo={showTourAgainRef} />
+      )}
     </div>
   );
 };
