@@ -109,6 +109,8 @@ def update_employee(
     payload: EmployeeUpdateSchema,
     db: sqlite3.Connection = Depends(get_db),
 ):
+    if payload.active is False:
+        raise HTTPException(status_code=422, detail="Use the separation route to deactivate staff")
     repo = ShiftFlowRepository(db)
     updated = repo.update_employee(
         employee_id=employee_id,

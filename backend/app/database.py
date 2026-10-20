@@ -300,6 +300,9 @@ class ShiftFlowRepository:
         existing = self.get_employee(employee_id)
         if not existing:
             return None
+        if active is False:
+            # Separation requires a category, reason and recorder, so it is written only by deactivate_employee.
+            raise ValueError("Use deactivate_employee to separate staff; update_employee cannot set active=False")
 
         new_name = name if name is not None else existing["name"]
         new_role = role if role is not None else existing["role"]
