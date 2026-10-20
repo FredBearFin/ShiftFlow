@@ -309,3 +309,31 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Payback: 26.3 days.** Computed from the figures in `gtm/roi_calculator.md`: $948 / ($13,148 / 365) = 26.3 days. The 24-day figure cannot be derived from any figure in the documents. Change: `gtm/roi_calculator.md` only, line 3 ("24-Day Payback" becomes "26.3-Day Payback") and line 63 ("24 Days" becomes "26.3 Days"). `gtm/cfo_financial_audit.md` is unchanged for payback. Reason: 26.3 days is the result of the gross annual value the documents already use.
   - **Baseline turnover: 65%.** Change: `gtm/cfo_financial_audit.md` only, line 69 (110% becomes 65%, and the quit count in that line becomes 3.9, which is 65% of 6). Reason: the $7,432 saving and the 1.8 avoided quits in both documents come from 65% of 8 staff (5.2 departures) times 35%. No calculation uses 110%.
   - **Open, not decided here:** the CFO store has 6 clerks, so 65% gives 3.9 departures and about 1.4 avoided quits at 35%, not 1.8. The 1.8 figure assumes 8 staff. The crew size needs a separate gtm decision before the value bridge is final.
+- **2026-10-20. Crew size for avoided quits: 6 clerks (King decision).** Scope: gtm files only. Resolves the open crew-size question in the payback and turnover entry above.
+  - **Crew size.** The avoided-quit calculation uses the CFO store's 6 clerks, not the 8 staff behind the 1.8 figure. Reason: 6 is the store's actual headcount, and the audit's own §2.1 and §2.2 already describe a 6-associate crew.
+  - **Figures.** 6 × 65% = 3.9 departures. 3.9 × 35% = 1.365 avoided quits. Saving: 1.365 × $4,129 = $5,636.09 per year. These replace 1.8 and $7,432 everywhere they appear.
+  - **`gtm/cfo_financial_audit.md`, lines 69 to 72.** Change the crew basis from 8 to 6 staff, 1.8 to 1.365 avoided quits, and $7,432 to $5,636.09 in the §2.2 valuation formula and its roi_calculator note. The 3.9 quit count on line 69 stays. The 35% assumption and the $4,129 cost per quit stay.
+  - **`gtm/roi_calculator.md`.** Line 14: 8 employees becomes 6, 5.2 departures becomes 3.9, and $21,470 becomes $16,103 (3.9 × $4,129). Line 19: 1.8 becomes 1.365. Line 20: $7,432 becomes $5,636.09. Scorecard turnover row (line 57): $16,103 without ShiftFlow, $10,467 with it (2.535 × $4,129), net +$5,636. Recompute the total row, ROI and payback from the new net: total net savings $11,352, ROI 11.0×, payback 30.5 days. Update the headline (line 3) and the payback line (line 63) to match.
+  - **Reason.** At 6 clerks the 1.8 figure overstates avoided quits by about 0.4, so the $7,432 saving overstates the turnover pillar by about $1,800.
+- **2026-10-20. ROI calculator cost totals and net return after the crew change (King decision).** Scope: `gtm/roi_calculator.md` lines 60 and 62 only.
+  - **Line 60, cost totals.** Without ShiftFlow: $16,103 + $2,359 + $6,370 = **$24,832** (was $30,199). With ShiftFlow: $10,467 + $354 + $455 = **$11,276** (was $14,847). The $16,103 is 3.9 departures × $4,129 for 6 clerks at 65% turnover.
+  - **Line 62, net return and ROI.** Net return: $11,352 − $948 = **+$10,404 / year**. ROI: $10,404 ÷ $948 = 10.97, shown as **11.0×**. This replaces "+$12,200 / year (12.9× ROI)".
+  - **Open, not decided here.** The line 60 net column stays +$11,352, the sum of its net entries (5,636 + 2,005 + 3,711). That does not equal $24,832 − $11,276 = $13,556, because the manager row's cost gap is $5,915 but its net uses the $3,711 direct-labor value (line 49). Lines 3 (12.9×), 5 ($13,148) and 63 still carry old figures; they are outside this scope.
+- **2026-10-20. gtm old figures after the crew change: scope and values (King decision).** Scope: `gtm/roi_calculator.md` and `gtm/cfo_financial_audit.md` only. Figures follow the crew-size entry above (6 clerks, 1.365 avoided quits, $5,636.09 turnover saving). Gross: $2,005 + $5,636 + $3,711 = **$11,352 / year** (whole dollars). Net: $11,352 − $948 = **$10,404 / year**. ROI: $10,404 ÷ $948 = 10.97, shown as **11.0×**. Payback: $948 ÷ ($11,352 ÷ 365) = **30.5 days**.
+  - **Conflict resolved.** The headline rule in the crew-size entry overrides the scope note in the cost-totals entry. That note covered only its own lines 60 and 62, not line 3.
+  - **`gtm/roi_calculator.md`, line 3: in scope.** "12.9×" becomes "11.0×". The "30.5-Day Payback" text is already correct.
+  - **`gtm/roi_calculator.md`, line 5: in scope.** "$13,148/year" becomes "$11,352/year". The old figure contains the superseded $7,432.
+  - **`gtm/cfo_financial_audit.md`, listed lines.**
+    - Line 18: "+$12,200.26" becomes "+$10,404"; "12.9×" becomes "11.0×"; "26.3-day" becomes "30.5-day".
+    - Line 42: "$7,432.00" becomes "$5,636.09".
+    - Line 45: "$13,148.26" becomes "$11,352".
+    - Line 48: "$12,200.26" becomes "$10,404".
+    - Line 50: "26.3 Calendar Days" becomes "30.5 Calendar Days".
+    - Line 51: "12.9x (1,287%; $12,200.26 / $948 = 12.87)" becomes "11.0x (1,097%; $10,404 / $948 = 10.97)".
+    - Line 126: net "$12,200" becomes "$10,404"; equity "$73,202" becomes "$62,424".
+    - Line 149: "26 days" becomes "30.5 days"; "+$12,200" becomes "+$10,404".
+  - **`gtm/cfo_financial_audit.md`, lines not listed but in scope.** These carry the same superseded net and must change with the listed lines.
+    - Line 20: "+$760,816" becomes "+$624,240" (10 stores × $10,404 × 6.0).
+    - Line 52: "+182.1 Basis Points" becomes "+155.3 Basis Points" ($10,404 ÷ $670,000).
+    - Lines 127 to 130: net becomes $31,212, $52,020, $104,040 and $260,100. Equity becomes $187,272, $312,120, $624,240 and $1,560,600.
+    - Line 135: "$122,003" becomes "$104,040"; "$732,016" becomes "$624,240"; "77×" becomes "66×" ($624,240 ÷ $9,480 = 65.85).
