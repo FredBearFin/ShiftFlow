@@ -169,13 +169,13 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                 <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-[11px] flex justify-between">
                   <span className="text-slate-600">(g, work)</span>
                   <span className="font-bold text-slate-900">
-                    in:{wNode?.in_degree ?? 0} / out:{wNode?.out_degree ?? 0}
+                    in:{wNode?.in_degree ?? '—'} / out:{wNode?.out_degree ?? '—'}
                   </span>
                 </div>
                 <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-[11px] flex justify-between">
                   <span className="text-slate-600">(g, rest)</span>
                   <span className="font-bold text-slate-900">
-                    in:{rNode?.in_degree ?? 0} / out:{rNode?.out_degree ?? 0}
+                    in:{rNode?.in_degree ?? '—'} / out:{rNode?.out_degree ?? '—'}
                   </span>
                 </div>
               </div>
