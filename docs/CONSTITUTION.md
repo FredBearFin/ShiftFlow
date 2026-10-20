@@ -203,3 +203,7 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Added.** A nav entry for the DOL compliance tab, which had no way to reach it.
   - **Changed.** The fallback preset's name and description no longer name a store. The preset id is unchanged.
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 15: keyboard and dialog safety (King).** Files: `frontend/src/components/ui/useDialogFocus.ts` (new, a shared hook), `frontend/src/components/KeyboardShortcutsModal.tsx`, `frontend/src/components/StaffDirectoryView.tsx` (the add and separation dialogs only), `frontend/src/components/MasterRosterView.tsx` (the add dialog only), `frontend/src/App.tsx` (the shortcut handler and its off switch only), and no other file. Behavior PR under §3, approved for this batch.
+  - **Dialogs.** Each dialog has `role="dialog"`, `aria-modal`, and a label. Focus moves into the dialog on open, Tab stays inside it, Escape closes it, and focus returns to the trigger on close.
+  - **Shortcuts.** Single-key shortcuts are ignored while any dialog is open, when Ctrl, Alt or Meta is held, and in editable fields. A switch in the shortcuts dialog turns single-key shortcuts off; the choice is kept in localStorage inside try/catch.
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
