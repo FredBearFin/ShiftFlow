@@ -280,6 +280,68 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
   return await res.json();
 }
 
+/** Staff record as the backend returns it. Mapped to EmployeeRecord in App.tsx. */
+export interface EmployeeApiRecord {
+  id: string;
+  facility_id: string;
+  name: string;
+  role: string;
+  wage: number;
+  active: boolean;
+  available_days: number[];
+  assigned_line: number | null;
+  accommodation_type: string;
+  statutory_notes: string | null;
+  separation_category: SeparationCategory | null;
+  separation_reason: string | null;
+  separation_timestamp: string | null;
+  recorded_by: string | null;
+}
+
+/** Staff fields the backend accepts when creating or updating a record. */
+export interface EmployeeApiWrite {
+  name?: string;
+  role?: string;
+  wage?: number;
+  active?: boolean;
+  available_days?: number[];
+  assigned_line?: number | null;
+  accommodation_type?: string;
+  statutory_notes?: string | null;
+}
+
+export async function fetchEmployeesApi(facilityId: string): Promise<EmployeeApiRecord[]> {
+  const res = await fetch(`/api/employees?facility_id=${encodeURIComponent(facilityId)}`);
+  if (!res.ok) throw new Error('Staff records could not be loaded from the server.');
+  return await res.json();
+}
+
+export async function createEmployeeApi(
+  facilityId: string,
+  payload: EmployeeApiWrite & { name: string }
+): Promise<EmployeeApiRecord> {
+  const res = await fetch('/api/employees', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+    body: JSON.stringify({ facility_id: facilityId, ...payload }),
+  });
+  if (!res.ok) throw new Error('The staff member could not be saved.');
+  return await res.json();
+}
+
+export async function updateEmployeeApi(
+  employeeId: string,
+  payload: EmployeeApiWrite
+): Promise<EmployeeApiRecord> {
+  const res = await fetch(`/api/employees/${encodeURIComponent(employeeId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error('The staff change could not be saved.');
+  return await res.json();
+}
+
 /** Records a separation (audit row) and deactivates the employee on the backend. */
 export async function deactivateEmployee(
   empId: string,

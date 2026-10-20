@@ -13,11 +13,15 @@ import {
 import {
   deactivateEmployee,
   fetchArchetypes,
+  fetchEmployeesApi,
+  createEmployeeApi,
+  updateEmployeeApi,
+  EmployeeApiRecord,
+  EmployeeApiWrite,
   solveScheduleApi,
   exportRosterToCsvString,
   DEFAULT_TEMPLATES,
   DEFAULT_GUARDRAILS,
-  INITIAL_STORE_EMPLOYEES,
 } from './services/api';
 
 import { Header } from './components/Header';
@@ -36,6 +40,29 @@ import { CompletionNote } from './components/onboarding/CompletionNote';
 
 const FLAT_DEMAND_MATRIX: number[][] = Array.from({ length: 7 }, () => Array(24).fill(2));
 
+const STAFF_FACILITY_ID = 'FAC-OMAHA-01';
+
+/** Maps a backend staff record to the shape the views use. */
+function mapApiEmployee(rec: EmployeeApiRecord): EmployeeRecord {
+  return {
+    employee_id: rec.id,
+    name: rec.name,
+    role: rec.role,
+    hourly_wage: rec.wage,
+    max_weekly_hours: 40,
+    is_active: rec.active,
+    available_days: rec.available_days,
+    preferred_shifts: ['M', 'D', 'E'],
+    assigned_line_id: rec.assigned_line,
+    accommodation_type: rec.accommodation_type as EmployeeRecord['accommodation_type'],
+    statutory_notes: rec.statutory_notes,
+    separation_category: rec.separation_category,
+    separation_reason: rec.separation_reason,
+    separation_timestamp: rec.separation_timestamp,
+    recorded_by: rec.recorded_by,
+  };
+}
+
 export function App() {
   const [archetypes, setArchetypes] = useState<ArchetypePreset[]>([]);
   const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>('custom');
@@ -47,7 +74,8 @@ export function App() {
   const [rotationWeekOffset, setRotationWeekOffset] = useState<number>(0);
 
   const [staffAssignments, setStaffAssignments] = useState<StaffMemberAssignment[]>([]);
-  const [employees, setEmployees] = useState<EmployeeRecord[]>(INITIAL_STORE_EMPLOYEES);
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [staffError, setStaffError] = useState<string | null>(null);
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState<boolean>(false);
@@ -59,6 +87,20 @@ export function App() {
   const [solveError, setSolveError] = useState<string | null>(null);
   const [solveAttempt, setSolveAttempt] = useState(0);
   const [separationError, setSeparationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchEmployeesApi(STAFF_FACILITY_ID)
+      .then((records) => {
+        if (isMounted) setEmployees(records.map(mapApiEmployee));
+      })
+      .catch((err: unknown) => {
+        if (isMounted) setStaffError(err instanceof Error ? err.message : 'Staff records could not be loaded.');
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     fetchArchetypes().then((list) => {
@@ -180,40 +222,37 @@ export function App() {
     setStaffAssignments([]);
   };
 
-  const handleAddEmployee = (newEmpData: NewEmployeeInput) => {
-    setEmployees((prev) => {
-      const n = prev.reduce((m, e) => Math.max(m, parseInt(e.employee_id.replace(/\D/g, ''), 10) || 0), 0) + 1;
-      const newEmp: EmployeeRecord = {
-        employee_id: `EMP-${String(n).padStart(2, '0')}`,
+  const handleAddEmployee = async (newEmpData: NewEmployeeInput) => {
+    setStaffError(null);
+    try {
+      const created = await createEmployeeApi(STAFF_FACILITY_ID, {
         name: newEmpData.name,
         role: newEmpData.role,
-        hourly_wage: newEmpData.wage,
-        max_weekly_hours: 40,
-        is_active: true,
+        wage: newEmpData.wage,
         available_days: newEmpData.days,
-        preferred_shifts: ['M', 'D', 'E'],
-        assigned_line_id: null,
         accommodation_type: newEmpData.accommodation_type ?? 'none',
         statutory_notes: newEmpData.statutory_notes ?? null,
-      };
-      return [...prev, newEmp];
-    });
+      });
+      setEmployees((prev) => [...prev, mapApiEmployee(created)]);
+    } catch (err) {
+      setStaffError(err instanceof Error ? err.message : 'The staff member could not be saved.');
+    }
+  };
+
+  const saveEmployeeChange = async (empId: string, change: EmployeeApiWrite) => {
+    setStaffError(null);
+    try {
+      const saved = await updateEmployeeApi(empId, change);
+      setEmployees((prev) => prev.map((e) => (e.employee_id === empId ? mapApiEmployee(saved) : e)));
+    } catch (err) {
+      setStaffError(err instanceof Error ? err.message : 'The staff change could not be saved.');
+    }
   };
 
   const handleToggleEmployeeStatus = (empId: string) => {
-    setEmployees((prev) =>
-      prev.map((e) => {
-        if (e.employee_id === empId) {
-          const updatedActive = !e.is_active;
-          return {
-            ...e,
-            is_active: updatedActive,
-            assigned_line_id: updatedActive ? e.assigned_line_id : null,
-          };
-        }
-        return e;
-      })
-    );
+    const current = employees.find((e) => e.employee_id === empId);
+    if (!current) return;
+    void saveEmployeeChange(empId, { active: !current.is_active });
   };
 
   const handleSeparateEmployee = async (
@@ -244,15 +283,19 @@ export function App() {
   };
 
   const handleUpdateEmployee = (updated: EmployeeRecord) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.employee_id === updated.employee_id ? updated : e))
-    );
+    void saveEmployeeChange(updated.employee_id, {
+      name: updated.name,
+      role: updated.role,
+      wage: updated.hourly_wage,
+      available_days: updated.available_days,
+      assigned_line: updated.assigned_line_id ?? null,
+      accommodation_type: updated.accommodation_type ?? 'none',
+      statutory_notes: updated.statutory_notes ?? null,
+    });
   };
 
   const handleUpdateAvailability = (empId: string, days: number[]) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.employee_id === empId ? { ...e, available_days: days } : e))
-    );
+    void saveEmployeeChange(empId, { available_days: days });
   };
 
   const handleExportCsv = () => {
@@ -281,6 +324,11 @@ export function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {staffError && (
+          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {staffError}
+          </div>
+        )}
         {separationError && (
           <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             {separationError}
