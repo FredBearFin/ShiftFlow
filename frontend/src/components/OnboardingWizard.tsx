@@ -682,7 +682,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
           {/* STEP 5: PARETO FRONTIER CALIBRATION */}
           {currentStep === 5 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
                   Cost vs. fairness
@@ -695,9 +696,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <label
+                      htmlFor="leeway-range"
+                      className="block text-xs font-bold uppercase tracking-wider text-slate-500"
+                    >
                       Extra cost allowed
-                    </span>
+                    </label>
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
                       +{leewayPct}% cost →{' '}
                       <span className="text-emerald-700">
@@ -715,6 +719,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 <input
+                  id="leeway-range"
                   type="range"
                   min={0}
                   max={75}
@@ -758,6 +763,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   ))}
                 </div>
               </div>
+            </div>
+            <BardPanel stepId={5} className="w-full lg:w-72 shrink-0" />
             </div>
           )}
         </div>
