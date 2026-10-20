@@ -48,7 +48,7 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
     id: 'downtown_foodmart_omaha',
     name: 'Sample retail store (fallback preset)',
     sector: 'Urban Retail & Convenience',
-    tagline: '18-hour daily grocery/market floor (6am–12am) with CHI Arena & CWS event presets',
+    tagline: '18-hour daily grocery/market floor (6am–12am)',
     description:
       'Fallback preset used when the server cannot list presets. Opening (6a–2p), Midday Rush (11a–7p) and Closing (4p–12a) shifts form a continuous forward rotation.',
     operating_hours_label: '06:00–12:00 AM Daily (126 hrs/wk)',
@@ -273,6 +273,16 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
   } catch {
     throw new Error(unavailable);
   }
+  if (res.status === 422) {
+    let detail: string | undefined;
+    try {
+      const body = await res.json();
+      if (typeof body?.detail === 'string' && body.detail.trim()) detail = body.detail;
+    } catch {
+      // Body is not JSON; fall back to the plain message below.
+    }
+    throw new Error(detail ?? 'The schedule cannot be built from these inputs.');
+  }
   if (!res.ok) throw new Error(unavailable);
   return await res.json();
 }
@@ -316,10 +326,20 @@ export interface PosUploadResult {
 }
 
 /** Uploads a POS transaction CSV and returns the parsed summary and suggested demand matrix. */
-export async function uploadPosCsvApi(facilityId: string, file: File): Promise<PosUploadResult> {
+export async function uploadPosCsvApi(
+  facilityId: string,
+  file: File,
+  openHour: number,
+  closeHour: number
+): Promise<PosUploadResult> {
   const body = new FormData();
   body.append('file', file);
-  const res = await fetch(`/api/pos/upload-csv?facility_id=${encodeURIComponent(facilityId)}`, {
+  const params = new URLSearchParams({
+    facility_id: facilityId,
+    open_hour: String(openHour),
+    close_hour: String(closeHour),
+  });
+  const res = await fetch(`/api/pos/upload-csv?${params.toString()}`, {
     method: 'POST',
     headers: { 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
     body,

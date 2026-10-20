@@ -15,13 +15,15 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PosUploadResult | null>(null);
+  const [openHour, setOpenHour] = useState<number>(6);
+  const [closeHour, setCloseHour] = useState<number>(24);
 
   const handleUpload = async () => {
     if (!file) return;
     setIsUploading(true);
     setError(null);
     try {
-      const summary = await uploadPosCsvApi(facilityId, file);
+      const summary = await uploadPosCsvApi(facilityId, file, openHour, closeHour);
       setResult(summary);
       onDemandUpdated?.(summary.suggested_demand_matrix);
     } catch (err) {
@@ -72,6 +74,39 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
           }}
           className="text-xs"
         />
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label htmlFor="pos-open-hour" className="block text-xs font-semibold text-slate-700">
+              Opening hour (0-23)
+            </label>
+            <input
+              id="pos-open-hour"
+              type="number"
+              min={0}
+              max={23}
+              step={1}
+              value={openHour}
+              onChange={(e) => setOpenHour(Number(e.target.value))}
+              className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs"
+            />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="pos-close-hour" className="block text-xs font-semibold text-slate-700">
+              Closing hour (1-24)
+            </label>
+            <input
+              id="pos-close-hour"
+              type="number"
+              min={1}
+              max={24}
+              step={1}
+              value={closeHour}
+              onChange={(e) => setCloseHour(Number(e.target.value))}
+              className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs"
+            />
+          </div>
+        </div>
 
         <div>
           <button
