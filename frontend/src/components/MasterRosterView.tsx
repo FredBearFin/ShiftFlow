@@ -140,10 +140,18 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
   const activeCycleWeek = (rotationWeekOffset % solution.employee_count) + 1;
 
+  // Under-staffed hours per day, summed from the solution's hourly coverage cells.
+  const underByDay = DAYS_OF_WEEK.map((_, idx) =>
+    solution.interval_coverage
+      .filter((c) => c.day_index === idx)
+      .reduce((a, c) => a + c.understaffing, 0)
+  );
+  const totalUnderHours = underByDay.reduce((a, h) => a + h, 0);
+
   return (
     <div className="space-y-5">
       {/* Top Executive KPI Summary Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 no-print">
         <div className="enterprise-card p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Rotation Cohorts (e)
@@ -234,6 +242,14 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
       {/* Master Cyclic Roster Card */}
       <div className="enterprise-card-elevated overflow-hidden">
+        {/* Print-only header: visible on paper, hidden on screen */}
+        <div className="hidden print:block px-6 pt-4 pb-3 border-b border-slate-300">
+          <h2 className="text-lg font-bold text-slate-900">{solution.instance_name}</h2>
+          <p className="text-sm text-slate-700 font-mono-tabular">
+            Rotation Week {activeCycleWeek} of {solution.employee_count}
+          </p>
+        </div>
+
         {/* Roster Action Toolbar */}
         <div className="p-4 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-white">
           <div>
@@ -247,7 +263,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
               Every Monday morning, each line advances down one row. Manage employee availability,
-              hourly wages, and active/fired status in the Staff Directory.
+              hourly wages, and active/fired status in the Staff & Directory drawer (key D).
             </p>
           </div>
 
@@ -386,10 +402,18 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           onChange={(e) => {
                             const raw = e.target.value;
                             setWageDrafts((d) => ({ ...d, [emp.employee_id]: raw }));
-                            const wage = parseWage(raw);
-                            if (wage !== null) {
+                          }}
+                          onBlur={() => {
+                            const draft = wageDrafts[emp.employee_id];
+                            if (draft === undefined) return;
+                            const wage = parseWage(draft);
+                            // Invalid draft stays visible (aria-invalid) and nothing is saved.
+                            if (wage !== null && wage !== emp.hourly_wage) {
                               onUpdateEmployee({ ...emp, hourly_wage: wage });
                             }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') e.currentTarget.blur();
                           }}
                           className="w-full px-2 py-1 border border-slate-200 rounded font-mono-tabular text-xs"
                         />
@@ -567,6 +591,23 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 <th className="py-3 px-3 text-right">Hours</th>
                 <th className="py-3 px-4 text-right">Weekly Payroll</th>
               </tr>
+              <tr className="bg-amber-50/70 border-b border-slate-200 text-[11px] font-semibold normal-case tracking-normal text-amber-900">
+                <th className="py-2 px-4 text-left">Under-staffed hours per day</th>
+                <th className="py-2 px-2" />
+                {underByDay.map((h, idx) => (
+                  <th
+                    key={DAYS_OF_WEEK[idx]}
+                    className={`py-2 px-2.5 text-center font-mono-tabular ${
+                      idx >= 5 ? 'bg-amber-100/60' : ''
+                    }`}
+                  >
+                    {h}h
+                  </th>
+                ))}
+                <th colSpan={2} className="py-2 px-4 text-right font-mono-tabular">
+                  Week total: {totalUnderHours}h
+                </th>
+              </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
               {solution.roster_lines.map((line: RosterLine) => (
@@ -633,6 +674,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         <span className="text-[10px] opacity-85 font-mono-tabular mt-0.5">
                           {cell.shift_code === 'OFF' ? 'Rest' : cell.time_window}
                         </span>
+                        {cell.availability_conflict && (
+                          <span className="text-[9px] font-bold uppercase tracking-wide text-amber-900 mt-0.5">
+                            ! Conflict
+                          </span>
+                        )}
                         {cell.availability_conflict && (
                           <span
                             className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500"
