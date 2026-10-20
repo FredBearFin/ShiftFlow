@@ -524,7 +524,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
           {/* STEP 4: ERGONOMIC GUARDRAIL POLICIES */}
           {currentStep === 4 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
                   Scheduling rules
@@ -541,10 +542,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-min-work-days" className="block text-slate-600 mb-1 font-medium">
                         Min Work Stretch (days)
                       </label>
                       <input
+                        id="rule-min-work-days"
                         type="number"
                         min={2}
                         max={5}
@@ -559,10 +561,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-work-days" className="block text-slate-600 mb-1 font-medium">
                         Max Work Stretch (days)
                       </label>
                       <input
+                        id="rule-max-work-days"
                         type="number"
                         min={3}
                         max={7}
@@ -577,10 +580,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-nights" className="block text-slate-600 mb-1 font-medium">
                         Max nights in a row
                       </label>
                       <input
+                        id="rule-max-nights"
                         type="number"
                         min={1}
                         max={4}
@@ -595,10 +599,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-evenings" className="block text-slate-600 mb-1 font-medium">
                         Max evenings in a row
                       </label>
                       <input
+                        id="rule-max-evenings"
                         type="number"
                         min={1}
                         max={5}
@@ -670,6 +675,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   ))}
                 </div>
               </div>
+            </div>
+            <BardPanel stepId={4} className="w-full lg:w-72 shrink-0" />
             </div>
           )}
 
