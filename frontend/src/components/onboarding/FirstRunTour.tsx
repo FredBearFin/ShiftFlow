@@ -62,6 +62,8 @@ export function FirstRunTour({ onDone, returnFocusTo }: FirstRunTourProps) {
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
+      // Stop here so the Escape press does not also reach the page-level shortcut handler.
+      e.stopPropagation();
       onDone();
       return;
     }
