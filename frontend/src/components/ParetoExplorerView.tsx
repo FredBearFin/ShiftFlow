@@ -46,7 +46,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
               Schedule Flexibility vs. Overtime Optimization
             </span>
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
@@ -58,7 +58,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             </p>
           </div>
           <div className="card p-4 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C6770] block">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
               Active Calibration
             </span>
             <span className="text-sm font-bold font-mono-tabular text-[#2B3A42]">
@@ -75,7 +75,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
               Interactive <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Best-Balance</Term> Frontier (Click Any Point to Apply)
             </h3>
-            <div className="flex items-center gap-3 text-[11px]">
+            <div className="flex items-center gap-3 text-xs">
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
@@ -112,7 +112,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       x={padL - 8}
                       y={y + 4}
                       textAnchor="end"
-                      className="text-[10px] fill-slate-500 font-mono-tabular"
+                      className="text-xs fill-slate-500 font-mono-tabular"
                     >
                       {val}
                     </text>
@@ -125,7 +125,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 x={padL + plotW / 2}
                 y={svgH - 10}
                 textAnchor="middle"
-                className="text-[11px] font-semibold fill-slate-700"
+                className="text-xs font-semibold fill-slate-700"
               >
                 Shift Design Cost →
               </text>
@@ -134,7 +134,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 y={padT + plotH / 2}
                 textAnchor="middle"
                 transform={`rotate(-90, 16, ${padT + plotH / 2})`}
-                className="text-[11px] font-semibold fill-slate-700"
+                className="text-xs font-semibold fill-slate-700"
               >
                 Staff Comfort Penalty ↓
               </text>
@@ -186,7 +186,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       <text
                         x={cx + 8}
                         y={cy - 8}
-                        className="text-[10px] font-mono-tabular font-bold fill-slate-800"
+                        className="text-xs font-mono-tabular font-bold fill-slate-800"
                       >
                         +{pt.leeway_pct}% (−{pt.ergo_improvement_pct}% comfort gain, theoretical)
                       </text>
@@ -201,7 +201,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         {/* Becker (2026) Table 7 Empirical Benchmark Reference */}
         <div className="lg:col-span-4 card p-5 flex flex-col justify-between">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770]">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
               Operational Rest & Efficiency Benchmark
             </span>
             <h3 className="text-sm font-bold text-slate-900 mt-1">
@@ -233,7 +233,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       <span className="font-mono-tabular font-bold text-slate-900">
                         +{pt.leeway_pct}% Flexibility
                       </span>
-                      <span className="block text-[11px] text-slate-500">
+                      <span className="block text-xs text-slate-500">
                         {pt.label}
                         {pt.is_knee_point ? ' (Best-Value Point)' : ''}
                       </span>
@@ -259,7 +259,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-white">
+              <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500 bg-white">
                 <th className="py-3 px-4"><Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Trade-off Setting</Term></th>
                 <th className="py-3 px-3 text-right">Flexibility</th>
                 <th className="py-3 px-3 text-right">Shift Design Cost</th>
@@ -281,7 +281,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     <td className="py-2.5 px-4 font-sans font-semibold text-slate-900">
                       {pt.label}
                       {pt.is_knee_point && (
-                        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
+                        <span className="ml-2 px-1.5 py-0.5 rounded text-xs bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
                           Best-Value Point
                         </span>
                       )}

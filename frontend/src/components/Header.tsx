@@ -89,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-base font-bold text-[#2B3A42] tracking-tight">
                   ShiftFlow Studio
                 </h1>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-[#E4E9EC] text-[#2B3A42] border border-slate-200">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#E4E9EC] text-[#2B3A42] border border-slate-200">
                   Enterprise Workforce OS
                 </span>
               </div>
@@ -141,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Keyboard Shortcuts Cheatsheet (?)"
               >
                 <span>⌨️ Hotkeys</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-[10px] font-mono-tabular text-slate-600 font-bold">
+                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-xs font-mono-tabular text-slate-600 font-bold">
                   ?
                 </kbd>
               </button>
@@ -153,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-sm flex items-center gap-2"
             >
               <span>Configure Facility Wizard</span>
-              <span className="px-1.5 py-0.5 rounded bg-slate-700 text-[10px] font-mono-tabular text-slate-200">
+              <span className="px-1.5 py-0.5 rounded bg-slate-700 text-xs font-mono-tabular text-slate-200">
                 5 Steps
               </span>
             </button>
@@ -177,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 {TAB_KEY_NUMBERS[tab.id] !== undefined && (
                   <kbd
-                    className={`px-1 py-0.5 rounded text-[10px] font-mono-tabular font-bold ${
+                    className={`px-1 py-0.5 rounded text-xs font-mono-tabular font-bold ${
                       isActive
                         ? 'bg-white text-[#2B3A42]'
                         : 'bg-slate-100 text-slate-500'
@@ -189,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>{tab.label}</span>
                 {tab.badge && (
                   <span
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-mono-tabular ${
+                    className={`px-1.5 py-0.5 rounded text-xs font-mono-tabular ${
                       isActive
                         ? 'bg-white text-[#2B3A42] font-bold'
                         : 'bg-slate-100 text-slate-600'

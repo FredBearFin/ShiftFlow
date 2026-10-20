@@ -45,7 +45,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   }
 
   const unpricedBadge = unpricedCount > 0 ? (
-    <span className="text-[11px] font-semibold text-[#2B3A42] bg-[#E4E9EC] border border-[#7F8A92] px-2 py-0.5 rounded before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
+    <span className="text-xs font-semibold text-[#2B3A42] bg-[#E4E9EC] border border-[#7F8A92] px-2 py-0.5 rounded before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
       {unpricedCount} {unpricedCount === 1 ? 'line' : 'lines'} unpriced
     </span>
   ) : null;
@@ -131,7 +131,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       {/* Action Header with Export Buttons */}
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770] block">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
             Payroll & Cost Analytics
           </span>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
@@ -174,7 +174,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       {/* Top Payroll & Hours Economics KPI Banner */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Est. Weekly Payroll
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -182,14 +182,14 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               ${labor.total_payroll_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Est. base: ${labor.regular_payroll_cost.toFixed(2)}
           </p>
           {unpricedBadge && <div className="mt-1.5">{unpricedBadge}</div>}
         </div>
 
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Scheduled Labor Hours
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -200,35 +200,35 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               {solution.employee_count} Lines
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Reg: {labor.total_regular_hours}h • OT: {labor.total_overtime_hours}h
           </p>
         </div>
 
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Overtime Exposure
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className={`text-2xl font-bold font-mono-tabular ${labor.total_overtime_hours > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
               ${labor.overtime_payroll_cost.toFixed(2)}
             </span>
-            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${labor.overtime_lines_count > 0 ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${labor.overtime_lines_count > 0 ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
               {labor.overtime_lines_count > 0 ? `${labor.overtime_lines_count} OT Lines` : '0 OT Risk'}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             1.5× rate applied over 40h/line
           </p>
           {overtimePremiumByLine.size > 0 && (
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Overtime premium (extra 0.5x): ${overtimePremiumTotal.toFixed(2)}
             </p>
           )}
         </div>
 
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Blended Average Wage
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -236,13 +236,13 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               {avgWage === null ? '' : `$${avgWage.toFixed(2)}/hr`}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Across priced personnel hours
           </p>
         </div>
 
         <div className="card p-4 col-span-2 lg:col-span-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Required ÷ scheduled hours
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -251,7 +251,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             </span>
             <span className="text-xs text-slate-500">Coverage</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">Above 100% means scheduled hours fall short of required hours{" "}
+          <p className="text-xs text-slate-500 mt-1">Above 100% means scheduled hours fall short of required hours{" "}
             Floor requirements vs hours paid
           </p>
         </div>
@@ -267,7 +267,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             <p className="text-xs text-slate-500 mt-0.5">
               Tracks daily labor expenditure matching store demand and customer rush patterns.
             </p>
-            <p className="text-[11px] text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Allocated pro rata from each line's estimated payroll.
             </p>
           </div>
@@ -279,7 +279,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-7 gap-3">
           {DAYS_OF_WEEK.map((dayName, idx) => {
             const cost = labor.cost_per_day[idx] || 0;
             const hours = labor.hours_per_day[idx] || 0;
@@ -297,11 +297,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-900">{dayName}</span>
-                    <span className="text-[10px] font-mono-tabular text-slate-500">
+                    <span className="text-xs font-mono-tabular text-slate-500">
                       {hours} hrs
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-500 block mt-1">Allocated daily spend</span>
+                  <span className="text-xs text-slate-500 block mt-1">Allocated daily spend</span>
                   <div className="text-base font-bold font-mono-tabular text-slate-900">
                     ${cost.toFixed(2)}
                   </div>
@@ -316,7 +316,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                       style={{ width: `${barPct}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-slate-500 mt-1 block text-right font-mono-tabular">
+                  <span className="text-xs text-slate-500 mt-1 block text-right font-mono-tabular">
                     {hours > 0 ? `$${(cost / hours).toFixed(2)}/hr` : '—'}
                   </span>
                 </div>
@@ -340,7 +340,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4">Line</th>
                 <th className="py-3 px-4">Assigned Personnel</th>
                 <th className="py-3 px-3">Role / Tier</th>
@@ -379,11 +379,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                   <td className="py-3 px-3 text-right">
                     {line.overtime_hours > 0 ? (
                       <>
-                        <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
                           +{line.overtime_hours}h OT
                         </span>
                         {overtimePremiumByLine.has(line.cohort_id) && (
-                          <span className="block text-[10px] text-amber-800 mt-0.5">
+                          <span className="block text-xs text-amber-800 mt-0.5">
                             premium +${overtimePremiumByLine.get(line.cohort_id)!.toFixed(2)}
                           </span>
                         )}

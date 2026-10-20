@@ -153,7 +153,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
       {/* Top Executive KPI Summary Row */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 no-print">
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Rotation Cohorts (e)
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -164,13 +164,13 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               {solution.employee_count}-Wk Cycle
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             {activeEmployees.length} Active Staff • {inactiveEmployees.length} Inactive
           </p>
         </div>
 
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Estimated Weekly Payroll
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -181,30 +181,30 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               {solution.labor_analysis.avg_hourly_wage === null ? '' : `$${solution.labor_analysis.avg_hourly_wage.toFixed(2)}/hr`}
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             OT: ${solution.labor_analysis.overtime_payroll_cost.toFixed(2)}
           </p>
         </div>
 
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Ergonomics Health Index
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-[#2B3A42]">
               {solution.ergonomics_audit.health_index_score}%
             </span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               {solution.ergonomics_audit.clopening_violations} Clopenings
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Min rest: {solution.ergonomics_audit.min_rest_hours_observed}h observed
           </p>
         </div>
 
         <div className="card p-4">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Full Weekends Off (Sat+Sun)
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -215,13 +215,13 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               {solution.ergonomics_audit.full_weekends_off_count}/{solution.employee_count} Lines
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Both Saturday & Sunday OFF together
           </p>
         </div>
 
         <div className="card p-4 col-span-2 lg:col-span-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Availability Adherence
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -234,7 +234,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               {solution.solve_time_ms} ms
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Staff day availability checked
           </p>
         </div>
@@ -303,8 +303,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   : 'bg-[#FFFFFF] text-[#2B3A42] border-[#7F8A92] hover:bg-[#F4F1EA]'
               }`}
             >
-              <span>Staff & Directory</span><kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px] font-mono-tabular font-bold ml-1">D</kbd>
-              <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-[10px]">
+              <span>Staff & Directory</span><kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-xs font-mono-tabular font-bold ml-1">D</kbd>
+              <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-xs">
                 {activeEmployees.length}
               </span>
             </button>
@@ -314,7 +314,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               onClick={() => setShowAddModal(true)}
               className="px-3 py-1.5 rounded-md bg-[#2B3A42] hover:bg-[#1E2A31] text-[#FFFFFF] text-xs font-semibold shadow-[0_1px_2px_rgba(43,58,66,0.08)]"
             >
-              + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-[#1E2A31] text-[#FFFFFF] text-[10px] font-mono-tabular font-bold ml-1">A</kbd>
+              + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-[#1E2A31] text-[#FFFFFF] text-xs font-mono-tabular font-bold ml-1">A</kbd>
             </button>
 
             <button
@@ -322,7 +322,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               onClick={() => window.print()}
               className="px-3 py-1.5 rounded-md border border-[#7F8A92] bg-[#FFFFFF] hover:bg-[#F4F1EA] text-xs font-semibold text-[#2B3A42]"
             >
-              Print Roster <kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-mono-tabular font-bold ml-1">P</kbd>
+              Print Roster <kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-xs font-mono-tabular font-bold ml-1">P</kbd>
             </button>
 
             <button
@@ -373,12 +373,12 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         <span className="font-bold text-xs text-slate-900 block">
                           {emp.name}
                         </span>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="text-xs text-slate-500">
                           {emp.role} {emp.assigned_line_id ? `• Line ${emp.assigned_line_id}` : '• Unassigned'}
                         </span>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        className={`px-2 py-0.5 rounded text-xs font-bold ${
                           emp.is_active
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             : 'bg-red-50 text-red-700 border border-red-200'
@@ -390,7 +390,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
                     <div className="mt-2.5 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label htmlFor={`roster-wage-${emp.employee_id}`} className="text-[10px] text-slate-500 block">Wage ($/hr)</label>
+                        <label htmlFor={`roster-wage-${emp.employee_id}`} className="text-xs text-slate-500 block">Wage ($/hr)</label>
                         <input id={`roster-wage-${emp.employee_id}`}
                           type="number"
                           step="0.5"
@@ -418,7 +418,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         />
                       </div>
                       <div>
-                        <label htmlFor={`roster-line-${emp.employee_id}`} className="text-[10px] text-slate-500 block">Assigned Line</label>
+                        <label htmlFor={`roster-line-${emp.employee_id}`} className="text-xs text-slate-500 block">Assigned Line</label>
                         <select id={`roster-line-${emp.employee_id}`}
                           disabled={!emp.is_active}
                           value={emp.assigned_line_id || ''}
@@ -441,7 +441,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     </div>
 
                     <div className="mt-2">
-                      <label className="text-[10px] text-slate-500 block mb-1">
+                      <label className="text-xs text-slate-500 block mb-1">
                         Available Days ({emp.available_days.length}/7):
                       </label>
                       <div className="flex gap-1">
@@ -460,7 +460,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                                   : [...emp.available_days, dIdx].sort();
                                 onUpdateEmployee({ ...emp, available_days: nextDays });
                               }}
-                              className={`w-6 h-6 rounded-md text-[10px] font-mono-tabular font-bold flex items-center justify-center ${
+                              className={`w-6 h-6 rounded-md text-xs font-mono-tabular font-bold flex items-center justify-center ${
                                 isAvail
                                   ? 'bg-[#2B3A42] text-[#FFFFFF]'
                                   : 'bg-slate-200 text-slate-600'
@@ -476,7 +476,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   </div>
 
                   <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-400 font-mono-tabular">
+                    <span className="text-xs text-slate-400 font-mono-tabular">
                       ID: {emp.employee_id}
                     </span>
                     {!(emp.is_active && sepEmpId === emp.employee_id) && (
@@ -504,7 +504,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       className="mt-3 pt-3 border-t border-slate-100 space-y-2"
                     >
                       <div>
-                        <label htmlFor={`sep-category-${emp.employee_id}`} className="text-[10px] text-slate-500 block">
+                        <label htmlFor={`sep-category-${emp.employee_id}`} className="text-xs text-slate-500 block">
                           Separation category
                         </label>
                         <select
@@ -521,7 +521,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         </select>
                       </div>
                       <div>
-                        <label htmlFor={`sep-reason-${emp.employee_id}`} className="text-[10px] text-slate-500 block">
+                        <label htmlFor={`sep-reason-${emp.employee_id}`} className="text-xs text-slate-500 block">
                           Reason (required)
                         </label>
                         <input
@@ -534,7 +534,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         />
                       </div>
                       <div>
-                        <label htmlFor={`sep-recorded-by-${emp.employee_id}`} className="text-[10px] text-slate-500 block">
+                        <label htmlFor={`sep-recorded-by-${emp.employee_id}`} className="text-xs text-slate-500 block">
                           Recorded by (required)
                         </label>
                         <input
@@ -574,7 +574,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4 min-w-[200px]">Rotation Cohort / Personnel</th>
                 <th className="py-3 px-2 text-center">Pattern Wk</th>
                 {DAYS_OF_WEEK.map((day, idx) => (
@@ -590,7 +590,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 <th className="py-3 px-3 text-right">Hours</th>
                 <th className="py-3 px-4 text-right">Weekly Payroll</th>
               </tr>
-              <tr className="bg-amber-50/70 border-b border-slate-200 text-[11px] font-semibold normal-case tracking-normal text-amber-900">
+              <tr className="bg-amber-50/70 border-b border-slate-200 text-xs font-semibold normal-case tracking-normal text-amber-900">
                 <th className="py-2 px-4 text-left">Under-staffed hours per day</th>
                 <th className="py-2 px-2" />
                 {underByDay.map((h, idx) => (
@@ -616,7 +616,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 >
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono-tabular font-bold text-[11px]">
+                      <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono-tabular font-bold text-xs">
                         {line.cohort_id}
                       </span>
                       <span className="font-semibold text-slate-900">
@@ -625,22 +625,22 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           : `Rotation Line ${line.line_number}`}
                       </span>
                       {line.availability_conflicts_count > 0 && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
                           {line.availability_conflicts_count} Avail Alert
                         </span>
                       )}
                       {line.statutory_accommodation_violation && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
                           Title VII / ADA Sabbath Alert
                         </span>
                       )}
                       {line.fair_workweek_predictability_warning && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
                           Predictability Pay Risk
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
+                    <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
                       <span>{line.qualification_tier}</span>
                       <span>•</span>
                       <span className="font-mono-tabular">{line.hourly_wage === null ? '' : `$${line.hourly_wage.toFixed(2)}/hr`}</span>
@@ -650,7 +650,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   </td>
 
                   <td className="py-3 px-2 text-center">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono-tabular font-semibold text-[11px]">
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono-tabular font-semibold text-xs">
                       Wk {line.current_cycle_week}
                     </span>
                   </td>
@@ -670,7 +670,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         <span className="font-mono-tabular font-bold text-xs">
                           {cell.shift_code}
                         </span>
-                        <span className="text-[10px] opacity-85 font-mono-tabular mt-0.5">
+                        <span className="text-xs opacity-85 font-mono-tabular mt-0.5">
                           {cell.shift_code === 'OFF' ? 'Rest' : cell.time_window}
                         </span>
                         {cell.availability_conflict && (
@@ -691,7 +691,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono-tabular">
                     <span className="font-bold text-slate-900">{line.weekly_hours}h</span>
                     {line.overtime_hours > 0 && (
-                      <span className="block text-[10px] text-amber-700 font-semibold">
+                      <span className="block text-xs text-amber-700 font-semibold">
                         +{line.overtime_hours}h OT
                       </span>
                     )}
@@ -791,7 +791,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     );
                   })}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-1 block">
+                <span className="text-xs text-slate-400 mt-1 block">
                   Tap to toggle available working days.
                 </span>
               </div>

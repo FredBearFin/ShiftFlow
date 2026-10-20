@@ -117,13 +117,13 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                     <div className="flex items-center gap-1.5 shrink-0 ml-4">
                       {item.keys.map((k, kIdx) =>
                         k === 'or' ? (
-                          <span key={kIdx} className="text-[11px] text-slate-400 font-medium">
+                          <span key={kIdx} className="text-xs text-slate-400 font-medium">
                             or
                           </span>
                         ) : (
                           <kbd
                             key={kIdx}
-                            className="px-2 py-1 rounded bg-slate-100 border border-slate-300 text-[11px] font-mono-tabular font-bold text-slate-800"
+                            className="px-2 py-1 rounded bg-slate-100 border border-slate-300 text-xs font-mono-tabular font-bold text-slate-800"
                           >
                             {k}
                           </kbd>

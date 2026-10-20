@@ -36,7 +36,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
   return (
     <div className="space-y-5">
       <div className="enterprise-card p-5 bg-white">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770] block">
+        <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
           Point-of-Sale Integration
         </span>
         <h2 className="text-base font-bold text-slate-900 mt-0.5">

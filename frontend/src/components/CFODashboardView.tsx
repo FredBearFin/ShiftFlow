@@ -19,26 +19,23 @@ const sumLineField = (lines: RosterLine[], key: NumericLineKey): number | null =
 };
 
 // Sums estimated_weekly_payroll over priced lines only and counts the unpriced ones
-const sumPayrollPriced = (lines: RosterLine[]): { total: number; priced: number; unpriced: number } => {
+const sumPayrollPriced = (lines: RosterLine[]): { total: number; unpriced: number } => {
   let total = 0;
-  let priced = 0;
   let unpriced = 0;
   for (const line of lines) {
     const value = line.estimated_weekly_payroll;
     if (typeof value === 'number' && Number.isFinite(value)) {
       total += value;
-      priced += 1;
     } else {
       unpriced += 1;
     }
   }
-  return { total, priced, unpriced };
+  return { total, unpriced };
 };
 
 interface Figure {
   label: string;
   value: string;
-  note?: string;
 }
 
 export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) => {
@@ -93,7 +90,6 @@ export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) 
           <div key={figure.label} className="enterprise-card p-4">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{figure.label}</span>
             <div className="text-2xl font-bold font-mono-tabular text-slate-900 mt-1">{figure.value}</div>
-            {figure.note && <span className="block text-xs text-slate-500 mt-1">{figure.note}</span>}
           </div>
         ))}
       </div>

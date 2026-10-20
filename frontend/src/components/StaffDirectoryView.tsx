@@ -114,7 +114,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770] block">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
               Workforce Management
             </span>
           </div>
@@ -170,7 +170,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                      className={`text-xs font-bold px-2 py-0.5 rounded ${
                         emp.is_active
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : 'bg-red-50 text-[#9F3A32] border border-red-200'
@@ -179,7 +179,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                       {emp.is_active ? 'Active' : 'Separated'}
                     </span>
                     {emp.accommodation_type && emp.accommodation_type !== 'none' && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92] capitalize">
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92] capitalize">
                         {emp.accommodation_type === 'religious' ? 'Sabbath accom.' : `${emp.accommodation_type} Accom.`}
                       </span>
                     )}
@@ -195,7 +195,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   <span className="text-slate-500">Current Assignment:</span>
                   <span className="font-semibold text-slate-800">
                     {assignedLine ? (
-                      <span className="px-1.5 py-0.5 rounded bg-slate-900 text-white text-[10px] font-mono-tabular">
+                      <span className="px-1.5 py-0.5 rounded bg-slate-900 text-white text-xs font-mono-tabular">
                         {assignedLine.cohort_id}
                       </span>
                     ) : (
@@ -207,11 +207,11 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 {/* Availability Days */}
                 <div className="mt-3 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] font-semibold text-slate-700">
+                    <span className="text-xs font-semibold text-slate-700">
                       Available Days (Mon – Sun):
                     </span>
                     {emp.accommodation_type === 'religious' && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92]">Schedule restriction on file</span>
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92]">Schedule restriction on file</span>
                     )}
                   </div>
                   <div className="grid grid-cols-7 gap-1">
@@ -232,7 +232,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                               onUpdateAvailability(emp.employee_id, nextDays);
                             }
                           }}
-                          className={`py-1 text-[10px] font-mono-tabular font-bold rounded border ${
+                          className={`py-1 text-xs font-mono-tabular font-bold rounded border ${
                             isAvail
                               ? 'bg-[#2B3A42] text-[#FFFFFF] border-[#2B3A42]'
                               : 'bg-slate-100 text-slate-600 border-slate-200 line-through'
@@ -246,7 +246,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
 
                 {emp.statutory_notes && (
-                  <div className="mt-2 text-[10px] text-slate-500 italic bg-slate-50 p-1.5 rounded border border-slate-200 no-print">
+                  <div className="mt-2 text-xs text-slate-500 italic bg-slate-50 p-1.5 rounded border border-slate-200 no-print">
                     Doc: {emp.statutory_notes}
                   </div>
                 )}
@@ -254,7 +254,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
               {/* Action Buttons */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[10px] font-mono-tabular text-slate-400">{emp.employee_id}</span>
+                <span className="text-xs font-mono-tabular text-slate-400">{emp.employee_id}</span>
                 {emp.is_active ? (
                   <button
                     type="button"
@@ -413,7 +413,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           <div ref={separationDialogRef} role="dialog" aria-modal="true" aria-labelledby="separation-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C6770] block">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
                   Contemporaneous HR Separation Audit
                 </span>
                 <h3 id="separation-title" className="text-base font-bold text-slate-900">
@@ -430,7 +430,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               <span className="font-bold flex items-center gap-1.5 text-[#2B3A42]">
                 ⚠ Legal Compliance Notice (FLSA § 15(a)(3) & Title VII § 704(a))
               </span>
-              <p className="text-[11px] leading-relaxed">
+              <p className="text-xs leading-relaxed">
                 Separating an employee in retaliation for wage complaints, injury reports, or statutory accommodation requests is strictly unlawful. This entry will be permanently logged in the SQLite audit ledger with a timestamp to establish contemporaneous evidence.
               </p>
             </div>
