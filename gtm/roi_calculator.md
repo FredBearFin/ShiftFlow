@@ -1,8 +1,8 @@
 # ShiftFlow Studio: Customer ROI & Financial Justification Model
 
-## Executive Summary: 11.0× Annual ROI with a 30.5-Day Payback
+## Executive Summary: 13.3× Annual ROI with a 25.5-Day Payback
 
-For an independent retail store, liquor store, or convenience grocery running 6 to 8 employees, ShiftFlow Studio costs **$79/month ($948/year)** while generating **$11,352/year in quantifiable hard-dollar labor savings**.
+For an independent retail store, liquor store, or convenience grocery running 6 to 8 employees, ShiftFlow Studio costs **$79/month ($948/year)** while generating **$13,556/year in quantifiable labor savings**.
 
 ---
 
@@ -56,8 +56,8 @@ For an independent retail store, liquor store, or convenience grocery running 6 
 | :--- | :--- | :--- | :--- |
 | **Turnover Replacement Costs** | $16,103 / yr | $10,467 / yr | **+$5,636 / year** |
 | **Unintended Overtime Premiums** | $2,359 / yr | $354 / yr | **+$2,005 / year** |
-| **Manager Scheduling Hours** | $6,370 / yr (182 hrs) | $455 / yr (13 hrs) | **+$3,711 / year** (reclaimed) |
-| **Total Annual Operational Cost** | **$24,832 / yr** | **$11,276 / yr** | **+$11,352 / year** |
+| **Manager Scheduling Hours** | $6,370 / yr (182 hrs) | $455 / yr (13 hrs) | **+$5,915 / year** (reclaimed) |
+| **Total Annual Operational Cost** | **$24,832 / yr** | **$11,276 / yr** | **+$13,556 / year** |
 | **ShiftFlow Studio Subscription** | $0 | $948 / yr ($79/mo) | −$948 / year |
-| **Net Financial Return (ROI)** | — | — | **+$10,404 / year (11.0× ROI: $10,404 ÷ $948 = 10.97)** |
-| **Payback Period** | — | — | **30.5 Days** |
+| **Net Financial Return (ROI)** | — | — | **+$12,608 / year (13.3× ROI: $12,608 ÷ $948 = 13.30)** |
+| **Payback Period** | — | — | **25.5 Days** |
