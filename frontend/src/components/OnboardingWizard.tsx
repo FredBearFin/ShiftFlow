@@ -6,6 +6,8 @@ import {
 } from '../types';
 import { DAYS_OF_WEEK, interpolateBeckerTable7 } from '../services/api';
 import { Button } from './ui/Button';
+import { BardPanel } from './onboarding/BardPanel';
+import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
 
 interface OnboardingWizardProps {
   isOpen: boolean;
@@ -165,7 +167,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         <div className="p-6 overflow-y-auto flex-1 space-y-5">
           {/* STEP 1: INDUSTRY ARCHETYPE SELECTION */}
           {currentStep === 1 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
@@ -176,10 +179,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   </p>
                 </div>
                 <div className="w-full sm:w-72">
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  <label
+                    htmlFor="onboarding-facility-name"
+                    className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1"
+                  >
                     Store or unit name
                   </label>
                   <input
+                    id="onboarding-facility-name"
                     type="text"
                     value={facilityName}
                     onChange={(e) => onChangeFacilityName(e.target.value)}
@@ -204,12 +211,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-700 border border-slate-200">
+                          <h4 className="text-sm font-bold text-slate-900">
                             {arch.sector}
-                          </span>
-                          <h4 className="text-sm font-bold text-slate-900 mt-1.5">
-                            {arch.name}
                           </h4>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            {presetLabelFor(arch.id, arch.sector)}
+                          </p>
                         </div>
                         <span
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -222,7 +229,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                        {arch.description}
+                        {PRESET_LABELS[arch.id]?.description ?? ''}
                       </p>
                       <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
                         <span>Hours: {arch.operating_hours_label}</span>
@@ -234,6 +241,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   );
                 })}
               </div>
+            </div>
+            <BardPanel stepId={1} className="w-full lg:w-72 shrink-0" />
             </div>
           )}
 
