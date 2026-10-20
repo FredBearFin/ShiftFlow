@@ -162,6 +162,11 @@ export function App() {
     employees,
   ]);
 
+  // Close the wizard when a solve fails so the failed-solve alert is visible.
+  useEffect(() => {
+    if (solveStatus === 'error') setIsWizardOpen(false);
+  }, [solveStatus]);
+
   const advanceWeek = useCallback((delta: number) => {
     if (!solution || solution.employee_count === 0) return;
     setRotationWeekOffset(
