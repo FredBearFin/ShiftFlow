@@ -51,7 +51,7 @@ Failure Scenario Injected         | Impact Without SRE Shield | ShiftFlow SRE Sh
 ### 2.1 Exponential Backoff & Connection Auto-Recovery
 When a store's local network or database pool experiences transient locks (`database is locked`, `busy`, `unable to open`), the `@with_db_retry` decorator intercepts the operational exception:
 - **Retry Schedule**: Initial delay $50\text{ ms}$, multiplying by $2.0\times$ backoff factor across 3 attempts.
-- **Durability Guarantee**: Write-Ahead Logging (WAL mode) and the Recovery Point Objective (RPO) of 0 seconds: **not measured**.
+- **Durability Guarantee**: WAL mode is not enabled in this codebase.
 
 ### 2.2 Circuit Breaker Protection (`db_circuit_breaker`)
 To prevent cascading worker starvation during prolonged cloud database outages:

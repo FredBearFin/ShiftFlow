@@ -37,7 +37,7 @@ Under Tristan Becker’s (2026) theorem, the rotating roster is an Eulerian tour
   $$\text{Offset}_{t+1} = (\text{Offset}_t + 1) \bmod N$$
 - The operation requires zero graph traversals, zero branch-and-bound iterations, and zero memory allocations.
 
-### 1.3 Verified Synthetic Benchmark Results (1,000 Stores, 20 Concurrency Workers)
+### 1.3 Benchmark results (not measured)
 
 ```
 =====================================================================================
