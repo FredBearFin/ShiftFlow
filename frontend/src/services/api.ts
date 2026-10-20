@@ -270,7 +270,7 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
   try {
     res = await fetch('/api/v1/schedules/solve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
       body: JSON.stringify(request),
     });
   } catch {
@@ -297,7 +297,7 @@ export async function deactivateEmployee(
 }> {
   const res = await fetch(`/api/employees/${encodeURIComponent(empId)}/deactivate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
     body: JSON.stringify({
       separation_category: payload.category,
       separation_reason: payload.reason,

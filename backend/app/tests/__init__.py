@@ -6,6 +6,12 @@ import os
 import sys
 
 _tests_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Every test client sends this key. The app reads SHIFTFLOW_API_KEY per request.
+TEST_API_KEY = "test-api-key-not-for-production"
+TEST_HEADERS = {"X-API-Key": TEST_API_KEY}
+os.environ["SHIFTFLOW_API_KEY"] = TEST_API_KEY
+
 _modules = [
     "test_solver",
     "test_persistence_and_integrations",
@@ -16,6 +22,7 @@ _modules = [
     "test_chaos_resilience",
     "test_timecard_audit",
     "test_shift_handover",
+    "test_auth",
 ]
 
 for _mod in _modules:

@@ -6,6 +6,8 @@ import sqlite3
 import unittest
 from fastapi.testclient import TestClient
 
+from app.tests import TEST_HEADERS
+
 from app.database import init_db, get_db_connection, ShiftFlowRepository
 from app.engine.pos_sync import POSDemandForecaster
 from app.engine.payroll_export import PayrollExportEngine
@@ -30,7 +32,7 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
             )
         finally:
             conn.close()
-        cls.client = TestClient(app)
+        cls.client = TestClient(app, headers=TEST_HEADERS)
 
     def setUp(self):
         self.conn = get_db_connection()

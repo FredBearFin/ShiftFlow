@@ -11,6 +11,8 @@ import time
 import unittest
 from fastapi.testclient import TestClient
 
+from app.tests import TEST_HEADERS
+
 from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.database import init_db
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
@@ -25,7 +27,7 @@ class TestDistributedArchitecture(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
-        cls.client = TestClient(app)
+        cls.client = TestClient(app, headers=TEST_HEADERS)
 
     def setUp(self):
         IdempotencyStore.clear_all()

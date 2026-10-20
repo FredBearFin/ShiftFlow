@@ -11,6 +11,11 @@ services:
     environment:
       - APP_ENV=${APP_ENV:-production}
       - LOG_LEVEL=${LOG_LEVEL:-info}
+      - SHIFTFLOW_API_KEY=${SHIFTFLOW_API_KEY:?Set SHIFTFLOW_API_KEY in the environment or .env}
+      - SHIFTFLOW_CORS_ORIGINS=${SHIFTFLOW_CORS_ORIGINS:-http://localhost:5173}
+      - SHIFTFLOW_DB_PATH=/app/data/shiftflow.db
+    volumes:
+      - shiftflow-data:/app/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 15s
@@ -29,3 +34,6 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  shiftflow-data:

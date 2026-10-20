@@ -3,7 +3,7 @@
 import os
 import time
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.archetype_routes import router as archetype_router
@@ -13,11 +13,14 @@ from app.api.pos_payroll_routes import router as pos_payroll_router
 from app.api.emergency_routes import router as emergency_router
 from app.api.compliance_routes import router as compliance_router
 from app.api.handover_routes import router as handover_router
+from app.auth import require_api_key
 from app.config import settings
 from app.database import init_db, get_db_connection
 from app.middleware import IdempotencyMiddleware
 
 APP_START_TIME = time.time()
+
+DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:3000"
 
 app = FastAPI(
     title=settings.app_name,
@@ -26,14 +29,20 @@ app = FastAPI(
         "Enterprise SaaS Workforce Optimization Engine implementing Tristan Becker (EJOR 2026), "
         "'A unifying approach to shift design and rotating workforce scheduling' (I-SD-RWSP)."
     ),
+    dependencies=[Depends(require_api_key)],
 )
 
+cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("SHIFTFLOW_CORS_ORIGINS", DEFAULT_CORS_ORIGINS).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Idempotency-Key", "X-API-Key"],
 )
 
 # Idempotency Middleware for exactly-once mutation semantics

@@ -8,6 +8,8 @@ cash till reconciliation variance checks, custom turnover task input, and checkl
 import unittest
 from fastapi.testclient import TestClient
 
+from app.tests import TEST_HEADERS
+
 from app.main import app
 from app.engine.shift_handover import ShiftHandoverEngine
 
@@ -15,7 +17,7 @@ from app.engine.shift_handover import ShiftHandoverEngine
 class TestShiftHandover(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.client = TestClient(app, headers=TEST_HEADERS)
 
     def test_01_checklist_categories_and_items(self):
         """Verifies standard checklists cover multiple industry archetypes."""

@@ -4,6 +4,8 @@ import datetime
 import unittest
 from fastapi.testclient import TestClient
 
+from app.tests import TEST_HEADERS
+
 from app.engine.timecard_audit import TimecardAuditor
 from app.main import app
 
@@ -12,7 +14,7 @@ class TestTimecardAuditor(unittest.TestCase):
     """Verifies FLSA Part 785, Part 778, and Part 516 statutory compliance."""
 
     def setUp(self):
-        self.client = TestClient(app)
+        self.client = TestClient(app, headers=TEST_HEADERS)
 
     def test_01_seven_minute_rounding_rules_29_cfr_785_48(self):
         """Verifies 29 C.F.R. § 785.48(b) 15-minute / 7-minute boundary rounding."""

@@ -6,10 +6,10 @@ import sqlite3
 from typing import Any, Dict, Generator, List, Optional
 import uuid
 
-# Use /tmp by default for SQLite locking compatibility on containerized environments
+# Durable SQLite file. Set SHIFTFLOW_DB_PATH to a path on a mounted volume in containers.
 DB_FILE = os.environ.get(
     "SHIFTFLOW_DB_PATH",
-    "/tmp/shiftflow.db",
+    os.path.join("data", "shiftflow.db"),
 )
 
 
@@ -32,6 +32,9 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
 
 def init_db() -> None:
     """Initializes the SQLite schema if not already present."""
+    db_dir = os.path.dirname(DB_FILE)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     conn = get_db_connection()
     cursor = conn.cursor()
 
