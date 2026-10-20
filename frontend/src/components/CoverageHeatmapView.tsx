@@ -35,13 +35,10 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
             24-Hour Register & Floor Coverage Verification
           </span>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
-            ∑ ξ_gt = <Term explanation="How many people you need in each hour.">R_gi</Term> + τ_gi − ω_gi across all 168 Weekly Time Intervals
+            Scheduled vs. <Term explanation="How many people you need in each hour.">required</Term> staff, across all 168 Weekly Time Intervals
           </h2>
           <p className="text-xs text-slate-600 mt-0.5">
-            Inspect hourly scheduled coverage (<span className="font-mono-tabular">∑ ξ_gt</span>) against
-            required staffing (<span className="font-mono-tabular"><Term explanation="How many people you need in each hour.">R_gi</Term></span>), understaffing (
-            <span className="font-mono-tabular">τ_gi</span>), and overstaffing (
-            <span className="font-mono-tabular">ω_gi</span>).
+            Check scheduled staff each hour against the need: short or extra.
           </p>
         </div>
 
@@ -51,11 +48,11 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
             <strong className="text-slate-900 text-sm">{totalScheduled}h</strong>
           </div>
           <div className="px-3.5 py-2 rounded-lg bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] text-xs font-mono-tabular">
-            <span className="text-[#2B3A42] block text-[10px] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">Understaffing (∑τ_gi)</span>
+            <span className="text-[#2B3A42] block text-[10px] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">Understaffed hours</span>
             <strong className="text-[#2B3A42] text-sm">{totalUnder}h</strong>
           </div>
           <div className="px-3.5 py-2 rounded-lg bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] text-xs font-mono-tabular">
-            <span className="text-[#2B3A42] block text-[10px]">Overstaffing (∑ω_gi)</span>
+            <span className="text-[#2B3A42] block text-[10px]">Overstaffed hours</span>
             <strong className="text-[#2B3A42] text-sm">{totalOver}h</strong>
           </div>
 
@@ -69,7 +66,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                   : 'text-slate-600'
               }`}
             >
-              Scheduled / Req (ξ / R)
+              Scheduled / Required staff
             </button>
             <button
               type="button"
@@ -80,7 +77,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                   : 'text-slate-600'
               }`}
             >
-              Net Deviation (ω − τ)
+              Net Difference (over minus under)
             </button>
           </div>
         </div>
@@ -135,7 +132,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                       <td key={c.hour} className="p-0.5" aria-label={cellLabel}>
                         <div
                           className={`rounded border py-1.5 px-0.5 ${cellStyle}`}
-                          title={`${dayName} ${c.hour_label}: Scheduled=${c.scheduled_staff}, Required=${c.required_staff} (τ=${c.understaffing}, ω=${c.overstaffing})`}
+                          title={`${dayName} ${c.hour_label}: Scheduled=${c.scheduled_staff}, Required=${c.required_staff} (understaffed=${c.understaffing}, overstaffed=${c.overstaffing})`}
                         >
                           {displayMode === 'scheduled'
                             ? `${c.scheduled_staff}/${c.required_staff}`
@@ -158,7 +155,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
       {/* Shift Design Utilization Table (xi_{gt} & phi_t) */}
       <div className="card p-5">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
-          Shift Design Decision Variables (ϕ_t & ξ_gt per Shift Type t ∈ T)
+          Shift Types: Active and Staff per Day
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
@@ -167,10 +164,10 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                 <th className="py-2.5 px-3">Shift Type ID</th>
                 <th className="py-2.5 px-3">Template</th>
                 <th className="py-2.5 px-3">Time Window</th>
-                <th className="py-2.5 px-3 text-center">Active (ϕ_t)</th>
+                <th className="py-2.5 px-3 text-center">Active</th>
                 {DAYS_OF_WEEK.map((d) => (
                   <th key={d} className="py-2.5 px-2 text-center">
-                    ξ_{d}
+                    {d} staff
                   </th>
                 ))}
                 <th className="py-2.5 px-3 text-right">Weekly Shifts</th>

@@ -43,7 +43,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
           Recalculate Register Demand from a POS Export
         </h2>
         <p className="text-xs text-slate-500 mt-0.5">
-          Upload a transaction CSV to recalculate the hourly <Term explanation="How many people you need in each hour.">R_gi</Term> demand table.
+          Upload a transaction CSV to recalculate the hourly <Term explanation="How many people you need in each hour.">staff-needed</Term> table.
         </p>
       </div>
 

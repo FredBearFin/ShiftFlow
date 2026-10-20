@@ -50,11 +50,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Schedule Flexibility vs. Overtime Optimization
             </span>
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
-              <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> Trade-Off Between Shift Design Quality (obj^shift) & Schedule Ergonomics (obj^ergo)
+              <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Best-Balance</Term> Trade-Off Between Shift Quality and Staff Comfort
             </h2>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              By constraining <span className="font-mono-tabular">obj^ergo ≤ ub^ergo − (ub^ergo − lb^ergo)·(i/n)</span>{' '}
-              (Eq. 23), ShiftFlow Studio maps the exact <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-efficient frontier. Click any point on
+              ShiftFlow Studio maps the exact <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">best-balance</Term> options. Click any point on
               the curve or table below to immediately re-calibrate the active roster.
             </p>
           </div>
@@ -63,7 +62,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Active Calibration
             </span>
             <span className="text-sm font-bold font-mono-tabular text-[#2B3A42]">
-              +{selectedLeewayPct}% Shift Design Leeway
+              +{selectedLeewayPct}% Scheduling Flexibility
             </span>
           </div>
         </div>
@@ -74,13 +73,13 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="lg:col-span-8 card p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Interactive <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-Efficient Frontier (Click Any Point to Apply)
+              Interactive <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Best-Balance</Term> Frontier (Click Any Point to Apply)
             </h3>
             <div className="flex items-center gap-3 text-[11px]">
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  {knee.leeway_pct}% Knee Point (+{knee.becker_theoretical_improvement_pct.toFixed(2)}% Ergo, theoretical)
+                  {knee.leeway_pct}% Best-Value Point (+{knee.becker_theoretical_improvement_pct.toFixed(2)}% comfort gain, theoretical)
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
@@ -128,7 +127,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 textAnchor="middle"
                 className="text-[11px] font-semibold fill-slate-700"
               >
-                Shift Design Objective (obj^shift = W^E·e + W^NS·∑ϕ_t + ∑(W^O·ω_gi + W^U·τ_gi)) →
+                Shift Design Cost →
               </text>
               <text
                 x={16}
@@ -137,7 +136,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 transform={`rotate(-90, 16, ${padT + plotH / 2})`}
                 className="text-[11px] font-semibold fill-slate-700"
               >
-                Ergonomics Penalty (obj^ergo) ↓
+                Staff Comfort Penalty ↓
               </text>
 
               {/* Pareto Curve Polyline */}
@@ -189,7 +188,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         y={cy - 8}
                         className="text-[10px] font-mono-tabular font-bold fill-slate-800"
                       >
-                        +{pt.leeway_pct}% (−{pt.ergo_improvement_pct}% Ergo, theoretical)
+                        +{pt.leeway_pct}% (−{pt.ergo_improvement_pct}% comfort gain, theoretical)
                       </text>
                     )}
                   </g>
@@ -206,10 +205,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Operational Rest & Efficiency Benchmark
             </span>
             <h3 className="text-sm font-bold text-slate-900 mt-1">
-              {knee ? `Why the ${knee.leeway_pct}% Knee Point Matters` : 'Frontier Benchmark'}
+              {knee ? `Why the ${knee.leeway_pct}% Best-Value Point Matters` : 'Frontier Benchmark'}
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              The <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> frontier descends
+              The <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">best-balance</Term> frontier descends
               steeply at first before flattening:
             </p>
 
@@ -228,15 +227,15 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                   >
                     <div>
                       <span className="font-mono-tabular font-bold text-slate-900">
-                        +{pt.leeway_pct}% SD Increase
+                        +{pt.leeway_pct}% Flexibility
                       </span>
                       <span className="block text-[11px] text-slate-500">
                         {pt.label}
-                        {pt.is_knee_point ? ' (Knee Point)' : ''}
+                        {pt.is_knee_point ? ' (Best-Value Point)' : ''}
                       </span>
                     </div>
                     <span className="font-mono-tabular font-bold text-[#2B3A42]">
-                      +{pt.becker_theoretical_improvement_pct.toFixed(2)}% Ergo (theoretical)
+                      +{pt.becker_theoretical_improvement_pct.toFixed(2)}% comfort gain (theoretical)
                     </span>
                   </div>
                 );
@@ -250,18 +249,18 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-slate-50">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Enumerated <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-Optimal Schedule Points
+            Enumerated <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Best-Balance</Term> Schedule Points
           </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-white">
-                <th className="py-3 px-4"><Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> Regime</th>
-                <th className="py-3 px-3 text-right">SD Leeway</th>
-                <th className="py-3 px-3 text-right">obj^shift</th>
-                <th className="py-3 px-3 text-right">obj^ergo</th>
-                <th className="py-3 px-3 text-right">Ergo improvement (theoretical)</th>
+                <th className="py-3 px-4"><Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Trade-off Setting</Term></th>
+                <th className="py-3 px-3 text-right">Flexibility</th>
+                <th className="py-3 px-3 text-right">Shift Design Cost</th>
+                <th className="py-3 px-3 text-right">Staff Comfort Penalty</th>
+                <th className="py-3 px-3 text-right">Comfort gain (theoretical)</th>
                 <th className="py-3 px-3 text-right">Headcount</th>
                 <th className="py-3 px-3 text-right">Free Weekends</th>
                 <th className="py-3 px-4 text-right">Action</th>
@@ -279,7 +278,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       {pt.label}
                       {pt.is_knee_point && (
                         <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
-                          Knee Point
+                          Best-Value Point
                         </span>
                       )}
                     </td>
