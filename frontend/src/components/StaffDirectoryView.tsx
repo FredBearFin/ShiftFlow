@@ -109,7 +109,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 no-print">
       {/* Directory Action Header */}
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>

@@ -199,7 +199,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                             : 'bg-slate-100 text-slate-500'
                         }`}
                       >
-                        ϕ = {st.active ? 1 : 0}
+                        {st.active ? 'Active' : 'Off'}
                       </span>
                     </td>
                     {st.daily_counts.map((cnt, idx) => (
