@@ -2,7 +2,7 @@
 
 from typing import List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 import sqlite3
 
 from app.database import get_db, ShiftFlowRepository, SeparationAuditExistsError
@@ -36,6 +36,14 @@ class EmployeeUpdateSchema(BaseModel):
     assigned_line: Optional[int] = None
     accommodation_type: Optional[AccommodationType] = None
     statutory_notes: Optional[str] = None
+
+    @model_validator(mode="after")
+    def required_fields_not_null(self):
+        # An explicit null clears assigned_line and statutory_notes. On the other fields it is refused.
+        for field in ("name", "role", "wage", "available_days", "active"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"{field} cannot be null")
+        return self
 
 
 class EmployeeDeactivateSchema(BaseModel):
@@ -112,17 +120,9 @@ def update_employee(
     if payload.active is False:
         raise HTTPException(status_code=422, detail="Use the separation route to deactivate staff")
     repo = ShiftFlowRepository(db)
-    updated = repo.update_employee(
-        employee_id=employee_id,
-        name=payload.name,
-        role=payload.role,
-        wage=payload.wage,
-        active=payload.active,
-        available_days=payload.available_days,
-        assigned_line=payload.assigned_line,
-        accommodation_type=payload.accommodation_type,
-        statutory_notes=payload.statutory_notes,
-    )
+    # Pass only the fields the client sent, so an omitted field is left unchanged and an explicit null is seen as null.
+    sent = {field: getattr(payload, field) for field in payload.model_fields_set}
+    updated = repo.update_employee(employee_id=employee_id, **sent)
     if not updated:
         raise HTTPException(status_code=404, detail=f"Employee {employee_id} not found")
     return updated

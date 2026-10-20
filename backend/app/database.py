@@ -6,6 +6,9 @@ import sqlite3
 from typing import Any, Dict, Generator, List, Optional
 import uuid
 
+# Marks an update argument the caller did not pass, so an explicit None can clear a stored value.
+_NOT_SENT = object()
+
 # Durable SQLite file. Set SHIFTFLOW_DB_PATH to a path on a mounted volume in containers.
 DB_FILE = os.environ.get(
     "SHIFTFLOW_DB_PATH",
@@ -293,10 +296,14 @@ class ShiftFlowRepository:
         wage: Optional[float] = None,
         active: Optional[bool] = None,
         available_days: Optional[List[int]] = None,
-        assigned_line: Optional[int] = None,
+        assigned_line: Any = _NOT_SENT,
         accommodation_type: Optional[str] = None,
-        statutory_notes: Optional[str] = None,
+        statutory_notes: Any = _NOT_SENT,
     ) -> Optional[Dict[str, Any]]:
+        """Updates the given fields. Omitted args keep the stored value.
+
+        assigned_line and statutory_notes accept an explicit None, which clears the stored value.
+        """
         existing = self.get_employee(employee_id)
         if not existing:
             return None
@@ -309,9 +316,9 @@ class ShiftFlowRepository:
         new_wage = wage if wage is not None else existing["wage"]
         new_active = 1 if (active if active is not None else existing["active"]) else 0
         new_days = available_days if available_days is not None else existing["available_days"]
-        new_line = assigned_line if assigned_line is not None else existing["assigned_line"]
+        new_line = existing["assigned_line"] if assigned_line is _NOT_SENT else assigned_line
         new_accom = accommodation_type if accommodation_type is not None else existing.get("accommodation_type", "none")
-        new_notes = statutory_notes if statutory_notes is not None else existing.get("statutory_notes")
+        new_notes = existing.get("statutory_notes") if statutory_notes is _NOT_SENT else statutory_notes
 
         cursor = self.conn.cursor()
         cursor.execute(
