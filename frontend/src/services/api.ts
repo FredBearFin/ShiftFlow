@@ -7,7 +7,6 @@
 
 import {
   ArchetypePreset,
-  EmployeeRecord,
   ErgonomicGuardrails,
   SeparationCategory,
   ShiftTemplate,
@@ -205,8 +204,6 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
 const DEFAULT_PRESET = DEFAULT_ARCHETYPES[0];
 export const DEFAULT_TEMPLATES: ShiftTemplate[] = DEFAULT_PRESET.templates;
 export const DEFAULT_GUARDRAILS: ErgonomicGuardrails = DEFAULT_PRESET.guardrails;
-export const DEFAULT_DEMAND_MATRIX: number[][] = DEFAULT_PRESET.demand_matrix;
-export const INITIAL_STORE_EMPLOYEES: EmployeeRecord[] = [];
 
 /** Serialises the roster grid (one row per rotation line, one column per day). */
 export function exportRosterToCsvString(solution: SolveResponse): string {
