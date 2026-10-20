@@ -19,9 +19,9 @@ export const LESSONS: Lesson[] = [
     stepId: 1,
     title: 'Pick your business type',
     explanation:
-      'Every business has its own rhythm, so start with the kind that looks most like yours. We fill in typical hours, shift times and rules for that kind. You can change any of them in the steps that follow, including the trade-off between extra cost and staff comfort on the last step.',
+      'Every business has its own rhythm, so start with the kind that looks most like yours. The wizard fills in typical hours, shift times and rules for that kind. You can change any of them in the steps that follow, including the balance between extra cost and staff comfort on the last step.',
     example:
-      'A corner café that opens early and closes mid-afternoon picks Urban Retail & Convenience. Its typical hours are filled in, and in step 2 the owner adjusts how many people are needed in each hour.',
+      'A corner café that opens early and closes mid-afternoon picks the Retail and food service type. Its typical hours are filled in, and in step 2 the owner adjusts how many people are needed in each hour.',
     whyItMatters:
       'A close match saves you from typing everything from scratch and gives you a sensible starting point.',
   },
@@ -29,19 +29,19 @@ export const LESSONS: Lesson[] = [
     stepId: 2,
     title: 'Set how many people you need each hour',
     explanation:
-      'Each day button picks a day of the week, and the hour boxes below then show that day\'s needs. For each hour, enter how many staff you need on the floor, and the schedule builds every shift from these counts. A higher number means more people are needed at that hour, and that adds extra cost.',
+      'Each day button picks a day of the week, and the hour boxes below show that day\'s needs. For each hour, enter how many staff you need on the floor, and Tab moves from box to box. The schedule builds every shift from these counts, and each higher number adds extra cost.',
     example:
-      'A shop needs 2 people from 12:00 to 13:00 and only 1 from 14:00 to 15:00. Enter 2 in the box labelled Hour 12:00 and 1 in the box labelled Hour 14:00, and the schedule puts two people on at lunch and one in the quiet afternoon. Tab moves between hours.',
+      'A shop needs 2 people from 12:00 to 13:00 and only 1 from 14:00 to 15:00. Enter 2 in the box labelled Hour 12:00 and 1 in the box labelled Hour 14:00, and the schedule puts 2 people on at lunch and 1 in the quiet afternoon.',
     whyItMatters:
-      'Numbers that are too low break your staffing rules and hurt staff comfort, while numbers that are too high add extra cost for people with little to do.',
+      'Too few people break your rules and hurt staff comfort, while too many add extra cost for slow hours.',
   },
   {
     stepId: 3,
     title: 'Choose your shift times',
     explanation:
-      'A shift is a block of hours that one person works, such as a morning, a midday, an evening or a night shift. Here you set when each kind starts and how long it lasts. The schedule builds its shifts from these blocks, and each rule about rest then applies to them.',
+      'A shift is a block of hours that one person works, such as a morning, midday, evening or night shift. Here you set when each kind starts and how long it lasts. The schedule builds its shifts from these blocks, and each rest rule then applies to them.',
     example:
-      'A Morning shift that starts at hour 6 and lasts 8 hours ends at hour 14. An Evening shift that starts at hour 14 and lasts 8 hours covers the afternoon rush.',
+      'A Morning shift that starts at hour 6 and lasts 8 hours ends at hour 14. An Evening shift that starts at hour 14 and lasts 8 hours covers the late afternoon and evening rush.',
     whyItMatters:
       'Shifts that start at the right times cover the busy hours without leaving gaps, which keeps extra cost down and staff comfort up.',
   },
@@ -53,15 +53,15 @@ export const LESSONS: Lesson[] = [
     example:
       'Set the longest work stretch to 5 days, and the schedule will never give one person 6 days in a row. A rule of at least 16 hours between shifts also means no one goes from a late night straight into an early morning.',
     whyItMatters:
-      'Rest rules protect people on the job and make a schedule that works on paper also work in real life.',
+      'Rest rules protect people at work and keep the schedule workable in real life, not just on paper.',
   },
   {
     stepId: 5,
     title: 'Balance extra cost and staff comfort',
     explanation:
-      'Allowing a little more cost can make the schedule noticeably kinder to staff. This slider sets how much extra cost you accept, and the screen shows the comfort gain that comes with it. Pick the balance that suits your business, knowing that every shift still follows your scheduling rules.',
+      'Allowing a little extra cost can make the schedule kinder to staff. This slider sets how much extra cost you accept, and the screen shows how much more staff comfort you get. Pick the balance that suits your business, and every shift still follows your scheduling rules.',
     example:
-      'Suppose you allow 5 percent extra cost. The screen then shows how much more staff comfort that buys, and the 5 percent setting is marked Recommended. If you want no extra cost at all, choose the setting marked No extra cost.',
+      'Suppose you allow 5% extra cost. The screen then shows how much more staff comfort that buys, and the 5% setting is marked Recommended. If you want no extra cost at all, choose the setting marked No extra cost.',
     whyItMatters:
       'A small extra cost can buy a noticeably fairer schedule, so this one choice shapes how staff feel about their week.',
   },
