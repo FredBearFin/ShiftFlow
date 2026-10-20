@@ -6,6 +6,7 @@ cash till reconciliation variance checks, custom turnover task input, and checkl
 """
 
 import unittest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from app.tests import TEST_HEADERS
@@ -41,23 +42,18 @@ class TestShiftHandover(unittest.TestCase):
         self.assertIn("lottery", cs_tasks)
 
     def test_02_overlap_duration_and_friction_reduction(self):
-        """Verifies 3.0-hour Morning-to-Midday overlap duration and low friction index."""
-        metrics = ShiftHandoverEngine.calculate_overlap_metrics()
-        self.assertEqual(len(metrics), 3)
-
-        mm_metric = next(m for m in metrics if "Morning to Midday" in m.transition_name)
-        self.assertEqual(mm_metric.overlap_duration_hours, 3.0)
-        self.assertTrue(mm_metric.staggered_lunch_coverage)
-        self.assertLess(mm_metric.friction_index_pct, 5.0)
+        """Verifies overlap metrics answer the 501 contract: no stored overlap data, no fixed metrics."""
+        with self.assertRaises(HTTPException) as ctx:
+            ShiftHandoverEngine.calculate_overlap_metrics()
+        self.assertEqual(ctx.exception.status_code, 501)
+        self.assertEqual(ctx.exception.detail, "not implemented: no source data")
 
     def test_03_till_audit_reconciliation_math(self):
-        """Verifies cash till reconciliation variance and status detection."""
-        till_audits = ShiftHandoverEngine.get_mock_till_audits()
-        for audit in till_audits:
-            self.assertEqual(audit.opening_float, 200.00)
-            self.assertEqual(audit.retained_float, 200.00)
-            self.assertEqual(audit.variance, 0.00)
-            self.assertEqual(audit.status, "balanced")
+        """Verifies till audits answer the 501 contract: no stored till data, no fixed audits."""
+        with self.assertRaises(HTTPException) as ctx:
+            ShiftHandoverEngine.get_mock_till_audits()
+        self.assertEqual(ctx.exception.status_code, 501)
+        self.assertEqual(ctx.exception.detail, "not implemented: no source data")
 
     def test_04_fastapi_handover_endpoints(self):
         """Verifies all FastAPI shift handover REST endpoints return status 200."""
