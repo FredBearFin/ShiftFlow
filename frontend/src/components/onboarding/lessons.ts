@@ -49,9 +49,9 @@ export const LESSONS: Lesson[] = [
     stepId: 4,
     title: 'Set the scheduling rules',
     explanation:
-      'Rules protect staff health and keep the schedule fair, which supports staff comfort. They limit how many days can run in a row, how much rest a person must have between shifts, and how days off are grouped. Tighter rules can add extra cost, so the starting values are a good place to begin.',
+      'Rules protect staff health and keep the schedule fair, which supports staff comfort. The clopening rule stops a closing shift from being followed directly by an opening shift the next day. Tighter rules can add extra cost, so the starting values are a good place to begin.',
     example:
-      'Set the longest work stretch to 5 days, and the schedule will never give one person 6 days in a row. A rule of at least 16 hours between shifts also means no one goes from a late night straight into an early morning.',
+      'If a person works a closing shift on Monday, the schedule never gives them an opening shift on Tuesday, so the Tuesday opening shift goes to someone else.',
     whyItMatters:
       'Rest rules protect people at work and keep the schedule workable in real life, not just on paper.',
   },
