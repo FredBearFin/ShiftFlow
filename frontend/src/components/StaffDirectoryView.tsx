@@ -3,6 +3,8 @@ import { useDialogFocus } from './ui/useDialogFocus';
 import { AccommodationType, EmployeeRecord, RosterLine, SeparationCategory } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 
+const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 interface StaffDirectoryViewProps {
   employees: EmployeeRecord[];
   rosterLines: RosterLine[];
@@ -210,6 +212,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                         <button
                           key={d}
                           type="button"
+                          aria-pressed={isAvail}
+                          aria-label={DAY_FULL_NAMES[dIdx]}
                           onClick={() => {
                             if (!emp.is_active) return;
                             const nextDays = isAvail
@@ -222,7 +226,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                           className={`py-1 text-[10px] font-mono-tabular font-bold rounded border ${
                             isAvail
                               ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                              : 'bg-slate-100 text-slate-400 border-slate-200 line-through'
+                              : 'bg-slate-100 text-slate-600 border-slate-200 line-through'
                           }`}
                         >
                           {d}
@@ -354,11 +358,13 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     <button
                       key={d}
                       type="button"
+                      aria-pressed={newDays.includes(i)}
+                      aria-label={DAY_FULL_NAMES[i]}
                       onClick={() => handleToggleDay(i)}
                       className={`py-1.5 rounded text-xs font-mono-tabular font-bold border ${
                         newDays.includes(i)
                           ? 'bg-indigo-600 text-white border-indigo-700'
-                          : 'bg-slate-100 text-slate-400 border-slate-200'
+                          : 'bg-slate-100 text-slate-600 border-slate-200'
                       }`}
                     >
                       {d}

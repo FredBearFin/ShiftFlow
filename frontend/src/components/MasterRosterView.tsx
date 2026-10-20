@@ -10,6 +10,8 @@ import {
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 
+const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 const SEPARATION_OPTIONS: { value: SeparationCategory; label: string }[] = [
   { value: 'voluntary_resignation', label: 'Voluntary resignation' },
   { value: 'mutual_agreement', label: 'Mutual agreement' },
@@ -409,6 +411,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                             <button
                               key={dName}
                               type="button"
+                              aria-pressed={isAvail}
+                              aria-label={DAY_FULL_NAMES[dIdx]}
                               disabled={!emp.is_active}
                               onClick={() => {
                                 const nextDays = isAvail
@@ -416,10 +420,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                                   : [...emp.available_days, dIdx].sort();
                                 onUpdateEmployee({ ...emp, available_days: nextDays });
                               }}
-                              className={`w-5 h-5 rounded text-[10px] font-mono-tabular font-bold flex items-center justify-center ${
+                              className={`w-6 h-6 rounded text-[10px] font-mono-tabular font-bold flex items-center justify-center ${
                                 isAvail
                                   ? 'bg-indigo-600 text-white'
-                                  : 'bg-slate-200 text-slate-400'
+                                  : 'bg-slate-200 text-slate-600'
                               }`}
                               title={`${dName}: ${isAvail ? 'Available' : 'Unavailable'}`}
                             >
@@ -710,11 +714,13 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       <button
                         key={dName}
                         type="button"
+                        aria-pressed={isSel}
+                        aria-label={DAY_FULL_NAMES[dIdx]}
                         onClick={() => handleToggleDay(dIdx)}
                         className={`py-1.5 rounded text-xs font-mono-tabular font-bold border ${
                           isSel
                             ? 'bg-indigo-600 text-white border-indigo-700'
-                            : 'bg-slate-100 text-slate-400 border-slate-200'
+                            : 'bg-slate-100 text-slate-600 border-slate-200'
                         }`}
                       >
                         {dName}
