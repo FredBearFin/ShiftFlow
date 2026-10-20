@@ -245,3 +245,9 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Compose.** The frontend service passes `VITE_API_KEY` as a build argument, because Vite reads it at build time. The unused runtime `VITE_API_BASE_URL` is removed. The frontend starts only after the backend is healthy, as before.
   - **Limit, stated plainly.** The API key is compiled into the browser bundle, so anyone who can load the page can read it. It keeps stray clients out but is not a secret for a public deployment. Real per-user auth is a later change.
   - **Acceptance.** `docker compose config` parses, and `cd frontend && npm run build` exits 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 23: docs and root artefacts (King).** Files: `DOL_WAGE_HOUR_AUDIT_REPORT.md` (delete), `gtm/dol_wage_hour_audit_report.md` (delete), `DEPLOYMENT_GUIDE.md`, `.env.example`, and no other file. Documentation only.
+  - **Deleted.** The DOL wage-and-hour report and its copy in `gtm/`. They present compliance findings that no code computes.
+  - **Deployment guide.** Environment table lists only variables the code reads (`SHIFTFLOW_API_KEY`, `SHIFTFLOW_CORS_ORIGINS`, `SHIFTFLOW_DB_PATH`, `VITE_API_KEY`, `BACKEND_PORT`, `FRONTEND_PORT`). The throughput and footprint figures are removed, because nothing in the repository measures them. The Gunicorn worker claim is removed; the image runs a single Uvicorn process. The test count is no longer stated, and the dev requirements and `npm ci` are named.
+  - **Env example.** Same variables as the table; the dead weight and leeway settings are removed, since the code reads them from `config.py`, not from the environment.
+  - **Not in this PR.** The rest of `gtm/` (pricing, ROI, pitch, prospect list) and the four root audit reports still carry unbacked figures. They need a separate pass, and are left open.
+  - **Acceptance.** No file in the repository still names the deleted report. One PR is one commit under Art. 1.
