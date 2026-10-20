@@ -290,12 +290,12 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 id="add-staff-title" className="text-base font-bold text-slate-900">Add New Workforce Associate</h3>
               <button type="button" aria-label="Close" onClick={() => setShowAddModal(false)} className="text-slate-400 font-bold">
-                ✕
+                Cancel
               </button>
             </div>
             <form onSubmit={handleSubmitAdd} className="space-y-3.5">
               <div>
-                <label htmlFor="staff-new-name" className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                <label htmlFor="staff-new-name" className="block text-xs font-semibold text-slate-700 mb-1">Full Name <span className="text-red-600">Required</span></label>
                 <input id="staff-new-name"
                   type="text"
                   required
@@ -316,7 +316,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label htmlFor="staff-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">Wage ($/hr)</label>
+                  <label htmlFor="staff-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">Wage ($/hr) <span className="text-red-600">Required</span></label>
                   <input id="staff-new-wage"
                     type="number"
                     step="0.25"
@@ -399,7 +399,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   disabled={newWageValue === null}
                   className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                 >
-                  Save Associate
+                  Add staff member
                 </button>
               </div>
             </form>
