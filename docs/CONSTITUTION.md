@@ -337,3 +337,8 @@ Only the King amends this document. Each amendment is recorded below with its da
     - Line 52: "+182.1 Basis Points" becomes "+155.3 Basis Points" ($10,404 ÷ $670,000).
     - Lines 127 to 130: net becomes $31,212, $52,020, $104,040 and $260,100. Equity becomes $187,272, $312,120, $624,240 and $1,560,600.
     - Line 135: "$122,003" becomes "$104,040"; "$732,016" becomes "$624,240"; "77×" becomes "66×" ($624,240 ÷ $9,480 = 65.85).
+- **2026-10-20. Labor efficiency clamp: DEFER (King decision, option c).** Scope: `docs/CONSTITUTION.md` only. No solver or frontend change.
+  - **Decision.** Defer. The backlog entry "solver metrics: efficiency clamp" (line 266) stays open.
+  - **Line correction.** The clamp is at `backend/app/engine/isd_rwsp_solver.py:881` (`labor_efficiency_pct=min(100.0, labor_eff)`). Line 863 is the average-wage line. The defect is the same; the cited line was wrong.
+  - **Reason.** No PR's file list covers line 881, so Art. 1 blocks any edit to it until a PR is numbered for it.
+  - **Open.** Until then, a schedule with scheduled hours below required hours reports at most 100.0%, which hides understaffing. Re-rule when a solver PR with the PR 18 contract tests is numbered. Option (b) would need a new response field, which the frozen `frontend/src/types.ts` (Art. 4) does not carry, so the re-rule must name its file list.
