@@ -198,3 +198,8 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Kept.** The component's `solution` prop and its export, so `App.tsx` is unchanged.
   - **Shown.** A plain statement that no timecard punches are loaded, because no backend route supplies punch data to this tab yet.
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 14: header, navigation and fallback copy (King).** Files: `frontend/src/components/Header.tsx`, `frontend/src/services/api.ts` (the fallback preset's name and description text only, an Art. 4 removal of unsupported content), and no other file. Behavior PR under §3, approved for this batch.
+  - **Removed.** The "Live Cloud Sync" badge, the "+12.2k EBITDA" badge on the CFO tab, and the "Square / Clover / Toast" badge on the POS tab (no sync exists).
+  - **Added.** A nav entry for the DOL compliance tab, which had no way to reach it.
+  - **Changed.** The fallback preset's name and description no longer name a store. The preset id is unchanged.
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
