@@ -132,7 +132,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         <div className="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
+              <span className="px-2 py-0.5 rounded text-xs font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
                 5 quick steps
               </span>
               <span className="text-xs text-slate-400">
@@ -182,7 +182,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               >
                 <div className="flex items-center gap-1.5">
                   <span
-                    className={`w-5 h-5 shrink-0 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                    className={`w-5 h-5 shrink-0 rounded-full text-xs font-bold flex items-center justify-center ${
                       isCurrent
                         ? 'bg-indigo-600 text-white'
                         : isDone
@@ -196,7 +196,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     {item.title}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5 pl-6">
+                <p className="text-xs text-slate-500 mt-0.5 pl-6">
                   {item.subtitle}
                 </p>
               </button>
@@ -226,7 +226,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <div className="w-full sm:w-72">
                   <label
                     htmlFor="onboarding-facility-name"
-                    className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1"
+                    className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1"
                   >
                     Store or unit name
                   </label>
@@ -261,7 +261,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           <span className="block text-sm font-bold text-slate-900">
                             {arch.sector}
                           </span>
-                          <span className="block text-[11px] text-slate-500 mt-0.5">
+                          <span className="block text-xs text-slate-500 mt-0.5">
                             {presetLabelFor(arch.id, arch.sector)}
                           </span>
                         </span>
@@ -279,7 +279,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       <span className="block text-xs text-slate-600 mt-2 leading-relaxed">
                         {PRESET_LABELS[arch.id]?.description ?? ''}
                       </span>
-                      <span className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                      <span className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
                         <span>Hours: {arch.operating_hours_label}</span>
                         <span className="font-mono-tabular text-slate-700">
                           {arch.typical_crew_size}
@@ -384,7 +384,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     >
                       <label
                         htmlFor={`demand-hour-${selectedDayTab}-${hr}`}
-                        className="text-[10px] font-mono-tabular text-slate-500"
+                        className="text-xs font-mono-tabular text-slate-500"
                       >
                         Hour {String(hr).padStart(2, '0')}:00
                       </label>
@@ -469,7 +469,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-preferred-start`}
-                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                          className="block text-xs text-slate-500 font-medium mb-1"
                         >
                           Usual start (hour, 0–23)
                         </label>
@@ -493,7 +493,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-preferred-duration`}
-                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                          className="block text-xs text-slate-500 font-medium mb-1"
                         >
                           Usual length (hours)
                         </label>
@@ -517,7 +517,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-earliest-start`}
-                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                          className="block text-xs text-slate-500 font-medium mb-1"
                         >
                           Earliest allowed start
                         </label>
@@ -541,7 +541,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-max-duration`}
-                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                          className="block text-xs text-slate-500 font-medium mb-1"
                         >
                           Longest shift the solver may use (hours)
                         </label>
@@ -719,7 +719,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         <span className="text-xs font-semibold text-slate-900 block">
                           {item.label}
                         </span>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="text-xs text-slate-500">
                           {item.desc}
                         </span>
                       </div>
@@ -804,7 +804,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
                       }`}
                     >
-                      <div className="text-[11px] font-bold">{pt.tag}</div>
+                      <div className="text-xs font-bold">{pt.tag}</div>
                       <div
                         className={`text-xs font-mono-tabular mt-0.5 ${
                           Math.abs(leewayPct - pt.lw) < 0.1

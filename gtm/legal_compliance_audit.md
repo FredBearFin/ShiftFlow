@@ -17,7 +17,7 @@ This memorandum provides a rigorous legal analysis of ShiftFlow Studio across fi
 2. **Fair Labor Standards Act (FLSA) Overtime & Workweek Standalone Rules**
 3. **Title VII & ADA Failure-to-Accommodate & Disparate Impact Risks**
 4. **Wrongful Termination, Retaliation, & Constructive Discharge Traps in UI Workflows**
-5. **Statutory Recordkeeping (29 C.F.R. § 516.5) & SaaS Contractual Shielding**
+5. **Statutory Recordkeeping (29 C.F.R. § 516.5) & SaaS Contractual Protections**
 
 ---
 
@@ -25,7 +25,7 @@ This memorandum provides a rigorous legal analysis of ShiftFlow Studio across fi
 
 A rapidly expanding bloc of jurisdictions (Oregon statewide, Chicago, Seattle, New York City, Philadelphia, San Francisco, Los Angeles, and Washington D.C.) enforces mandatory predictive scheduling statutes with severe financial penalties.
 
-### 1.1 The Mandatory Rest Interval ("Clopening" Shield)
+### 1.1 The Mandatory Rest Interval ("Clopening" Rest Rule)
 - **The Statutory Rule**: State and local statutes (e.g., Seattle Municipal Code § 14.22.035, Oregon Rev. Stat. § 653.455, Chicago Municipal Code § 1-25-050) prohibit employers from scheduling closing and opening shifts separated by less than **10 to 11 consecutive hours** unless:
   1. The employee explicitly consents in writing; AND
   2. The employer pays a statutory premium of **1.25× to 1.5× regular pay** for all hours worked during the rest interval.
@@ -84,7 +84,7 @@ Under state common law and federal retaliation statutes (Title VII § 704(a), FL
 
 ---
 
-## 5. STATUTORY RECORDKEEPING & B2B SAAS CONTRACTUAL SHIELDING
+## 5. STATUTORY RECORDKEEPING & B2B SAAS CONTRACTUAL PROTECTIONS
 
 ### 5.1 FLSA 3-Year Recordkeeping Mandate (29 C.F.R. § 516.5)
 - Federal law mandates that employers retain all basic payroll records for **3 years**, and all work schedules, wage rate tables, and order records for **2 years**.
@@ -102,9 +102,9 @@ To insulate ShiftFlow Inc. from direct vicarious liability for managerial labor 
 
 | Priority | Feature / Guardrail | Target Component | Legal Protection / Statute |
 | :---: | :--- | :--- | :--- |
-| **P0** | **Hard Clopening Shield ($\ge 16$h)** | `isd_rwsp_solver.py` | Complete defense against municipal Fair Workweek premiums ($500/violation) |
+| **P0** | **Hard Clopening Rest Rule ($\ge 16$h)** | `isd_rwsp_solver.py` | Targets municipal Fair Workweek premium exposure ($500/violation) |
 | **P0** | **Workweek Standalone Overtime** | `payroll_export.py` | Compliance with 29 C.F.R. § 778.104; eliminates 200% liquidated damages |
-| **P1** | **Religious & Medical Hard Invariants** | `employee_routes.py` | Title VII (*Groff v. DeJoy*) & ADA failure-to-accommodate liability shield |
+| **P1** | **Religious & Medical Hard Invariants** | `employee_routes.py` | Title VII (*Groff v. DeJoy*) & ADA failure-to-accommodate liability risk reduction |
 | **P1** | **Structured Deactivation Workflow** | `StaffDirectoryView.tsx` | Controverts pretextual retaliation claims under FLSA § 15(a)(3) |
 | **P2** | **3-Year Immutable Audit Snapshots** | `database.py` | Satisfies DOL recordkeeping under 29 C.F.R. § 516.5 |
 | **P2** | **Predictability Pay Notice Warning** | `MasterRosterView.tsx` | Alerts managers modifying schedules within statutory 14-day notice windows |

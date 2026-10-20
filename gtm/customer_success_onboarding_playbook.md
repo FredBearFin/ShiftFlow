@@ -50,7 +50,7 @@ The ShiftFlow onboarding framework is structured around three critical milestone
 > Starting this Monday, we are switching to **ShiftFlow** for our store schedule.
 >
 > **What this means for you:**
-> 1. **No More Clopenings**: You will *never* be scheduled to close at 11 PM and open at 8 AM the next morning. ShiftFlow guarantees at least 16 hours of rest between shifts.
+> 1. **No More Clopenings**: You will *never* be scheduled to close at 11 PM and open at 8 AM the next morning. ShiftFlow schedules to a target of at least 16 hours of rest between shifts and flags any shift that falls short.
 > 2. **100% Fair Weekends**: We use standardized rotation lines (`Line 1` to `Line 6`). Every Monday, everyone advances one line down. Everyone gets regular full weekends off—zero favoritism.
 > 3. **Predictable Schedules Months in Advance**: You can now look at the wall board and know exactly what weekends and shifts you work next month, so you can plan your life without waiting for a last-minute schedule text on Sunday night.
 >

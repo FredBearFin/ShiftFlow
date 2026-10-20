@@ -88,7 +88,7 @@ export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {figures.map((figure) => (
           <div key={figure.label} className="enterprise-card p-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{figure.label}</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">{figure.label}</span>
             <div className="text-2xl font-bold font-mono-tabular text-slate-900 mt-1">{figure.value}</div>
           </div>
         ))}

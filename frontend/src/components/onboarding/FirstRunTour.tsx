@@ -97,7 +97,7 @@ export function FirstRunTour({ onDone, returnFocusTo }: FirstRunTourProps) {
         onKeyDown={handleKeyDown}
         className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl p-6"
       >
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-600">
+        <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
           Quick tour, step {index + 1} of {TOUR_STEPS.length}
         </p>
         <h3

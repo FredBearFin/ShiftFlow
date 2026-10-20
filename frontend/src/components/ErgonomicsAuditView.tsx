@@ -15,7 +15,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       {/* Top Compliance & Theorem 1 Summary Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Occupational Rest & Circadian Health Standard
           </span>
           <div className="flex items-baseline gap-3 mt-1">
@@ -33,7 +33,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         </div>
 
         <div className="card p-5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Zero-Clopening & Circadian Guardrail
           </span>
           <div className="flex items-baseline gap-3 mt-1">
@@ -52,7 +52,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         </div>
 
         <div className="card p-5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Cyclic Line Fairness & Continuity
           </span>
           <div className="flex items-baseline gap-3 mt-1">
@@ -81,7 +81,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4">Symbol</th>
                 <th className="py-3 px-4">Ergonomic Criterion</th>
                 <th className="py-3 px-3">Ideal Range</th>
@@ -100,7 +100,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   </td>
                   <td className="py-3 px-4">
                     <div className="font-semibold text-slate-900">{c.name}</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">{c.explanation}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{c.explanation}</div>
                   </td>
                   <td className="py-3 px-3 font-mono-tabular text-slate-700">
                     {c.ideal_range}
@@ -119,7 +119,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
                         c.status === 'optimal'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : c.status === 'acceptable'
@@ -166,13 +166,13 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                 <div className="font-bold text-slate-900 flex items-center justify-between">
                   <span>{wNode?.day_name}</span>
                 </div>
-                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-[11px] flex justify-between">
+                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
                   <span className="text-slate-600">(g, work)</span>
                   <span className="font-bold text-slate-900">
                     in:{wNode?.in_degree ?? '—'} / out:{wNode?.out_degree ?? '—'}
                   </span>
                 </div>
-                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-[11px] flex justify-between">
+                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
                   <span className="text-slate-600">(g, rest)</span>
                   <span className="font-bold text-slate-900">
                     in:{rNode?.in_degree ?? '—'} / out:{rNode?.out_degree ?? '—'}
