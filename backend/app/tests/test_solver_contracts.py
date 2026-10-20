@@ -11,7 +11,7 @@ from app.database import get_db_connection, init_db
 from app.main import app
 from app.middleware import IdempotencyStore
 from app.schemas import SolveRequestSchema
-from app.engine.isd_rwsp_solver import ISDRWSPSolver
+from app.engine.isd_rwsp_solver import ISDRWSPSolver, SolverInfeasibleError
 from app.tests import TEST_HEADERS
 
 
@@ -39,6 +39,20 @@ class SolverContractTests(unittest.TestCase):
                     cell.scheduled_staff - cell.required_staff,
                     cell.overstaffing - cell.understaffing,
                 )
+
+    def test_demand_giving_fewer_than_14_work_shifts_raises_infeasible(self):
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
+        req = SolveRequestSchema(
+            archetype_id=preset.id,
+            facility_name=preset.name,
+            demand_matrix=[[0] * 24 for _ in range(7)],
+            templates=preset.templates,
+            guardrails=preset.guardrails,
+            pareto_leeway_pct=preset.default_leeway_pct,
+        )
+        with self.assertRaises(SolverInfeasibleError) as ctx:
+            ISDRWSPSolver(req).solve()
+        self.assertIn("fewer than 14 work shifts", str(ctx.exception))
 
     def test_concurrent_request_with_same_key_returns_409(self):
         body = json.dumps({"demand_matrix": [[1] * 24 for _ in range(7)], "templates": [

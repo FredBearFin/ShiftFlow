@@ -535,11 +535,9 @@ class ISDRWSPSolver:
                 total_work_shifts += cnt
 
         if total_work_shifts < 14:
-            for g in range(7):
-                daily_template_pool[(g, shift_types_raw[0]["template_code"])] = max(
-                    2, daily_template_pool[(g, shift_types_raw[0]["template_code"])]
-                )
-            total_work_shifts = sum(daily_template_pool.values())
+            raise SolverInfeasibleError(
+                "The demand gives fewer than 14 work shifts a week, so no valid rotation exists."
+            )
 
         employee_count, seq_pairs = self._partition_into_alternating_sequences(
             total_work_shifts
