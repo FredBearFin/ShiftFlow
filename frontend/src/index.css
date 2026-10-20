@@ -3,30 +3,30 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-heading: 'Source Sans 3', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --surface-canvas: #f8fafc;
-  --surface-card: #ffffff;
-  --surface-subtle: #f1f5f9;
-  --border-subtle: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --accent-primary: #4f46e5;
+  --canvas: #F4F1EA;
+  --card: #FFFFFF;
+  --border: #D1D5DB;
+  --ink: #2B3A42;
+  --muted: #5C6770;
+  --accent: #4A6B5D;
+  --warning: #C28B47;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--surface-canvas);
-  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  background-color: var(--canvas);
+  color: var(--ink);
   margin: 0;
   padding: 0;
 }
 
 /* WCAG 2.2 AAA High-Contrast Focus Ring for Backroom Store Displays */
 *:focus-visible {
-  outline: 2px solid #4f46e5;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
