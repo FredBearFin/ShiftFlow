@@ -38,6 +38,8 @@ import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { CompletionNote } from './components/onboarding/CompletionNote';
 
+type SolveStatus = 'loading' | 'error' | 'ready';
+
 const FLAT_DEMAND_MATRIX: number[][] = Array.from({ length: 7 }, () => Array(24).fill(2));
 
 const STAFF_FACILITY_ID = 'FAC-OMAHA-01';
@@ -91,6 +93,7 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<ActiveTabId>('roster');
   const [solution, setSolution] = useState<SolveResponse | null>(null);
+  const [solveStatus, setSolveStatus] = useState<SolveStatus>('loading');
   const [solveError, setSolveError] = useState<string | null>(null);
   const [solveAttempt, setSolveAttempt] = useState(0);
   const [separationError, setSeparationError] = useState<string | null>(null);
@@ -117,6 +120,7 @@ export function App() {
 
   useEffect(() => {
     let isMounted = true;
+    setSolveStatus('loading');
     const timer = window.setTimeout(() => {
       solveScheduleApi({
         archetype_id: selectedArchetypeId,
@@ -132,11 +136,13 @@ export function App() {
         if (isMounted) {
           setSolution(res);
           setSolveError(null);
+          setSolveStatus('ready');
         }
       }).catch((err: unknown) => {
-        // Keep the last schedule that was computed; only the error changes.
+        // Keep the last schedule that was computed; only the status and error change.
         if (isMounted) {
           setSolveError(err instanceof Error ? err.message : 'The scheduling service is unavailable.');
+          setSolveStatus('error');
         }
       });
     }, 300);
@@ -349,10 +355,11 @@ export function App() {
             {separationError}
           </div>
         )}
-        {solveError && (
+        {solveStatus === 'error' && (
           <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             <span>
-              {solveError}
+              The schedule could not be calculated.
+              {solveError ? ` ${solveError}` : ''}
               {solution ? ' The schedule shown is the last one that was computed.' : ''}
             </span>
             <button
@@ -418,11 +425,15 @@ export function App() {
             {activeTab === 'ergonomics' && <ErgonomicsAuditView solution={solution} />}
             {activeTab === 'compliance' && <DOLComplianceView solution={solution} />}
           </>
-        ) : (
+        ) : solveStatus === 'loading' ? (
           <div className="enterprise-card p-12 text-center text-sm text-slate-500">
+            <span
+              aria-hidden="true"
+              className="mx-auto mb-4 block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
+            />
             Calculating Optimized Schedule, Coverage & Labor Economics...
           </div>
-        )}
+        ) : null}
       </main>
 
       <OnboardingWizard
