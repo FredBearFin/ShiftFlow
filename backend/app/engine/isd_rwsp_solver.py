@@ -394,6 +394,20 @@ class ISDRWSPSolver:
                 prev_code = seq_shifts[-1] if seq_shifts else "OFF"
 
                 if prev_code == "N":
+                    n_st = st_by_code["N"]
+                    forced_rest_hrs = compute_rest_hours_between(
+                        "N",
+                        n_st["start_hour"],
+                        n_st["duration_hours"],
+                        "N",
+                        n_st["start_hour"],
+                    )
+                    if forced_rest_hrs < settings.min_rest_hours_between_shifts:
+                        raise SolverInfeasibleError(
+                            "A night shift cannot be followed by another night shift "
+                            "with the required rest between them. "
+                            "Shorten the night template or relax the rest rule."
+                        )
                     seq_shifts.append("N")
                     rem_pool[(day_g, "N")] = rem_pool.get((day_g, "N"), 0) - 1
                     continue
@@ -553,9 +567,12 @@ class ISDRWSPSolver:
             flat_cycle_shifts.extend(arc["shifts"])
 
         total_slots = employee_count * 7
-        while len(flat_cycle_shifts) < total_slots:
-            flat_cycle_shifts.append("OFF")
-        flat_cycle_shifts = flat_cycle_shifts[:total_slots]
+        if len(flat_cycle_shifts) != total_slots:
+            raise SolverInfeasibleError(
+                f"The cycle has {len(flat_cycle_shifts)} day slots from {len(ordered_arcs_dicts)} arcs, "
+                f"but {employee_count} lines need {total_slots}. "
+                "The schedule is not one whole rotation."
+            )
 
         aligned_shifts = ["OFF"] * total_slots
         for step_idx, s_code in enumerate(flat_cycle_shifts):
