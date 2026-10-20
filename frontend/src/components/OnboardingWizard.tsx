@@ -121,7 +121,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const expectedErgoGain = interpolateBeckerTable7(leewayPct);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-wizard-title"
+      className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+    >
       <div className="bg-white border border-slate-200 rounded-2xl max-w-[min(96vw,1600px)] w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Wizard Top Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
@@ -134,7 +139,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 Tell us how your store runs. We'll build the schedule.
               </span>
             </div>
-            <h2 className="text-lg font-bold tracking-tight mt-1">
+            <h2 id="onboarding-wizard-title" className="text-lg font-bold tracking-tight mt-1">
               Set up your schedule
             </h2>
           </div>
@@ -338,6 +343,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   <button
                     key={day}
                     type="button"
+                    aria-pressed={selectedDayTab === dIdx}
                     onClick={() => setSelectedDayTab(dIdx)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       selectedDayTab === dIdx
@@ -346,6 +352,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     }`}
                   >
                     {day} ({demandMatrix[dIdx].reduce((a, b) => a + b, 0)} staff-hrs)
+                    {selectedDayTab === dIdx && <span className="ml-1">Selected</span>}
                   </button>
                 ))}
               </div>
