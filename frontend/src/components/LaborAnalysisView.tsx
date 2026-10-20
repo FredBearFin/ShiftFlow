@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { SolveResponse } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import { Button } from './ui/Button';
 
 interface LaborAnalysisViewProps {
   solution: SolveResponse;
 }
+
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   solution,
@@ -12,6 +15,40 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   const labor = solution.labor_analysis;
   const maxDayCost = Math.max(...labor.cost_per_day, 100);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
+
+  // A line is priced when it carries a numeric estimated payroll and a numeric hours value.
+  const pricedLines = solution.roster_lines.filter(
+    (l) => isNum(l.estimated_weekly_payroll) && isNum(l.weekly_hours),
+  );
+  const unpricedCount = solution.roster_lines.length - pricedLines.length;
+
+  // Blended wage: hours-weighted base wage over priced hours only.
+  let wageHours = 0;
+  let wageSum = 0;
+  for (const l of pricedLines) {
+    if (isNum(l.hourly_wage)) {
+      wageHours += l.weekly_hours;
+      wageSum += l.hourly_wage * l.weekly_hours;
+    }
+  }
+  const avgWage = wageHours > 0 ? wageSum / wageHours : null;
+
+  // Overtime premium: the extra 0.5x above base, only where OT hours and wage are both present.
+  const overtimePremiumByLine = new Map<string, number>();
+  let overtimePremiumTotal = 0;
+  for (const l of solution.roster_lines) {
+    if (isNum(l.overtime_hours) && l.overtime_hours > 0 && isNum(l.hourly_wage)) {
+      const premium = 0.5 * l.overtime_hours * l.hourly_wage;
+      overtimePremiumByLine.set(l.cohort_id, premium);
+      overtimePremiumTotal += premium;
+    }
+  }
+
+  const unpricedBadge = unpricedCount > 0 ? (
+    <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+      {unpricedCount} {unpricedCount === 1 ? 'line' : 'lines'} unpriced
+    </span>
+  ) : null;
 
   const handleDownloadGusto = () => {
     // Generate RFC-4180 Gusto CSV client-side for immediate download
@@ -111,24 +148,26 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               ✓ {downloadMsg}
             </span>
           )}
-          <button type="button"
+          <Button
+            variant="primary"
             onClick={handleDownloadGusto}
-            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5"
+            className="!bg-emerald-700 hover:!bg-emerald-800 font-bold"
           >
             <span>↓ Gusto CSV</span>
-          </button>
-          <button type="button"
+          </Button>
+          <Button
+            variant="primary"
             onClick={handleDownloadAdp}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5"
+            className="font-bold"
           >
             <span>↓ ADP CSV</span>
-          </button>
-          <button type="button"
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => window.print()}
-            className="px-3 py-2 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold"
           >
             Print Audit
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -136,7 +175,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
         <div className="enterprise-card p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
-            Total Weekly Payroll
+            Est. Weekly Payroll
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-slate-900">
@@ -144,8 +183,9 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            Base: ${labor.regular_payroll_cost.toFixed(2)}
+            Est. base: ${labor.regular_payroll_cost.toFixed(2)}
           </p>
+          {unpricedBadge && <div className="mt-1.5">{unpricedBadge}</div>}
         </div>
 
         <div className="enterprise-card p-4">
@@ -180,6 +220,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           <p className="text-[11px] text-slate-500 mt-1">
             1.5× rate applied over 40h/line
           </p>
+          {overtimePremiumByLine.size > 0 && (
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Overtime premium (extra 0.5x): ${overtimePremiumTotal.toFixed(2)}
+            </p>
+          )}
         </div>
 
         <div className="enterprise-card p-4">
@@ -188,11 +233,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-slate-900">
-              {labor.avg_hourly_wage === null ? '' : `$${labor.avg_hourly_wage.toFixed(2)}/hr`}
+              {avgWage === null ? '' : `$${avgWage.toFixed(2)}/hr`}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
-            Across active personnel
+            Across priced personnel hours
           </p>
         </div>
 
@@ -222,10 +267,16 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             <p className="text-xs text-slate-500 mt-0.5">
               Tracks daily labor expenditure matching store demand and customer rush patterns.
             </p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Allocated pro rata from each line's estimated payroll.
+            </p>
           </div>
-          <span className="text-xs font-mono-tabular text-slate-600 bg-slate-100 px-3 py-1 rounded-md">
-            Weekly Spend: ${labor.total_payroll_cost.toFixed(2)}
-          </span>
+          <div className="flex items-center gap-2">
+            {unpricedBadge}
+            <span className="text-xs font-mono-tabular text-slate-600 bg-slate-100 px-3 py-1 rounded-md">
+              Est. Weekly Spend: ${labor.total_payroll_cost.toFixed(2)}
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-7 gap-3">
@@ -250,7 +301,8 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                       {hours} hrs
                     </span>
                   </div>
-                  <div className="text-base font-bold font-mono-tabular text-slate-900 mt-1">
+                  <span className="text-[10px] text-slate-500 block mt-1">Allocated daily spend</span>
+                  <div className="text-base font-bold font-mono-tabular text-slate-900">
                     ${cost.toFixed(2)}
                   </div>
                 </div>
@@ -264,7 +316,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                       style={{ width: `${barPct}%` }}
                     />
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-1 block text-right font-mono-tabular">
+                  <span className="text-[10px] text-slate-500 mt-1 block text-right font-mono-tabular">
                     {hours > 0 ? `$${(cost / hours).toFixed(2)}/hr` : '—'}
                   </span>
                 </div>
@@ -296,7 +348,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                 <th className="py-3 px-3 text-right">Scheduled</th>
                 <th className="py-3 px-3 text-right">Regular</th>
                 <th className="py-3 px-3 text-right">Overtime</th>
-                <th className="py-3 px-4 text-right">Weekly Payroll</th>
+                <th className="py-3 px-4 text-right">Est. Weekly Payroll</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 font-mono-tabular">
@@ -307,7 +359,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                   </td>
                   <td className="py-3 px-4 font-sans font-semibold text-slate-900">
                     {line.assigned_person || (
-                      <span className="text-slate-400 italic font-normal">
+                      <span className="text-slate-500 italic font-normal">
                         Pure Rotation Line (Unassigned)
                       </span>
                     )}
@@ -326,11 +378,18 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                   </td>
                   <td className="py-3 px-3 text-right">
                     {line.overtime_hours > 0 ? (
-                      <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                        +{line.overtime_hours}h OT
-                      </span>
+                      <>
+                        <span className="px-1.5 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                          +{line.overtime_hours}h OT
+                        </span>
+                        {overtimePremiumByLine.has(line.cohort_id) && (
+                          <span className="block text-[10px] text-amber-800 mt-0.5">
+                            premium +${overtimePremiumByLine.get(line.cohort_id)!.toFixed(2)}
+                          </span>
+                        )}
+                      </>
                     ) : (
-                      <span className="text-slate-400">0h</span>
+                      <span className="text-slate-500">0h</span>
                     )}
                   </td>
                   <td className="py-3 px-4 text-right font-bold text-slate-900">
