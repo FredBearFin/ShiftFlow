@@ -73,7 +73,7 @@ OPERATING EBITDA MARGIN EXPANSION                                   : +188.2 Bas
 - **Controller Classification**: **Direct Cost Avoidance**. Reduces onboarding cash outlays and preserves store transactional productivity.
 
 ### 2.3 General Manager Administrative Time Reallocated to Floor Operations
-- **The Empirical Baseline**: Store General Managers spend an average of **4.5 hours per week** building rosters from scratch, resolving text message disputes, adjusting shift swaps, and managing call-ins.
+- **The Empirical Baseline**: Store General Managers spend an average of **3.75 hours per week** building rosters from scratch, resolving text message disputes, adjusting shift swaps, and managing call-ins.
 - **ShiftFlow 1-Click Rollover**: Because rotation sequences are mathematically determined along the cyclic multigraph chain, Monday rollovers take **0.5 hours per week** (1-click rollover + availability audit), recovering **3.25 hours per week** (169 hours annually).
 - **Valuation Basis**: The 169 hours are valued at **$35.00/hr**, an opportunity rate for supervised floor time. It is an assumption, not a wage: the General Manager's wage is $22.00/hr (line 34). No realization factor is applied, and shrink and truck-unloading benefits are not valued.
 - **Audit Valuation Formula**:
