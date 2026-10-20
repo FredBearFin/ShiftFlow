@@ -34,23 +34,24 @@ class TestDistributedArchitecture(unittest.TestCase):
         """Verify mutating request with Idempotency-Key stores and replays cached response."""
         key = "IDEM-CALLOUT-TEST-001"
         payload = {
-            "target_day_index": 5,
-            "target_shift_code": "E",
-            "line_number": 6,
+            "checklist_type": "morning_to_midday",
+            "category": "Safety",
+            "task": "Check ice merchandiser",
+            "responsible_shift": "Morning Shift",
         }
         headers = {"Idempotency-Key": key}
 
         # 1. First execution: MISS-STORED
-        resp1 = self.client.post("/api/emergency/callout-replacement", json=payload, headers=headers)
+        resp1 = self.client.post("/api/handover/task", json=payload, headers=headers)
         self.assertEqual(resp1.status_code, 200)
         self.assertEqual(resp1.headers.get("X-Cache-Lookup"), "MISS-STORED")
         self.assertEqual(resp1.headers.get("Idempotency-Key"), key)
         data1 = resp1.json()
-        self.assertEqual(data1["target_day_name"], "Sat")
-        self.assertTrue(len(data1["candidates"]) > 0)
+        self.assertEqual(data1["task"], "Check ice merchandiser")
+        self.assertEqual(data1["status"], "pending")
 
         # 2. Second execution (network retry / mobile redelivery): HIT-IDEMPOTENT
-        resp2 = self.client.post("/api/emergency/callout-replacement", json=payload, headers=headers)
+        resp2 = self.client.post("/api/handover/task", json=payload, headers=headers)
         self.assertEqual(resp2.status_code, 200)
         self.assertEqual(resp2.headers.get("X-Cache-Lookup"), "HIT-IDEMPOTENT")
         self.assertEqual(resp2.headers.get("Idempotency-Key"), key)
@@ -64,18 +65,18 @@ class TestDistributedArchitecture(unittest.TestCase):
         key_a = "IDEM-SWAP-A"
         key_b = "IDEM-SWAP-B"
 
-        payload_safe = {
-            "associate_a_id": "EMP-04",
-            "associate_b_id": "EMP-03",
-            "day_a_index": 1,
-            "day_b_index": 4,
+        payload_task = {
+            "checklist_type": "morning_to_midday",
+            "category": "Safety",
+            "task": "Audit propane tanks",
+            "responsible_shift": "Midday Shift",
         }
 
-        resp_a = self.client.post("/api/emergency/validate-swap", json=payload_safe, headers={"Idempotency-Key": key_a})
+        resp_a = self.client.post("/api/handover/task", json=payload_task, headers={"Idempotency-Key": key_a})
         self.assertEqual(resp_a.status_code, 200)
         self.assertEqual(resp_a.headers.get("X-Cache-Lookup"), "MISS-STORED")
 
-        resp_b = self.client.post("/api/emergency/validate-swap", json=payload_safe, headers={"Idempotency-Key": key_b})
+        resp_b = self.client.post("/api/handover/task", json=payload_task, headers={"Idempotency-Key": key_b})
         self.assertEqual(resp_b.status_code, 200)
         self.assertEqual(resp_b.headers.get("X-Cache-Lookup"), "MISS-STORED")
 

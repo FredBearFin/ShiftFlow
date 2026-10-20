@@ -1,62 +1,40 @@
-"""Unit and integration tests for Store Manager Emergency Callout & Shift Swap operations."""
+"""Tests for Store Manager Emergency Callout & Shift Swap operations.
+
+Both endpoints need stored shift and rest data, which the schema does not hold,
+so each must answer 501 rather than return a fixed roster or verdict.
+"""
 
 import unittest
 from fastapi.testclient import TestClient
 
 from app.main import app
 
+NO_SOURCE = {"detail": "not implemented: no source data"}
+
 
 class TestEmergencyWorkflows(unittest.TestCase):
-    """Test suite verifying chaotic store emergency handling, callouts, and shift swaps."""
+    """Test suite verifying emergency endpoints refuse to return unsourced results."""
 
     @classmethod
     def setUpClass(cls):
         cls.client = TestClient(app)
 
-    def test_01_saturday_evening_callout_ranking_and_clopening_block(self):
-        """Verify Saturday 8pm callout recommends zero-clopening candidate and blocks unsafe Sunday openers."""
+    def test_01_callout_returns_501_without_stored_data(self):
+        """Saturday evening callout returns 501 and names no fixed candidate."""
         payload = {
             "target_day_index": 5,      # Saturday
             "target_shift_code": "E",   # Evening (16:00-24:00)
             "line_number": 6,
+            "missing_employee_id": "EMP-03",
         }
         response = self.client.post("/api/emergency/callout-replacement", json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
+        self.assertEqual(response.status_code, 501)
+        self.assertEqual(response.json(), NO_SOURCE)
+        self.assertNotIn("Devon Taylor", response.text)
+        self.assertNotIn("Elena Rodriguez", response.text)
 
-        self.assertEqual(data["target_day_name"], "Sat")
-        self.assertEqual(data["target_shift_code"], "E")
-        self.assertGreaterEqual(data["candidates_count"], 3)
-
-        # Candidate 1 should be recommended (Devon Taylor)
-        rec = data["candidates"][0]
-        self.assertTrue(rec["is_recommended"])
-        self.assertEqual(rec["employee_id"], "EMP-03")
-        self.assertEqual(rec["employee_name"], "Devon Taylor")
-        self.assertFalse(rec["clopening_risk"])
-        self.assertFalse(rec["overtime_risk"])
-        self.assertEqual(rec["hours_with_shift"], 40)
-        self.assertGreaterEqual(rec["prior_rest_hours"], 16.0)
-        self.assertGreaterEqual(rec["next_rest_hours"], 16.0)
-
-        # Priya Patel must be BLOCKED because of Sunday 6:00 AM opening shift (6h turnaround)
-        priya = next((c for c in data["candidates"] if c["employee_id"] == "EMP-05"), None)
-        self.assertIsNotNone(priya)
-        self.assertTrue(priya["clopening_risk"])
-        self.assertFalse(priya["is_recommended"])
-        self.assertIn("BLOCKED", priya["status_label"])
-        self.assertLess(priya["next_rest_hours"], 16.0)
-
-        # Sarah Kowalski should be available with Overtime
-        sarah = next((c for c in data["candidates"] if c["employee_id"] == "EMP-02"), None)
-        self.assertIsNotNone(sarah)
-        self.assertTrue(sarah["overtime_risk"])
-        self.assertFalse(sarah["clopening_risk"])
-        self.assertIn("Overtime", sarah["status_label"])
-
-    def test_02_bilateral_shift_swap_clopening_guardrail(self):
-        """Verify adjacent day Evening->Day swap is rejected, and non-adjacent swap is approved."""
-        # Dangerous swap: Wednesday (day 2) Evening to Thursday (day 3) Day
+    def test_02_swap_returns_501_for_adjacent_and_non_adjacent_days(self):
+        """Shift swap validation returns 501 for both adjacent and non-adjacent days."""
         dangerous_swap = {
             "associate_a_id": "EMP-04",
             "associate_b_id": "EMP-03",
@@ -64,14 +42,10 @@ class TestEmergencyWorkflows(unittest.TestCase):
             "day_b_index": 3,  # Thursday
         }
         res_danger = self.client.post("/api/emergency/validate-swap", json=dangerous_swap)
-        self.assertEqual(res_danger.status_code, 200)
-        data_danger = res_danger.json()
+        self.assertEqual(res_danger.status_code, 501)
+        self.assertEqual(res_danger.json(), NO_SOURCE)
+        self.assertNotIn("11.0 hours", res_danger.text)
 
-        self.assertFalse(data_danger["is_approved"])
-        self.assertTrue(data_danger["clopening_violation_a"])
-        self.assertTrue(any("REJECTED" in msg for msg in data_danger["validation_messages"]))
-
-        # Safe swap: Tuesday (day 1) to Friday (day 4)
         safe_swap = {
             "associate_a_id": "EMP-04",
             "associate_b_id": "EMP-03",
@@ -79,19 +53,14 @@ class TestEmergencyWorkflows(unittest.TestCase):
             "day_b_index": 4,  # Friday
         }
         res_safe = self.client.post("/api/emergency/validate-swap", json=safe_swap)
-        self.assertEqual(res_safe.status_code, 200)
-        data_safe = res_safe.json()
+        self.assertEqual(res_safe.status_code, 501)
+        self.assertEqual(res_safe.json(), NO_SOURCE)
 
-        self.assertTrue(data_safe["is_approved"])
-        self.assertFalse(data_safe["clopening_violation_a"])
-        self.assertFalse(data_safe["clopening_violation_b"])
-        self.assertIn("APPROVED", data_safe["validation_messages"][0])
-        self.assertIn("Zero impact", data_safe["next_monday_rotation_impact"])
-
-    def test_03_fastapi_emergency_endpoints_exist(self):
-        """Verify endpoints return standard 200 responses."""
+    def test_03_callout_without_employee_id_returns_501(self):
+        """A callout with no missing employee also returns 501, not a default name."""
         res = self.client.post("/api/emergency/callout-replacement", json={"target_day_index": 0, "target_shift_code": "M"})
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 501)
+        self.assertEqual(res.json(), NO_SOURCE)
 
 
 if __name__ == "__main__":

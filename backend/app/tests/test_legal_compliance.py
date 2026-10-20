@@ -87,6 +87,10 @@ class TestLegalComplianceAndAccommodations(unittest.TestCase):
             statutory_conflicts = [c for c in line_1.days if c.statutory_accommodation_conflict]
             self.assertGreater(len(statutory_conflicts), 0)
 
+        # The ergonomics count is computed from the solved lines, not fixed at zero.
+        expected_count = sum(1 for line in sol.roster_lines if line.statutory_accommodation_violation)
+        self.assertEqual(sol.ergonomics_audit.statutory_accommodation_violations_count, expected_count)
+
     def test_02_contemporaneous_separation_audit_logging(self):
         """Verify employee deactivation logs an immutable contemporaneous audit record for retaliation defense."""
         emp = self.repo.create_employee(

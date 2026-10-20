@@ -24,24 +24,25 @@ class TestIdempotency(unittest.TestCase):
     def setUp(self):
         IdempotencyStore.clear_all()
 
-    def _payload(self, line_number: int) -> dict:
+    def _payload(self, task: str) -> dict:
         return {
-            "target_day_index": 5,
-            "target_shift_code": "E",
-            "line_number": line_number,
+            "checklist_type": "morning_to_midday",
+            "category": "Safety",
+            "task": task,
+            "responsible_shift": "Morning Shift",
         }
 
     def test_01_same_key_same_body_replays_response(self):
         """A retry with the same key and body returns the stored response."""
         key = "IDEM-PR1-REPLAY-001"
         headers = {"Idempotency-Key": key}
-        payload = self._payload(6)
+        payload = self._payload("Check ice merchandiser")
 
-        resp1 = self.client.post("/api/emergency/callout-replacement", json=payload, headers=headers)
+        resp1 = self.client.post("/api/handover/task", json=payload, headers=headers)
         self.assertEqual(resp1.status_code, 200)
         self.assertEqual(resp1.headers.get("X-Cache-Lookup"), "MISS-STORED")
 
-        resp2 = self.client.post("/api/emergency/callout-replacement", json=payload, headers=headers)
+        resp2 = self.client.post("/api/handover/task", json=payload, headers=headers)
         self.assertEqual(resp2.status_code, 200)
         self.assertEqual(resp2.headers.get("X-Cache-Lookup"), "HIT-IDEMPOTENT")
         self.assertEqual(resp2.json(), resp1.json())
@@ -51,10 +52,10 @@ class TestIdempotency(unittest.TestCase):
         key = "IDEM-PR1-MISMATCH-001"
         headers = {"Idempotency-Key": key}
 
-        resp1 = self.client.post("/api/emergency/callout-replacement", json=self._payload(6), headers=headers)
+        resp1 = self.client.post("/api/handover/task", json=self._payload("Check ice merchandiser"), headers=headers)
         self.assertEqual(resp1.status_code, 200)
 
-        resp2 = self.client.post("/api/emergency/callout-replacement", json=self._payload(7), headers=headers)
+        resp2 = self.client.post("/api/handover/task", json=self._payload("Clean coffee carafes"), headers=headers)
         self.assertEqual(resp2.status_code, 422)
         self.assertEqual(resp2.json()["error"], "IdempotencyKeyReuseMismatch")
         self.assertIn(key, resp2.json()["detail"])

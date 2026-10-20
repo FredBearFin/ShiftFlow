@@ -59,12 +59,10 @@ class TestShiftHandover(unittest.TestCase):
 
     def test_04_fastapi_handover_endpoints(self):
         """Verifies all FastAPI shift handover REST endpoints return status 200."""
-        # 1. Audit report endpoint
+        # 1. Audit report endpoint: no stored source data, so it answers 501
         resp1 = self.client.get("/api/handover/audit/FAC-OMAHA-01")
-        self.assertEqual(resp1.status_code, 200)
-        data1 = resp1.json()
-        self.assertIn("overall_handover_health_score", data1)
-        self.assertGreaterEqual(data1["overall_handover_health_score"], 90.0)
+        self.assertEqual(resp1.status_code, 501)
+        self.assertEqual(resp1.json()["detail"], "not implemented: no source data")
 
         # 2. Checklists endpoint
         resp2 = self.client.get("/api/handover/checklists/FAC-OMAHA-01")
@@ -72,23 +70,22 @@ class TestShiftHandover(unittest.TestCase):
         data2 = resp2.json()
         self.assertIn("morning_to_midday", data2)
 
-        # 3. Overlap analysis endpoint
+        # 3. Overlap analysis endpoint: no stored overlap data, so it answers 501
         resp3 = self.client.get("/api/handover/overlap-analysis")
-        self.assertEqual(resp3.status_code, 200)
-        data3 = resp3.json()
-        self.assertIn("overlap_metrics", data3)
+        self.assertEqual(resp3.status_code, 501)
+        self.assertEqual(resp3.json()["detail"], "not implemented: no source data")
 
-        # 4. Checklist item toggle endpoint
+        # 4. Checklist item toggle endpoint: nothing is persisted, so no result is returned
         resp4 = self.client.post("/api/handover/checklist-toggle", json={
             "item_id": "CHK-GR-01",
             "facility_id": "FAC-OMAHA-01",
             "new_status": "completed",
             "verified_by": "Sarah Kowalski (Supervisor)"
         })
-        self.assertEqual(resp4.status_code, 200)
-        self.assertEqual(resp4.json()["status"], "updated")
+        self.assertEqual(resp4.status_code, 501)
+        self.assertEqual(resp4.json()["detail"], "not implemented: no source data")
 
-        # 5. Till audit submission endpoint
+        # 5. Till audit submission endpoint: variance is computed from the submitted figures
         resp5 = self.client.post("/api/handover/till-audit", json={
             "register_id": "Register 01",
             "facility_id": "FAC-OMAHA-01",
@@ -102,6 +99,19 @@ class TestShiftHandover(unittest.TestCase):
         self.assertEqual(resp5.status_code, 200)
         self.assertEqual(resp5.json()["reconciliation_status"], "balanced")
         self.assertEqual(resp5.json()["variance"], 0.0)
+        self.assertNotIn("safe_drop_receipt", resp5.json())
+        self.assertIn("Float retained at $200.00", resp5.json()["message"])
+
+        # Float is required: no $200 default is supplied by the server
+        resp6 = self.client.post("/api/handover/till-audit", json={
+            "register_id": "Register 01",
+            "closing_cash_counted": 1045.00,
+            "cash_dropped_to_safe": 845.00,
+            "expected_system_cash": 1045.00,
+            "audited_by": "Marcus Vance",
+            "witnessed_by": "Devon Taylor"
+        })
+        self.assertEqual(resp6.status_code, 422)
 
     def test_05_custom_turnover_task_input(self):
         """Verifies supervisors can dynamically input custom turnover tasks into checklists."""

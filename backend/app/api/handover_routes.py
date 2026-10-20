@@ -31,7 +31,7 @@ class ChecklistToggleRequest(BaseModel):
 class TillSubmitRequest(BaseModel):
     register_id: str
     facility_id: str = "FAC-OMAHA-01"
-    opening_float: float = 200.00
+    opening_float: float
     closing_cash_counted: float
     cash_dropped_to_safe: float
     expected_system_cash: float
@@ -49,13 +49,12 @@ class CreateCustomTaskRequest(BaseModel):
     notes: Optional[str] = "Supervisor configured turnover task"
 
 
-@router.get("/audit/{facility_id}", response_model=ShiftHandoverAuditReport)
+@router.get("/audit/{facility_id}")
 def get_shift_handover_audit(facility_id: str):
     """
-    Returns the comprehensive frontline shift supervisor handover audit,
-    including overlap window buffers, friction indices, and checklists.
+    Returns 501: no stored shift, overlap, or till data, so no handover audit is generated.
     """
-    return ShiftHandoverEngine.generate_handover_audit(facility_id=facility_id)
+    raise HTTPException(status_code=501, detail="not implemented: no source data")
 
 
 @router.get("/checklists/{facility_id}")
@@ -93,40 +92,28 @@ def create_custom_turnover_task(request: CreateCustomTaskRequest):
 @router.get("/overlap-analysis")
 def get_overlap_analysis():
     """
-    Returns detailed metrics on shift overlap durations and friction reduction.
+    Returns 501: no stored shift or overlap data, so no overlap metrics are computed.
     """
-    metrics = ShiftHandoverEngine.calculate_overlap_metrics()
-    return {
-        "status": "success",
-        "overlap_metrics": metrics,
-        "primary_advantage": "3.0-hour Morning-to-Midday overlap decouples cash drops from rush lines",
-        "overall_friction_reduction": "Reduced from 45.0% (ad-hoc zero-overlap) to 2.8% (ShiftFlow overlap)"
-    }
+    raise HTTPException(status_code=501, detail="not implemented: no source data")
 
 
 @router.post("/checklist-toggle")
 def toggle_checklist_item(request: ChecklistToggleRequest):
     """
     Toggles a checklist item's status with supervisor verification tracking.
+    Returns 501: no checklist state is persisted, so a toggle cannot be recorded.
     """
     if request.new_status not in ["completed", "pending", "flagged"]:
         raise HTTPException(status_code=400, detail="Invalid status. Must be completed, pending, or flagged.")
 
-    return {
-        "status": "updated",
-        "item_id": request.item_id,
-        "new_status": request.new_status,
-        "verified_by": request.verified_by,
-        "timestamp": "2026-10-19 13:45:00 UTC",
-        "message": f"Checklist item {request.item_id} marked as {request.new_status} by {request.verified_by}."
-    }
+    raise HTTPException(status_code=501, detail="not implemented: no source data")
 
 
 @router.post("/till-audit")
 def submit_till_audit(request: TillSubmitRequest):
     """
-    Submits a cash drawer till audit, validates float preservation ($200 default),
-    and computes cash variance against POS system totals.
+    Submits a cash drawer till audit and computes cash variance against the POS system total.
+    No receipt is issued: nothing is persisted.
     """
     retained_float = request.opening_float
     total_reconciled = request.cash_dropped_to_safe + retained_float
@@ -149,6 +136,5 @@ def submit_till_audit(request: TillSubmitRequest):
         "reconciliation_status": status,
         "audited_by": request.audited_by,
         "witnessed_by": request.witnessed_by,
-        "safe_drop_receipt": f"DROP-SAFE-{request.register_id[:3]}-8841",
-        "message": "Cash drawer reconciled cleanly. Float preserved at $200.00."
+        "message": f"Cash drawer status: {status}. Variance {variance:+.2f}. Float retained at ${retained_float:.2f}."
     }

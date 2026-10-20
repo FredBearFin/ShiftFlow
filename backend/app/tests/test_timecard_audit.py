@@ -54,9 +54,11 @@ class TestTimecardAuditor(unittest.TestCase):
         ]
 
         audit = TimecardAuditor.audit_rounding_neutrality(punches)
-        self.assertTrue(audit["flsa_785_48_compliant"])
-        self.assertFalse(audit["employer_favorable_bias"])
-        self.assertTrue(audit["statutorily_neutral"])
+        # Deltas per shift: -8, +5, +6, +14 minutes. Net +17, average +4.25.
+        self.assertEqual(audit["net_variance_minutes"], 17.0)
+        self.assertEqual(audit["avg_shift_variance_minutes"], 4.25)
+        self.assertNotIn("flsa_785_48_compliant", audit)
+        self.assertNotIn("employer_favorable_bias", audit)
 
     def test_03_standalone_workweek_overtime_29_cfr_778_104(self):
         """Verifies single standalone workweek overtime calculation and zero cross-week averaging."""
@@ -99,29 +101,24 @@ class TestTimecardAuditor(unittest.TestCase):
         audit = TimecardAuditor.audit_recordkeeping_compliance(compliant_records)
         self.assertTrue(audit["cfr_516_5_compliant"])
         self.assertEqual(audit["deficiency_count"], 0)
-        self.assertEqual(audit["retention_policy_years"], 3)
-        self.assertIn("PASS", audit["audit_readiness_verdict"])
+        self.assertEqual(audit["audit_readiness_verdict"], "PASS")
 
     def test_05_fastapi_compliance_endpoints(self):
-        """Verifies all FastAPI wage and hour compliance REST endpoints respond with status 200."""
-        # 1. Timecard Rounding Audit
-        res1 = self.client.get("/api/compliance/timecard-rounding-audit?sample_size=100")
-        self.assertEqual(res1.status_code, 200)
-        data1 = res1.json()
-        self.assertTrue(data1["flsa_785_48_compliant"])
-        self.assertEqual(data1["total_shifts_audited"], 100)
+        """Stored-data audits return 501 because no stored timecards exist; the POST audits its request body."""
+        # 1. Timecard Rounding Audit: no stored punches
+        res1 = self.client.get("/api/compliance/timecard-rounding-audit")
+        self.assertEqual(res1.status_code, 501)
+        self.assertEqual(res1.json()["detail"], "not implemented: no source data")
 
-        # 2. Standalone Workweek Overtime Audit
+        # 2. Standalone Workweek Overtime Audit: no stored hours
         res2 = self.client.get("/api/compliance/workweek-overtime-audit?hourly_wage=18.00")
-        self.assertEqual(res2.status_code, 200)
-        data2 = res2.json()
-        self.assertTrue(data2["prohibition_of_averaging"]["is_enforced"])
+        self.assertEqual(res2.status_code, 501)
+        self.assertEqual(res2.json()["detail"], "not implemented: no source data")
 
-        # 3. Recordkeeping Certificate
+        # 3. Recordkeeping Certificate: no stored payroll records
         res3 = self.client.get("/api/compliance/recordkeeping-certificate")
-        self.assertEqual(res3.status_code, 200)
-        data3 = res3.json()
-        self.assertIn("CERT-FLSA-516", data3["certificate_id"])
+        self.assertEqual(res3.status_code, 501)
+        self.assertEqual(res3.json()["detail"], "not implemented: no source data")
 
         # 4. Custom Rounding Neutrality Test POST
         payload = {
@@ -135,6 +132,7 @@ class TestTimecardAuditor(unittest.TestCase):
         self.assertEqual(res4.status_code, 200)
         data4 = res4.json()
         self.assertEqual(data4["total_shifts_audited"], 2)
+        self.assertNotIn("investigator_verdict", data4)
 
 
 if __name__ == "__main__":

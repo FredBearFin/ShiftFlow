@@ -431,7 +431,7 @@ def evaluate_ergonomics_audit(
         full_weekends_off_pct=full_weekends_off_pct,
         consolidated_rest_blocks_pct=consolidated_rest_pct,
         criteria_breakdown=criteria_breakdown,
-        statutory_accommodation_violations_count=0,
+        statutory_accommodation_violations_count=sum(1 for line in roster_lines if line.statutory_accommodation_violation),
         fair_workweek_compliant=(clopening_violations == 0),
         mandatory_rest_violations=clopening_violations,
     )
