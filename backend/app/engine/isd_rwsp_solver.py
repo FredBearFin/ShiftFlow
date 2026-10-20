@@ -435,7 +435,7 @@ class ISDRWSPSolver:
                         if rest_hrs < settings.min_rest_hours_between_shifts:
                             continue
 
-                    if cand == "N" and len(candidates) > 1:
+                    if cand == "N":
                         if steps_remaining > max_n:
                             continue
                         if (
