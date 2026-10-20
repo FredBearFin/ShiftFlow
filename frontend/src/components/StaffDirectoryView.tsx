@@ -180,7 +180,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     </span>
                     {emp.accommodation_type && emp.accommodation_type !== 'none' && (
                       <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92] capitalize">
-                        {emp.accommodation_type === 'religious' ? 'Title VII Sabbath' : `${emp.accommodation_type} Accom.`}
+                        {emp.accommodation_type === 'religious' ? 'Sabbath accom.' : `${emp.accommodation_type} Accom.`}
                       </span>
                     )}
                   </div>
@@ -211,7 +211,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                       Available Days (Mon – Sun):
                     </span>
                     {emp.accommodation_type === 'religious' && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92]">Protected Exclusion</span>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92]">Schedule restriction on file</span>
                     )}
                   </div>
                   <div className="grid grid-cols-7 gap-1">
