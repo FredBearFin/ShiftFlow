@@ -1,6 +1,7 @@
 import React from 'react';
 import { ParetoPoint, SolveResponse } from '../types';
 import { Term } from './ui/Term';
+import { Button } from './ui/Button';
 
 interface ParetoExplorerViewProps {
   solution: SolveResponse;
@@ -18,6 +19,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   const maxShift = Math.max(...points.map((p) => p.obj_shift), minShift + 10);
   const minErgo = 0;
   const maxErgo = Math.max(...points.map((p) => p.obj_ergo), 20);
+  const knee = points.find((p) => p.is_knee_point);
 
   // SVG Coordinate projection
   const svgW = 720;
@@ -75,10 +77,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Interactive <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-Efficient Frontier (Click Any Point to Apply)
             </h3>
             <div className="flex items-center gap-3 text-[11px]">
-              <span className="inline-flex items-center gap-1.5 text-slate-600">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                5% Knee Point (+27.34% Ergo)
-              </span>
+              {knee && (
+                <span className="inline-flex items-center gap-1.5 text-slate-600">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  {knee.leeway_pct}% Knee Point (+{knee.becker_theoretical_improvement_pct.toFixed(2)}% Ergo, theoretical)
+                </span>
+              )}
               <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
                 Active Schedule
@@ -202,42 +206,41 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Operational Rest & Efficiency Benchmark
             </span>
             <h3 className="text-sm font-bold text-slate-900 mt-1">
-              Why the 5% Knee Point Matters
+              {knee ? `Why the ${knee.leeway_pct}% Knee Point Matters` : 'Frontier Benchmark'}
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
               The <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> frontier descends
               steeply at first before flattening:
             </p>
 
-            <div className="mt-3 space-y-2">
-              {[
-                { lw: 1, gain: '8.37%', desc: 'Micro shift boundary adjustment' },
-                { lw: 5, gain: '27.34%', desc: 'Critical Knee Point (Best ROI)' },
-                { lw: 10, gain: '39.46%', desc: 'Zero extra payroll headcount' },
-                { lw: 20, gain: '54.64%', desc: 'Aggressive weekend recovery' },
-                { lw: 50, gain: '79.06%', desc: 'Ergonomics-first regime' },
-                { lw: 75, gain: '89.71%', desc: 'Near-zero ergonomic penalty' },
-              ].map((row) => (
-                <div
-                  key={row.lw}
-                  onClick={() => onSelectLeewayPct(row.lw)}
-                  className={`p-2.5 rounded-lg border cursor-pointer transition-colors flex items-center justify-between text-xs ${
-                    Math.abs(selectedLeewayPct - row.lw) < 0.1
-                      ? 'bg-indigo-50 border-indigo-500 font-semibold'
-                      : 'bg-slate-50 border-slate-200 hover:bg-white'
-                  }`}
-                >
-                  <div>
-                    <span className="font-mono-tabular font-bold text-slate-900">
-                      +{row.lw}% SD Increase
+            <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
+              {points.map((pt) => {
+                const isSel = Math.abs(pt.leeway_pct - selectedLeewayPct) < 0.1;
+                return (
+                  <div
+                    key={pt.point_index}
+                    onClick={() => onSelectLeewayPct(pt.leeway_pct)}
+                    className={`p-2.5 rounded-lg border cursor-pointer transition-colors flex items-center justify-between text-xs ${
+                      isSel
+                        ? 'bg-indigo-50 border-indigo-500 font-semibold'
+                        : 'bg-slate-50 border-slate-200 hover:bg-white'
+                    }`}
+                  >
+                    <div>
+                      <span className="font-mono-tabular font-bold text-slate-900">
+                        +{pt.leeway_pct}% SD Increase
+                      </span>
+                      <span className="block text-[11px] text-slate-500">
+                        {pt.label}
+                        {pt.is_knee_point ? ' (Knee Point)' : ''}
+                      </span>
+                    </div>
+                    <span className="font-mono-tabular font-bold text-emerald-700">
+                      +{pt.becker_theoretical_improvement_pct.toFixed(2)}% Ergo (theoretical)
                     </span>
-                    <span className="block text-[11px] text-slate-500">{row.desc}</span>
                   </div>
-                  <span className="font-mono-tabular font-bold text-emerald-700">
-                    +{row.gain} Ergo
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -259,7 +262,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 <th className="py-3 px-3 text-right">obj^shift</th>
                 <th className="py-3 px-3 text-right">obj^ergo</th>
                 <th className="py-3 px-3 text-right">Ergo improvement (theoretical)</th>
-                <th className="py-3 px-3 text-right">Cohorts (e)</th>
+                <th className="py-3 px-3 text-right">Headcount</th>
                 <th className="py-3 px-3 text-right">Free Weekends</th>
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
@@ -293,17 +296,13 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     <td className="py-2.5 px-3 text-right">{pt.employee_count}</td>
                     <td className="py-2.5 px-3 text-right">{pt.full_weekends_off_pct}%</td>
                     <td className="py-2.5 px-4 text-right font-sans">
-                      <button
-                        type="button"
+                      <Button
+                        size="sm"
+                        variant={isSel ? 'accent' : 'secondary'}
                         onClick={() => onSelectLeewayPct(pt.leeway_pct)}
-                        className={`px-2.5 py-1 rounded text-xs font-semibold ${
-                          isSel
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                        }`}
                       >
                         {isSel ? 'Active' : 'Apply'}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );
