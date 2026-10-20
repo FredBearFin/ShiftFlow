@@ -534,7 +534,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           htmlFor={`shift-${tpl.code}-max-duration`}
                           className="block text-[11px] text-slate-500 font-medium mb-1"
                         >
-                          Longest allowed (hours)
+                          Longest shift the solver may use (hours)
                         </label>
                         <input
                           id={`shift-${tpl.code}-max-duration`}
@@ -672,8 +672,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     },
                     {
                       field: 'enforce_zero_clopening' as const,
-                      label: 'At least 16 hours between shifts',
-                      desc: 'No closing shift followed directly by an opening shift.',
+                      label: 'No closing shift followed by an opening shift the next day',
+                      desc: 'The solver checks this one rule. It does not check other rest periods.',
                     },
                     {
                       field: 'avoid_single_rest_days' as const,
@@ -745,7 +745,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
                       +{leewayPct}% cost →{' '}
                       <span className="text-emerald-700">
-                        +{expectedErgoGain}% staff comfort
+                        +{expectedErgoGain}% ergonomic score (theoretical)
                       </span>
                     </div>
                   </div>
@@ -753,7 +753,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     {leewayPct === 5
                       ? '★ Recommended'
                       : leewayPct === 10
-                      ? 'No extra payroll'
+                      ? 'Standard balance'
                       : 'Custom balance'}
                   </span>
                 </div>
@@ -797,7 +797,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             : 'text-emerald-700 font-semibold'
                         }`}
                       >
-                        +{pt.gain} staff comfort
+                        +{pt.gain}% ergonomic score (theoretical)
                       </div>
                     </button>
                   ))}
