@@ -77,6 +77,8 @@ def create_employee(
     db: sqlite3.Connection = Depends(get_db),
 ):
     repo = ShiftFlowRepository(db)
+    if repo.get_facility(payload.facility_id) is None:
+        raise HTTPException(status_code=404, detail=f"Facility {payload.facility_id} not found.")
     emp = repo.create_employee(
         facility_id=payload.facility_id,
         name=payload.name,
