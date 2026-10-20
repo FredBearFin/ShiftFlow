@@ -217,3 +217,7 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Gain.** "staff comfort" becomes "ergonomic score (theoretical)", since the gain is a Table 7 target, not a measured result.
   - **Cost step.** "No extra payroll" at 10% leeway is removed; the label becomes "Standard balance".
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 18: solver and idempotency contract tests (King).** Files: `backend/app/tests/test_solver_contracts.py` (new), `backend/app/tests/__init__.py` (adds the module to the list), and no other file. Tests only; no production code changes.
+  - **Coverage recount.** For every one of the 168 interval cells, scheduled minus required equals overstaffing minus understaffing.
+  - **Idempotency conflict.** A second request with the same key while the first is still in flight returns 409 with Retry-After.
+  - **Acceptance.** `cd backend && python run_all_tests.py` exits 0. One PR is one commit under Art. 1.
