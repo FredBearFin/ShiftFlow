@@ -39,12 +39,10 @@ export const Header: React.FC<HeaderProps> = ({
     {
       id: 'cfo',
       label: 'CFO Financial Model',
-      badge: '+12.2k EBITDA',
     },
     {
       id: 'pos',
-      label: 'POS Demand Sync',
-      badge: 'Square / Clover / Toast',
+      label: 'POS Demand Upload',
     },
     {
       id: 'coverage',
@@ -60,6 +58,10 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'ergonomics',
       label: 'Ergonomics Health Audit',
       badge: solution ? `${solution.ergonomics_audit.health_index_score}/100` : undefined,
+    },
+    {
+      id: 'compliance',
+      label: 'DOL Compliance',
     },
   ];
 
@@ -78,10 +80,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </h1>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
                   Enterprise Workforce OS
-                </span>
-                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Live Cloud Sync
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
