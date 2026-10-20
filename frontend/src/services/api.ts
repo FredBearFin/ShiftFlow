@@ -310,6 +310,30 @@ export interface EmployeeApiWrite {
   statutory_notes?: string | null;
 }
 
+export interface PosUploadResult {
+  status: string;
+  records_parsed: number;
+  weekly_sales: number;
+  weekly_transactions: number;
+  suggested_demand_matrix: number[][];
+}
+
+/** Uploads a POS transaction CSV and returns the parsed summary and suggested demand matrix. */
+export async function uploadPosCsvApi(facilityId: string, file: File): Promise<PosUploadResult> {
+  const body = new FormData();
+  body.append('file', file);
+  const res = await fetch(`/api/pos/upload-csv?facility_id=${encodeURIComponent(facilityId)}`, {
+    method: 'POST',
+    headers: { 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+    body,
+  });
+  if (!res.ok) {
+    const detail = await res.json().then((j) => j.detail).catch(() => null);
+    throw new Error(typeof detail === 'string' ? detail : 'The POS file could not be uploaded.');
+  }
+  return await res.json();
+}
+
 export async function fetchEmployeesApi(facilityId: string): Promise<EmployeeApiRecord[]> {
   const res = await fetch(`/api/employees?facility_id=${encodeURIComponent(facilityId)}`);
   if (!res.ok) throw new Error('Staff records could not be loaded from the server.');

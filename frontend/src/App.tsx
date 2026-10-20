@@ -388,6 +388,7 @@ export function App() {
             {activeTab === 'cfo' && <CFODashboardView solution={solution} />}
             {activeTab === 'pos' && (
               <POSIntegrationView
+                facilityId={STAFF_FACILITY_ID}
                 onDemandUpdated={(newDemand) => setDemandMatrix(newDemand)}
               />
             )}
