@@ -172,6 +172,18 @@ def extract_eulerian_cycle_hierholzer(arcs: List[Dict]) -> List[Dict]:
     return ordered_arcs
 
 
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_WORK_BOUND_PENALTY = 12.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_WORK_TARGET_PENALTY = 4.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_SINGLE_REST_PENALTY = 15.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_SINGLE_REST_DEFAULT_PENALTY = 3.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_REST_MIN_PENALTY = 8.0
+
+
 class SolverInfeasibleError(Exception):
     """Raised when the generator cannot satisfy a hard constraint, or the cycle is incomplete."""
 
@@ -334,16 +346,20 @@ class ISDRWSPSolver:
             score = 0.0
             for w_len in w_lens:
                 if w_len < min_w:
-                    score += 12.0 * (min_w - w_len)
+                    score += SOFT_GUARDRAIL_WORK_BOUND_PENALTY * (min_w - w_len)
                 elif w_len > max_w:
-                    score += 12.0 * (w_len - max_w)
+                    score += SOFT_GUARDRAIL_WORK_BOUND_PENALTY * (w_len - max_w)
                 if not (3 <= w_len <= 5):
-                    score += 4.0 * abs(4 - w_len)
+                    score += SOFT_GUARDRAIL_WORK_TARGET_PENALTY * abs(4 - w_len)
             for r_len in r_lens:
                 if r_len == 1:
-                    score += 15.0 if self.guardrails.avoid_single_rest_days else 3.0
+                    score += (
+                        SOFT_GUARDRAIL_SINGLE_REST_PENALTY
+                        if self.guardrails.avoid_single_rest_days
+                        else SOFT_GUARDRAIL_SINGLE_REST_DEFAULT_PENALTY
+                    )
                 if r_len < min_r:
-                    score += 8.0 * (min_r - r_len)
+                    score += SOFT_GUARDRAIL_REST_MIN_PENALTY * (min_r - r_len)
                 elif r_len > max_r:
                     score += 4.0 * (r_len - max_r)
 
