@@ -36,7 +36,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
   return (
     <div className="space-y-5">
       <div className="enterprise-card p-5 bg-white">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770] block">
           Point-of-Sale Integration
         </span>
         <h2 className="text-base font-bold text-slate-900 mt-0.5">
@@ -113,7 +113,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
             type="button"
             onClick={handleUpload}
             disabled={!file || isUploading}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs disabled:opacity-50"
+            className="px-4 py-2 bg-[#4A6B5D] hover:bg-[#3E5C50] text-[#FFFFFF] rounded-lg text-xs font-bold shadow-[0_1px_2px_rgba(43,58,66,0.08)] disabled:opacity-50"
           >
             {isUploading ? 'Uploading and recalculating...' : 'Upload and recalculate demand'}
           </button>

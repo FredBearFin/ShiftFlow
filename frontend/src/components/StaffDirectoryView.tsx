@@ -114,7 +114,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770] block">
               Workforce Management
             </span>
           </div>
@@ -173,7 +173,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                       className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                         emp.is_active
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-red-50 text-red-700 border border-red-200'
+                          : 'bg-red-50 text-[#9F3A32] border border-red-200'
                       }`}
                     >
                       {emp.is_active ? 'Active' : 'Separated'}
@@ -295,7 +295,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
             </div>
             <form onSubmit={handleSubmitAdd} className="space-y-3.5">
               <div>
-                <label htmlFor="staff-new-name" className="block text-xs font-semibold text-slate-700 mb-1">Full Name <span className="text-red-600">Required</span></label>
+                <label htmlFor="staff-new-name" className="block text-xs font-semibold text-slate-700 mb-1">Full Name <span className="text-[#9F3A32]">Required</span></label>
                 <input id="staff-new-name"
                   type="text"
                   required
@@ -316,7 +316,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label htmlFor="staff-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">Wage ($/hr) <span className="text-red-600">Required</span></label>
+                  <label htmlFor="staff-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">Wage ($/hr) <span className="text-[#9F3A32]">Required</span></label>
                   <input id="staff-new-wage"
                     type="number"
                     step="0.25"
@@ -413,7 +413,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           <div ref={separationDialogRef} role="dialog" aria-modal="true" aria-labelledby="separation-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C6770] block">
                   Contemporaneous HR Separation Audit
                 </span>
                 <h3 id="separation-title" className="text-base font-bold text-slate-900">
@@ -426,8 +426,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
             </div>
 
             {/* Legal Warning Notice */}
-            <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-900 space-y-1">
-              <span className="font-bold flex items-center gap-1.5 text-amber-800">
+            <div className="p-3 bg-white border border-[#7F8A92] border-l-4 border-l-[#C28B47] rounded-lg text-xs text-[#2B3A42] space-y-1">
+              <span className="font-bold flex items-center gap-1.5 text-[#2B3A42]">
                 ⚠ Legal Compliance Notice (FLSA § 15(a)(3) & Title VII § 704(a))
               </span>
               <p className="text-[11px] leading-relaxed">

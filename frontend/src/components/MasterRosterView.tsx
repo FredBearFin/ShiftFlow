@@ -191,7 +191,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
             Ergonomics Health Index
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-emerald-700">
+            <span className="text-2xl font-bold font-mono-tabular text-[#2B3A42]">
               {solution.ergonomics_audit.health_index_score}%
             </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -225,7 +225,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
             Availability Adherence
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-indigo-700">
+            <span className="text-2xl font-bold font-mono-tabular text-[#2B3A42]">
               {solution.roster_lines.reduce((a, l) => a + l.availability_conflicts_count, 0) === 0
                 ? '100%'
                 : `${solution.roster_lines.reduce((a, l) => a + l.availability_conflicts_count, 0)} Conflicts`}
@@ -626,17 +626,17 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           : `Rotation Line ${line.line_number}`}
                       </span>
                       {line.availability_conflicts_count > 0 && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
                           {line.availability_conflicts_count} Avail Alert
                         </span>
                       )}
                       {line.statutory_accommodation_violation && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-900 border border-purple-300">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
                           Title VII / ADA Sabbath Alert
                         </span>
                       )}
                       {line.fair_workweek_predictability_warning && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
                           Predictability Pay Risk
                         </span>
                       )}
@@ -734,7 +734,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g., Alex Morgan"
-                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs focus:border-indigo-600 focus:outline-none"
+                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
                 />
               </div>
 

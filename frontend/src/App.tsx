@@ -328,7 +328,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col bg-[#F4F1EA] text-[#2B3A42]">
       <Header
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -340,17 +340,17 @@ export function App() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {staffError && (
-          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             {staffError}
           </div>
         )}
         {separationError && (
-          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             {separationError}
           </div>
         )}
         {solveError && (
-          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             <span>
               {solveError}
               {solution ? ' The schedule shown is the last one that was computed.' : ''}
@@ -358,7 +358,7 @@ export function App() {
             <button
               type="button"
               onClick={() => setSolveAttempt((n) => n + 1)}
-              className="rounded-md border border-red-300 bg-white px-3 py-1 font-semibold text-red-800 hover:bg-red-100"
+              className="rounded-md border border-[#9F3A32] bg-white px-3 py-1 font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
             >
               Retry
             </button>

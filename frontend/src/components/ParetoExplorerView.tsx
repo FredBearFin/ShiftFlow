@@ -46,7 +46,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770]">
               Schedule Flexibility vs. Overtime Optimization
             </span>
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
@@ -58,11 +58,11 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               the curve or table below to immediately re-calibrate the active roster.
             </p>
           </div>
-          <div className="px-4 py-2.5 rounded-lg bg-indigo-50 border border-indigo-200 text-xs">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
+          <div className="card p-4 text-xs">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[#5C6770] block">
               Active Calibration
             </span>
-            <span className="text-sm font-bold font-mono-tabular text-indigo-950">
+            <span className="text-sm font-bold font-mono-tabular text-[#2B3A42]">
               +{selectedLeewayPct}% Shift Design Leeway
             </span>
           </div>
@@ -202,7 +202,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         {/* Becker (2026) Table 7 Empirical Benchmark Reference */}
         <div className="lg:col-span-4 card p-5 flex flex-col justify-between">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770]">
               Operational Rest & Efficiency Benchmark
             </span>
             <h3 className="text-sm font-bold text-slate-900 mt-1">
@@ -222,7 +222,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     onClick={() => onSelectLeewayPct(pt.leeway_pct)}
                     className={`p-2.5 rounded-lg border cursor-pointer transition-colors flex items-center justify-between text-xs ${
                       isSel
-                        ? 'bg-indigo-50 border-indigo-500 font-semibold'
+                        ? 'bg-white border-[#7F8A92] border-l-4 border-l-[#2B3A42] font-semibold'
                         : 'bg-slate-50 border-[#7F8A92] hover:bg-white'
                     }`}
                   >
@@ -235,7 +235,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         {pt.is_knee_point ? ' (Knee Point)' : ''}
                       </span>
                     </div>
-                    <span className="font-mono-tabular font-bold text-emerald-700">
+                    <span className="font-mono-tabular font-bold text-[#2B3A42]">
                       +{pt.becker_theoretical_improvement_pct.toFixed(2)}% Ergo (theoretical)
                     </span>
                   </div>
@@ -278,7 +278,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     <td className="py-2.5 px-4 font-sans font-semibold text-slate-900">
                       {pt.label}
                       {pt.is_knee_point && (
-                        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-amber-100 text-amber-800 border border-amber-300">
+                        <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
                           Knee Point
                         </span>
                       )}
@@ -287,10 +287,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     <td className="py-2.5 px-3 text-right font-bold text-slate-900">
                       {pt.obj_shift.toFixed(1)}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
+                    <td className="py-2.5 px-3 text-right font-bold text-[#2B3A42]">
                       {pt.obj_ergo.toFixed(1)}
                     </td>
-                    <td className="py-2.5 px-3 text-right text-indigo-700 font-semibold">
+                    <td className="py-2.5 px-3 text-right text-[#2B3A42] font-bold">
                       +{pt.ergo_improvement_pct.toFixed(2)}%
                     </td>
                     <td className="py-2.5 px-3 text-right">{pt.employee_count}</td>

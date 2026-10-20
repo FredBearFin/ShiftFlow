@@ -45,7 +45,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   }
 
   const unpricedBadge = unpricedCount > 0 ? (
-    <span className="text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+    <span className="text-[11px] font-semibold text-[#2B3A42] bg-[#E4E9EC] border border-[#7F8A92] px-2 py-0.5 rounded before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
       {unpricedCount} {unpricedCount === 1 ? 'line' : 'lines'} unpriced
     </span>
   ) : null;
@@ -131,7 +131,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       {/* Action Header with Export Buttons */}
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770] block">
             Payroll & Cost Analytics
           </span>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">

@@ -31,7 +31,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
       {/* Coverage Equation Banner */}
       <div className="card p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#5C6770]">
             24-Hour Register & Floor Coverage Verification
           </span>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
@@ -50,13 +50,13 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
             <span className="text-slate-500 block text-[10px]">Scheduled Hrs</span>
             <strong className="text-slate-900 text-sm">{totalScheduled}h</strong>
           </div>
-          <div className="px-3.5 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs font-mono-tabular">
-            <span className="text-amber-700 block text-[10px]">Understaffing (∑τ_gi)</span>
-            <strong className="text-amber-900 text-sm">{totalUnder}h</strong>
+          <div className="px-3.5 py-2 rounded-lg bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] text-xs font-mono-tabular">
+            <span className="text-[#2B3A42] block text-[10px] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">Understaffing (∑τ_gi)</span>
+            <strong className="text-[#2B3A42] text-sm">{totalUnder}h</strong>
           </div>
-          <div className="px-3.5 py-2 rounded-lg bg-indigo-50 border border-indigo-200 text-xs font-mono-tabular">
-            <span className="text-indigo-700 block text-[10px]">Overstaffing (∑ω_gi)</span>
-            <strong className="text-indigo-900 text-sm">{totalOver}h</strong>
+          <div className="px-3.5 py-2 rounded-lg bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] text-xs font-mono-tabular">
+            <span className="text-[#2B3A42] block text-[10px]">Overstaffing (∑ω_gi)</span>
+            <strong className="text-[#2B3A42] text-sm">{totalOver}h</strong>
           </div>
 
           <div className="inline-flex rounded-md border border-[#7F8A92] p-0.5 bg-slate-100">
