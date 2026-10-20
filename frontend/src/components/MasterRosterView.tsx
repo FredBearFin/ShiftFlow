@@ -10,6 +10,16 @@ import {
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 
+const WAGE_MIN = 7.25;
+const WAGE_MAX = 100;
+
+// A blank or out-of-bounds wage is not a number: no substitute value is ever used.
+const parseWage = (raw: string): number | null => {
+  if (raw.trim() === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= WAGE_MIN && n <= WAGE_MAX ? n : null;
+};
+
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const SEPARATION_OPTIONS: { value: SeparationCategory; label: string }[] = [
@@ -73,7 +83,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   // New Employee Form State
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState('Frontline Associate');
-  const [newWage, setNewWage] = useState('16.50');
+  const [newWage, setNewWage] = useState('');
+  const [wageDrafts, setWageDrafts] = useState<Record<string, string>>({});
+  const newWageValue = parseWage(newWage);
   const [newAvailDays, setNewAvailDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
 
   // Inline separation form state (one employee's form open at a time)
@@ -113,15 +125,15 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
   const submitNewEmployee = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!newName.trim() || newWageValue === null) return;
     onAddEmployee({
       name: newName.trim(),
       role: newRole,
-      wage: parseFloat(newWage) || 16.50,
+      wage: newWageValue,
       days: newAvailDays,
     });
     setNewName('');
-    setNewWage('16.50');
+    setNewWage('');
     setNewAvailDays([0, 1, 2, 3, 4, 5, 6]);
     setShowAddModal(false);
   };
@@ -366,14 +378,19 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         <input id={`roster-wage-${emp.employee_id}`}
                           type="number"
                           step="0.5"
+                          min={WAGE_MIN}
+                          max={WAGE_MAX}
                           disabled={!emp.is_active}
-                          value={emp.hourly_wage}
-                          onChange={(e) =>
-                            onUpdateEmployee({
-                              ...emp,
-                              hourly_wage: parseFloat(e.target.value) || 16.50,
-                            })
-                          }
+                          aria-invalid={wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null}
+                          value={wageDrafts[emp.employee_id] ?? String(emp.hourly_wage)}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            setWageDrafts((d) => ({ ...d, [emp.employee_id]: raw }));
+                            const wage = parseWage(raw);
+                            if (wage !== null) {
+                              onUpdateEmployee({ ...emp, hourly_wage: wage });
+                            }
+                          }}
                           className="w-full px-2 py-1 border border-slate-200 rounded font-mono-tabular text-xs"
                         />
                       </div>
@@ -694,8 +711,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   <input id="roster-new-wage"
                     type="number"
                     step="0.25"
-                    min="7.25"
-                    max="100"
+                    min={WAGE_MIN}
+                    max={WAGE_MAX}
+                    aria-invalid={newWage.trim() !== '' && newWageValue === null}
                     value={newWage}
                     onChange={(e) => setNewWage(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono-tabular"
@@ -743,7 +761,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold"
+                  disabled={newWageValue === null}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                 >
                   Save & Map to Schedule
                 </button>

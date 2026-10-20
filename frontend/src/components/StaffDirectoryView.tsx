@@ -5,6 +5,16 @@ import { DAYS_OF_WEEK } from '../services/api';
 
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+const WAGE_MIN = 7.25;
+const WAGE_MAX = 100;
+
+// A blank or out-of-bounds wage is not a number: no substitute value is ever used.
+const parseWage = (raw: string): number | null => {
+  if (raw.trim() === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= WAGE_MIN && n <= WAGE_MAX ? n : null;
+};
+
 interface StaffDirectoryViewProps {
   employees: EmployeeRecord[];
   rosterLines: RosterLine[];
@@ -40,7 +50,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
   // Add Employee Form State
   const [newName, setNewName] = useState('');
   const [newRole, setNewRole] = useState('Frontline Clerk');
-  const [newWage, setNewWage] = useState(16.50);
+  const [newWage, setNewWage] = useState('');
   const [newDays, setNewDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
   const [newAccom, setNewAccom] = useState<AccommodationType>('none');
   const [newStatNotes, setNewStatNotes] = useState('');
@@ -52,8 +62,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
   useDialogFocus(addDialogRef, showAddModal, () => setShowAddModal(false));
   useDialogFocus(separationDialogRef, separatingEmp !== null, () => setSeparatingEmp(null));
   const [sepCategory, setSepCategory] = useState<SeparationCategory>('voluntary_resignation');
-  const [sepReason, setSepReason] = useState('Employee tendered voluntary resignation notice.');
-  const [recordedBy, setRecordedBy] = useState('Store General Manager');
+  const [sepReason, setSepReason] = useState('');
+  const [recordedBy, setRecordedBy] = useState('');
+  const sepFormValid = sepReason.trim() !== '' && recordedBy.trim() !== '';
+  const newWageValue = parseWage(newWage);
 
   const displayedEmployees = filterActiveOnly
     ? employees.filter((e) => e.is_active)
@@ -71,11 +83,11 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
   const handleSubmitAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!newName.trim() || newWageValue === null) return;
     onAddEmployee({
       name: newName.trim(),
       role: newRole.trim(),
-      wage: Number(newWage) || 16.50,
+      wage: newWageValue,
       days: newDays,
       accommodation_type: newAccom,
       statutory_notes: newStatNotes.trim() || undefined,
@@ -87,7 +99,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
   };
 
   const handleConfirmSeparation = () => {
-    if (!separatingEmp) return;
+    if (!separatingEmp || !sepFormValid) return;
     onToggleActive(separatingEmp.employee_id, {
       category: sepCategory,
       reason: sepReason,
@@ -249,7 +261,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     onClick={() => {
                       setSeparatingEmp(emp);
                       setSepCategory('voluntary_resignation');
-                      setSepReason('Employee tendered voluntary resignation notice.');
+                      setSepReason('');
+                      setRecordedBy('');
                     }}
                     className="px-3 py-1 rounded text-xs font-semibold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors"
                   >
@@ -307,8 +320,11 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   <input id="staff-new-wage"
                     type="number"
                     step="0.25"
+                    min={WAGE_MIN}
+                    max={WAGE_MAX}
+                    aria-invalid={newWage.trim() !== '' && newWageValue === null}
                     value={newWage}
-                    onChange={(e) => setNewWage(parseFloat(e.target.value) || 16.50)}
+                    onChange={(e) => setNewWage(e.target.value)}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-mono-tabular"
                   />
                 </div>
@@ -380,7 +396,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold"
+                  disabled={newWageValue === null}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                 >
                   Save Associate
                 </button>
@@ -472,7 +489,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               <button
                 type="button"
                 onClick={handleConfirmSeparation}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold"
+                disabled={!sepFormValid}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
                 Log Separation & Unbind Line
               </button>
