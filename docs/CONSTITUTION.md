@@ -233,3 +233,10 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Frontend image.** Copies the lockfile and runs `npm ci`, so the image builds from the locked versions. `.dockerignore` keeps `node_modules` and `dist` out of the build context.
   - **Not in this PR.** Action references stay as major-version tags. Pinning them to commit SHAs needs lookups that were not possible in this session, so that is left open.
   - **Acceptance.** Local `npm ci`, `npm run build` and `npm test` exit 0 in `frontend/`; `python run_all_tests.py` exits 0 in `backend/`. One PR is one commit under Art. 1.
+- **2026-10-20. PR 21: backend pins and image hygiene (King).** Files: `backend/requirements.txt`, `backend/requirements-dev.txt` (new), `backend/Dockerfile`, `.github/workflows/backend-tests.yml` (installs the dev file too), and no other file.
+  - **Removed.** `numpy`, `scipy`, `ortools` and `pydantic-settings`, which no code in `backend/` imports. `uvicorn[standard]` becomes plain `uvicorn`.
+  - **Pinned.** Exact versions of the packages the code uses: `fastapi==0.152.0`, `uvicorn==0.54.0`, `pydantic==2.13.5`, `python-multipart==0.0.32`.
+  - **Dev only.** `httpx==0.28.1` moves to `requirements-dev.txt`, because the test client needs it and the server does not. `pytest` is dropped: no test imports it.
+  - **Container.** The backend image runs as a non-root user, and `/app/data` is owned by that user so the SQLite volume is writable.
+  - **Not in this PR.** Hash pins and base image digests need a lockfile tool and registry lookups that this session cannot run, so they are left open.
+  - **Acceptance.** `python run_all_tests.py` exits 0 after `pip install -r requirements.txt -r requirements-dev.txt`. One PR is one commit under Art. 1.
