@@ -19,7 +19,7 @@ export const LESSONS: Lesson[] = [
     stepId: 1,
     title: 'Pick your business type',
     explanation:
-      'Every business has its own rhythm, so start with the kind that looks most like yours. We fill in typical hours, shift times and rules for that kind. You can change any of them in the steps that follow.',
+      'Every business has its own rhythm, so start with the kind that looks most like yours. We fill in typical hours, shift times and rules for that kind. You can change any of them in the steps that follow, including the trade-off between extra cost and staff comfort on the last step.',
     example:
       'A corner café that opens early and closes mid-afternoon picks Urban Retail & Convenience. Its typical hours are filled in, and in step 2 the owner adjusts how many people are needed in each hour.',
     whyItMatters:
@@ -29,27 +29,27 @@ export const LESSONS: Lesson[] = [
     stepId: 2,
     title: 'Set how many people you need each hour',
     explanation:
-      'Each day button picks a day of the week, and the hour boxes below then show that day\'s needs. For each hour, enter how many staff you need on the floor. A higher number means more people are needed at that hour.',
+      'Each day button picks a day of the week, and the hour boxes below then show that day\'s needs. For each hour, enter how many staff you need on the floor, and the schedule builds every shift from these counts. A higher number means more people are needed at that hour, and that adds extra cost.',
     example:
       'A shop needs 2 people from 12:00 to 13:00 and only 1 from 14:00 to 15:00. Enter 2 in the box labelled Hour 12:00 and 1 in the box labelled Hour 14:00, and the schedule puts two people on at lunch and one in the quiet afternoon. Tab moves between hours.',
     whyItMatters:
-      'Numbers that are too low make customers wait, and numbers that are too high make you pay people who have little to do.',
+      'Numbers that are too low break your staffing rules and hurt staff comfort, while numbers that are too high add extra cost for people with little to do.',
   },
   {
     stepId: 3,
     title: 'Choose your shift times',
     explanation:
-      'A shift is a block of hours that one person works, such as a morning, a midday, an evening or a night shift. Here you set when each kind starts and how long it lasts. The schedule builds its shifts from these blocks.',
+      'A shift is a block of hours that one person works, such as a morning, a midday, an evening or a night shift. Here you set when each kind starts and how long it lasts. The schedule builds its shifts from these blocks, and each rule about rest then applies to them.',
     example:
       'A Morning shift that starts at hour 6 and lasts 8 hours ends at hour 14. An Evening shift that starts at hour 14 and lasts 8 hours covers the afternoon rush.',
     whyItMatters:
-      'Shifts that start at the right times cover the busy hours without leaving gaps or paying for empty ones.',
+      'Shifts that start at the right times cover the busy hours without leaving gaps, which keeps extra cost down and staff comfort up.',
   },
   {
     stepId: 4,
     title: 'Set the scheduling rules',
     explanation:
-      'Rules protect staff health and keep the schedule fair. They limit how many days can run in a row, how much rest a person must have between shifts, and how days off are grouped. The starting values are a good place to begin.',
+      'Rules protect staff health and keep the schedule fair, which supports staff comfort. They limit how many days can run in a row, how much rest a person must have between shifts, and how days off are grouped. Tighter rules can add extra cost, so the starting values are a good place to begin.',
     example:
       'Set the longest work stretch to 5 days, and the schedule will never give one person 6 days in a row. A rule of at least 16 hours between shifts also means no one goes from a late night straight into an early morning.',
     whyItMatters:
@@ -59,7 +59,7 @@ export const LESSONS: Lesson[] = [
     stepId: 5,
     title: 'Balance extra cost and staff comfort',
     explanation:
-      'Allowing a little more cost can make the schedule noticeably kinder to staff. This slider sets how much extra cost you accept, and the screen shows the comfort gain that comes with it. Pick the balance that suits your business.',
+      'Allowing a little more cost can make the schedule noticeably kinder to staff. This slider sets how much extra cost you accept, and the screen shows the comfort gain that comes with it. Pick the balance that suits your business, knowing that every shift still follows your scheduling rules.',
     example:
       'Suppose you allow 5 percent extra cost. The screen then shows how much more staff comfort that buys, and the 5 percent setting is marked Recommended. If you want no extra cost at all, choose the setting marked No extra cost.',
     whyItMatters:
