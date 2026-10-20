@@ -10,7 +10,7 @@
 
 ### EXECUTIVE SUMMARY
 
-In retail store operations, labor is the single largest controllable expense, typically consuming **18% to 28% of gross revenue**. Yet frontline scheduling is historically managed through soft managerial intuition, fragmented spreadsheets, or static calendar software (e.g., 7shifts, Deputy, When I Work). This legacy paradigm leaks hundreds of basis points in unmanaged overtime, employee turnover, and lost general manager floor presence.
+In retail store operations, labor is a major controllable expense. Yet frontline scheduling is historically managed through soft managerial intuition, fragmented spreadsheets, or static calendar software (e.g., 7shifts, Deputy, When I Work). This legacy paradigm leaks hundreds of basis points in unmanaged overtime, employee turnover, and lost general manager floor presence.
 
 ShiftFlow Studio’s algorithmic engine—grounded in Tristan Becker’s (EJOR 2026) Integrated Shift Design and Rotating Workforce Scheduling Problem (I-SD-RWSP)—transforms store scheduling from an administrative cost center into a **tool modeled to reduce labor-cost leakage**.
 
@@ -90,7 +90,6 @@ MODELED NET VALUE / STORE REVENUE                                   : +188.2 Bas
 | Metric                             | Legacy Ad-Hoc Rosters | ShiftFlow Studio OS      |
 +------------------------------------+-----------------------+--------------------------+
 | Bi-Weekly Payroll Volatility       | +/- 14.8% Spikes      | +/- 1.2% Controlled      |
-| Merchant Credit Line Drawdown Cost | $480.00 / year        | $0.00 (Zero drawdowns)   |
 | Wage-law exposure     | Not modeled     | Not assessed; counsel to advise. |
 +------------------------------------+-----------------------+--------------------------+
 ```
@@ -104,7 +103,7 @@ MODELED NET VALUE / STORE REVENUE                                   : +188.2 Bas
 For multi-unit franchisees and private equity rollups, software ROI is judged by **Enterprise Value creation at exit**.
 
 ### Multi-Store Scale Pricing & Compounding Economics
-- **Fleet SaaS Subscription**: **$39.00 / store / month** ($468.00 / store / year) for 4+ locations.
+- **Fleet SaaS Subscription**: **$39.00 / store / month** ($468.00 / store / year) for 10+ locations.
 - **Valuation Multiple Benchmark**: 6.0× is an assumed exit multiple, not sourced.
 
 ```

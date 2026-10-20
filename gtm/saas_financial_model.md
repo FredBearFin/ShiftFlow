@@ -4,8 +4,8 @@
 
 ShiftFlow Studio monetizes via a pure B2B monthly subscription tiered by retail footprint and functionality:
 - **Starter Tier ($79/mo)**: Single-location stores (up to 12 staff). Covers ISD-RWSP solver, cyclic line rotation, zero-clopening check (blocks a closing shift followed by an opening shift when enforce_zero_clopening is on), and CSV exports.
-- **Growth Tier ($199/mo)**: Multi-unit operators (2–5 stores). Includes live overtime KPIs, employee availability matching, and POS sales ingestion.
-- **Fleet Tier ($39/store/mo, min 4 stores)**: Regional chains and franchisees (4–25 stores). Includes multi-store rollup dashboards, Gusto/ADP CSV export, and centralized payroll sync.
+- **Growth Tier ($199/mo)**: Multi-unit operators (2–9 stores). Includes live overtime KPIs, employee availability matching, and POS sales ingestion.
+- **Enterprise Fleet Tier ($39/store/mo, minimum 10 stores)**: Regional chains and franchisees (10–25 stores). Includes multi-store rollup dashboards, Gusto/ADP CSV export, and centralized payroll sync.
 
 ### Key Financial Unit Metrics
 - **Blended Average Revenue Per User (ARPU)**: **$139 / month** ($1,668 / year)
@@ -21,9 +21,9 @@ ShiftFlow Studio monetizes via a pure B2B monthly subscription tiered by retail 
 
 ## 2. 24-Month Month-by-Month Operating Projections
 
-| Month | Active Stores | New Stores Added | Churned Stores | MRR ($) | ARR Run-Rate ($) | Hosting & Infra ($) | Gross Profit ($) | Gross Margin (%) |
+| Month | Active Stores | New Stores Added | Churned Stores | MRR ($) | ARR Run-Rate ($) | Hosting & Infra ($) | Gross Profit ($) | Hosting-only margin (%) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **M01** | 10 | 10 | 0 | $790 | $9,480 | $120 | $670 | 84.8% |
+| **M01** (10 single-location accounts) | 10 | 10 | 0 | $790 | $9,480 | $120 | $670 | 84.8% |
 | **M02** | 22 | 12 | 0 | $1,858 | $22,296 | $140 | $1,718 | 92.5% |
 | **M03** | 38 | 17 | 1 | $3,454 | $41,448 | $180 | $3,274 | 94.8% |
 | **M04** | 56 | 19 | 1 | $5,472 | $65,664 | $240 | $5,232 | 95.6% |
@@ -47,6 +47,8 @@ ShiftFlow Studio monetizes via a pure B2B monthly subscription tiered by retail 
 | **M22** | 722 | 71 | 17 | $100,492 | $1,205,904 | $3,750 | $96,742 | 96.3% |
 | **M23** | 778 | 74 | 18 | $108,872 | $1,306,464 | $4,120 | $104,752 | 96.2% |
 | **M24** | **836** | 77 | 19 | **$117,572** | **$1,410,864** | $4,510 | $113,062 | 96.2% |
+
+= (MRR − hosting) ÷ MRR. Not used for LTV.
 
 ---
 
