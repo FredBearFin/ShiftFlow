@@ -96,6 +96,17 @@ export function App() {
   });
   const [isAddEmpOpen, setIsAddEmpOpen] = useState<boolean>(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false);
+  // An explicit choice to plan a schedule's shape without adding real staff yet
+  // (e.g. a hypothetical business, a job site being planned before anyone is hired).
+  // Deliberately opt-in, not a default fallback, so the empty-staff bug this was
+  // built to fix can't silently reappear.
+  const [planningOnly, setPlanningOnly] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('shiftflow.planningOnly') === '1';
+    } catch {
+      return false;
+    }
+  });
 
   const [authState, setAuthState] = useState<'checking' | 'needs-login' | 'ready'>('checking');
 
@@ -198,7 +209,17 @@ export function App() {
 
   // There is no such thing as a real schedule with no staff on it: until at least one
   // employee exists, setup cannot be skipped or dismissed.
-  const needsOnboarding = employeesLoaded && employees.length === 0;
+  const needsOnboarding = employeesLoaded && employees.length === 0 && !planningOnly;
+
+  const handlePlanWithoutStaff = () => {
+    setPlanningOnly(true);
+    try {
+      window.localStorage.setItem('shiftflow.planningOnly', '1');
+    } catch {
+      // Storage can be blocked; the choice then lasts for this visit only.
+    }
+    setIsWizardOpen(false);
+  };
 
   useEffect(() => {
     if (needsOnboarding) setIsWizardOpen(true);
@@ -401,6 +422,24 @@ export function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {planningOnly && employees.length === 0 && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+            <span>
+              Planning mode: this schedule has no real staff on it yet, so lines show as
+              unassigned. Add your team when you're ready to run it for real.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('roster');
+                setIsAddEmpOpen(true);
+              }}
+              className="rounded-md border border-indigo-300 bg-white px-3 py-1 font-semibold text-indigo-800 hover:bg-indigo-100 whitespace-nowrap"
+            >
+              Add your team
+            </button>
+          </div>
+        )}
         {staffError && (
           <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             {staffError}
@@ -508,6 +547,7 @@ export function App() {
         employees={employees}
         onAddEmployee={handleAddEmployee}
         canSkip={!needsOnboarding}
+        onPlanWithoutStaff={handlePlanWithoutStaff}
       />
 
       <KeyboardShortcutsModal

@@ -40,6 +40,8 @@ interface OnboardingWizardProps {
   onAddEmployee: (emp: NewEmployeeInput) => void;
   /** False while there is no real staff yet: setup cannot be skipped or dismissed. */
   canSkip?: boolean;
+  /** Explicitly finishes setup without any staff - planning a schedule's shape, not running one. */
+  onPlanWithoutStaff?: () => void;
 }
 
 const STEP_LABELS = [
@@ -86,6 +88,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   employees,
   onAddEmployee,
   canSkip = true,
+  onPlanWithoutStaff,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedDayTab, setSelectedDayTab] = useState<number>(0);
@@ -1129,15 +1132,22 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 Next: {STEP_LABELS[currentStep].title} →
               </Button>
             ) : (
-              <Button
-                variant="accent"
-                disabled={employees.length === 0}
-                title={employees.length === 0 ? 'Add at least one staff member first' : undefined}
-                onClick={onCompleteWizard}
-              >
-                <span>Finish setup</span>
-                <span>→</span>
-              </Button>
+              <>
+                {employees.length === 0 && onPlanWithoutStaff && (
+                  <Button variant="secondary" onClick={onPlanWithoutStaff}>
+                    I'm just planning — no real staff yet
+                  </Button>
+                )}
+                <Button
+                  variant="accent"
+                  disabled={employees.length === 0}
+                  title={employees.length === 0 ? 'Add at least one staff member, or choose "just planning"' : undefined}
+                  onClick={onCompleteWizard}
+                >
+                  <span>Finish setup</span>
+                  <span>→</span>
+                </Button>
+              </>
             )}
           </div>
         </div>
