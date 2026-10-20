@@ -193,3 +193,8 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Added.** A real CSV upload to `POST /api/pos/upload-csv`. On success the view shows the parsed record count, weekly sales and transactions from the server, and passes the server's suggested demand matrix up. Before any upload it shows "Not connected: no POS data has been uploaded yet."
   - **Art. 4 exception (narrow, PR 12 only).** `frontend/src/services/api.ts` may add `uploadPosCsvApi` and nothing else. This exception is not precedent.
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 13: DOL tab with no fabricated results (King).** Files: `frontend/src/components/DOLComplianceView.tsx` (rewritten) and no other file. Behavior PR under §3, approved for this batch.
+  - **Removed.** The "AUDIT VERIFIED" badge, the certificate button, the "Safe Harbor" statement, the neutrality test, the fixed sample punches and the fixed statistics (1,248 shifts, +4.6 s per shift, 0% bias, 3-year retention, meal relief count). The view claimed compliance results that no code computed.
+  - **Kept.** The component's `solution` prop and its export, so `App.tsx` is unchanged.
+  - **Shown.** A plain statement that no timecard punches are loaded, because no backend route supplies punch data to this tab yet.
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
