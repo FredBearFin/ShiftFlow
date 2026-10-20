@@ -240,3 +240,8 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Container.** The backend image runs as a non-root user, and `/app/data` is owned by that user so the SQLite volume is writable.
   - **Not in this PR.** Hash pins and base image digests need a lockfile tool and registry lookups that this session cannot run, so they are left open.
   - **Acceptance.** `python run_all_tests.py` exits 0 after `pip install -r requirements.txt -r requirements-dev.txt`. One PR is one commit under Art. 1.
+- **2026-10-20. PR 22: Docker reaches the API (King).** Files: `frontend/nginx.conf` (new), `frontend/Dockerfile`, `docker-compose.yml` (frontend service only), and no other file. Container wiring only.
+  - **Proxy.** The frontend container serves the built app and proxies `/api/` to `http://backend:8000`, so the browser calls the API on its own origin.
+  - **Compose.** The frontend service passes `VITE_API_KEY` as a build argument, because Vite reads it at build time. The unused runtime `VITE_API_BASE_URL` is removed. The frontend starts only after the backend is healthy, as before.
+  - **Limit, stated plainly.** The API key is compiled into the browser bundle, so anyone who can load the page can read it. It keeps stray clients out but is not a secret for a public deployment. Real per-user auth is a later change.
+  - **Acceptance.** `docker compose config` parses, and `cd frontend && npm run build` exits 0. One PR is one commit under Art. 1.
