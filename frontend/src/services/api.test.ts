@@ -2,7 +2,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { solveScheduleApi, exportRosterToCsvString, interpolateBeckerTable7 } from './api';
 import type { SolveRequest, SolveResponse } from '../types';
 
-const UNAVAILABLE = 'The scheduling service is unavailable, so no schedule was computed.';
 const request = { demand_matrix: [], templates: [] } as unknown as SolveRequest;
 
 afterEach(() => {
@@ -10,14 +9,22 @@ afterEach(() => {
 });
 
 describe('solveScheduleApi failure path', () => {
-  it('rejects with the unavailable message when the request throws', async () => {
+  it('rejects with the real error when the request throws', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('network down')));
-    await expect(solveScheduleApi(request)).rejects.toThrow(UNAVAILABLE);
+    await expect(solveScheduleApi(request)).rejects.toThrow('network down');
   });
 
-  it('rejects with the unavailable message when the response is not OK', async () => {
+  it('rejects with the status code when the response is not OK and has no detail', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
-    await expect(solveScheduleApi(request)).rejects.toThrow(UNAVAILABLE);
+    await expect(solveScheduleApi(request)).rejects.toThrow('HTTP 500');
+  });
+
+  it('rejects with the backend detail message when the response body has one', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: false, status: 401, json: async () => ({ detail: 'Not logged in' }) })
+    );
+    await expect(solveScheduleApi(request)).rejects.toThrow('Not logged in');
   });
 
   it('resolves with the parsed body when the response is OK', async () => {

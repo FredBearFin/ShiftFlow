@@ -22,9 +22,14 @@ import {
   exportRosterToCsvString,
   DEFAULT_TEMPLATES,
   DEFAULT_GUARDRAILS,
+  authStatusApi,
+  loginApi,
+  signupApi,
+  logoutApi,
 } from './services/api';
 
 import { Header } from './components/Header';
+import { LoginView } from './components/LoginView';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { MasterRosterView } from './components/MasterRosterView';
 import { StaffDirectoryView } from './components/StaffDirectoryView';
@@ -90,6 +95,31 @@ export function App() {
   });
   const [isAddEmpOpen, setIsAddEmpOpen] = useState<boolean>(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false);
+
+  const [authState, setAuthState] = useState<'checking' | 'needs-login' | 'ready'>('checking');
+
+  useEffect(() => {
+    authStatusApi().then(({ login_required, logged_in }) => {
+      setAuthState(login_required && !logged_in ? 'needs-login' : 'ready');
+    });
+  }, []);
+
+  const handleLogin = async (email: string, password: string): Promise<string | null> => {
+    const err = await loginApi(email, password);
+    if (!err) setAuthState('ready');
+    return err;
+  };
+
+  const handleSignup = async (email: string, password: string): Promise<string | null> => {
+    const err = await signupApi(email, password);
+    if (!err) setAuthState('ready');
+    return err;
+  };
+
+  const handleLogout = async () => {
+    await logoutApi();
+    setAuthState('needs-login');
+  };
 
   const [activeTab, setActiveTab] = useState<ActiveTabId>('roster');
   const [solution, setSolution] = useState<SolveResponse | null>(null);
@@ -338,6 +368,13 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
+  if (authState === 'checking') {
+    return <div className="min-h-screen bg-[#F4F1EA]" />;
+  }
+  if (authState === 'needs-login') {
+    return <LoginView onLogin={handleLogin} onSignup={handleSignup} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F1EA] text-[#2B3A42]">
       <Header
@@ -347,6 +384,7 @@ export function App() {
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
         solution={solution}
         leewayPct={leewayPct}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">

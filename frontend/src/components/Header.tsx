@@ -19,6 +19,7 @@ interface HeaderProps {
   onOpenShortcuts?: () => void;
   solution: SolveResponse | null;
   leewayPct: number;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -28,6 +29,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenShortcuts,
   solution,
   leewayPct,
+  onLogout,
 }) => {
   const navTabs: { id: ActiveTabId; label: string; badge?: string }[] = [
     {
@@ -157,6 +159,17 @@ export const Header: React.FC<HeaderProps> = ({
                 5 Steps
               </span>
             </button>
+
+            {onLogout && (
+              <button
+                type="button"
+                onClick={onLogout}
+                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
+                title="Log out"
+              >
+                Log out
+              </button>
+            )}
           </div>
         </div>
 

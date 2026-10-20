@@ -18,7 +18,7 @@ from fastapi import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-from app.auth import require_api_key
+from app.auth import require_login
 from app.database import get_db_connection
 
 
@@ -164,9 +164,9 @@ class IdempotencyMiddleware:
             return
 
         # Authenticate before any replay lookup or store write. Reuses the route dependency
-        # (app.auth.require_api_key) so the key policy is defined in one place.
+        # (app.auth.require_login) so the login policy is defined in one place.
         try:
-            require_api_key(Request(scope))
+            require_login(Request(scope))
         except HTTPException as exc:
             resp = JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
             await resp(scope, receive, send)

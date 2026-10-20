@@ -417,3 +417,45 @@ export async function deactivateEmployee(
   }
   return await res.json();
 }
+
+/** Whether account login is configured on the backend, and who (if anyone) is signed in. */
+export async function authStatusApi(): Promise<{ login_required: boolean; logged_in: boolean; email: string | null }> {
+  try {
+    const res = await fetch('/api/auth/status');
+    if (!res.ok) return { login_required: false, logged_in: true, email: null };
+    return await res.json();
+  } catch {
+    return { login_required: false, logged_in: true, email: null };
+  }
+}
+
+async function authFormRequest(path: string, email: string, password: string): Promise<string | null> {
+  try {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (res.ok) return null;
+    const body = await res.json().catch(() => null);
+    if (typeof body?.detail === 'string') return body.detail;
+    if (Array.isArray(body?.detail) && body.detail[0]?.msg) return body.detail[0].msg;
+    return 'Something went wrong.';
+  } catch {
+    return 'Could not reach the login service.';
+  }
+}
+
+/** Returns an error message on failure, or null on success (a session cookie is now set). */
+export async function loginApi(email: string, password: string): Promise<string | null> {
+  return authFormRequest('/api/auth/login', email, password);
+}
+
+/** Creates a new account and signs in. Returns an error message on failure, or null on success. */
+export async function signupApi(email: string, password: string): Promise<string | null> {
+  return authFormRequest('/api/auth/signup', email, password);
+}
+
+export async function logoutApi(): Promise<void> {
+  await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+}
