@@ -51,8 +51,6 @@ export function App() {
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState<boolean>(false);
-  const [isCalloutOpen, setIsCalloutOpen] = useState<boolean>(false);
-  const [isSwapOpen, setIsSwapOpen] = useState<boolean>(false);
   const [isAddEmpOpen, setIsAddEmpOpen] = useState<boolean>(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false);
 
@@ -123,8 +121,6 @@ export function App() {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
         if (e.key === 'Escape') {
           setIsShortcutsOpen(false);
-          setIsCalloutOpen(false);
-          setIsSwapOpen(false);
           setIsAddEmpOpen(false);
           setIsWizardOpen(false);
         }
@@ -136,8 +132,6 @@ export function App() {
         setIsShortcutsOpen((prev) => !prev);
       } else if (e.key === 'Escape') {
         setIsShortcutsOpen(false);
-        setIsCalloutOpen(false);
-        setIsSwapOpen(false);
         setIsAddEmpOpen(false);
         setIsWizardOpen(false);
       } else if (e.key === ' ' || e.key === 'ArrowRight') {
@@ -160,12 +154,6 @@ export function App() {
         setActiveTab('ergonomics');
       } else if (e.key === '7') {
         setActiveTab('compliance');
-      } else if (e.key.toLowerCase() === 'c') {
-        setActiveTab('roster');
-        setIsCalloutOpen(true);
-      } else if (e.key.toLowerCase() === 's') {
-        setActiveTab('roster');
-        setIsSwapOpen(true);
       } else if (e.key.toLowerCase() === 'd') {
         setIsDirectoryOpen((prev) => !prev);
       } else if (e.key.toLowerCase() === 'a') {
@@ -331,10 +319,6 @@ export function App() {
                 }
                 onUpdateEmployee={handleUpdateEmployee}
                 onExportCsv={handleExportCsv}
-                showCalloutModal={isCalloutOpen}
-                onSetShowCalloutModal={setIsCalloutOpen}
-                showSwapModal={isSwapOpen}
-                onSetShowSwapModal={setIsSwapOpen}
                 showAddModal={isAddEmpOpen}
                 onSetShowAddModal={setIsAddEmpOpen}
                 showDirectoryDrawer={isDirectoryOpen}

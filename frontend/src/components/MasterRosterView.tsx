@@ -31,10 +31,6 @@ interface MasterRosterViewProps {
   ) => void;
   onUpdateEmployee: (emp: EmployeeRecord) => void;
   onExportCsv: () => void;
-  showCalloutModal?: boolean;
-  onSetShowCalloutModal?: (show: boolean) => void;
-  showSwapModal?: boolean;
-  onSetShowSwapModal?: (show: boolean) => void;
   showAddModal?: boolean;
   onSetShowAddModal?: (show: boolean) => void;
   showDirectoryDrawer?: boolean;
@@ -53,10 +49,6 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   onToggleEmployeeStatus,
   onUpdateEmployee,
   onExportCsv,
-  showCalloutModal: extCalloutModal,
-  onSetShowCalloutModal: extSetCalloutModal,
-  showSwapModal: extSwapModal,
-  onSetShowSwapModal: extSetSwapModal,
   showAddModal: extAddModal,
   onSetShowAddModal: extSetAddModal,
   showDirectoryDrawer: extDirectoryDrawer,
@@ -64,8 +56,6 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 }) => {
   const [internalDirectoryDrawer, setInternalDirectoryDrawer] = useState(false);
   const [internalAddModal, setInternalAddModal] = useState(false);
-  const [internalCalloutModal, setInternalCalloutModal] = useState(false);
-  const [internalSwapModal, setInternalSwapModal] = useState(false);
 
   const showDirectoryDrawer = extDirectoryDrawer !== undefined ? extDirectoryDrawer : internalDirectoryDrawer;
   const setShowDirectoryDrawer = extSetDirectoryDrawer || setInternalDirectoryDrawer;
@@ -73,12 +63,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   const showAddModal = extAddModal !== undefined ? extAddModal : internalAddModal;
   const setShowAddModal = extSetAddModal || setInternalAddModal;
 
-  const showCalloutModal = extCalloutModal !== undefined ? extCalloutModal : internalCalloutModal;
-  const setShowCalloutModal = extSetCalloutModal || setInternalCalloutModal;
 
-  const showSwapModal = extSwapModal !== undefined ? extSwapModal : internalSwapModal;
-  const setShowSwapModal = extSetSwapModal || setInternalSwapModal;
-  const [swapScenario, setSwapScenario] = useState<'danger' | 'safe'>('danger');
 
   // New Employee Form State
   const [newName, setNewName] = useState('');
@@ -185,7 +170,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               {solution.ergonomics_audit.health_index_score}%
             </span>
             <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              0 Clopenings
+              {solution.ergonomics_audit.clopening_violations} Clopenings
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -275,22 +260,6 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 Advance +1 Wk →
               </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setShowCalloutModal(true)}
-              className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-xs flex items-center gap-1"
-            >
-              <span>⚡ Saturday Callout</span><kbd className="px-1.5 py-0.2 rounded bg-amber-600/70 text-amber-100 text-[10px] font-mono-tabular font-bold ml-1">C</kbd>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setShowSwapModal(true)}
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs flex items-center gap-1"
-            >
-              <span>⇄ Shift Swap</span><kbd className="px-1.5 py-0.2 rounded bg-indigo-700 text-indigo-200 text-[10px] font-mono-tabular font-bold ml-1">S</kbd>
-            </button>
 
             <button
               type="button"
@@ -771,137 +740,6 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {/* Saturday Emergency Callout Modal */}
-      {showCalloutModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <div>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono-tabular font-bold bg-amber-500 text-slate-950">
-                  FLOOR CRISIS DISPATCH
-                </span>
-                <h3 className="text-base font-bold text-slate-900 mt-1">Saturday Evening Callout Rebalancing (8:00 PM)</h3>
-              </div>
-              <button type="button" aria-label="Close" onClick={() => setShowCalloutModal(false)} className="text-slate-400 font-bold">✕</button>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
-              <strong>Frontline Absence:</strong> Cashier Elena Rodriguez called out of Saturday Evening (16:00–24:00). ShiftFlow evaluated all associates to prevent clopenings and unauthorized overtime.
-            </div>
-
-            <div className="space-y-2.5">
-              <div className="p-3.5 rounded-xl border border-emerald-300 bg-emerald-50/50 flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white">#1 TOP RECOMMENDATION</span>
-                    <span className="text-xs font-bold text-slate-900">Devon Taylor (Senior Clerk)</span>
-                    <span className="text-[11px] text-slate-500 font-mono-tabular">$17.50/hr</span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 mt-1">
-                    ✓ 21.0h prior rest • ✓ 40.0h next rest • 32h → <strong>40.0h total ($0 overtime)</strong>
-                  </p>
-                </div>
-                <button type="button"
-                  onClick={() => {
-                    alert("Assigned Devon Taylor to cover Saturday Closing. Next Monday rotation lines remain 100% preserved.");
-                    setShowCalloutModal(false);
-                  }}
-                  className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs"
-                >
-                  Assign Replacement
-                </button>
-              </div>
-
-              <div className="p-3.5 rounded-xl border border-red-200 bg-red-50/40 flex items-center justify-between opacity-75">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 border border-red-300">BLOCKED — CLOPENING</span>
-                    <span className="text-xs font-bold text-slate-900">Priya Patel (Customer Service)</span>
-                  </div>
-                  <p className="text-[11px] text-red-700 mt-1">
-                    ❌ <strong>Illegal Clopening</strong>: Scheduled to open Sunday at 06:00 (only 6.0h turnaround from midnight!).
-                  </p>
-                </div>
-                <button type="button" disabled className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-400 text-xs font-semibold cursor-not-allowed">
-                  Blocked by Law
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-slate-200 flex justify-end">
-              <button type="button" onClick={() => setShowCalloutModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Shift Swap Modal */}
-      {showSwapModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 className="text-base font-bold text-slate-900">Peer-to-Peer Shift Trade Validator</h3>
-              <button type="button" aria-label="Close" onClick={() => setShowSwapModal(false)} className="text-slate-400 font-bold">✕</button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button type="button"
-                onClick={() => setSwapScenario('danger')}
-                className={`p-3 rounded-xl border text-left transition-all ${
-                  swapScenario === 'danger' ? 'border-2 border-red-500 bg-red-50' : 'border-slate-300 bg-slate-50'
-                }`}
-              >
-                <span className="text-xs font-bold text-slate-900 block">Scenario A: Hazardous Swap</span>
-                <span className="text-[11px] text-slate-500 mt-1 block">Carlos (Wed Eve) ⇄ Devon (Thu Day)</span>
-              </button>
-              <button type="button"
-                onClick={() => setSwapScenario('safe')}
-                className={`p-3 rounded-xl border text-left transition-all ${
-                  swapScenario === 'safe' ? 'border-2 border-emerald-500 bg-emerald-50' : 'border-slate-300 bg-slate-50'
-                }`}
-              >
-                <span className="text-xs font-bold text-slate-900 block">Scenario B: Compliant Swap</span>
-                <span className="text-[11px] text-slate-500 mt-1 block">Carlos (Tue Day) ⇄ Devon (Fri Day)</span>
-              </button>
-            </div>
-
-            <div className={`p-4 rounded-xl border ${swapScenario === 'danger' ? 'border-red-300 bg-red-50 text-red-900' : 'border-emerald-300 bg-emerald-50 text-emerald-900'}`}>
-              {swapScenario === 'danger' ? (
-                <>
-                  <div className="text-xs font-bold text-red-700">❌ REJECTED BY FAIR WORKWEEK GUARDRAILS</div>
-                  <p className="text-[11px] mt-1">
-                    Carlos would receive only 11.0h rest between Wednesday close (24:00) and Thursday midday start (11:00). Triggers statutory penalty pay.
-                  </p>
-                </>
-              ) : (
-                <>
-                  <div className="text-xs font-bold text-emerald-700">✓ APPROVED BY ENGINE</div>
-                  <p className="text-[11px] mt-1">
-                    Complies with mandatory ≥16h rest and 40h regular limits for both cashiers. Monday cycle progression remains 100% intact.
-                  </p>
-                </>
-              )}
-            </div>
-
-            <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
-              <button type="button" onClick={() => setShowSwapModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Cancel</button>
-              <button type="button"
-                disabled={swapScenario === 'danger'}
-                onClick={() => {
-                  alert("Shift swap executed successfully! Master Monday rotation progression remains 100% intact.");
-                  setShowSwapModal(false);
-                }}
-                className={`px-4 py-2 rounded-lg text-xs font-bold ${
-                  swapScenario === 'safe' ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
-              >
-                Approve Swap
-              </button>
-            </div>
           </div>
         </div>
       )}
