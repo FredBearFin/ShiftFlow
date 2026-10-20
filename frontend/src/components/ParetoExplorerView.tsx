@@ -185,7 +185,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         y={cy - 8}
                         className="text-[10px] font-mono-tabular font-bold fill-slate-800"
                       >
-                        +{pt.leeway_pct}% (−{pt.ergo_improvement_pct}% Ergo)
+                        +{pt.leeway_pct}% (−{pt.ergo_improvement_pct}% Ergo, theoretical)
                       </text>
                     )}
                   </g>
@@ -258,7 +258,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 <th className="py-3 px-3 text-right">SD Leeway</th>
                 <th className="py-3 px-3 text-right">obj^shift</th>
                 <th className="py-3 px-3 text-right">obj^ergo</th>
-                <th className="py-3 px-3 text-right">Ergo Improvement</th>
+                <th className="py-3 px-3 text-right">Ergo improvement (theoretical)</th>
                 <th className="py-3 px-3 text-right">Cohorts (e)</th>
                 <th className="py-3 px-3 text-right">Free Weekends</th>
                 <th className="py-3 px-4 text-right">Action</th>

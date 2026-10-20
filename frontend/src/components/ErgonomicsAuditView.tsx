@@ -28,7 +28,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
             Integrated planning reduces total ergonomic penalty by{' '}
-            <strong className="text-indigo-700">+{audit.ergo_improvement_pct}%</strong>.
+            <strong className="text-indigo-700">+{audit.ergo_improvement_pct}%</strong> (theoretical, Becker Table 7 target).
           </p>
         </div>
 
