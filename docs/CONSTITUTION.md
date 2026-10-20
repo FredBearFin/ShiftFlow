@@ -251,3 +251,7 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Env example.** Same variables as the table; the dead weight and leeway settings are removed, since the code reads them from `config.py`, not from the environment.
   - **Not in this PR.** The rest of `gtm/` (pricing, ROI, pitch, prospect list) and the four root audit reports still carry unbacked figures. They need a separate pass, and are left open.
   - **Acceptance.** No file in the repository still names the deleted report. One PR is one commit under Art. 1.
+- **2026-10-20. PR 24: dead code and prototype (King).** Files: `frontend/package.json` and `frontend/package-lock.json` (drops `lucide-react`), `frontend/src/services/api.ts` (removes two unused exports), `shiftflow_studio_app.html` (delete), and no other file. No behavior change.
+  - **Removed.** `lucide-react`, which no source file imports. `DEFAULT_DEMAND_MATRIX` and `INITIAL_STORE_EMPLOYEES`, which nothing imports. The standalone `shiftflow_studio_app.html` prototype, which nothing links to.
+  - **Not in this PR.** `npm audit` findings are not cleared here. Each one needs its own upgrade decision and the vulnerable packages need to be checked against the build, so it stays open.
+  - **Acceptance.** `cd frontend && npm ci`, `npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
