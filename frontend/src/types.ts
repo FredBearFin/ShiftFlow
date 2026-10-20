@@ -279,41 +279,6 @@ export interface ArchetypePreset {
 }
 
 
-export interface FinanceAudit {
-  facility_id?: string;
-  facility_name: string;
-  annual_gross_revenue: number;
-  active_headcount: number;
-  average_hourly_wage: number;
-  hard_overtime_savings: number;
-  churn_reduction_savings: number;
-  manager_floor_reallocation_savings: number;
-  gross_annual_value: number;
-  software_annual_cost: number;
-  net_ebitda_gain: number;
-  payback_days: number;
-  annual_roi_ratio: number;
-  working_capital_released: number;
-  ebitda_margin_expansion_bps: number;
-  audit_methodology_notes: string[];
-}
-
-export interface FleetProjection {
-  store_count: number;
-  combined_gross_revenue: number;
-  baseline_annual_payroll: number;
-  shiftflow_annual_payroll: number;
-  annual_payroll_savings: number;
-  annual_churn_savings: number;
-  annual_manager_reallocation: number;
-  total_annual_ebitda_gain: number;
-  fleet_software_annual_cost: number;
-  net_annual_ebitda_impact: number;
-  valuation_multiple: number;
-  enterprise_value_gain: number;
-  fleet_roi_multiple: number;
-}
-
 export type ActiveTabId = 'roster' | 'staff' | 'labor' | 'cfo' | 'pos' | 'coverage' | 'pareto' | 'ergonomics' | 'compliance';
 
 

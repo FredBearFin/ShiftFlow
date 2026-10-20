@@ -6,7 +6,6 @@ import unittest
 import app.tests.test_solver
 import app.tests.test_persistence_and_integrations
 import app.tests.test_legal_compliance
-import app.tests.test_finance_audit
 import app.tests.test_emergency_workflows
 import app.tests.test_distributed_architecture
 import app.tests.test_chaos_resilience
@@ -19,7 +18,6 @@ def main():
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_solver))
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_persistence_and_integrations))
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_legal_compliance))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_finance_audit))
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_emergency_workflows))
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_distributed_architecture))
     suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_chaos_resilience))

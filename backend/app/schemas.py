@@ -326,43 +326,6 @@ class ArchetypePresetSchema(BaseModel):
     guardrails: ErgonomicGuardrailsSchema
 
 
-class FinanceAuditSchema(BaseModel):
-    """Audited EBITDA expansion, cash flow velocity, and ROI metrics for store financial controllers."""
-    facility_id: Optional[str] = Field(default=None, description="Facility identifier")
-    facility_name: str = Field(..., description="Facility display name")
-    annual_gross_revenue: float = Field(default=670000.0, description="Estimated annual store top-line gross revenue")
-    active_headcount: int = Field(default=6, description="Active non-exempt store headcount")
-    average_hourly_wage: float = Field(default=16.50, description="Weighted average hourly wage rate")
-    hard_overtime_savings: float = Field(..., description="Audit-verified annual hard overtime leakage eliminated")
-    churn_reduction_savings: float = Field(..., description="Direct annual employee separation & onboarding cost reduction")
-    manager_floor_reallocation_savings: float = Field(..., description="Store manager administrative hours recaptured for floor sales/shrink control")
-    gross_annual_value: float = Field(..., description="Total gross annual economic value generated")
-    software_annual_cost: float = Field(..., description="ShiftFlow SaaS subscription cost")
-    net_ebitda_gain: float = Field(..., description="Net annual audited EBITDA addition")
-    payback_days: float = Field(..., description="Days to fully amortize annual software investment")
-    annual_roi_ratio: float = Field(..., description="Net EBITDA return divided by software cost (e.g., 13.8x)")
-    working_capital_released: float = Field(..., description="Uncommitted payroll contingency reserve released into working capital")
-    ebitda_margin_expansion_bps: float = Field(..., description="Basis points expansion in store operating EBITDA margin")
-    audit_methodology_notes: List[str] = Field(default_factory=list, description="Statutory GAAP and SHRM audit citations")
-
-
-class FleetProjectionSchema(BaseModel):
-    """Multi-store franchise and regional retail chain EBITDA and Enterprise Value (EV) rollup."""
-    store_count: int = Field(..., ge=1, description="Number of operational retail store locations in the fleet")
-    combined_gross_revenue: float = Field(..., description="Total aggregate fleet retail revenue")
-    baseline_annual_payroll: float = Field(..., description="Estimated baseline fleet payroll spend prior to ShiftFlow")
-    shiftflow_annual_payroll: float = Field(..., description="Optimized fleet payroll spend under ShiftFlow cyclic lines")
-    annual_payroll_savings: float = Field(..., description="Aggregate annual payroll leakage and overtime reduction")
-    annual_churn_savings: float = Field(..., description="Fleet-wide employee churn and retraining savings")
-    annual_manager_reallocation: float = Field(..., description="Total fleet manager administrative hours converted to floor operations")
-    total_annual_ebitda_gain: float = Field(..., description="Gross aggregate fleet EBITDA expansion")
-    fleet_software_annual_cost: float = Field(..., description="Fleet subscription tier SaaS fee (9/store/mo)")
-    net_annual_ebitda_impact: float = Field(..., description="Net recurring annual EBITDA improvement across all stores")
-    valuation_multiple: float = Field(default=6.0, description="Standard retail M&A / private equity EBITDA exit multiple")
-    enterprise_value_gain: float = Field(..., description="Incremental equity enterprise value created (Net EBITDA x Multiple)")
-    fleet_roi_multiple: float = Field(..., description="Fleet-wide net ROI multiple")
-
-
 class CalloutCandidateSchema(BaseModel):
     """Candidate evaluation for frontline emergency callout replacement."""
     employee_id: str

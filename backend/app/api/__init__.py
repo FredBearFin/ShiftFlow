@@ -6,7 +6,7 @@ import os
 import sys
 
 _api_dir = os.path.dirname(os.path.abspath(__file__))
-_modules = ["archetype_routes", "schedule_routes", "employee_routes", "pos_payroll_routes", "finance_routes", "emergency_routes"]
+_modules = ["archetype_routes", "schedule_routes", "employee_routes", "pos_payroll_routes", "emergency_routes"]
 
 for _mod in _modules:
     _fpath = os.path.join(_api_dir, f"{_mod}.py")
