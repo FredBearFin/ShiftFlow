@@ -218,10 +218,10 @@ export function exportRosterToCsvString(solution: SolveResponse): string {
     line.cohort_id,
     line.assigned_person ?? '',
     line.qualification_tier,
-    line.hourly_wage.toFixed(2),
+    line.hourly_wage === null ? '' : line.hourly_wage.toFixed(2),
     line.weekly_hours,
     line.overtime_hours,
-    line.estimated_weekly_payroll.toFixed(2),
+    line.estimated_weekly_payroll === null ? '' : line.estimated_weekly_payroll.toFixed(2),
     ...line.days.map((cell) => cell.shift_code),
   ]);
   return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');

@@ -701,7 +701,7 @@ class ISDRWSPSolver:
                 assigned_person = None
                 assigned_emp_id = None
                 qual_tier = "Union Line Standard"
-                wage = 16.50
+                wage = None
                 avail_days = {0, 1, 2, 3, 4, 5, 6}
 
             display_label = (
@@ -781,8 +781,13 @@ class ISDRWSPSolver:
             ot_hrs = max(0, weekly_hours - 40)
             if ot_hrs > 0:
                 overtime_lines_count += 1
-            line_reg_pay = round(reg_hrs * wage, 2)
-            line_ot_pay = round(ot_hrs * wage * 1.5, 2)
+            # An unassigned line has no wage, so it adds nothing to payroll.
+            if wage is None:
+                line_reg_pay = 0.0
+                line_ot_pay = 0.0
+            else:
+                line_reg_pay = round(reg_hrs * wage, 2)
+                line_ot_pay = round(ot_hrs * wage * 1.5, 2)
             line_total_pay = round(line_reg_pay + line_ot_pay, 2)
 
             total_reg_hours += reg_hrs
@@ -817,7 +822,7 @@ class ISDRWSPSolver:
                     weekly_hours=weekly_hours,
                     regular_hours=reg_hrs,
                     overtime_hours=ot_hrs,
-                    estimated_weekly_payroll=line_total_pay,
+                    estimated_weekly_payroll=line_total_pay if wage is not None else None,
                     work_days_count=work_days,
                     rest_days_count=7 - work_days,
                     full_weekend_off=full_wknd_off,
@@ -876,7 +881,7 @@ class ISDRWSPSolver:
         avg_wage = (
             round(total_reg_payroll / max(1, total_reg_hours), 2)
             if total_reg_hours > 0
-            else 16.50
+            else None
         )
         labor_eff = round(
             (total_weekly_req_hours / max(1, tot_sched_hours)) * 100.0, 1
@@ -925,7 +930,7 @@ class ISDRWSPSolver:
             selected_leeway_pct=self.leeway_pct,
         )
         for p in pareto_frontier:
-            p.estimated_weekly_payroll = round(p.employee_count * 40 * avg_wage, 2)
+            p.estimated_weekly_payroll = round(p.employee_count * total_payroll / max(1, employee_count), 2)
 
         if total_weekly_req_hours <= 800:
             size_cat = "Small"

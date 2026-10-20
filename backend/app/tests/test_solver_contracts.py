@@ -31,6 +31,14 @@ class SolverContractTests(unittest.TestCase):
         )
         cls.solution = ISDRWSPSolver(req).solve()
 
+    def test_unassigned_line_has_no_wage(self):
+        unassigned = [line for line in self.solution.roster_lines if line.assigned_person is None]
+        self.assertTrue(unassigned, "precondition: the preset with no staff must yield unassigned lines")
+        for line in unassigned:
+            with self.subTest(line=line.line_number):
+                self.assertIsNone(line.hourly_wage)
+                self.assertIsNone(line.estimated_weekly_payroll)
+
     def test_coverage_difference_matches_over_and_under_staffing(self):
         self.assertEqual(len(self.solution.interval_coverage), 168)
         for cell in self.solution.interval_coverage:

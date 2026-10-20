@@ -175,14 +175,14 @@ class RosterLineSchema(BaseModel):
     assigned_person: Optional[str] = None
     assigned_employee_id: Optional[str] = None
     qualification_tier: str = "Union Line Standard"
-    hourly_wage: float = 16.50
+    hourly_wage: Optional[float] = None
     current_cycle_week: int
     next_week_line_number: int
     days: List[RosterCellSchema]
     weekly_hours: int
     regular_hours: int
     overtime_hours: int
-    estimated_weekly_payroll: float
+    estimated_weekly_payroll: Optional[float] = None
     work_days_count: int
     rest_days_count: int
     full_weekend_off: bool
@@ -247,7 +247,7 @@ class LaborAnalysisSchema(BaseModel):
     regular_payroll_cost: float
     overtime_payroll_cost: float
     total_payroll_cost: float
-    avg_hourly_wage: float
+    avg_hourly_wage: Optional[float] = None
     hours_per_day: List[int]
     cost_per_day: List[float]
     overtime_lines_count: int

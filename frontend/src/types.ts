@@ -131,14 +131,14 @@ export interface RosterLine {
   assigned_person: string | null;
   assigned_employee_id: string | null;
   qualification_tier: string;
-  hourly_wage: number;
+  hourly_wage: number | null;
   current_cycle_week: number;
   next_week_line_number: number;
   days: RosterCell[];
   weekly_hours: number;
   regular_hours: number;
   overtime_hours: number;
-  estimated_weekly_payroll: number;
+  estimated_weekly_payroll: number | null;
   work_days_count: number;
   rest_days_count: number;
   full_weekend_off: boolean;
@@ -199,7 +199,7 @@ export interface LaborAnalysis {
   regular_payroll_cost: number;
   overtime_payroll_cost: number;
   total_payroll_cost: number;
-  avg_hourly_wage: number;
+  avg_hourly_wage: number | null;
   hours_per_day: number[];
   cost_per_day: number[];
   overtime_lines_count: number;

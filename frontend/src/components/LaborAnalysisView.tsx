@@ -32,8 +32,8 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       l.qualification_tier ? `"${l.qualification_tier}"` : '',
       l.regular_hours.toFixed(2),
       l.overtime_hours.toFixed(2),
-      l.hourly_wage.toFixed(2),
-      l.estimated_weekly_payroll.toFixed(2),
+      l.hourly_wage === null ? '' : l.hourly_wage.toFixed(2),
+      l.estimated_weekly_payroll === null ? '' : l.estimated_weekly_payroll.toFixed(2),
       '',
     ]);
 
@@ -71,9 +71,9 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       l.assigned_person ? `"${l.assigned_person}"` : '',
       l.regular_hours.toFixed(2),
       l.overtime_hours.toFixed(2),
-      l.hourly_wage.toFixed(2),
+      l.hourly_wage === null ? '' : l.hourly_wage.toFixed(2),
       '',
-      l.estimated_weekly_payroll.toFixed(2),
+      l.estimated_weekly_payroll === null ? '' : l.estimated_weekly_payroll.toFixed(2),
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -188,7 +188,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-slate-900">
-              ${labor.avg_hourly_wage.toFixed(2)}/hr
+              {labor.avg_hourly_wage === null ? '' : `$${labor.avg_hourly_wage.toFixed(2)}/hr`}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -316,7 +316,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                     {line.qualification_tier}
                   </td>
                   <td className="py-3 px-3 text-right text-slate-700">
-                    ${line.hourly_wage.toFixed(2)}/hr
+                    {line.hourly_wage === null ? '' : `$${line.hourly_wage.toFixed(2)}/hr`}
                   </td>
                   <td className="py-3 px-3 text-right font-bold text-slate-900">
                     {line.weekly_hours}h
@@ -334,7 +334,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                     )}
                   </td>
                   <td className="py-3 px-4 text-right font-bold text-slate-900">
-                    ${line.estimated_weekly_payroll.toFixed(2)}
+                    {line.estimated_weekly_payroll === null ? '' : `$${line.estimated_weekly_payroll.toFixed(2)}`}
                   </td>
                 </tr>
               ))}

@@ -183,7 +183,7 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
             self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 16.0)
             self.assertEqual(len(sol.ergonomics_audit.criteria_breakdown), 8)
             self.assertEqual(len(sol.interval_coverage), 168)
-            self.assertGreater(sol.labor_analysis.total_payroll_cost, 0.0)
+            self.assertEqual(sol.labor_analysis.total_payroll_cost, 0.0)
 
             for cell in sol.interval_coverage:
                 lhs = cell.scheduled_staff
@@ -311,7 +311,7 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
 
         self.assertGreater(la.total_scheduled_hours, 0)
         self.assertEqual(la.total_scheduled_hours, la.total_regular_hours + la.total_overtime_hours)
-        self.assertGreater(la.total_payroll_cost, 0.0)
+        self.assertEqual(la.total_payroll_cost, 0.0)
         self.assertAlmostEqual(
             la.total_payroll_cost,
             la.regular_payroll_cost + la.overtime_payroll_cost,
@@ -346,7 +346,7 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         self.assertEqual(r_solve.status_code, 200)
         data = r_solve.json()
         self.assertIn("labor_analysis", data)
-        self.assertGreater(data["labor_analysis"]["total_payroll_cost"], 0.0)
+        self.assertEqual(data["labor_analysis"]["total_payroll_cost"], 0.0)
 
         r_csv = self.client.post("/api/v1/schedules/export-csv", json=payload)
         self.assertEqual(r_csv.status_code, 200)

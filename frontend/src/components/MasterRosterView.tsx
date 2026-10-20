@@ -170,7 +170,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               ${solution.labor_analysis.total_payroll_cost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
             <span className="text-xs font-mono-tabular text-slate-500">
-              ${solution.labor_analysis.avg_hourly_wage.toFixed(2)}/hr
+              {solution.labor_analysis.avg_hourly_wage === null ? '' : `$${solution.labor_analysis.avg_hourly_wage.toFixed(2)}/hr`}
             </span>
           </div>
           <p className="text-[11px] text-slate-500 mt-1">
@@ -603,7 +603,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
                       <span>{line.qualification_tier}</span>
                       <span>•</span>
-                      <span className="font-mono-tabular">${line.hourly_wage.toFixed(2)}/hr</span>
+                      <span className="font-mono-tabular">{line.hourly_wage === null ? '' : `$${line.hourly_wage.toFixed(2)}/hr`}</span>
                       <span>•</span>
                       <span>Next Mon → Line {line.next_week_line_number}</span>
                     </div>
@@ -653,7 +653,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   </td>
 
                   <td className="py-3 px-4 text-right font-mono-tabular font-bold text-slate-900">
-                    ${line.estimated_weekly_payroll.toFixed(2)}
+                    {line.estimated_weekly_payroll === null ? '' : `$${line.estimated_weekly_payroll.toFixed(2)}`}
                   </td>
                 </tr>
               ))}
