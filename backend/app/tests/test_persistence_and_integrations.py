@@ -230,6 +230,7 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
                 "recorded_by": "Test Manager",
             })
         self.assertEqual(again_resp.status_code, 200)
+
         audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
         self.assertEqual(len([a for a in audits if a["employee_id"] == created_id]), 1)
 
@@ -272,6 +273,20 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         self.assertEqual(pos_resp.status_code, 200)
         self.assertEqual(pos_resp.json()["status"], "success")
         self.assertEqual(pos_resp.json()["records_parsed"], 2)
+
+    def test_06_add_employee_with_no_prior_facility_row(self):
+        """A brand-new install has no facilities row until POS data is uploaded - nothing in the
+        app exposes an explicit "create a facility" step, so adding staff must not depend on it.
+        """
+        facility_id = "FAC-NEVER-UPSERTED-01"
+        self.assertIsNone(self.repo.get_facility(facility_id))
+        resp = self.client.post(
+            "/api/employees",
+            json={"facility_id": facility_id, "name": "Day One Hire", "role": "Cook", "wage": 16.0},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsNotNone(self.repo.get_facility(facility_id))
+        self._purge(resp.json()["id"])
 
 
 if __name__ == "__main__":
