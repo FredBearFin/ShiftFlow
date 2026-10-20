@@ -61,7 +61,7 @@ OPERATING EBITDA MARGIN EXPANSION                                   : +188.2 Bas
 - **The Empirical Baseline**: High-turnover retail stores with erratic scheduling average **3.5 hours of unmanaged overtime per week** across a 6-person crew. This arises from unexpected shift extensions, manual coverage patching, and erratic call-ins.
 - **The ShiftFlow Elimination**: By deploying standardized cyclic rotation lines (`Line 1` to `Line N`), every shift is balanced precisely to 40 regular hours across single standalone workweeks (Mon 00:00 to Sun 23:59). Overtime exposure is reduced by **2.5 hours/week** (130 hours annually).
 - **Audit Valuation Formula**:
-  $$\text{Hard OT Savings} = 130 \text{ hrs} \times (\$16.50 \times 1.5 - \$16.50 \times 0.5 \text{ call-in delta}) = \$2,005.12 / \text{year}$$
+  $$\text{Hard OT Savings} = \$2,005 / \text{year}$$ (source: `gtm/roi_calculator.md` line 35)
 - **Controller Classification**: **Hard Cash Reduction**. Reduces direct cash outflow on payroll disbursements dollar-for-dollar.
 
 ### 2.2 Direct Cashier Separation & Churn Avoidance (SHRM Standard)
@@ -97,7 +97,7 @@ Working capital management is critical for independent retail operators operatin
 | Working Capital Released to Cash   | $0.00                 | $2,843.33 / store        |
 | Days Cash on Hand (DCOH) Gain      | Baseline              | +1.8 Days                |
 | Merchant Credit Line Drawdown Cost | $480.00 / year        | $0.00 (Zero drawdowns)   |
-| FLSA § 778.104 Wage Audit Risk     | Uninsulated ($$$)     | 100% Safe Harbor Defense |
+| FLSA § 778.104 Wage Audit Risk     | Uninsulated ($$$)     | Not claimed; counsel to advise |
 +------------------------------------+-----------------------+--------------------------+
 ```
 

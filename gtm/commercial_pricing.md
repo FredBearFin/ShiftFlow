@@ -15,10 +15,10 @@ ShiftFlow Studio monetizes on a per-location recurring SaaS model, aligning soft
 ## 2. Unit Economics & Customer Lifetime Value (LTV)
 
 * **Average Revenue Per User (ARPU)**: $125 / month across blended customer tiers.
-* **Customer Acquisition Cost (CAC)**: $320 (direct digital outreach, local retail trade associations, Word of Mouth).
+* **Customer Acquisition Cost (CAC)**: $95 (fully loaded Month 12 acquisition spend of $3,895 ÷ 41 new stores; direct digital outreach, local retail trade associations, Word of Mouth).
 * **Target Churn Rate**: < 1.8% monthly (cyclic schedules create extremely high operational stickiness; once a store runs on a 6-week rotation, switching costs are high).
 * **Customer Lifetime (Months)**: ~45 months.
 * **Estimated LTV**: $125 × 45 = **$5,625**.
-* **LTV / CAC Ratio**: **17.5×** (exceptionally strong capital efficiency).
-* **Payback Period**: **2.5 months**.
+* **LTV / CAC Ratio**: **59.2×** (exceptionally strong capital efficiency).
+* **Payback Period**: **0.8 months**.
 

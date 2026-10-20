@@ -26,7 +26,7 @@
 ## Slide 6: The Unbreakable Forward Rotation Wheel
 * **How It Works**: Workers move through a continuous loop: **Open (6a–2p) → Mid (11a–7p) → Close (4p–12a) → 2–3 Days Rest**.
 * **Zero Favoritism**: Every employee works the exact same fair sequence over the cycle.
-* **Zero Clopenings**: Guaranteed 16+ hours of continuous recovery after every close.
+* **Zero Clopenings**: Scheduled for at least 16 hours rest after every close; the roster audit flags any shift that gives less.
 
 ## Slide 7: Real-Time Labor & Payroll Control
 * **Labor Analysis**: Live visibility into total weekly payroll, regular vs. overtime hours, and cost per day.
@@ -34,10 +34,10 @@
 * **Availability Matching**: Staff enter their available days; ShiftFlow flags conflicts instantly.
 
 ## Slide 8: Measurable Business Case (The Numbers)
-* **Turnover Reduction**: Saves $7,400+ per store annually by eliminating burnout.
+* **Turnover Reduction**: Saves $5,636 per store annually by eliminating burnout.
 * **Overtime Avoidance**: Saves $2,000+ per store in accidental overtime.
 * **Time Saved**: Gives managers 3 hours of their weekend back every single week.
-* **Net ROI**: **12.9× annual return on investment** ($12,200 net savings ÷ $948 per year).
+* **Net ROI**: **13.3× annual return on investment** ($12,608 net savings ÷ $948 per year).
 
 ## Slide 9: 5-Minute Onboarding
 * **Step 1**: Choose your store operating hours (e.g. 6:00 AM to midnight).

@@ -71,4 +71,4 @@ ShiftFlow Studio monetizes via a pure B2B monthly subscription tiered by retail 
   - Cold email infrastructure (domains, warmup, Instantly): $380
   - Direct local travel & founder in-person store visits: $1,200
   - Paid search & POS marketplace sponsorships: $2,165
-- **Net Operating Margin (Month 12)**: **$28,137 / month** (82% EBITDA margin before corporate taxes).
+- **Net Operating Margin (Month 12)**: **$29,277 / month** (85% EBITDA margin before corporate taxes).

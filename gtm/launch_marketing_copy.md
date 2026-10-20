@@ -3,7 +3,7 @@
 ## 1. Product Hunt Launch Copy
 
 * **Tagline**: The self-driving workforce OS for retail & shift work — zero clopenings forever.
-* **Short Description**: Stop building schedules on spreadsheets every Sunday. ShiftFlow coordinates shift design and cyclic rotation into an unbreakable, fair schedule with guaranteed 16+ hours rest and zero favoritism.
+* **Short Description**: Stop building schedules on spreadsheets every Sunday. ShiftFlow coordinates shift design and cyclic rotation into an unbreakable, fair schedule. Scheduled for at least 16 hours rest after every close; the roster audit flags any shift that gives less. Zero favoritism.
 * **Maker Comment**:
 > Hey Product Hunt! 👋
 > 
@@ -13,7 +13,7 @@
 > 
 > **Key Features**:
 > • **1-Click Autopilot Rollover**: Every Monday morning, everyone advances down one line automatically. Zero manual drag-and-drop.
-> • **Zero-Clopening Guarantee**: Always enforces ≥16 hours rest between shifts.
+> • **Zero-Clopening Target**: Scheduled for at least 16 hours rest after every close; the roster audit flags any shift that gives less.
 > • **Labor & Overtime Analytics**: Live payroll calculations with 1.5× overtime risk warnings.
 > • **Staff Availability & Add/Fire**: Easily manage who can work which days and instantly reassign lines.
 > 
