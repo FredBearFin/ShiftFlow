@@ -23,14 +23,14 @@ services:
       retries: 3
 
   frontend:
+    container_name: shiftflow-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: shiftflow-frontend
+      args:
+        - VITE_API_KEY=${SHIFTFLOW_API_KEY:-}
     ports:
       - "${FRONTEND_PORT:-5173}:80"
-    environment:
-      - VITE_API_BASE_URL=http://backend:8000
     depends_on:
       backend:
         condition: service_healthy
