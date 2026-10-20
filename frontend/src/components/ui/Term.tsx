@@ -15,6 +15,7 @@ export const Term: React.FC<TermProps> = ({ children, explanation, className = '
   // True when the popover should anchor to the trigger's right edge (near the viewport's right edge).
   const [alignRight, setAlignRight] = useState(false);
   const popoverId = useId();
+  const triggerId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLSpanElement>(null);
   // Focus opens the popover. The click that usually follows a mouse focus must not
@@ -85,6 +86,7 @@ export const Term: React.FC<TermProps> = ({ children, explanation, className = '
     >
       <button
         ref={triggerRef}
+        id={triggerId}
         type="button"
         aria-expanded={open}
         aria-controls={open ? popoverId : undefined}
@@ -103,6 +105,7 @@ export const Term: React.FC<TermProps> = ({ children, explanation, className = '
           ref={popoverRef}
           role="dialog"
           id={popoverId}
+          aria-labelledby={triggerId}
           className={[
             'absolute top-full z-50 mt-2 block w-max max-w-[min(16rem,calc(100vw-2rem))] whitespace-normal break-words rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-normal leading-relaxed text-slate-900 shadow-lg',
             alignRight ? 'right-0' : 'left-0',

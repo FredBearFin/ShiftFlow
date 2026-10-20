@@ -239,7 +239,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   return (
                     <div
                       key={arch.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSelected}
                       onClick={() => onSelectArchetype(arch)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelectArchetype(arch);
+                        }
+                      }}
                       className={`p-4 rounded-xl border cursor-pointer transition-all ${
                         isSelected
                           ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
@@ -256,6 +265,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           </p>
                         </div>
                         <span
+                          aria-hidden="true"
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                             isSelected
                               ? 'bg-indigo-600 text-white'

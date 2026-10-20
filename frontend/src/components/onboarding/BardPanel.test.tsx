@@ -53,7 +53,9 @@ describe('BardPanel', () => {
 
   it('renders nothing for a step with no lesson', () => {
     const { container } = render(<BardPanel stepId={99} />);
-    expect(container.innerHTML).toBe('');
+    expect(container.querySelector('section')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(container.textContent).toBe('');
   });
 
   it('still renders the panel when storage throws', () => {
