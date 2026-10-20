@@ -56,6 +56,7 @@ export function App() {
 
   const [activeTab, setActiveTab] = useState<ActiveTabId>('roster');
   const [solution, setSolution] = useState<SolveResponse | null>(null);
+  const [solveError, setSolveError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchArchetypes().then((list) => {
@@ -76,7 +77,15 @@ export function App() {
       staff_assignments: staffAssignments,
       employees: employees,
     }).then((res) => {
-      if (isMounted) setSolution(res);
+      if (isMounted) {
+        setSolution(res);
+        setSolveError(null);
+      }
+    }).catch((err: unknown) => {
+      if (isMounted) {
+        setSolution(null);
+        setSolveError(err instanceof Error ? err.message : 'The scheduling service is unavailable.');
+      }
     });
     return () => {
       isMounted = false;
@@ -250,6 +259,11 @@ export function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {solveError && (
+          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            The scheduling service is unavailable, so no schedule was computed. Try again later.
+          </div>
+        )}
         {solution ? (
           <>
             {activeTab === 'roster' && solution !== null && <CompletionNote solution={solution} />}
