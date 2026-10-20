@@ -103,8 +103,50 @@ def kubernetes_liveness() -> dict:
     }
 
 
+def _check_solver_engine() -> dict:
+    """Healthy only if ISDRWSPSolver imports and can be constructed from a valid request."""
+    engine = "Becker Hierholzer Eulerian Cycle Extraction O(|E|)"
+    try:
+        from app.api.archetype_routes import ARCHETYPE_PRESETS
+        from app.engine.isd_rwsp_solver import ISDRWSPSolver
+        from app.schemas import SolveRequestSchema
+
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
+        req = SolveRequestSchema(
+            archetype_id=preset.id,
+            facility_name=preset.name,
+            demand_matrix=preset.demand_matrix,
+            templates=preset.templates,
+            guardrails=preset.guardrails,
+            pareto_leeway_pct=10.0,
+        )
+        ISDRWSPSolver(req)
+        return {"status": "healthy", "engine": engine}
+    except Exception as e:
+        return {"status": "unhealthy", "engine": engine, "error": type(e).__name__}
+
+
+def _check_idempotency_store() -> dict:
+    """Healthy only if the idempotency_records table exists and a SELECT on it succeeds."""
+    backend = "SQLite / PostgreSQL append-only"
+    try:
+        conn = get_db_connection()
+        try:
+            table = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'idempotency_records';"
+            ).fetchone()
+            if table is None:
+                return {"status": "unhealthy", "backend": backend, "error": "table_missing"}
+            conn.execute("SELECT key FROM idempotency_records LIMIT 1;").fetchall()
+        finally:
+            conn.close()
+        return {"status": "healthy", "backend": backend}
+    except Exception as e:
+        return {"status": "unhealthy", "backend": backend, "error": type(e).__name__}
+
+
 @app.get("/health/readiness", tags=["System"])
-def kubernetes_readiness() -> dict:
+def kubernetes_readiness():
     """Production Kubernetes readiness probe - validates database connectivity and solver worker status."""
     db_ok = False
     db_latency_ms = 0.0
@@ -124,20 +166,24 @@ def kubernetes_readiness() -> dict:
             detail={"status": "not_ready", "reason": "Database connection pool unresponsive"}
         )
 
+    solver_check = _check_solver_engine()
+    idempotency_check = _check_idempotency_store()
+    checks = {
+        "database": {
+            "status": "healthy",
+            "latency_ms": db_latency_ms,
+        },
+        "solver_engine": solver_check,
+        "idempotency_store": idempotency_check,
+    }
+
+    if solver_check["status"] != "healthy" or idempotency_check["status"] != "healthy":
+        return JSONResponse(
+            status_code=503,
+            content={"status": "not_ready", "checks": checks},
+        )
+
     return {
         "status": "ready",
-        "checks": {
-            "database": {
-                "status": "healthy",
-                "latency_ms": db_latency_ms,
-            },
-            "solver_engine": {
-                "status": "healthy",
-                "engine": "Becker Hierholzer Eulerian Cycle Extraction O(|E|)",
-            },
-            "idempotency_store": {
-                "status": "healthy",
-                "backend": "SQLite / PostgreSQL append-only",
-            },
-        },
+        "checks": checks,
     }
