@@ -157,7 +157,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               onClick={onClose}
               className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
             >
-              Skip setup ✕
+              Skip setup for now
             </button>
           </div>
         </div>
@@ -833,14 +833,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 size="lg"
                 onClick={() => setCurrentStep((s) => Math.min(5, s + 1))}
               >
-                Next ({currentStep} of 5) →
+                Next: {STEP_LABELS[currentStep].title} →
               </Button>
             ) : (
               <Button
                 variant="accent"
                 onClick={onCompleteWizard}
               >
-                <span>Create my schedule</span>
+                <span>Finish setup</span>
                 <span>→</span>
               </Button>
             )}
