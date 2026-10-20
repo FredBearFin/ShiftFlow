@@ -36,6 +36,13 @@ const STEP_LABELS = [
   { step: 5, title: 'Cost vs. fairness', subtitle: 'Choose your balance' },
 ];
 
+const SHIFT_PLAIN_NAMES: Record<string, string> = {
+  M: 'Morning',
+  D: 'Midday',
+  E: 'Evening',
+  N: 'Night',
+};
+
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   isOpen,
   archetypes,
@@ -248,7 +255,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
           {/* STEP 2: OPERATING SCHEDULE & 24-HOUR DAILY DEMAND MATRIX */}
           {currentStep === 2 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
@@ -319,16 +327,23 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     </strong>
                   </span>
                 </div>
+                <p className="text-xs text-slate-600 mb-3">
+                  Tab moves between hours. Type the number of people needed.
+                </p>
                 <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
                   {demandMatrix[selectedDayTab].map((val, hr) => (
                     <div
                       key={hr}
                       className="p-2 rounded-lg bg-white border border-slate-200 flex flex-col items-center"
                     >
-                      <span className="text-[10px] font-mono-tabular text-slate-500">
-                        {String(hr).padStart(2, '0')}:00
-                      </span>
+                      <label
+                        htmlFor={`demand-hour-${selectedDayTab}-${hr}`}
+                        className="text-[10px] font-mono-tabular text-slate-500"
+                      >
+                        Hour {String(hr).padStart(2, '0')}:00
+                      </label>
                       <input
+                        id={`demand-hour-${selectedDayTab}-${hr}`}
                         type="number"
                         min={0}
                         max={40}
@@ -350,11 +365,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
               </div>
             </div>
+            <BardPanel stepId={2} className="w-full lg:w-72 shrink-0" />
+            </div>
           )}
 
           {/* STEP 3: SHIFT DESIGN TEMPLATES */}
           {currentStep === 3 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
                   Shift times
@@ -376,13 +394,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">
+                          {SHIFT_PLAIN_NAMES[tpl.code] ? `${SHIFT_PLAIN_NAMES[tpl.code]} shift` : 'Shift'}
+                        </span>
                         <span
                           className={`shift-pill-${tpl.code} px-2.5 py-0.5 rounded-md text-xs font-bold font-mono-tabular`}
                         >
                           {tpl.code}
-                        </span>
-                        <span className="text-sm font-bold text-slate-900">
-                          {tpl.name}
                         </span>
                       </div>
                       <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
@@ -400,10 +418,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-preferred-start`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Usual start (hour, 0–23)
                         </label>
                         <input
+                          id={`shift-${tpl.code}-preferred-start`}
                           type="number"
                           min={0}
                           max={23}
@@ -420,10 +442,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-preferred-duration`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Usual length (hours)
                         </label>
                         <input
+                          id={`shift-${tpl.code}-preferred-duration`}
                           type="number"
                           min={6}
                           max={12}
@@ -440,10 +466,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-earliest-start`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Earliest allowed start
                         </label>
                         <input
+                          id={`shift-${tpl.code}-earliest-start`}
                           type="number"
                           min={0}
                           max={23}
@@ -460,10 +490,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-max-duration`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Longest allowed (hours)
                         </label>
                         <input
+                          id={`shift-${tpl.code}-max-duration`}
                           type="number"
                           min={7}
                           max={12}
@@ -483,6 +517,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+            <BardPanel stepId={3} className="w-full lg:w-72 shrink-0" />
             </div>
           )}
 

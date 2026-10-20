@@ -29,9 +29,9 @@ export const LESSONS: Lesson[] = [
     stepId: 2,
     title: 'Set how many people you need each hour',
     explanation:
-      'For each hour of the day, enter how many staff you need on the floor. This grid is the picture the schedule has to fill. A higher number means more people are needed at that hour.',
+      'Each day button picks a day of the week, and the hour boxes below then show that day\'s needs. For each hour, enter how many staff you need on the floor. A higher number means more people are needed at that hour.',
     example:
-      'A shop needs 2 people from 12:00 to 13:00 and only 1 from 14:00 to 15:00. Enter 2 in the cell labelled 12:00 and 1 in the cell labelled 14:00, and the schedule puts two people on at lunch and one in the quiet afternoon.',
+      'A shop needs 2 people from 12:00 to 13:00 and only 1 from 14:00 to 15:00. Enter 2 in the box labelled Hour 12:00 and 1 in the box labelled Hour 14:00, and the schedule puts two people on at lunch and one in the quiet afternoon. Tab moves between hours.',
     whyItMatters:
       'Numbers that are too low make customers wait, and numbers that are too high make you pay people who have little to do.',
   },
