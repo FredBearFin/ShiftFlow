@@ -133,6 +133,23 @@ def init_db() -> None:
     );
     """)
 
+    # CREATE TABLE IF NOT EXISTS does not add columns to an existing employees
+    # table, so add any employee columns that an older database is missing.
+    existing_employee_columns = {
+        row[1] for row in cursor.execute("PRAGMA table_info(employees)").fetchall()
+    }
+    employee_column_additions = {
+        "accommodation_type": "TEXT NOT NULL DEFAULT 'none'",
+        "statutory_notes": "TEXT",
+        "separation_category": "TEXT",
+        "separation_reason": "TEXT",
+        "separation_timestamp": "TEXT",
+        "recorded_by": "TEXT",
+    }
+    for column, definition in employee_column_additions.items():
+        if column not in existing_employee_columns:
+            cursor.execute(f"ALTER TABLE employees ADD COLUMN {column} {definition}")
+
     conn.commit()
     conn.close()
 
