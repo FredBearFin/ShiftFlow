@@ -245,33 +245,26 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 {archetypes.map((arch) => {
                   const isSelected = arch.id === selectedArchetypeId;
                   return (
-                    <div
+                    <button
                       key={arch.id}
-                      role="button"
-                      tabIndex={0}
+                      type="button"
                       aria-pressed={isSelected}
                       onClick={() => onSelectArchetype(arch)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          onSelectArchetype(arch);
-                        }
-                      }}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all ${
+                      className={`w-full text-left p-4 rounded-xl border cursor-pointer transition-all ${
                         isSelected
                           ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
                           : 'bg-white border-slate-200 hover:border-slate-300'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900">
+                      <span className="flex items-start justify-between gap-2">
+                        <span className="block">
+                          <span className="block text-sm font-bold text-slate-900">
                             {arch.sector}
-                          </h4>
-                          <p className="text-[11px] text-slate-500 mt-0.5">
+                          </span>
+                          <span className="block text-[11px] text-slate-500 mt-0.5">
                             {presetLabelFor(arch.id, arch.sector)}
-                          </p>
-                        </div>
+                          </span>
+                        </span>
                         <span
                           aria-hidden="true"
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -282,17 +275,17 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         >
                           ✓
                         </span>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                      </span>
+                      <span className="block text-xs text-slate-600 mt-2 leading-relaxed">
                         {PRESET_LABELS[arch.id]?.description ?? ''}
-                      </p>
-                      <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                      </span>
+                      <span className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
                         <span>Hours: {arch.operating_hours_label}</span>
                         <span className="font-mono-tabular text-slate-700">
                           {arch.typical_crew_size}
                         </span>
-                      </div>
-                    </div>
+                      </span>
+                    </button>
                   );
                 })}
               </div>
