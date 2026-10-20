@@ -6,7 +6,17 @@ import os
 import sys
 
 _tests_dir = os.path.dirname(os.path.abspath(__file__))
-_modules = ["test_solver", "test_persistence_and_integrations", "test_legal_compliance", "test_emergency_workflows", "test_distributed_architecture", "test_idempotency"]
+_modules = [
+    "test_solver",
+    "test_persistence_and_integrations",
+    "test_legal_compliance",
+    "test_emergency_workflows",
+    "test_distributed_architecture",
+    "test_idempotency",
+    "test_chaos_resilience",
+    "test_timecard_audit",
+    "test_shift_handover",
+]
 
 for _mod in _modules:
     _fpath = os.path.join(_tests_dir, f"{_mod}.py")

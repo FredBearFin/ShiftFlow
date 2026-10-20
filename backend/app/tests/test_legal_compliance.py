@@ -16,6 +16,18 @@ class TestLegalComplianceAndAccommodations(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
+        conn = get_db_connection()
+        try:
+            ShiftFlowRepository(conn).upsert_facility(
+                facility_id="FAC-TEST-01",
+                name="Test Facility",
+                location="Test Location",
+                operating_hours="00:00-24:00",
+                demand_matrix=[[1] * 24 for _ in range(7)],
+                shift_templates=[],
+            )
+        finally:
+            conn.close()
 
     def setUp(self):
         self.conn = get_db_connection()
@@ -72,7 +84,7 @@ class TestLegalComplianceAndAccommodations(unittest.TestCase):
     def test_02_contemporaneous_separation_audit_logging(self):
         """Verify employee deactivation logs an immutable contemporaneous audit record for retaliation defense."""
         emp = self.repo.create_employee(
-            facility_id="FAC-OMAHA-01",
+            facility_id="FAC-TEST-01",
             name="Marcus Jones",
             role="Register Clerk",
             wage=16.50,
@@ -94,7 +106,7 @@ class TestLegalComplianceAndAccommodations(unittest.TestCase):
         self.assertIn("drawer shortages", deactivated["separation_reason"])
 
         # Query separation audits table to ensure contemporaneous proof exists
-        audits = self.repo.list_separation_audits(facility_id="FAC-OMAHA-01")
+        audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
         matching = [a for a in audits if a["employee_id"] == "EMP-LEGAL-01"]
         self.assertEqual(len(matching), 1)
         self.assertEqual(matching[0]["separation_category"], "involuntary_for_cause")

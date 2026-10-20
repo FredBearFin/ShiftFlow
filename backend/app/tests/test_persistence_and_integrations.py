@@ -18,6 +18,18 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
+        conn = get_db_connection()
+        try:
+            ShiftFlowRepository(conn).upsert_facility(
+                facility_id="FAC-TEST-01",
+                name="Test Facility",
+                location="Test Location",
+                operating_hours="00:00-24:00",
+                demand_matrix=[[1] * 24 for _ in range(7)],
+                shift_templates=[],
+            )
+        finally:
+            conn.close()
         cls.client = TestClient(app)
 
     def setUp(self):
@@ -151,7 +163,7 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
     def test_05_fastapi_rest_endpoints(self):
         """Verify all new REST API endpoints respond with status code 200."""
         # 1. Employees list
-        resp = self.client.get("/api/employees?facility_id=FAC-OMAHA-01")
+        resp = self.client.get("/api/employees?facility_id=FAC-TEST-01")
         self.assertEqual(resp.status_code, 200)
         self.assertIsInstance(resp.json(), list)
 
@@ -159,7 +171,7 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         post_resp = self.client.post(
             "/api/employees",
             json={
-                "facility_id": "FAC-OMAHA-01",
+                "facility_id": "FAC-TEST-01",
                 "name": "Integration Tester",
                 "role": "Temp Clerk",
                 "wage": 17.25,
@@ -179,18 +191,18 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         self.assertEqual(del_resp.status_code, 200)
 
         # 5. Gusto and ADP exports
-        g_resp = self.client.get("/api/payroll/export/gusto?facility_id=FAC-OMAHA-01")
+        g_resp = self.client.get("/api/payroll/export/gusto?facility_id=FAC-TEST-01")
         self.assertEqual(g_resp.status_code, 200)
         self.assertIn("Regular Hours", g_resp.text)
 
-        a_resp = self.client.get("/api/payroll/export/adp?facility_id=FAC-OMAHA-01")
+        a_resp = self.client.get("/api/payroll/export/adp?facility_id=FAC-TEST-01")
         self.assertEqual(a_resp.status_code, 200)
         self.assertIn("Co Code", a_resp.text)
 
         # 6. POS CSV Upload
         dummy_pos_csv = b"Day,Hour,Total\n0,8,$450.00\n0,12,$1200.00\n"
         pos_resp = self.client.post(
-            "/api/pos/upload-csv?facility_id=FAC-OMAHA-01",
+            "/api/pos/upload-csv?facility_id=FAC-TEST-01",
             files={"file": ("pos.csv", dummy_pos_csv, "text/csv")},
         )
         self.assertEqual(pos_resp.status_code, 200)

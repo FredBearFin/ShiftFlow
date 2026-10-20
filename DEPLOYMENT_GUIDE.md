@@ -42,7 +42,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run automated test suite (10 unit & integration tests)
-PYTHONPATH=. python3 -m unittest discover -s app/tests -v
+python run_all_tests.py
 
 # Launch development server with hot reload
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
