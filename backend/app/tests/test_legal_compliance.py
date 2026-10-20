@@ -172,7 +172,7 @@ class TestLegalComplianceAndAccommodations(unittest.TestCase):
 
         sol = ISDRWSPSolver(req).solve()
         self.assertEqual(sol.ergonomics_audit.clopening_violations, 0)
-        self.assertTrue(sol.ergonomics_audit.fair_workweek_compliant)
+        self.assertIsNone(sol.ergonomics_audit.fair_workweek_compliant)
         self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 16.0)
 
 

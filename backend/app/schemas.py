@@ -222,7 +222,7 @@ class ErgonomicsAuditSchema(BaseModel):
     consolidated_rest_blocks_pct: float
     criteria_breakdown: List[ErgonomicCriterionBreakdown]
     statutory_accommodation_violations_count: int = 0
-    fair_workweek_compliant: bool = True
+    fair_workweek_compliant: Optional[bool] = None
     mandatory_rest_violations: int = 0
 
 
