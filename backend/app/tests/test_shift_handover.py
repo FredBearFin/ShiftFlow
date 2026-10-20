@@ -6,7 +6,10 @@ cash till reconciliation variance checks, custom turnover task input, and checkl
 """
 
 import unittest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
+
+from app.tests import TEST_HEADERS
 
 from app.main import app
 from app.engine.shift_handover import ShiftHandoverEngine
@@ -15,7 +18,7 @@ from app.engine.shift_handover import ShiftHandoverEngine
 class TestShiftHandover(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.client = TestClient(app, headers=TEST_HEADERS)
 
     def test_01_checklist_categories_and_items(self):
         """Verifies standard checklists cover multiple industry archetypes."""
@@ -39,56 +42,47 @@ class TestShiftHandover(unittest.TestCase):
         self.assertIn("lottery", cs_tasks)
 
     def test_02_overlap_duration_and_friction_reduction(self):
-        """Verifies 3.0-hour Morning-to-Midday overlap duration and low friction index."""
-        metrics = ShiftHandoverEngine.calculate_overlap_metrics()
-        self.assertEqual(len(metrics), 3)
-
-        mm_metric = next(m for m in metrics if "Morning to Midday" in m.transition_name)
-        self.assertEqual(mm_metric.overlap_duration_hours, 3.0)
-        self.assertTrue(mm_metric.staggered_lunch_coverage)
-        self.assertLess(mm_metric.friction_index_pct, 5.0)
+        """Verifies overlap metrics answer the 501 contract: no stored overlap data, no fixed metrics."""
+        with self.assertRaises(HTTPException) as ctx:
+            ShiftHandoverEngine.calculate_overlap_metrics()
+        self.assertEqual(ctx.exception.status_code, 501)
+        self.assertEqual(ctx.exception.detail, "not implemented: no source data")
 
     def test_03_till_audit_reconciliation_math(self):
-        """Verifies cash till reconciliation variance and status detection."""
-        till_audits = ShiftHandoverEngine.get_mock_till_audits()
-        for audit in till_audits:
-            self.assertEqual(audit.opening_float, 200.00)
-            self.assertEqual(audit.retained_float, 200.00)
-            self.assertEqual(audit.variance, 0.00)
-            self.assertEqual(audit.status, "balanced")
+        """Verifies till audits answer the 501 contract: no stored till data, no fixed audits."""
+        with self.assertRaises(HTTPException) as ctx:
+            ShiftHandoverEngine.get_mock_till_audits()
+        self.assertEqual(ctx.exception.status_code, 501)
+        self.assertEqual(ctx.exception.detail, "not implemented: no source data")
 
     def test_04_fastapi_handover_endpoints(self):
         """Verifies all FastAPI shift handover REST endpoints return status 200."""
-        # 1. Audit report endpoint
+        # 1. Audit report endpoint: no stored source data, so it answers 501
         resp1 = self.client.get("/api/handover/audit/FAC-OMAHA-01")
-        self.assertEqual(resp1.status_code, 200)
-        data1 = resp1.json()
-        self.assertIn("overall_handover_health_score", data1)
-        self.assertGreaterEqual(data1["overall_handover_health_score"], 90.0)
+        self.assertEqual(resp1.status_code, 501)
+        self.assertEqual(resp1.json()["detail"], "not implemented: no source data")
 
-        # 2. Checklists endpoint
+        # 2. Checklists endpoint: no stored checklist status, so it answers 501
         resp2 = self.client.get("/api/handover/checklists/FAC-OMAHA-01")
-        self.assertEqual(resp2.status_code, 200)
-        data2 = resp2.json()
-        self.assertIn("morning_to_midday", data2)
+        self.assertEqual(resp2.status_code, 501)
+        self.assertEqual(resp2.json()["detail"], "not implemented: no source data")
 
-        # 3. Overlap analysis endpoint
+        # 3. Overlap analysis endpoint: no stored overlap data, so it answers 501
         resp3 = self.client.get("/api/handover/overlap-analysis")
-        self.assertEqual(resp3.status_code, 200)
-        data3 = resp3.json()
-        self.assertIn("overlap_metrics", data3)
+        self.assertEqual(resp3.status_code, 501)
+        self.assertEqual(resp3.json()["detail"], "not implemented: no source data")
 
-        # 4. Checklist item toggle endpoint
+        # 4. Checklist item toggle endpoint: nothing is persisted, so no result is returned
         resp4 = self.client.post("/api/handover/checklist-toggle", json={
             "item_id": "CHK-GR-01",
             "facility_id": "FAC-OMAHA-01",
             "new_status": "completed",
             "verified_by": "Sarah Kowalski (Supervisor)"
         })
-        self.assertEqual(resp4.status_code, 200)
-        self.assertEqual(resp4.json()["status"], "updated")
+        self.assertEqual(resp4.status_code, 501)
+        self.assertEqual(resp4.json()["detail"], "not implemented: no source data")
 
-        # 5. Till audit submission endpoint
+        # 5. Till audit submission endpoint: variance is computed from the submitted figures
         resp5 = self.client.post("/api/handover/till-audit", json={
             "register_id": "Register 01",
             "facility_id": "FAC-OMAHA-01",
@@ -99,9 +93,19 @@ class TestShiftHandover(unittest.TestCase):
             "audited_by": "Marcus Vance",
             "witnessed_by": "Devon Taylor"
         })
-        self.assertEqual(resp5.status_code, 200)
-        self.assertEqual(resp5.json()["reconciliation_status"], "balanced")
-        self.assertEqual(resp5.json()["variance"], 0.0)
+        self.assertEqual(resp5.status_code, 501)
+        self.assertEqual(resp5.json()["detail"], "not implemented: no source data")
+
+        # Float is required: no $200 default is supplied by the server
+        resp6 = self.client.post("/api/handover/till-audit", json={
+            "register_id": "Register 01",
+            "closing_cash_counted": 1045.00,
+            "cash_dropped_to_safe": 845.00,
+            "expected_system_cash": 1045.00,
+            "audited_by": "Marcus Vance",
+            "witnessed_by": "Devon Taylor"
+        })
+        self.assertEqual(resp6.status_code, 422)
 
     def test_05_custom_turnover_task_input(self):
         """Verifies supervisors can dynamically input custom turnover tasks into checklists."""
@@ -121,11 +125,10 @@ class TestShiftHandover(unittest.TestCase):
         self.assertEqual(task_data["task"], payload["task"])
         self.assertEqual(task_data["status"], "pending")
 
-        # Verify task is returned in the checklists endpoint
+        # The checklists endpoint has no stored source data, so it answers 501
         resp2 = self.client.get("/api/handover/checklists/FAC-OMAHA-01")
-        self.assertEqual(resp2.status_code, 200)
-        mm_list = resp2.json()["morning_to_midday"]
-        self.assertTrue(any("ice merchandiser" in item["task"].lower() for item in mm_list))
+        self.assertEqual(resp2.status_code, 501)
+        self.assertEqual(resp2.json()["detail"], "not implemented: no source data")
 
 
 if __name__ == "__main__":

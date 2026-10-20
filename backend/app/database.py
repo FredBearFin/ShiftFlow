@@ -6,10 +6,13 @@ import sqlite3
 from typing import Any, Dict, Generator, List, Optional
 import uuid
 
-# Use /tmp by default for SQLite locking compatibility on containerized environments
+# Marks an update argument the caller did not pass, so an explicit None can clear a stored value.
+_NOT_SENT = object()
+
+# Durable SQLite file. Set SHIFTFLOW_DB_PATH to a path on a mounted volume in containers.
 DB_FILE = os.environ.get(
     "SHIFTFLOW_DB_PATH",
-    "/tmp/shiftflow.db",
+    os.path.join("data", "shiftflow.db"),
 )
 
 
@@ -32,6 +35,9 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
 
 def init_db() -> None:
     """Initializes the SQLite schema if not already present."""
+    db_dir = os.path.dirname(DB_FILE)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -112,10 +118,44 @@ def init_db() -> None:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (facility_id) REFERENCES facilities(id)
     );
+
+    CREATE TABLE IF NOT EXISTS idempotency_records (
+        key TEXT PRIMARY KEY,
+        method TEXT NOT NULL,
+        path TEXT NOT NULL,
+        request_hash TEXT NOT NULL,
+        status_code INTEGER,
+        response_headers_json TEXT,
+        response_body TEXT,
+        in_flight INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at REAL
+    );
     """)
+
+    # CREATE TABLE IF NOT EXISTS does not add columns to an existing employees
+    # table, so add any employee columns that an older database is missing.
+    existing_employee_columns = {
+        row[1] for row in cursor.execute("PRAGMA table_info(employees)").fetchall()
+    }
+    employee_column_additions = {
+        "accommodation_type": "TEXT NOT NULL DEFAULT 'none'",
+        "statutory_notes": "TEXT",
+        "separation_category": "TEXT",
+        "separation_reason": "TEXT",
+        "separation_timestamp": "TEXT",
+        "recorded_by": "TEXT",
+    }
+    for column, definition in employee_column_additions.items():
+        if column not in existing_employee_columns:
+            cursor.execute(f"ALTER TABLE employees ADD COLUMN {column} {definition}")
 
     conn.commit()
     conn.close()
+
+
+class SeparationAuditExistsError(Exception):
+    """Raised when deleting an employee whose separation audit rows must be retained."""
 
 
 class ShiftFlowRepository:
@@ -273,22 +313,29 @@ class ShiftFlowRepository:
         wage: Optional[float] = None,
         active: Optional[bool] = None,
         available_days: Optional[List[int]] = None,
-        assigned_line: Optional[int] = None,
+        assigned_line: Any = _NOT_SENT,
         accommodation_type: Optional[str] = None,
-        statutory_notes: Optional[str] = None,
+        statutory_notes: Any = _NOT_SENT,
     ) -> Optional[Dict[str, Any]]:
+        """Updates the given fields. Omitted args keep the stored value.
+
+        assigned_line and statutory_notes accept an explicit None, which clears the stored value.
+        """
         existing = self.get_employee(employee_id)
         if not existing:
             return None
+        if active is False:
+            # Separation requires a category, reason and recorder, so it is written only by deactivate_employee.
+            raise ValueError("Use deactivate_employee to separate staff; update_employee cannot set active=False")
 
         new_name = name if name is not None else existing["name"]
         new_role = role if role is not None else existing["role"]
         new_wage = wage if wage is not None else existing["wage"]
         new_active = 1 if (active if active is not None else existing["active"]) else 0
         new_days = available_days if available_days is not None else existing["available_days"]
-        new_line = assigned_line if assigned_line is not None else existing["assigned_line"]
+        new_line = existing["assigned_line"] if assigned_line is _NOT_SENT else assigned_line
         new_accom = accommodation_type if accommodation_type is not None else existing.get("accommodation_type", "none")
-        new_notes = statutory_notes if statutory_notes is not None else existing.get("statutory_notes")
+        new_notes = existing.get("statutory_notes") if statutory_notes is _NOT_SENT else statutory_notes
 
         cursor = self.conn.cursor()
         cursor.execute(
@@ -305,14 +352,17 @@ class ShiftFlowRepository:
     def deactivate_employee(
         self,
         employee_id: str,
-        separation_category: str = "voluntary_resignation",
-        separation_reason: str = "Employee voluntary separation",
-        recorded_by: str = "Store Manager",
+        separation_category: str,
+        separation_reason: str,
+        recorded_by: str,
     ) -> Optional[Dict[str, Any]]:
         """Deactivates employee, unassigns line, and records contemporaneous legal separation audit."""
         emp = self.get_employee(employee_id)
         if not emp:
             return None
+        if not emp["active"]:
+            # Already separated: no second audit row and no overwrite of the first record.
+            return emp
 
         cursor = self.conn.cursor()
         # 1. Update employee record
@@ -361,8 +411,13 @@ class ShiftFlowRepository:
         ]
 
     def delete_employee(self, employee_id: str) -> bool:
+        """Deletes an employee record. Refused while separation audits exist (FLSA/Title VII retention)."""
         cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM separation_audits WHERE employee_id = ?", (employee_id,))
+        cursor.execute("SELECT COUNT(*) FROM separation_audits WHERE employee_id = ?", (employee_id,))
+        if cursor.fetchone()[0] > 0:
+            raise SeparationAuditExistsError(
+                f"Employee {employee_id} has separation audit records and cannot be deleted"
+            )
         cursor.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
         self.conn.commit()
         return cursor.rowcount > 0

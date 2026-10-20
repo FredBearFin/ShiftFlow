@@ -5,7 +5,9 @@ rotating workforce scheduling'. Cross-version compatible with Pydantic v1 & v2.
 """
 
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel as _PydanticBaseModel, Field
+from pydantic import BaseModel as _PydanticBaseModel, Field, field_validator, model_validator
+
+MAX_DEMAND_PER_INTERVAL = 500
 
 
 class BaseModel(_PydanticBaseModel):
@@ -45,6 +47,16 @@ class ShiftTemplateSchema(BaseModel):
     preferred_duration: int = Field(default=8, ge=4, le=12, description="Default canonical duration in hours")
     enabled: bool = Field(default=True, description="Whether this template is active in the current facility")
 
+    @model_validator(mode="after")
+    def _check_window_cross_fields(self):
+        if self.min_duration > self.max_duration:
+            raise ValueError("min_duration must not exceed max_duration")
+        if not self.min_duration <= self.preferred_duration <= self.max_duration:
+            raise ValueError("preferred_duration must lie between min_duration and max_duration")
+        if not self.earliest_start <= self.preferred_start < self.latest_end:
+            raise ValueError("preferred_start must lie inside the earliest_start to latest_end window")
+        return self
+
 
 class ErgonomicGuardrailsSchema(BaseModel):
     """Scheduling constraints and ergonomic policy toggles."""
@@ -66,7 +78,7 @@ class EmployeeRecord(BaseModel):
     employee_id: str = Field(..., description="Unique employee identifier")
     name: str = Field(..., description="Employee full name")
     role: str = Field(default="Frontline Associate", description="Operational role / title")
-    hourly_wage: float = Field(default=16.50, ge=7.25, le=150.0, description="Base hourly wage rate ($/hr)")
+    hourly_wage: float = Field(..., ge=7.25, le=150.0, description="Base hourly wage rate ($/hr)")
     max_weekly_hours: int = Field(default=40, ge=10, le=60, description="Target max weekly hours before overtime")
     is_active: bool = Field(default=True, description="Active status; False if fired / deactivated")
     available_days: List[int] = Field(
@@ -95,7 +107,7 @@ class StaffMemberAssignment(BaseModel):
     cohort_label: str = Field(..., description="Standardized Rotation Line label (e.g., Line 1)")
     assigned_staff_name: Optional[str] = Field(default=None, description="Optional mapped employee name")
     qualification_tier: str = Field(default="Frontline Associate", description="Employee operational role")
-    hourly_wage: float = Field(default=16.50, description="Hourly wage rate for labor economics ($)")
+    hourly_wage: float = Field(..., description="Hourly wage rate for labor economics ($)")
     employee_id: Optional[str] = Field(default=None, description="Unique foreign key linking to EmployeeRecord")
 
 
@@ -163,14 +175,14 @@ class RosterLineSchema(BaseModel):
     assigned_person: Optional[str] = None
     assigned_employee_id: Optional[str] = None
     qualification_tier: str = "Union Line Standard"
-    hourly_wage: float = 16.50
+    hourly_wage: Optional[float] = None
     current_cycle_week: int
     next_week_line_number: int
     days: List[RosterCellSchema]
     weekly_hours: int
     regular_hours: int
     overtime_hours: int
-    estimated_weekly_payroll: float
+    estimated_weekly_payroll: Optional[float] = None
     work_days_count: int
     rest_days_count: int
     full_weekend_off: bool
@@ -210,7 +222,7 @@ class ErgonomicsAuditSchema(BaseModel):
     consolidated_rest_blocks_pct: float
     criteria_breakdown: List[ErgonomicCriterionBreakdown]
     statutory_accommodation_violations_count: int = 0
-    fair_workweek_compliant: bool = True
+    fair_workweek_compliant: Optional[bool] = None
     mandatory_rest_violations: int = 0
 
 
@@ -235,7 +247,7 @@ class LaborAnalysisSchema(BaseModel):
     regular_payroll_cost: float
     overtime_payroll_cost: float
     total_payroll_cost: float
-    avg_hourly_wage: float
+    avg_hourly_wage: Optional[float] = None
     hours_per_day: List[int]
     cost_per_day: List[float]
     overtime_lines_count: int
@@ -281,6 +293,19 @@ class SolveRequestSchema(BaseModel):
     staff_assignments: Optional[List[StaffMemberAssignment]] = None
     employees: Optional[List[EmployeeRecord]] = None
 
+    @field_validator("demand_matrix")
+    @classmethod
+    def _check_demand_matrix(cls, matrix: List[List[int]]) -> List[List[int]]:
+        if len(matrix) != 7 or any(len(row) != 24 for row in matrix):
+            raise ValueError("demand_matrix must be 7 rows of 24 hourly values")
+        for row in matrix:
+            for value in row:
+                if not 0 <= value <= MAX_DEMAND_PER_INTERVAL:
+                    raise ValueError(
+                        f"demand values must be between 0 and {MAX_DEMAND_PER_INTERVAL} people per hour"
+                    )
+        return matrix
+
 
 class SolveResponseSchema(BaseModel):
     """Complete solution response containing shift design, multigraph, cyclic roster, and audits."""
@@ -324,43 +349,6 @@ class ArchetypePresetSchema(BaseModel):
     demand_matrix: List[List[int]]
     templates: List[ShiftTemplateSchema]
     guardrails: ErgonomicGuardrailsSchema
-
-
-class FinanceAuditSchema(BaseModel):
-    """Audited EBITDA expansion, cash flow velocity, and ROI metrics for store financial controllers."""
-    facility_id: Optional[str] = Field(default=None, description="Facility identifier")
-    facility_name: str = Field(..., description="Facility display name")
-    annual_gross_revenue: float = Field(default=670000.0, description="Estimated annual store top-line gross revenue")
-    active_headcount: int = Field(default=6, description="Active non-exempt store headcount")
-    average_hourly_wage: float = Field(default=16.50, description="Weighted average hourly wage rate")
-    hard_overtime_savings: float = Field(..., description="Audit-verified annual hard overtime leakage eliminated")
-    churn_reduction_savings: float = Field(..., description="Direct annual employee separation & onboarding cost reduction")
-    manager_floor_reallocation_savings: float = Field(..., description="Store manager administrative hours recaptured for floor sales/shrink control")
-    gross_annual_value: float = Field(..., description="Total gross annual economic value generated")
-    software_annual_cost: float = Field(..., description="ShiftFlow SaaS subscription cost")
-    net_ebitda_gain: float = Field(..., description="Net annual audited EBITDA addition")
-    payback_days: float = Field(..., description="Days to fully amortize annual software investment")
-    annual_roi_ratio: float = Field(..., description="Net EBITDA return divided by software cost (e.g., 13.8x)")
-    working_capital_released: float = Field(..., description="Uncommitted payroll contingency reserve released into working capital")
-    ebitda_margin_expansion_bps: float = Field(..., description="Basis points expansion in store operating EBITDA margin")
-    audit_methodology_notes: List[str] = Field(default_factory=list, description="Statutory GAAP and SHRM audit citations")
-
-
-class FleetProjectionSchema(BaseModel):
-    """Multi-store franchise and regional retail chain EBITDA and Enterprise Value (EV) rollup."""
-    store_count: int = Field(..., ge=1, description="Number of operational retail store locations in the fleet")
-    combined_gross_revenue: float = Field(..., description="Total aggregate fleet retail revenue")
-    baseline_annual_payroll: float = Field(..., description="Estimated baseline fleet payroll spend prior to ShiftFlow")
-    shiftflow_annual_payroll: float = Field(..., description="Optimized fleet payroll spend under ShiftFlow cyclic lines")
-    annual_payroll_savings: float = Field(..., description="Aggregate annual payroll leakage and overtime reduction")
-    annual_churn_savings: float = Field(..., description="Fleet-wide employee churn and retraining savings")
-    annual_manager_reallocation: float = Field(..., description="Total fleet manager administrative hours converted to floor operations")
-    total_annual_ebitda_gain: float = Field(..., description="Gross aggregate fleet EBITDA expansion")
-    fleet_software_annual_cost: float = Field(..., description="Fleet subscription tier SaaS fee (9/store/mo)")
-    net_annual_ebitda_impact: float = Field(..., description="Net recurring annual EBITDA improvement across all stores")
-    valuation_multiple: float = Field(default=6.0, description="Standard retail M&A / private equity EBITDA exit multiple")
-    enterprise_value_gain: float = Field(..., description="Incremental equity enterprise value created (Net EBITDA x Multiple)")
-    fleet_roi_multiple: float = Field(..., description="Fleet-wide net ROI multiple")
 
 
 class CalloutCandidateSchema(BaseModel):

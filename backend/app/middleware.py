@@ -14,8 +14,11 @@ import sqlite3
 import threading
 import time
 from typing import Optional
+from fastapi import HTTPException
+from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
+from app.auth import require_api_key
 from app.database import get_db_connection
 
 
@@ -37,7 +40,13 @@ class IdempotencyStore:
                 row = cursor.fetchone()
                 if not row:
                     return None
-                return dict(row)
+                record = dict(row)
+                expires_at = record.get("expires_at")
+                if expires_at is not None and expires_at < time.time():
+                    cursor.execute("DELETE FROM idempotency_records WHERE key = ?", (key,))
+                    conn.commit()
+                    return None
+                return record
             finally:
                 conn.close()
 
@@ -154,9 +163,45 @@ class IdempotencyMiddleware:
             await self.app(scope, receive, send)
             return
 
+        # Authenticate before any replay lookup or store write. Reuses the route dependency
+        # (app.auth.require_api_key) so the key policy is defined in one place.
+        try:
+            require_api_key(Request(scope))
+        except HTTPException as exc:
+            resp = JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+            await resp(scope, receive, send)
+            return
+
+        # Buffer the incoming request body and hash it, so a replay can be checked against the stored request
+        body_messages = []
+        request_body = b""
+        more_body = True
+        while more_body:
+            msg = await receive()
+            body_messages.append(msg)
+            request_body += msg.get("body", b"")
+            more_body = msg.get("more_body", False)
+
+        body_hash = hashlib.sha256(request_body).hexdigest()
+
         # Check existing record in persistence store
         record = IdempotencyStore.get_record(idempotency_key)
         if record:
+            if (
+                record["request_hash"] != body_hash
+                or record["method"] != method
+                or record["path"] != scope.get("path", "")
+            ):
+                resp = JSONResponse(
+                    status_code=422,
+                    content={
+                        "error": "IdempotencyKeyReuseMismatch",
+                        "detail": f"Idempotency-Key '{idempotency_key}' was already used with a different request body.",
+                    },
+                )
+                await resp(scope, receive, send)
+                return
+
             if record["in_flight"] == 1:
                 resp = JSONResponse(
                     status_code=409,
@@ -182,17 +227,6 @@ class IdempotencyMiddleware:
             await resp(scope, receive, send)
             return
 
-        # Buffer the incoming request body
-        body_messages = []
-        request_body = b""
-        more_body = True
-        while more_body:
-            msg = await receive()
-            body_messages.append(msg)
-            request_body += msg.get("body", b"")
-            more_body = msg.get("more_body", False)
-
-        body_hash = hashlib.sha256(request_body).hexdigest()
         started = IdempotencyStore.start_request(
             key=idempotency_key,
             method=method,
@@ -251,6 +285,8 @@ class IdempotencyMiddleware:
                             response_headers=header_dict,
                             response_body=response_body.decode("utf-8", errors="replace"),
                         )
+                    else:
+                        IdempotencyStore.clear_failed_request(idempotency_key)
             else:
                 await send(message)
 

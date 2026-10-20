@@ -1,34 +1,44 @@
-"""Test runner executing the complete ShiftFlow Studio automated test suite."""
+"""Single test runner for the ShiftFlow Studio backend suite.
 
+Every test module runs against its own temporary SQLite file. The file is
+created before the module's tests start and removed after they finish, so no
+module shares state with another and none touches /tmp/shiftflow.db.
+"""
+
+import importlib
+import os
 import sys
+import tempfile
 import unittest
 
-import app.tests.test_solver
-import app.tests.test_persistence_and_integrations
-import app.tests.test_legal_compliance
-import app.tests.test_finance_audit
-import app.tests.test_emergency_workflows
-import app.tests.test_distributed_architecture
-import app.tests.test_chaos_resilience
-import app.tests.test_timecard_audit
-import app.tests.test_shift_handover
+import app.database as shiftflow_db
+from app.tests import _modules
+
+
+def run_module(name):
+    """Runs one test module against a fresh temporary database."""
+    module = importlib.import_module(f"app.tests.{name}")
+    fd, db_path = tempfile.mkstemp(prefix=f"shiftflow_{name}_", suffix=".db")
+    os.close(fd)
+    previous_db = shiftflow_db.DB_FILE
+    shiftflow_db.DB_FILE = db_path
+    try:
+        shiftflow_db.init_db()
+        suite = unittest.defaultTestLoader.loadTestsFromModule(module)
+        print(f"\n===== {name} (database: {db_path}) =====")
+        return unittest.TextTestRunner(verbosity=2).run(suite)
+    finally:
+        shiftflow_db.DB_FILE = previous_db
+        os.remove(db_path)
 
 
 def main():
-    suite = unittest.TestSuite()
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_solver))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_persistence_and_integrations))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_legal_compliance))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_finance_audit))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_emergency_workflows))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_distributed_architecture))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_chaos_resilience))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_timecard_audit))
-    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(app.tests.test_shift_handover))
-
-    runner = unittest.TextTestRunner(verbosity=2)
-    result = runner.run(suite)
-    if not result.wasSuccessful():
+    results = [run_module(name) for name in _modules]
+    ran = sum(r.testsRun for r in results)
+    errors = sum(len(r.errors) for r in results)
+    failures = sum(len(r.failures) for r in results)
+    print(f"\nTOTAL: ran {ran} tests, {errors} errors, {failures} failures")
+    if any(not r.wasSuccessful() for r in results):
         sys.exit(1)
 
 

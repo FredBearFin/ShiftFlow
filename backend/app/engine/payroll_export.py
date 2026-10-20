@@ -36,8 +36,10 @@ class PayrollExportEngine:
             role = line.get("qualification_tier") or line.get("role") or "Floor Clerk"
             reg = round(float(line.get("regular_hours", line.get("regHours", 0.0))), 2)
             ot = round(float(line.get("overtime_hours", line.get("otHours", 0.0))), 2)
-            wage = round(float(line.get("hourly_wage", line.get("wage", 16.50))), 2)
-            gross = round(float(line.get("estimated_weekly_payroll", line.get("weeklyPay", 0.0))), 2)
+            wage_raw = line.get("hourly_wage", line.get("wage"))
+            gross_raw = line.get("estimated_weekly_payroll", line.get("weeklyPay"))
+            wage = "" if wage_raw is None else f"{round(float(wage_raw), 2):.2f}"
+            gross = "" if gross_raw is None else f"{round(float(gross_raw), 2):.2f}"
 
             writer.writerow([
                 emp_id,
@@ -45,8 +47,8 @@ class PayrollExportEngine:
                 role,
                 f"{reg:.2f}",
                 f"{ot:.2f}",
-                f"{wage:.2f}",
-                f"{gross:.2f}",
+                wage,
+                gross,
                 f"ShiftFlow Cyclic Line {line_num}",
             ])
 
@@ -81,8 +83,10 @@ class PayrollExportEngine:
             name = line.get("assigned_person") or line.get("empName") or f"Associate {line_num}"
             reg = round(float(line.get("regular_hours", line.get("regHours", 0.0))), 2)
             ot = round(float(line.get("overtime_hours", line.get("otHours", 0.0))), 2)
-            wage = round(float(line.get("hourly_wage", line.get("wage", 16.50))), 2)
-            gross = round(float(line.get("estimated_weekly_payroll", line.get("weeklyPay", 0.0))), 2)
+            wage_raw = line.get("hourly_wage", line.get("wage"))
+            gross_raw = line.get("estimated_weekly_payroll", line.get("weeklyPay"))
+            wage = "" if wage_raw is None else f"{round(float(wage_raw), 2):.2f}"
+            gross = "" if gross_raw is None else f"{round(float(gross_raw), 2):.2f}"
 
             writer.writerow([
                 company_code,
@@ -91,9 +95,9 @@ class PayrollExportEngine:
                 name,
                 f"{reg:.2f}",
                 f"{ot:.2f}",
-                f"{wage:.2f}",
+                wage,
                 "REG",
-                f"{gross:.2f}",
+                gross,
             ])
 
         return output.getvalue()

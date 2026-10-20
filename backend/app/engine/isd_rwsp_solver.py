@@ -172,6 +172,22 @@ def extract_eulerian_cycle_hierholzer(arcs: List[Dict]) -> List[Dict]:
     return ordered_arcs
 
 
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_WORK_BOUND_PENALTY = 12.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_WORK_TARGET_PENALTY = 4.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_SINGLE_REST_PENALTY = 15.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_SINGLE_REST_DEFAULT_PENALTY = 3.0
+# soft guardrail: penalty, not a hard constraint
+SOFT_GUARDRAIL_REST_MIN_PENALTY = 8.0
+
+
+class SolverInfeasibleError(Exception):
+    """Raised when the generator cannot satisfy a hard constraint, or the cycle is incomplete."""
+
+
 class ISDRWSPSolver:
     """Integrated Shift Design and Rotating Workforce Scheduling Solver (Becker, EJOR 2026)."""
 
@@ -203,8 +219,6 @@ class ISDRWSPSolver:
                 start_hr = 6
 
             dur = max(tpl.min_duration, min(tpl.max_duration, tpl.preferred_duration))
-            if dur > 8 and tpl.min_duration <= 8:
-                dur = 8
 
             end_hr = (start_hr + dur) % 24
             w_sl, w_ms = evaluate_shift_type_penalties(tpl.code, start_hr, dur)
@@ -246,6 +260,7 @@ class ISDRWSPSolver:
                     counts[(g, st["type_id"])] = 0
                     continue
                 sorted_reqs = sorted(req_vals)
+                # The 0.65 quantile is a value the author chose. No source for it is recorded in this repository. It is not from Becker (2026) unless a source is added.
                 q_idx = int(len(sorted_reqs) * 0.65)
                 base_needed = sorted_reqs[min(len(sorted_reqs) - 1, q_idx)]
                 counts[(g, st["type_id"])] = max(0, int(round(base_needed)))
@@ -331,16 +346,20 @@ class ISDRWSPSolver:
             score = 0.0
             for w_len in w_lens:
                 if w_len < min_w:
-                    score += 12.0 * (min_w - w_len)
+                    score += SOFT_GUARDRAIL_WORK_BOUND_PENALTY * (min_w - w_len)
                 elif w_len > max_w:
-                    score += 12.0 * (w_len - max_w)
+                    score += SOFT_GUARDRAIL_WORK_BOUND_PENALTY * (w_len - max_w)
                 if not (3 <= w_len <= 5):
-                    score += 4.0 * abs(4 - w_len)
+                    score += SOFT_GUARDRAIL_WORK_TARGET_PENALTY * abs(4 - w_len)
             for r_len in r_lens:
                 if r_len == 1:
-                    score += 15.0 if self.guardrails.avoid_single_rest_days else 3.0
+                    score += (
+                        SOFT_GUARDRAIL_SINGLE_REST_PENALTY
+                        if self.guardrails.avoid_single_rest_days
+                        else SOFT_GUARDRAIL_SINGLE_REST_DEFAULT_PENALTY
+                    )
                 if r_len < min_r:
-                    score += 8.0 * (min_r - r_len)
+                    score += SOFT_GUARDRAIL_REST_MIN_PENALTY * (min_r - r_len)
                 elif r_len > max_r:
                     score += 4.0 * (r_len - max_r)
 
@@ -392,6 +411,20 @@ class ISDRWSPSolver:
                 prev_code = seq_shifts[-1] if seq_shifts else "OFF"
 
                 if prev_code == "N":
+                    n_st = st_by_code["N"]
+                    forced_rest_hrs = compute_rest_hours_between(
+                        "N",
+                        n_st["start_hour"],
+                        n_st["duration_hours"],
+                        "N",
+                        n_st["start_hour"],
+                    )
+                    if forced_rest_hrs < settings.min_rest_hours_between_shifts:
+                        raise SolverInfeasibleError(
+                            "A night shift cannot be followed by another night shift "
+                            "with the required rest between them. "
+                            "Shorten the night template or relax the rest rule."
+                        )
                     seq_shifts.append("N")
                     rem_pool[(day_g, "N")] = rem_pool.get((day_g, "N"), 0) - 1
                     continue
@@ -419,7 +452,7 @@ class ISDRWSPSolver:
                         if rest_hrs < settings.min_rest_hours_between_shifts:
                             continue
 
-                    if cand == "N" and len(candidates) > 1:
+                    if cand == "N":
                         if steps_remaining > max_n:
                             continue
                         if (
@@ -441,8 +474,10 @@ class ISDRWSPSolver:
                     valid_candidates.append(cand)
 
                 if not valid_candidates:
-                    non_n = [c for c in candidates if c != "N"]
-                    valid_candidates = non_n if non_n else candidates
+                    raise SolverInfeasibleError(
+                        "No template satisfies the rest and rotation rules for this demand. "
+                        "Add templates or relax the guardrails."
+                    )
 
                 best_code = valid_candidates[0]
                 best_demand_score = -1e9
@@ -516,11 +551,9 @@ class ISDRWSPSolver:
                 total_work_shifts += cnt
 
         if total_work_shifts < 14:
-            for g in range(7):
-                daily_template_pool[(g, shift_types_raw[0]["template_code"])] = max(
-                    2, daily_template_pool[(g, shift_types_raw[0]["template_code"])]
-                )
-            total_work_shifts = sum(daily_template_pool.values())
+            raise SolverInfeasibleError(
+                "The demand gives fewer than 14 work shifts a week, so no valid rotation exists."
+            )
 
         employee_count, seq_pairs = self._partition_into_alternating_sequences(
             total_work_shifts
@@ -533,7 +566,14 @@ class ISDRWSPSolver:
         eulerian_valid, multigraph_nodes = verify_multigraph_eulerian_conditions(
             raw_arcs
         )
+        if not eulerian_valid:
+            raise SolverInfeasibleError("The generated multigraph is not balanced, so no cycle exists.")
         ordered_arcs_dicts = extract_eulerian_cycle_hierholzer(raw_arcs)
+        if len(ordered_arcs_dicts) != len(raw_arcs):
+            raise SolverInfeasibleError(
+                f"The cycle covers {len(ordered_arcs_dicts)} of {len(raw_arcs)} arcs, "
+                "so the schedule is not one connected rotation."
+            )
         multigraph_arcs = [MultigraphArcSchema(**a) for a in ordered_arcs_dicts]
 
         g_start = ordered_arcs_dicts[0]["start_day"] if ordered_arcs_dicts else 0
@@ -542,14 +582,28 @@ class ISDRWSPSolver:
             flat_cycle_shifts.extend(arc["shifts"])
 
         total_slots = employee_count * 7
-        while len(flat_cycle_shifts) < total_slots:
-            flat_cycle_shifts.append("OFF")
-        flat_cycle_shifts = flat_cycle_shifts[:total_slots]
+        if len(flat_cycle_shifts) != total_slots:
+            raise SolverInfeasibleError(
+                f"The cycle has {len(flat_cycle_shifts)} day slots from {len(ordered_arcs_dicts)} arcs, "
+                f"but {employee_count} lines need {total_slots}. "
+                "The schedule is not one whole rotation."
+            )
 
         aligned_shifts = ["OFF"] * total_slots
         for step_idx, s_code in enumerate(flat_cycle_shifts):
             aligned_pos = (g_start + step_idx) % total_slots
             aligned_shifts[aligned_pos] = s_code
+
+        if self.guardrails.enforce_zero_clopening:
+            for line_idx in range(employee_count):
+                for d in range(7):
+                    today = aligned_shifts[line_idx * 7 + d]
+                    tomorrow = aligned_shifts[line_idx * 7 + (d + 1) % 7]
+                    if today == "E" and tomorrow == "M":
+                        raise SolverInfeasibleError(
+                            "The rotation has a closing shift followed by an opening shift, "
+                            "which zero-clopening forbids."
+                        )
 
         actual_daily_counts: Dict[Tuple[int, str], int] = defaultdict(int)
         for line_idx in range(employee_count):
@@ -647,7 +701,7 @@ class ISDRWSPSolver:
                 assigned_person = None
                 assigned_emp_id = None
                 qual_tier = "Union Line Standard"
-                wage = 16.50
+                wage = None
                 avail_days = {0, 1, 2, 3, 4, 5, 6}
 
             display_label = (
@@ -727,8 +781,13 @@ class ISDRWSPSolver:
             ot_hrs = max(0, weekly_hours - 40)
             if ot_hrs > 0:
                 overtime_lines_count += 1
-            line_reg_pay = round(reg_hrs * wage, 2)
-            line_ot_pay = round(ot_hrs * wage * 1.5, 2)
+            # An unassigned line has no wage, so it adds nothing to payroll.
+            if wage is None:
+                line_reg_pay = 0.0
+                line_ot_pay = 0.0
+            else:
+                line_reg_pay = round(reg_hrs * wage, 2)
+                line_ot_pay = round(ot_hrs * wage * 1.5, 2)
             line_total_pay = round(line_reg_pay + line_ot_pay, 2)
 
             total_reg_hours += reg_hrs
@@ -763,7 +822,7 @@ class ISDRWSPSolver:
                     weekly_hours=weekly_hours,
                     regular_hours=reg_hrs,
                     overtime_hours=ot_hrs,
-                    estimated_weekly_payroll=line_total_pay,
+                    estimated_weekly_payroll=line_total_pay if wage is not None else None,
                     work_days_count=work_days,
                     rest_days_count=7 - work_days,
                     full_weekend_off=full_wknd_off,
@@ -822,7 +881,7 @@ class ISDRWSPSolver:
         avg_wage = (
             round(total_reg_payroll / max(1, total_reg_hours), 2)
             if total_reg_hours > 0
-            else 16.50
+            else None
         )
         labor_eff = round(
             (total_weekly_req_hours / max(1, tot_sched_hours)) * 100.0, 1
@@ -838,7 +897,7 @@ class ISDRWSPSolver:
             hours_per_day=daily_hours_sum,
             cost_per_day=[round(c, 2) for c in daily_cost_sum],
             overtime_lines_count=overtime_lines_count,
-            labor_efficiency_pct=min(100.0, labor_eff),
+            labor_efficiency_pct=labor_eff,
         )
 
         sw = settings.shift_weights
@@ -871,7 +930,7 @@ class ISDRWSPSolver:
             selected_leeway_pct=self.leeway_pct,
         )
         for p in pareto_frontier:
-            p.estimated_weekly_payroll = round(p.employee_count * 40 * avg_wage, 2)
+            p.estimated_weekly_payroll = round(p.employee_count * total_payroll / max(1, employee_count), 2)
 
         if total_weekly_req_hours <= 800:
             size_cat = "Small"

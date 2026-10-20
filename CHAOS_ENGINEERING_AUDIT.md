@@ -23,24 +23,24 @@ This Site Reliability Engineering (SRE) audit subjects ShiftFlow Studio Enterpri
 
 ```
 ========================================================================================================
-SRE CHAOS FAULT-INJECTION AUDIT RESULTS (32/32 AUTOMATED TESTS PASSING)
+SRE CHAOS FAULT-INJECTION AUDIT RESULTS (AUTOMATED TEST RESULTS: not measured)
 ========================================================================================================
 Failure Scenario Injected         | Impact Without SRE Shield | ShiftFlow SRE Shield     | Recovery Time
 ========================================================================================================
-1. Transient Database Disconnect  | HTTP 500 Internal Server  | with_db_retry (3x backoff| MTTR: 14.2 ms
-   (Simulated connection drop)    | Error, lost roster save   | with auto-reconnect)     | (100% recovered)
+1. Transient Database Disconnect  | HTTP 500 Internal Server  | with_db_retry (3x backoff| MTTR: not measured
+   (Simulated connection drop)    | Error, lost roster save   | with auto-reconnect)     | (not measured)
 --------------------------------------------------------------------------------------------------------
 2. Database Lock Pool Exhaustion  | Cascading thread pool     | 3-State Circuit Breaker  | Trip: 3 failures
    (Repeated lock timeouts)       | starvation, 60s freeze    | (CLOSED -> OPEN -> HALF) | Reset: 1.0s window
 --------------------------------------------------------------------------------------------------------
-3. Solver Worker SIGKILL / OOM    | Uncaught 500 error, blank | Safe Master-Cycle Watch- | RTO: 0.8 ms
-   (Worker crash mid-solve)       | schedule on store floor   | dog Fallback             | (Zero downtime)
+3. Solver Worker SIGKILL / OOM    | Uncaught 500 error, blank | Safe Master-Cycle Watch- | RTO: not measured
+   (Worker crash mid-solve)       | schedule on store floor   | dog Fallback             | (not measured)
 --------------------------------------------------------------------------------------------------------
 4. Interrupted Mutation / Crash   | Orphan in_flight lock,    | Atomic clear_failed_req  | Instant retry
-   (Process killed during POST)   | permanent 409 deadlock    | on exception handler     | (< 1.0 ms)
+   (Process killed during POST)   | permanent 409 deadlock    | on exception handler     | (not measured)
 --------------------------------------------------------------------------------------------------------
-5. Store Tablet Wi-Fi Partition   | White screen, failed shift| LocalStorage Sync Queue  | Zero data loss,
-   (Network dropped mid-swap)     | swap, cashier confusion   | & Offline UI Cache       | auto-sync on reconnect
+5. Store Tablet Wi-Fi Partition   | White screen, failed shift| LocalStorage Sync Queue  | not measured
+   (Network dropped mid-swap)     | swap, cashier confusion   | & Offline UI Cache       | not measured
 ========================================================================================================
 ```
 
@@ -51,7 +51,7 @@ Failure Scenario Injected         | Impact Without SRE Shield | ShiftFlow SRE Sh
 ### 2.1 Exponential Backoff & Connection Auto-Recovery
 When a store's local network or database pool experiences transient locks (`database is locked`, `busy`, `unable to open`), the `@with_db_retry` decorator intercepts the operational exception:
 - **Retry Schedule**: Initial delay $50\text{ ms}$, multiplying by $2.0\times$ backoff factor across 3 attempts.
-- **Durability Guarantee**: Write-Ahead Logging (WAL mode) ensures all committed transactions (`roster_snapshots`, `separation_audits`, `idempotency_records`) achieve a **Recovery Point Objective (RPO) of 0 seconds**.
+- **Durability Guarantee**: WAL mode is not enabled in this codebase.
 
 ### 2.2 Circuit Breaker Protection (`db_circuit_breaker`)
 To prevent cascading worker starvation during prolonged cloud database outages:
@@ -71,11 +71,8 @@ Traditional scheduling software relies entirely on online integer programming so
 Because ShiftFlow's I-SD-RWSP formulation establishes that rotating shift rosters follow invariant Eulerian cycles:
 1. Every store has a validated **pre-computed Eulerian master cycle** stored in persistent memory.
 2. If a customized Pareto re-solve worker process is killed or exceeds the timeout limit (`SOLVER_TIME_LIMIT_SECONDS`), the SRE watchdog intercepts the crash:
-   ```python
-   logger.warning("SRE ALERT: Solver process error. Falling back gracefully to Eulerian master cycle.")
-   return fallback_eulerian_schedule(), True
-   ```
-3. **Store Outcome**: The store manager receives a 100% feasible, zero-clopening, Fair Workweek-compliant schedule instantly ($<1.0\text{ ms}$). Store floor operations continue without interruption.
+   Fallback behavior: **not measured**.
+3. **Store Outcome**: The store manager receives a 100% feasible, zero-clopening, Fair Workweek-compliant schedule instantly (**not measured**). Store floor operations continue without interruption.
 
 ---
 
@@ -96,11 +93,11 @@ ShiftFlow implements three layers of network partition resilience:
 
 | SRE Reliability Metric | Statutory / Industry Benchmark | ShiftFlow Production Target | Chaos Test Verified |
 | :--- | :--- | :--- | :--- |
-| **Availability / Uptime** | 99.5% (Standard Retail SaaS) | **99.99%** (< 4.38 min/mo) | **100% in Chaos Suite** |
-| **Recovery Time Objective (RTO)** | < 15 minutes | **< 1.0 second** (Auto-fallback) | **0.8 ms Verified** |
-| **Recovery Point Objective (RPO)** | < 1 hour | **0 seconds** (Atomic WAL) | **0 sec Data Loss** |
-| **Database Pool MTTR** | < 30 seconds | **< 100 ms** (Auto-retry) | **14.2 ms Mean** |
-| **Idempotency Durability** | N/A (Often missing) | **100% exactly-once** | **Zero Duplicate Writes** |
+| **Availability / Uptime** | 99.5% (Standard Retail SaaS) | **not measured** | **not measured** |
+| **Recovery Time Objective (RTO)** | < 15 minutes | **not measured** | **not measured** |
+| **Recovery Point Objective (RPO)** | < 1 hour | **not measured** | **not measured** |
+| **Database Pool MTTR** | < 30 seconds | **not measured** | **not measured** |
+| **Idempotency Durability** | N/A (Often missing) | **not measured** | **not measured** |
 
 ---
 

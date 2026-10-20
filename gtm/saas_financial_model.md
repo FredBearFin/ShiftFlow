@@ -3,27 +3,27 @@
 ## 1. Unit Economics & Pricing Model Summary
 
 ShiftFlow Studio monetizes via a pure B2B monthly subscription tiered by retail footprint and functionality:
-- **Starter Tier ($79/mo)**: Single-location stores (4–12 staff). Covers ISD-RWSP solver, cyclic line rotation, zero-clopening shield, and CSV exports.
-- **Growth Tier ($199/mo)**: Multi-unit operators (up to 3 stores). Includes live overtime KPIs, employee availability matching, and POS sales ingestion.
-- **Fleet Tier ($39/store/mo, min 4 stores)**: Regional chains and franchisees (4–25 stores). Includes multi-store rollup dashboards, Gusto/ADP webhooks, and centralized payroll sync.
+- **Starter Tier ($79/mo)**: Single-location stores (up to 12 staff). Covers ISD-RWSP solver, cyclic line rotation, zero-clopening check (blocks a closing shift followed by an opening shift when enforce_zero_clopening is on), and CSV exports.
+- **Growth Tier ($199/mo)**: Multi-unit operators (2–9 stores). Includes live overtime KPIs, employee availability matching, and POS sales ingestion.
+- **Enterprise Fleet Tier ($39/store/mo, minimum 10 stores)**: Regional chains and franchisees (10–25 stores). Includes multi-store rollup dashboards, Gusto/ADP CSV export, and centralized payroll sync.
 
 ### Key Financial Unit Metrics
 - **Blended Average Revenue Per User (ARPU)**: **$139 / month** ($1,668 / year)
 - **Gross Margin**: **88.4%** (lightweight computational solver footprint on containerized infrastructure)
 - **Customer Acquisition Cost (CAC)**: **$95** (founder-led local walk-ins, license database scraping, and cold email outbound)
-- **Monthly Customer Churn**: **2.2%** (sticky cyclic rotation workflows with high switching costs)
-- **Customer Lifetime (1 / churn)**: **45.5 months** (~3.8 years)
-- **Customer Lifetime Value (LTV)**: $139 × 88.4% × 45.5 = **$5,591**
-- **LTV / CAC Ratio**: **58.8×** (exceptional capital efficiency)
-- **CAC Payback Period**: **2.1 months**
+- **Monthly Customer Churn**: **2.66%** (162 churned / 6,080 opening stores, M13-M24)
+- **Customer Lifetime (1 / churn)**: **37.6 months** (1 / 2.66%)
+- **Customer Lifetime Value (LTV)**: $139 x 88.4% x 37.6 = **$4,620**
+- **LTV / CAC Ratio**: **48.6x** (exceptional capital efficiency)
+- **CAC Payback Period**: 0.8 months (CAC / (ARPU x gross margin))
 
 ---
 
 ## 2. 24-Month Month-by-Month Operating Projections
 
-| Month | Active Stores | New Stores Added | Churned Stores | MRR ($) | ARR Run-Rate ($) | Hosting & Infra ($) | Gross Profit ($) | Gross Margin (%) |
+| Month | Active Stores | New Stores Added | Churned Stores | MRR ($) | ARR Run-Rate ($) | Hosting & Infra ($) | Gross Profit ($) | Hosting-only margin (%) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **M01** | 10 | 10 | 0 | $790 | $9,480 | $120 | $670 | 84.8% |
+| **M01** (10 single-location accounts) | 10 | 10 | 0 | $790 | $9,480 | $120 | $670 | 84.8% |
 | **M02** | 22 | 12 | 0 | $1,858 | $22,296 | $140 | $1,718 | 92.5% |
 | **M03** | 38 | 17 | 1 | $3,454 | $41,448 | $180 | $3,274 | 94.8% |
 | **M04** | 56 | 19 | 1 | $5,472 | $65,664 | $240 | $5,232 | 95.6% |
@@ -48,6 +48,8 @@ ShiftFlow Studio monetizes via a pure B2B monthly subscription tiered by retail 
 | **M23** | 778 | 74 | 18 | $108,872 | $1,306,464 | $4,120 | $104,752 | 96.2% |
 | **M24** | **836** | 77 | 19 | **$117,572** | **$1,410,864** | $4,510 | $113,062 | 96.2% |
 
+= (MRR − hosting) ÷ MRR. Not used for LTV.
+
 ---
 
 ## 3. Financial Milestones & Inflection Points
@@ -71,4 +73,4 @@ ShiftFlow Studio monetizes via a pure B2B monthly subscription tiered by retail 
   - Cold email infrastructure (domains, warmup, Instantly): $380
   - Direct local travel & founder in-person store visits: $1,200
   - Paid search & POS marketplace sponsorships: $2,165
-- **Net Operating Margin (Month 12)**: **$28,137 / month** (82% EBITDA margin before corporate taxes).
+- **Net Operating Margin (Month 12)**: **$29,277 / month** (modeled 85.3% of $34,312 M12 MRR; excludes staff salaries, which the model does not include).

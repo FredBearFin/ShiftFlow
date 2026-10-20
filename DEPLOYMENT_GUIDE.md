@@ -38,11 +38,11 @@ cd backend/
 python3 -m venv venv
 source venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies (add requirements-dev.txt to run the tests)
+pip install -r requirements.txt -r requirements-dev.txt
 
-# Run automated test suite (10 unit & integration tests)
-PYTHONPATH=. python3 -m unittest discover -s app/tests -v
+# Run automated test suite
+python run_all_tests.py
 
 # Launch development server with hot reload
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -52,8 +52,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```bash
 cd frontend/
 
-# Install npm dependencies
-npm install
+# Install npm dependencies from the lockfile
+npm ci
 
 # Run development server
 npm run dev
@@ -68,6 +68,14 @@ npm run build
 
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
+| `SHIFTFLOW_API_KEY` | none (required) | Key that every write request must send in `X-API-Key`. Writes are refused with 503 while it is unset. |
+| `SHIFTFLOW_CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Comma-separated origins allowed to call the API from a browser |
+| `SHIFTFLOW_DB_PATH` | `data/shiftflow.db` | SQLite file. In Docker it sits on the `shiftflow-data` volume. |
+| `VITE_API_KEY` | empty | Build-time key compiled into the frontend. It is visible to anyone who loads the page. |
+| `BACKEND_PORT` | `8000` | Host port for the backend container |
+| `FRONTEND_PORT` | `5173` | Host port for the frontend container (nginx on port 80 inside) |
+
+--- | :--- | :--- |
 | `ENVIRONMENT` | `production` | Runtime mode (`development`, `staging`, `production`) |
 | `PORT` | `8000` | FastAPI server listening port |
 | `FRONTEND_PORT` | `3000` | Nginx web server listening port |
@@ -82,5 +90,4 @@ npm run build
 
 ### Architecture
 - **Web Tier**: Nginx serving static pre-rendered React assets with client-side routing fallback (`try_files $uri /index.html;`) and caching headers (`Cache-Control "public, max-age=31536000, immutable"`).
-- **Application Tier**: Uvicorn running FastAPI behind Gunicorn with 4 worker processes per CPU core.
-- **Compute Footprint**: The Becker (2026) ISD-RWSP solver operates in $O(|\mathcal{E}|)$ Eulerian multigraph extraction time (<15 ms for 6–12 staff roster lines). A single 0.5 vCPU / 512 MB RAM container comfortably handles 50 concurrent store solve requests per second.
+- **Application Tier**: Uvicorn serves FastAPI as a single process in the provided image.

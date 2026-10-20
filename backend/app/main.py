@@ -3,22 +3,26 @@
 import os
 import time
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.archetype_routes import router as archetype_router
 from app.api.schedule_routes import router as schedule_router
 from app.api.employee_routes import router as employee_router
 from app.api.pos_payroll_routes import router as pos_payroll_router
-from app.api.finance_routes import router as finance_router
 from app.api.emergency_routes import router as emergency_router
 from app.api.compliance_routes import router as compliance_router
 from app.api.handover_routes import router as handover_router
+from app.auth import require_api_key
 from app.config import settings
 from app.database import init_db, get_db_connection
+from fastapi.responses import JSONResponse
+from app.engine.isd_rwsp_solver import SolverInfeasibleError
 from app.middleware import IdempotencyMiddleware
 
 APP_START_TIME = time.time()
+
+DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:3000"
 
 app = FastAPI(
     title=settings.app_name,
@@ -27,18 +31,30 @@ app = FastAPI(
         "Enterprise SaaS Workforce Optimization Engine implementing Tristan Becker (EJOR 2026), "
         "'A unifying approach to shift design and rotating workforce scheduling' (I-SD-RWSP)."
     ),
+    dependencies=[Depends(require_api_key)],
 )
 
+cors_origins = [
+    origin.strip()
+    for origin in os.environ.get("SHIFTFLOW_CORS_ORIGINS", DEFAULT_CORS_ORIGINS).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Idempotency-Key", "X-API-Key"],
 )
 
 # Idempotency Middleware for exactly-once mutation semantics
 app.add_middleware(IdempotencyMiddleware)
+
+
+@app.exception_handler(SolverInfeasibleError)
+def solver_infeasible_handler(request, exc: SolverInfeasibleError):
+    """Reports a schedule the solver cannot build from the given constraints, instead of relaxing them."""
+    return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
 # Startup event to ensure SQLite database schema is initialized
@@ -51,7 +67,6 @@ app.include_router(archetype_router, prefix=settings.api_prefix)
 app.include_router(schedule_router, prefix=settings.api_prefix)
 app.include_router(employee_router)
 app.include_router(pos_payroll_router)
-app.include_router(finance_router)
 app.include_router(emergency_router)
 app.include_router(compliance_router)
 app.include_router(handover_router)
@@ -88,41 +103,83 @@ def kubernetes_liveness() -> dict:
     }
 
 
+def _check_solver_engine() -> dict:
+    """Healthy only if ISDRWSPSolver imports and can be constructed from a valid request."""
+    engine = "Becker Hierholzer Eulerian Cycle Extraction O(|E|)"
+    try:
+        from app.api.archetype_routes import ARCHETYPE_PRESETS
+        from app.engine.isd_rwsp_solver import ISDRWSPSolver
+        from app.schemas import SolveRequestSchema
+
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
+        req = SolveRequestSchema(
+            archetype_id=preset.id,
+            facility_name=preset.name,
+            demand_matrix=preset.demand_matrix,
+            templates=preset.templates,
+            guardrails=preset.guardrails,
+            pareto_leeway_pct=10.0,
+        )
+        ISDRWSPSolver(req)
+        return {"status": "healthy", "engine": engine}
+    except Exception as e:
+        return {"status": "unhealthy", "engine": engine, "error": type(e).__name__}
+
+
+def _check_idempotency_store() -> dict:
+    """Healthy only if the idempotency_records table exists and a SELECT on it succeeds."""
+    backend = "SQLite / PostgreSQL append-only"
+    try:
+        conn = get_db_connection()
+        try:
+            table = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'idempotency_records';"
+            ).fetchone()
+            if table is None:
+                return {"status": "unhealthy", "backend": backend, "error": "table_missing"}
+            conn.execute("SELECT key FROM idempotency_records LIMIT 1;").fetchall()
+        finally:
+            conn.close()
+        return {"status": "healthy", "backend": backend}
+    except Exception as e:
+        return {"status": "unhealthy", "backend": backend, "error": type(e).__name__}
+
+
 @app.get("/health/readiness", tags=["System"])
-def kubernetes_readiness() -> dict:
+def kubernetes_readiness():
     """Production Kubernetes readiness probe - validates database connectivity and solver worker status."""
     db_ok = False
     db_latency_ms = 0.0
+    t0 = time.time()
     try:
-        t0 = time.time()
         conn = get_db_connection()
-        conn.execute("SELECT 1;").fetchone()
-        conn.close()
+        try:
+            conn.execute("SELECT 1;").fetchone()
+        finally:
+            conn.close()
         db_latency_ms = round((time.time() - t0) * 1000, 3)
         db_ok = True
     except Exception as e:
         db_ok = False
 
-    if not db_ok:
-        raise HTTPException(
+    solver_check = _check_solver_engine()
+    idempotency_check = _check_idempotency_store()
+    checks = {
+        "database": {
+            "status": "healthy" if db_ok else "unhealthy",
+            "latency_ms": db_latency_ms,
+        },
+        "solver_engine": solver_check,
+        "idempotency_store": idempotency_check,
+    }
+
+    if not db_ok or solver_check["status"] != "healthy" or idempotency_check["status"] != "healthy":
+        return JSONResponse(
             status_code=503,
-            detail={"status": "not_ready", "reason": "Database connection pool unresponsive"}
+            content={"status": "not_ready", "checks": checks},
         )
 
     return {
         "status": "ready",
-        "checks": {
-            "database": {
-                "status": "healthy",
-                "latency_ms": db_latency_ms,
-            },
-            "solver_engine": {
-                "status": "healthy",
-                "engine": "Becker Hierholzer Eulerian Cycle Extraction O(|E|)",
-            },
-            "idempotency_store": {
-                "status": "healthy",
-                "backend": "SQLite / PostgreSQL append-only",
-            },
-        },
+        "checks": checks,
     }

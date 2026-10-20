@@ -85,20 +85,12 @@ class TimecardAuditor:
         net_delta_minutes = (rounded_total_seconds - actual_total_seconds) / 60.0
         avg_delta_per_shift = (net_delta_minutes / len(punch_pairs)) if punch_pairs else 0.0
 
-        # WHD Enforcement standard: employer must not systematically underpay.
-        # Negative delta means employee was paid for LESS time than actually worked.
-        employer_bias = avg_delta_per_shift < -1.0
-        is_neutral = abs(avg_delta_per_shift) <= 5.0
-
         return {
             "total_shifts_audited": len(punch_pairs),
             "actual_total_hours": round(actual_total_seconds / 3600.0, 3),
             "rounded_total_hours": round(rounded_total_seconds / 3600.0, 3),
             "net_variance_minutes": round(net_delta_minutes, 2),
             "avg_shift_variance_minutes": round(avg_delta_per_shift, 3),
-            "statutorily_neutral": is_neutral,
-            "employer_favorable_bias": employer_bias,
-            "flsa_785_48_compliant": is_neutral and not employer_bias,
             "details": details,
         }
 
@@ -134,7 +126,6 @@ class TimecardAuditor:
             "overtime_pay": round(overtime_pay, 2),
             "total_gross_pay": round(total_gross_pay, 2),
             "daily_hours_mon_sun": daily_hours,
-            "flsa_standalone_compliant": True,
         }
 
     @staticmethod
@@ -165,11 +156,25 @@ class TimecardAuditor:
             "timestamp",
         ]
 
+        if not records:
+            # No source data: this module is not called from a route, so it cannot raise HTTP 501.
+            # Return an explicitly unverified result with no PASS verdict instead.
+            return {
+                "records_audited": 0,
+                "compliant_records": 0,
+                "deficiency_count": 0,
+                "cfr_516_5_compliant": None,
+                "audit_readiness_verdict": None,
+                "status": "NOT_IMPLEMENTED",
+                "detail": "not implemented: no source data",
+                "deficiencies": [],
+            }
+
         deficiencies = []
         compliant_count = 0
 
         for idx, rec in enumerate(records):
-            missing = [f for f in required_fields if f not in rec]
+            missing = [f for f in required_fields if rec.get(f) is None]
             if missing:
                 deficiencies.append({
                     "record_index": idx,
@@ -185,8 +190,7 @@ class TimecardAuditor:
             "records_audited": len(records),
             "compliant_records": compliant_count,
             "deficiency_count": len(deficiencies),
-            "retention_policy_years": 3,
             "cfr_516_5_compliant": is_fully_compliant,
-            "audit_readiness_verdict": "PASS — IRONCLAD DEFENSE" if is_fully_compliant else "REVISE — DEFICIENCIES NOTED",
+            "audit_readiness_verdict": "PASS" if is_fully_compliant else "REVISE — DEFICIENCIES NOTED",
             "deficiencies": deficiencies,
         }

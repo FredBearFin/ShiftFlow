@@ -3,30 +3,32 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-heading: 'Source Sans 3', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --surface-canvas: #f8fafc;
-  --surface-card: #ffffff;
-  --surface-subtle: #f1f5f9;
-  --border-subtle: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #64748b;
-  --accent-primary: #4f46e5;
+  --canvas: #F4F1EA;
+  --card: #FFFFFF;
+  --border: #D1D5DB;
+  --border-control: #7F8A92;
+  --ink: #2B3A42;
+  --muted: #5C6770;
+  --accent: #4A6B5D;
+  --danger: #9F3A32;
+  --warning: #C28B47;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--surface-canvas);
-  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  background-color: var(--canvas);
+  color: var(--ink);
   margin: 0;
   padding: 0;
 }
 
 /* WCAG 2.2 AAA High-Contrast Focus Ring for Backroom Store Displays */
 *:focus-visible {
-  outline: 2px solid #4f46e5;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
@@ -35,57 +37,50 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Accessible Keyboard Hotkey Token */
+/* Accessible Keyboard Hotkey Token (no shadow) */
 kbd {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 1px 1px 0 rgba(15, 23, 42, 0.08);
 }
 
-/* Enterprise SaaS Card & Badge Tokens (Linear / Stripe / Gusto aesthetic) */
+/* Card surface: cards, panels and modals. No shadow; control-coloured edge.
+   .enterprise-card is kept as an alias for views outside this change. */
+.card,
 .enterprise-card {
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--border-control);
+  border-radius: 0.5rem;
 }
 
-.enterprise-card-elevated {
-  background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-}
-
-/* High-contrast, clean semantic shift pills (Dual-encoded for screen glare & colorblindness) */
+/* Neutral shift pills (dual-encoded: fill + label; OFF is dashed) */
 .shift-pill-M {
-  background-color: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background-color: #E4E9EC;
+  color: #2B3A42;
+  border: 1px solid #7F8A92;
 }
 
 .shift-pill-D {
-  background-color: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
+  background-color: #FFFFFF;
+  color: #2B3A42;
+  border: 1px solid #7F8A92;
 }
 
 .shift-pill-E {
-  background-color: #fffbeb;
-  color: #b45309;
-  border: 1px solid #fde68a;
+  background-color: #F4F1EA;
+  color: #2B3A42;
+  border: 1px solid #7F8A92;
 }
 
 .shift-pill-N {
-  background-color: #f5f3ff;
-  color: #6d28d9;
-  border: 1px solid #ddd6fe;
+  background-color: #D9DFE3;
+  color: #2B3A42;
+  border: 1px solid #7F8A92;
 }
 
 .shift-pill-OFF {
-  background-color: #f8fafc;
-  color: #64748b;
-  border: 1px dashed #cbd5e1;
+  background-color: #FFFFFF;
+  color: #5C6770;
+  border: 1px dashed #7F8A92;
 }
 
 @media print {
@@ -94,5 +89,16 @@ kbd {
   }
   body {
     background-color: #ffffff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

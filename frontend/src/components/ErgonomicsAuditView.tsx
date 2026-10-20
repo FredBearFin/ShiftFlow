@@ -14,8 +14,8 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
     <div className="space-y-5">
       {/* Top Compliance & Theorem 1 Summary Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="enterprise-card p-5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="card p-5">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Occupational Rest & Circadian Health Standard
           </span>
           <div className="flex items-baseline gap-3 mt-1">
@@ -28,37 +28,36 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
             Integrated planning reduces total ergonomic penalty by{' '}
-            <strong className="text-indigo-700">+{audit.ergo_improvement_pct}%</strong>.
+            <strong className="text-indigo-700">+{audit.ergo_improvement_pct}%</strong> (theoretical, Becker Table 7 target).
           </p>
         </div>
 
-        <div className="enterprise-card p-5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="card p-5">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Zero-Clopening & Circadian Guardrail
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-slate-900">
               {audit.min_rest_hours_observed}h
             </span>
-            <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              {audit.clopening_violations === 0 ? '100% Compliant' : `${audit.clopening_violations} Alerts`}
-            </span>
+            {audit.clopening_violations > 0 && (
+              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {audit.clopening_violations} Alerts
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
             Minimum rest between consecutive shifts (≥16h required; 0 backward rotations).
           </p>
         </div>
 
-        <div className="enterprise-card p-5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+        <div className="card p-5">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Cyclic Line Fairness & Continuity
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-indigo-700">
               {solution.multigraph_nodes.filter((n) => n.is_balanced).length}/14
-            </span>
-            <span className="px-2 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              Balanced Roster Verified
             </span>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
@@ -68,7 +67,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       </div>
 
       {/* The 8 Ergonomics Objective Criteria Table (Becker 2026, Table 4) */}
-      <div className="enterprise-card-elevated overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
           <h2 className="text-base font-bold text-slate-900">
             Staff Health & Anti-Burnout Protection Standards
@@ -82,7 +81,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4">Symbol</th>
                 <th className="py-3 px-4">Ergonomic Criterion</th>
                 <th className="py-3 px-3">Ideal Range</th>
@@ -101,7 +100,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   </td>
                   <td className="py-3 px-4">
                     <div className="font-semibold text-slate-900">{c.name}</div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">{c.explanation}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{c.explanation}</div>
                   </td>
                   <td className="py-3 px-3 font-mono-tabular text-slate-700">
                     {c.ideal_range}
@@ -120,7 +119,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                      className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
                         c.status === 'optimal'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : c.status === 'acceptable'
@@ -139,7 +138,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       </div>
 
       {/* Directed Multigraph Flow Conservation Verification (Constraints 7 & 8) */}
-      <div className="enterprise-card p-5">
+      <div className="card p-5">
         <div className="mb-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Directed Multigraph G = (V, E) Node Degree Balance (Constraints 7 & 8)
@@ -162,24 +161,21 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             return (
               <div
                 key={g}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs"
+                className="p-3 rounded-lg bg-slate-50 border border-[#7F8A92] space-y-2 text-xs"
               >
                 <div className="font-bold text-slate-900 flex items-center justify-between">
                   <span>{wNode?.day_name}</span>
-                  <span className="text-[10px] font-mono-tabular text-emerald-700 font-semibold">
-                    Balanced ✓
-                  </span>
                 </div>
-                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-[11px] flex justify-between">
+                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
                   <span className="text-slate-600">(g, work)</span>
                   <span className="font-bold text-slate-900">
-                    in:{wNode?.in_degree ?? 0} / out:{wNode?.out_degree ?? 0}
+                    in:{wNode?.in_degree ?? '—'} / out:{wNode?.out_degree ?? '—'}
                   </span>
                 </div>
-                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-[11px] flex justify-between">
+                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
                   <span className="text-slate-600">(g, rest)</span>
                   <span className="font-bold text-slate-900">
-                    in:{rNode?.in_degree ?? 0} / out:{rNode?.out_degree ?? 0}
+                    in:{rNode?.in_degree ?? '—'} / out:{rNode?.out_degree ?? '—'}
                   </span>
                 </div>
               </div>

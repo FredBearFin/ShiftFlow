@@ -1,4 +1,3 @@
-import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Button } from './Button';
@@ -21,7 +20,7 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Next' }).className).toContain('px-5 py-2');
     render(<Button variant="accent">Create</Button>);
     const accent = screen.getByRole('button', { name: 'Create' }).className;
-    expect(accent).toContain('bg-indigo-600');
+    expect(accent).toContain('bg-[#4A6B5D]');
     expect(accent).toContain('font-bold');
   });
 

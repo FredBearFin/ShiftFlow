@@ -8,10 +8,10 @@ Tests:
 """
 
 import sqlite3
-import time
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import app.resilience as resilience
 from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
 from app.middleware import IdempotencyStore
@@ -52,26 +52,34 @@ class TestChaosResilience(unittest.TestCase):
 
     def test_02_circuit_breaker_trips_and_recovers(self):
         """Verify circuit breaker opens under repeated failures and recovers after timeout."""
-        cb = CircuitBreaker(failure_threshold=3, recovery_timeout_sec=0.2)
-        self.assertEqual(cb.state, "CLOSED")
+        # Injected clock: the breaker reads time only through resilience.time.time,
+        # so the recovery window is advanced by a fixed step, not by sleeping.
+        clock = {"now": 1000.0}
+        fake_time = MagicMock()
+        fake_time.time.side_effect = lambda: clock["now"]
 
-        # 3 failures trip the breaker
-        cb.record_failure()
-        cb.record_failure()
-        self.assertEqual(cb.state, "CLOSED")
-        cb.record_failure()
-        self.assertEqual(cb.state, "OPEN")
-        self.assertFalse(cb.can_execute())
+        with patch.object(resilience, "time", fake_time):
+            cb = CircuitBreaker(failure_threshold=3, recovery_timeout_sec=0.2)
+            self.assertEqual(cb.state, "CLOSED")
 
-        # Wait for timeout to enter HALF_OPEN
-        time.sleep(0.25)
-        self.assertTrue(cb.can_execute())
-        self.assertEqual(cb.state, "HALF_OPEN")
+            # 3 failures trip the breaker
+            cb.record_failure()
+            cb.record_failure()
+            self.assertEqual(cb.state, "CLOSED")
+            cb.record_failure()
+            self.assertEqual(cb.state, "OPEN")
+            self.assertFalse(cb.can_execute())
+            self.assertEqual(cb.state, "OPEN")
 
-        # Success resets to CLOSED
-        cb.record_success()
-        self.assertEqual(cb.state, "CLOSED")
-        self.assertEqual(cb.failure_count, 0)
+            # Advance the injected clock past the recovery window to enter HALF_OPEN
+            clock["now"] += 0.25
+            self.assertTrue(cb.can_execute())
+            self.assertEqual(cb.state, "HALF_OPEN")
+
+            # Success resets to CLOSED
+            cb.record_success()
+            self.assertEqual(cb.state, "CLOSED")
+            self.assertEqual(cb.failure_count, 0)
 
     def test_03_solver_crash_and_watchdog_master_cycle_fallback(self):
         """Verify worker crash mid-solve gracefully falls back to Eulerian master cycle."""

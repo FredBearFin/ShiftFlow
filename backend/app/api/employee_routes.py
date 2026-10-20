@@ -2,10 +2,10 @@
 
 from typing import List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 import sqlite3
 
-from app.database import get_db, ShiftFlowRepository
+from app.database import get_db, ShiftFlowRepository, SeparationAuditExistsError
 
 router = APIRouter(prefix="/api/employees", tags=["Workforce & Employees"])
 
@@ -37,18 +37,23 @@ class EmployeeUpdateSchema(BaseModel):
     accommodation_type: Optional[AccommodationType] = None
     statutory_notes: Optional[str] = None
 
+    @model_validator(mode="after")
+    def required_fields_not_null(self):
+        # An explicit null clears assigned_line and statutory_notes. On the other fields it is refused.
+        for field in ("name", "role", "wage", "available_days", "active"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"{field} cannot be null")
+        return self
+
 
 class EmployeeDeactivateSchema(BaseModel):
     separation_category: SeparationCategory = Field(
-        default="voluntary_resignation",
         description="Legal separation classification to controvert pretextual retaliation claims under FLSA § 15(a)(3)",
     )
     separation_reason: str = Field(
-        default="Voluntary separation initiated by employee",
         description="Contemporaneous business justification and factual narrative",
     )
     recorded_by: str = Field(
-        default="Store Manager",
         description="Manager or administrator certifying the separation",
     )
 
@@ -69,6 +74,8 @@ def create_employee(
     db: sqlite3.Connection = Depends(get_db),
 ):
     repo = ShiftFlowRepository(db)
+    if repo.get_facility(payload.facility_id) is None:
+        raise HTTPException(status_code=404, detail=f"Facility {payload.facility_id} not found.")
     emp = repo.create_employee(
         facility_id=payload.facility_id,
         name=payload.name,
@@ -109,18 +116,12 @@ def update_employee(
     payload: EmployeeUpdateSchema,
     db: sqlite3.Connection = Depends(get_db),
 ):
+    if payload.active is False:
+        raise HTTPException(status_code=422, detail="Use the separation route to deactivate staff")
     repo = ShiftFlowRepository(db)
-    updated = repo.update_employee(
-        employee_id=employee_id,
-        name=payload.name,
-        role=payload.role,
-        wage=payload.wage,
-        active=payload.active,
-        available_days=payload.available_days,
-        assigned_line=payload.assigned_line,
-        accommodation_type=payload.accommodation_type,
-        statutory_notes=payload.statutory_notes,
-    )
+    # Pass only the fields the client sent, so an omitted field is left unchanged and an explicit null is seen as null.
+    sent = {field: getattr(payload, field) for field in payload.model_fields_set}
+    updated = repo.update_employee(employee_id=employee_id, **sent)
     if not updated:
         raise HTTPException(status_code=404, detail=f"Employee {employee_id} not found")
     return updated
@@ -129,19 +130,16 @@ def update_employee(
 @router.post("/{employee_id}/deactivate", summary="Deactivate or separate employee with contemporaneous legal audit")
 def deactivate_employee(
     employee_id: str,
-    payload: Optional[EmployeeDeactivateSchema] = None,
+    payload: EmployeeDeactivateSchema,
     db: sqlite3.Connection = Depends(get_db),
 ):
     repo = ShiftFlowRepository(db)
-    sep_cat = payload.separation_category if payload else "voluntary_resignation"
-    sep_reason = payload.separation_reason if payload else "Employee voluntary separation"
-    recorded_by = payload.recorded_by if payload else "Store Manager"
 
     deactivated = repo.deactivate_employee(
         employee_id=employee_id,
-        separation_category=sep_cat,
-        separation_reason=sep_reason,
-        recorded_by=recorded_by,
+        separation_category=payload.separation_category,
+        separation_reason=payload.separation_reason,
+        recorded_by=payload.recorded_by,
     )
     if not deactivated:
         raise HTTPException(status_code=404, detail=f"Employee {employee_id} not found")
@@ -154,7 +152,10 @@ def delete_employee(
     db: sqlite3.Connection = Depends(get_db),
 ):
     repo = ShiftFlowRepository(db)
-    success = repo.delete_employee(employee_id)
+    try:
+        success = repo.delete_employee(employee_id)
+    except SeparationAuditExistsError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
     if not success:
         raise HTTPException(status_code=404, detail=f"Employee {employee_id} not found")
     return {"status": "deleted", "id": employee_id}

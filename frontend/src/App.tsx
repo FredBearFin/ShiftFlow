@@ -1,22 +1,27 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ActiveTabId,
   ArchetypePreset,
   EmployeeRecord,
   ErgonomicGuardrails,
   NewEmployeeInput,
+  SeparationCategory,
   ShiftTemplate,
   SolveResponse,
   StaffMemberAssignment,
 } from './types';
 import {
+  deactivateEmployee,
   fetchArchetypes,
+  fetchEmployeesApi,
+  createEmployeeApi,
+  updateEmployeeApi,
+  EmployeeApiRecord,
+  EmployeeApiWrite,
   solveScheduleApi,
   exportRosterToCsvString,
   DEFAULT_TEMPLATES,
   DEFAULT_GUARDRAILS,
-  DEFAULT_DEMAND_MATRIX,
-  INITIAL_STORE_EMPLOYEES,
 } from './services/api';
 
 import { Header } from './components/Header';
@@ -33,28 +38,79 @@ import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { CompletionNote } from './components/onboarding/CompletionNote';
 
+type SolveStatus = 'loading' | 'error' | 'ready';
+
+const FLAT_DEMAND_MATRIX: number[][] = Array.from({ length: 7 }, () => Array(24).fill(2));
+
+const STAFF_FACILITY_ID = 'FAC-OMAHA-01';
+
+/** Maps a backend staff record to the shape the views use. */
+function mapApiEmployee(rec: EmployeeApiRecord): EmployeeRecord {
+  return {
+    employee_id: rec.id,
+    name: rec.name,
+    role: rec.role,
+    hourly_wage: rec.wage,
+    max_weekly_hours: 40,
+    is_active: rec.active,
+    available_days: rec.available_days,
+    preferred_shifts: ['M', 'D', 'E'],
+    assigned_line_id: rec.assigned_line,
+    accommodation_type: rec.accommodation_type as EmployeeRecord['accommodation_type'],
+    statutory_notes: rec.statutory_notes,
+    separation_category: rec.separation_category,
+    separation_reason: rec.separation_reason,
+    separation_timestamp: rec.separation_timestamp,
+    recorded_by: rec.recorded_by,
+  };
+}
+
 export function App() {
   const [archetypes, setArchetypes] = useState<ArchetypePreset[]>([]);
-  const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>('downtown_foodmart_omaha');
-  const [facilityName, setFacilityName] = useState<string>('Downtown Foodmart — 16th & Farnam (Omaha, NE)');
-  const [demandMatrix, setDemandMatrix] = useState<number[][]>(DEFAULT_DEMAND_MATRIX);
+  const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>('custom');
+  const [facilityName, setFacilityName] = useState<string>('');
+  const [demandMatrix, setDemandMatrix] = useState<number[][]>(FLAT_DEMAND_MATRIX);
   const [templates, setTemplates] = useState<ShiftTemplate[]>(DEFAULT_TEMPLATES);
   const [guardrails, setGuardrails] = useState<ErgonomicGuardrails>(DEFAULT_GUARDRAILS);
   const [leewayPct, setLeewayPct] = useState<number>(10.0);
   const [rotationWeekOffset, setRotationWeekOffset] = useState<number>(0);
 
   const [staffAssignments, setStaffAssignments] = useState<StaffMemberAssignment[]>([]);
-  const [employees, setEmployees] = useState<EmployeeRecord[]>(INITIAL_STORE_EMPLOYEES);
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [staffError, setStaffError] = useState<string | null>(null);
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
   const [isShortcutsOpen, setIsShortcutsOpen] = useState<boolean>(false);
-  const [isCalloutOpen, setIsCalloutOpen] = useState<boolean>(false);
-  const [isSwapOpen, setIsSwapOpen] = useState<boolean>(false);
+  const [singleKeyEnabled, setSingleKeyEnabled] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('shiftflow.singleKeyShortcuts') !== 'off';
+    } catch {
+      return true;
+    }
+  });
   const [isAddEmpOpen, setIsAddEmpOpen] = useState<boolean>(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false);
 
   const [activeTab, setActiveTab] = useState<ActiveTabId>('roster');
   const [solution, setSolution] = useState<SolveResponse | null>(null);
+  const [solveStatus, setSolveStatus] = useState<SolveStatus>('loading');
+  const [solveError, setSolveError] = useState<string | null>(null);
+  const [solveAttempt, setSolveAttempt] = useState(0);
+  const [separationError, setSeparationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetchEmployeesApi(STAFF_FACILITY_ID)
+      .then((records) => {
+        if (isMounted) setEmployees(records.map(mapApiEmployee));
+      })
+      .catch((err: unknown) => {
+        if (isMounted) setStaffError(err instanceof Error ? err.message : 'Staff records could not be loaded.');
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     fetchArchetypes().then((list) => {
@@ -64,23 +120,37 @@ export function App() {
 
   useEffect(() => {
     let isMounted = true;
-    solveScheduleApi({
-      archetype_id: selectedArchetypeId,
-      facility_name: facilityName,
-      demand_matrix: demandMatrix,
-      templates,
-      guardrails,
-      pareto_leeway_pct: leewayPct,
-      rotation_week_offset: rotationWeekOffset,
-      staff_assignments: staffAssignments,
-      employees: employees,
-    }).then((res) => {
-      if (isMounted) setSolution(res);
-    });
+    setSolveStatus('loading');
+    const timer = window.setTimeout(() => {
+      solveScheduleApi({
+        archetype_id: selectedArchetypeId,
+        facility_name: facilityName,
+        demand_matrix: demandMatrix,
+        templates,
+        guardrails,
+        pareto_leeway_pct: leewayPct,
+        rotation_week_offset: rotationWeekOffset,
+        staff_assignments: staffAssignments,
+        employees: employees,
+      }).then((res) => {
+        if (isMounted) {
+          setSolution(res);
+          setSolveError(null);
+          setSolveStatus('ready');
+        }
+      }).catch((err: unknown) => {
+        // Keep the last schedule that was computed; only the status and error change.
+        if (isMounted) {
+          setSolveError(err instanceof Error ? err.message : 'The scheduling service is unavailable.');
+          setSolveStatus('error');
+        }
+      });
+    }, 300);
     return () => {
       isMounted = false;
+      window.clearTimeout(timer);
     };
-  }, [
+  }, [solveAttempt, 
     selectedArchetypeId,
     facilityName,
     demandMatrix,
@@ -92,6 +162,11 @@ export function App() {
     employees,
   ]);
 
+  // Close the wizard when a solve fails so the failed-solve alert is visible.
+  useEffect(() => {
+    if (solveStatus === 'error') setIsWizardOpen(false);
+  }, [solveStatus]);
+
   const advanceWeek = useCallback((delta: number) => {
     if (!solution || solution.employee_count === 0) return;
     setRotationWeekOffset(
@@ -102,27 +177,31 @@ export function App() {
   // Global Keyboard Navigation Engine (Hands-on-keyboard retail backroom drivability)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const activeTag = document.activeElement ? document.activeElement.tagName : '';
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag)) {
+      const activeEl = document.activeElement as HTMLElement | null;
+      const activeTag = activeEl ? activeEl.tagName : '';
+      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(activeTag) || activeEl?.isContentEditable) {
         if (e.key === 'Escape') {
           setIsShortcutsOpen(false);
-          setIsCalloutOpen(false);
-          setIsSwapOpen(false);
           setIsAddEmpOpen(false);
           setIsWizardOpen(false);
         }
         return;
       }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const dialogOpen = isShortcutsOpen || isAddEmpOpen || isWizardOpen;
+      if (e.key === 'Escape') {
+        setIsShortcutsOpen(false);
+        setIsAddEmpOpen(false);
+        setIsWizardOpen(false);
+        return;
+      }
+      if (!singleKeyEnabled && e.key !== '?') return;
+      if (dialogOpen && e.key !== '?') return;
 
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {
         e.preventDefault();
         setIsShortcutsOpen((prev) => !prev);
-      } else if (e.key === 'Escape') {
-        setIsShortcutsOpen(false);
-        setIsCalloutOpen(false);
-        setIsSwapOpen(false);
-        setIsAddEmpOpen(false);
-        setIsWizardOpen(false);
       } else if (e.key === ' ' || e.key === 'ArrowRight') {
         e.preventDefault();
         advanceWeek(1);
@@ -143,12 +222,6 @@ export function App() {
         setActiveTab('ergonomics');
       } else if (e.key === '7') {
         setActiveTab('compliance');
-      } else if (e.key.toLowerCase() === 'c') {
-        setActiveTab('roster');
-        setIsCalloutOpen(true);
-      } else if (e.key.toLowerCase() === 's') {
-        setActiveTab('roster');
-        setIsSwapOpen(true);
       } else if (e.key.toLowerCase() === 'd') {
         setIsDirectoryOpen((prev) => !prev);
       } else if (e.key.toLowerCase() === 'a') {
@@ -162,7 +235,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [advanceWeek]);
+  }, [advanceWeek, singleKeyEnabled, isShortcutsOpen, isAddEmpOpen, isWizardOpen]);
 
   const handleSelectArchetype = (preset: ArchetypePreset) => {
     setSelectedArchetypeId(preset.id);
@@ -175,52 +248,80 @@ export function App() {
     setStaffAssignments([]);
   };
 
-  const handleAddEmployee = (newEmpData: NewEmployeeInput) => {
-    setEmployees((prev) => {
-      const n = prev.reduce((m, e) => Math.max(m, parseInt(e.employee_id.replace(/\D/g, ''), 10) || 0), 0) + 1;
-      const newEmp: EmployeeRecord = {
-        employee_id: `EMP-${String(n).padStart(2, '0')}`,
+  const handleAddEmployee = async (newEmpData: NewEmployeeInput) => {
+    setStaffError(null);
+    try {
+      const created = await createEmployeeApi(STAFF_FACILITY_ID, {
         name: newEmpData.name,
         role: newEmpData.role,
-        hourly_wage: newEmpData.wage,
-        max_weekly_hours: 40,
-        is_active: true,
+        wage: newEmpData.wage,
         available_days: newEmpData.days,
-        preferred_shifts: ['M', 'D', 'E'],
-        assigned_line_id: null,
         accommodation_type: newEmpData.accommodation_type ?? 'none',
         statutory_notes: newEmpData.statutory_notes ?? null,
-      };
-      return [...prev, newEmp];
-    });
+      });
+      setEmployees((prev) => [...prev, mapApiEmployee(created)]);
+    } catch (err) {
+      setStaffError(err instanceof Error ? err.message : 'The staff member could not be saved.');
+    }
+  };
+
+  const saveEmployeeChange = async (empId: string, change: EmployeeApiWrite) => {
+    setStaffError(null);
+    try {
+      const saved = await updateEmployeeApi(empId, change);
+      setEmployees((prev) => prev.map((e) => (e.employee_id === empId ? mapApiEmployee(saved) : e)));
+    } catch (err) {
+      setStaffError(err instanceof Error ? err.message : 'The staff change could not be saved.');
+    }
   };
 
   const handleToggleEmployeeStatus = (empId: string) => {
-    setEmployees((prev) =>
-      prev.map((e) => {
-        if (e.employee_id === empId) {
-          const updatedActive = !e.is_active;
-          return {
-            ...e,
-            is_active: updatedActive,
-            assigned_line_id: updatedActive ? e.assigned_line_id : null,
-          };
-        }
-        return e;
-      })
-    );
+    const current = employees.find((e) => e.employee_id === empId);
+    if (!current) return;
+    void saveEmployeeChange(empId, { active: !current.is_active });
+  };
+
+  const handleSeparateEmployee = async (
+    empId: string,
+    sep: { category: SeparationCategory; reason: string; recorded_by: string }
+  ) => {
+    setSeparationError(null);
+    try {
+      const { employee } = await deactivateEmployee(empId, sep);
+      setEmployees((prev) =>
+        prev.map((e) =>
+          e.employee_id === empId
+            ? {
+                ...e,
+                is_active: employee.active,
+                assigned_line_id: employee.assigned_line,
+                separation_category: employee.separation_category,
+                separation_reason: employee.separation_reason,
+                separation_timestamp: employee.separation_timestamp,
+                recorded_by: employee.recorded_by,
+              }
+            : e
+        )
+      );
+    } catch (err) {
+      setSeparationError(err instanceof Error ? err.message : 'Separation could not be recorded.');
+    }
   };
 
   const handleUpdateEmployee = (updated: EmployeeRecord) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.employee_id === updated.employee_id ? updated : e))
-    );
+    void saveEmployeeChange(updated.employee_id, {
+      name: updated.name,
+      role: updated.role,
+      wage: updated.hourly_wage,
+      available_days: updated.available_days,
+      assigned_line: updated.assigned_line_id ?? null,
+      accommodation_type: updated.accommodation_type ?? 'none',
+      statutory_notes: updated.statutory_notes ?? null,
+    });
   };
 
   const handleUpdateAvailability = (empId: string, days: number[]) => {
-    setEmployees((prev) =>
-      prev.map((e) => (e.employee_id === empId ? { ...e, available_days: days } : e))
-    );
+    void saveEmployeeChange(empId, { available_days: days });
   };
 
   const handleExportCsv = () => {
@@ -238,7 +339,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col bg-[#F4F1EA] text-[#2B3A42]">
       <Header
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -249,6 +350,30 @@ export function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {staffError && (
+          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+            {staffError}
+          </div>
+        )}
+        {separationError && (
+          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+            {separationError}
+          </div>
+        )}
+        {solveStatus === 'error' && (
+          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+            <span>
+              {solveError ? 'The scheduling service is unavailable, so no schedule was computed. Try again later.' : null}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSolveAttempt((n) => n + 1)}
+              className="rounded-md border border-[#9F3A32] bg-white px-3 py-1 font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
+            >
+              Retry
+            </button>
+          </div>
+        )}
         {solution ? (
           <>
             {activeTab === 'roster' && solution !== null && <CompletionNote solution={solution} />}
@@ -262,13 +387,11 @@ export function App() {
                 onResetWeek={() => setRotationWeekOffset(0)}
                 onUpdateStaffAssignments={setStaffAssignments}
                 onAddEmployee={handleAddEmployee}
-                onToggleEmployeeStatus={handleToggleEmployeeStatus}
+                onToggleEmployeeStatus={(empId, sep) =>
+                  sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)
+                }
                 onUpdateEmployee={handleUpdateEmployee}
                 onExportCsv={handleExportCsv}
-                showCalloutModal={isCalloutOpen}
-                onSetShowCalloutModal={setIsCalloutOpen}
-                showSwapModal={isSwapOpen}
-                onSetShowSwapModal={setIsSwapOpen}
                 showAddModal={isAddEmpOpen}
                 onSetShowAddModal={setIsAddEmpOpen}
                 showDirectoryDrawer={isDirectoryOpen}
@@ -280,7 +403,9 @@ export function App() {
                 employees={employees}
                 rosterLines={solution.roster_lines}
                 onAddEmployee={handleAddEmployee}
-                onToggleActive={handleToggleEmployeeStatus}
+                onToggleActive={(empId, sep) =>
+                  sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)
+                }
                 onUpdateAvailability={handleUpdateAvailability}
               />
             )}
@@ -288,6 +413,7 @@ export function App() {
             {activeTab === 'cfo' && <CFODashboardView solution={solution} />}
             {activeTab === 'pos' && (
               <POSIntegrationView
+                facilityId={STAFF_FACILITY_ID}
                 onDemandUpdated={(newDemand) => setDemandMatrix(newDemand)}
               />
             )}
@@ -302,11 +428,15 @@ export function App() {
             {activeTab === 'ergonomics' && <ErgonomicsAuditView solution={solution} />}
             {activeTab === 'compliance' && <DOLComplianceView solution={solution} />}
           </>
-        ) : (
+        ) : solveStatus === 'loading' ? (
           <div className="enterprise-card p-12 text-center text-sm text-slate-500">
+            <span
+              aria-hidden="true"
+              className="mx-auto mb-4 block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
+            />
             Calculating Optimized Schedule, Coverage & Labor Economics...
           </div>
-        )}
+        ) : null}
       </main>
 
       <OnboardingWizard
@@ -331,6 +461,15 @@ export function App() {
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
+        singleKeyEnabled={singleKeyEnabled}
+        onToggleSingleKey={(enabled) => {
+          setSingleKeyEnabled(enabled);
+          try {
+            window.localStorage.setItem('shiftflow.singleKeyShortcuts', enabled ? 'on' : 'off');
+          } catch {
+            // Storage can be blocked; the choice then lasts for this visit only.
+          }
+        }}
       />
     </div>
   );
