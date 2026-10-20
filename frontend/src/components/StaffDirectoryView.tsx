@@ -111,7 +111,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <button type="button"
             onClick={() => setFilterActiveOnly(!filterActiveOnly)}
             className={`px-3 py-1.5 rounded-lg border text-xs font-semibold ${
               filterActiveOnly
@@ -121,7 +121,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           >
             {filterActiveOnly ? 'Showing Active Only' : 'Showing All Staff'}
           </button>
-          <button
+          <button type="button"
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5"
           >
@@ -270,14 +270,14 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 className="text-base font-bold text-slate-900">Add New Workforce Associate</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 font-bold">
+              <button type="button" aria-label="Close" onClick={() => setShowAddModal(false)} className="text-slate-400 font-bold">
                 ✕
               </button>
             </div>
             <form onSubmit={handleSubmitAdd} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
-                <input
+                <label htmlFor="staff-new-name" className="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
+                <input id="staff-new-name"
                   type="text"
                   required
                   placeholder="e.g., Alex Morgan"
@@ -288,8 +288,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Role / Position</label>
-                  <input
+                  <label htmlFor="staff-new-role" className="block text-xs font-semibold text-slate-700 mb-1">Role / Position</label>
+                  <input id="staff-new-role"
                     type="text"
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
@@ -297,8 +297,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Wage ($/hr)</label>
-                  <input
+                  <label htmlFor="staff-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">Wage ($/hr)</label>
+                  <input id="staff-new-wage"
                     type="number"
                     step="0.25"
                     value={newWage}
@@ -310,10 +310,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
               {/* Title VII & ADA Statutory Protections */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="staff-new-accom" className="block text-xs font-semibold text-slate-700 mb-1">
                   Statutory Accommodation Protection (Title VII / ADA)
                 </label>
-                <select
+                <select id="staff-new-accom"
                   value={newAccom}
                   onChange={(e) => setNewAccom(e.target.value as AccommodationType)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white"
@@ -327,10 +327,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
               {newAccom !== 'none' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="staff-new-notes" className="block text-xs font-semibold text-slate-700 mb-1">
                     Documentation Notes (Confidential HR Record)
                   </label>
-                  <input
+                  <input id="staff-new-notes"
                     type="text"
                     placeholder="e.g., Friday sundown to Saturday sundown Sabbath observance approved"
                     value={newStatNotes}
@@ -395,7 +395,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   Deactivate / Separate: {separatingEmp.name}
                 </h3>
               </div>
-              <button onClick={() => setSeparatingEmp(null)} className="text-slate-400 font-bold">
+              <button type="button" aria-label="Close" onClick={() => setSeparatingEmp(null)} className="text-slate-400 font-bold">
                 ✕
               </button>
             </div>
@@ -412,10 +412,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="staff-sep-category" className="block text-xs font-semibold text-slate-700 mb-1">
                   Separation Classification
                 </label>
-                <select
+                <select id="staff-sep-category"
                   value={sepCategory}
                   onChange={(e) => setSepCategory(e.target.value as SeparationCategory)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs bg-white"
@@ -428,10 +428,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="staff-sep-reason" className="block text-xs font-semibold text-slate-700 mb-1">
                   Contemporaneous Business Justification & Notes
                 </label>
-                <textarea
+                <textarea id="staff-sep-reason"
                   rows={3}
                   value={sepReason}
                   onChange={(e) => setSepReason(e.target.value)}
@@ -441,10 +441,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="staff-sep-recorded-by" className="block text-xs font-semibold text-slate-700 mb-1">
                   Certifying Manager / Administrator
                 </label>
-                <input
+                <input id="staff-sep-recorded-by"
                   type="text"
                   value={recordedBy}
                   onChange={(e) => setRecordedBy(e.target.value)}

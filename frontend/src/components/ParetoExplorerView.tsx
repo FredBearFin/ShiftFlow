@@ -1,5 +1,6 @@
 import React from 'react';
 import { ParetoPoint, SolveResponse } from '../types';
+import { Term } from './ui/Term';
 
 interface ParetoExplorerViewProps {
   solution: SolveResponse;
@@ -47,11 +48,11 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Schedule Flexibility vs. Overtime Optimization
             </span>
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
-              Pareto Trade-Off Between Shift Design Quality (obj^shift) & Schedule Ergonomics (obj^ergo)
+              <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> Trade-Off Between Shift Design Quality (obj^shift) & Schedule Ergonomics (obj^ergo)
             </h2>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
               By constraining <span className="font-mono-tabular">obj^ergo ≤ ub^ergo − (ub^ergo − lb^ergo)·(i/n)</span>{' '}
-              (Eq. 23), ShiftFlow Studio maps the exact Pareto-efficient frontier. Click any point on
+              (Eq. 23), ShiftFlow Studio maps the exact <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-efficient frontier. Click any point on
               the curve or table below to immediately re-calibrate the active roster.
             </p>
           </div>
@@ -71,7 +72,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="lg:col-span-8 enterprise-card-elevated p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Interactive Pareto-Efficient Frontier (Click Any Point to Apply)
+              Interactive <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-Efficient Frontier (Click Any Point to Apply)
             </h3>
             <div className="flex items-center gap-3 text-[11px]">
               <span className="inline-flex items-center gap-1.5 text-slate-600">
@@ -204,7 +205,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Why the 5% Knee Point Matters
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              Across 279 benchmark instances (620,730 MILP solves), the Pareto frontier descends
+              Across 279 benchmark instances (620,730 MILP solves), the <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> frontier descends
               steeply at first before flattening:
             </p>
 
@@ -246,14 +247,14 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       <div className="enterprise-card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-slate-50">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Enumerated Pareto-Optimal Schedule Points
+            Enumerated <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-Optimal Schedule Points
           </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-white">
-                <th className="py-3 px-4">Pareto Regime</th>
+                <th className="py-3 px-4"><Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term> Regime</th>
                 <th className="py-3 px-3 text-right">SD Leeway</th>
                 <th className="py-3 px-3 text-right">obj^shift</th>
                 <th className="py-3 px-3 text-right">obj^ergo</th>

@@ -108,19 +108,19 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               ✓ {downloadMsg}
             </span>
           )}
-          <button
+          <button type="button"
             onClick={handleDownloadGusto}
             className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5"
           >
             <span>↓ Gusto CSV</span>
           </button>
-          <button
+          <button type="button"
             onClick={handleDownloadAdp}
             className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold shadow-xs flex items-center gap-1.5"
           >
             <span>↓ ADP CSV</span>
           </button>
-          <button
+          <button type="button"
             onClick={() => window.print()}
             className="px-3 py-2 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 rounded-lg text-xs font-semibold"
           >
