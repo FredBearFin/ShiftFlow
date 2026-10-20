@@ -255,3 +255,5 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Removed.** `lucide-react`, which no source file imports. `DEFAULT_DEMAND_MATRIX` and `INITIAL_STORE_EMPLOYEES`, which nothing imports. The standalone `shiftflow_studio_app.html` prototype, which nothing links to.
   - **Not in this PR.** `npm audit` findings are not cleared here. Each one needs its own upgrade decision and the vulnerable packages need to be checked against the build, so it stays open.
   - **Acceptance.** `cd frontend && npm ci`, `npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 25: strict unused locals (King).** Files: `frontend/tsconfig.json` (`noUnusedLocals` set to true), `frontend/src/App.tsx`, `frontend/src/components/__tests__/OnboardingWizard.smoke.test.tsx`, `frontend/src/components/ui/Button.test.tsx`, `frontend/src/components/ui/Term.test.tsx` (unused `React` imports only), and no other file. No behavior change.
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0 with the flag on. One PR is one commit under Art. 1.
