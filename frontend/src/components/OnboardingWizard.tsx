@@ -217,6 +217,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     Pick the closest match
                   </h3>
                   <p className="text-xs text-slate-600 mt-0.5">
+                    Choose the business type closest to yours, then type your store or unit name.
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5">
                     We'll fill in typical hours, shift times and rules. You can change any of them in the next steps.
                   </p>
                 </div>
@@ -307,6 +310,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   <h3 className="text-base font-bold text-slate-900">
                     How many people you need
                   </h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Fill in the number of people needed for each hour of each day, using the boxes below.
+                  </p>
                   <p className="text-xs text-slate-600 mt-0.5">
                     Enter how many people you need working each hour, for each day of the week.
                   </p>
@@ -424,6 +430,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <h3 className="text-base font-bold text-slate-900">
                   Shift times
                 </h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Fill in the start hour and length for each shift your store runs, and untick any shift it does not use.
+                </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Set when each shift starts and how long it runs. Morning (M), Midday (D), Evening (E) and Night (N).
                 </p>
@@ -577,6 +586,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <h3 className="text-base font-bold text-slate-900">
                   Scheduling rules
                 </h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Fill in the limits for work stretches and nights or evenings in a row, and check the rest rules you want.
+                </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Set limits that protect staff health and give everyone fair rest. Defaults are a good starting point.
                 </p>
@@ -735,6 +747,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <h3 className="text-base font-bold text-slate-900">
                   Cost vs. fairness
                 </h3>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  Choose how much extra cost you allow, using the slider or one of the buttons below.
+                </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Allowing a little more cost can make schedules noticeably fairer for staff. Pick the balance that suits you.
                 </p>
