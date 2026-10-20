@@ -211,3 +211,9 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Day toggles.** Each toggle has `aria-pressed` and a full day name in `aria-label`, so its state is not shown by colour alone. Targets are 24 px, up from 20 px. Inactive toggles use `text-slate-600` on `bg-slate-200`, which passes contrast where `text-slate-400` did not.
   - **Motion.** Users who ask for reduced motion get no animation from `animate-pulse` and similar classes.
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 17: wizard labels state only what the solver does (King).** Files: `frontend/src/components/OnboardingWizard.tsx` (label and description text only), and no other file. Copy change only; no behavior, prop or value changes.
+  - **Clopening.** "At least 16 hours between shifts" becomes "No closing shift followed by an opening shift the next day", which is the one rule the solver checks.
+  - **Duration cap.** "Longest allowed (hours)" becomes "Longest shift the solver may use (hours)".
+  - **Gain.** "staff comfort" becomes "ergonomic score (theoretical)", since the gain is a Table 7 target, not a measured result.
+  - **Cost step.** "No extra payroll" at 10% leeway is removed; the label becomes "Standard balance".
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
