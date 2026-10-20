@@ -349,7 +349,7 @@ export function App() {
         leewayPct={leewayPct}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-[min(96vw,1600px)] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {staffError && (
           <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             {staffError}
