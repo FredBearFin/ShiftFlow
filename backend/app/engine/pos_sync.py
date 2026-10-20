@@ -3,7 +3,66 @@
 import csv
 import io
 import json
-from typing import Any, Dict, List, Tuple
+import math
+from typing import Any, Dict, List, Optional, Tuple
+
+AMOUNT_COLUMNS = ("amount", "Total", "Net Sales", "Gross Sales")
+DAY_COLUMNS = ("day_of_week", "Day")
+HOUR_COLUMNS = ("hour_of_day", "Hour")
+
+# Accepts "Mon" and "Monday" (any case) as well as 0=Mon .. 6=Sun.
+_DAY_INDEX: Dict[str, int] = {}
+for _i, _full in enumerate(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]):
+    _DAY_INDEX[_full] = _i
+    _DAY_INDEX[_full[:3]] = _i
+
+
+def _first_column(row: Dict[str, Any], names: Tuple[str, ...]) -> Optional[str]:
+    """Returns the value of the first header present in the row, or None if no such column exists."""
+    for name in names:
+        if name in row:
+            return row[name]
+    return None
+
+
+def _parse_amount(raw: Optional[str]) -> float:
+    if raw is None or not raw.strip():
+        raise ValueError("amount is missing")
+    text = raw.replace("$", "").replace(",", "").strip()
+    try:
+        amt = float(text)
+    except ValueError:
+        raise ValueError(f"amount '{raw}' is not a number") from None
+    if not math.isfinite(amt):
+        raise ValueError(f"amount '{raw}' is not a finite number")
+    return amt
+
+
+def _parse_day(raw: Optional[str]) -> int:
+    if raw is None or not raw.strip():
+        raise ValueError("day is missing")
+    text = raw.strip().lower()
+    if text in _DAY_INDEX:
+        return _DAY_INDEX[text]
+    try:
+        day = int(text)
+    except ValueError:
+        raise ValueError(f"day '{raw}' is not a day name or a number 0-6") from None
+    if not 0 <= day <= 6:
+        raise ValueError(f"day '{raw}' is outside 0-6")
+    return day
+
+
+def _parse_hour(raw: Optional[str]) -> int:
+    if raw is None or not raw.strip():
+        raise ValueError("hour is missing")
+    try:
+        hr = int(raw.strip())
+    except ValueError:
+        raise ValueError(f"hour '{raw}' is not a whole number") from None
+    if not 0 <= hr <= 23:
+        raise ValueError(f"hour '{raw}' is outside 0-23")
+    return hr
 
 
 class POSDemandForecaster:
@@ -22,26 +81,27 @@ class POSDemandForecaster:
         self.max_staff_cap = max_staff_cap
 
     def parse_pos_csv(self, csv_content: str) -> List[Dict[str, Any]]:
-        """Parses generic POS export CSV (Square, Clover, Toast) into normalized transaction records."""
+        """Parses generic POS export CSV (Square, Clover, Toast) into normalized transaction records.
+
+        Raises ValueError naming the first row that cannot be read. No row is skipped silently,
+        and a missing amount, day or hour is never defaulted to zero.
+        """
         records = []
         reader = csv.DictReader(io.StringIO(csv_content))
         for row in reader:
-            # Flexible field matching across POS types
-            amt_str = row.get("amount") or row.get("Total") or row.get("Net Sales") or row.get("Gross Sales") or "0"
-            day_str = row.get("day_of_week") or row.get("Day") or "0"
-            hr_str = row.get("hour_of_day") or row.get("Hour") or "0"
-            
+            line_no = reader.line_num
+            # Flexible field matching across POS types: the first header present wins
             try:
-                amt = float(amt_str.replace("$", "").replace(",", "").strip())
-                day = int(day_str)
-                hr = int(hr_str)
-                records.append({
-                    "day_of_week": day % 7,
-                    "hour_of_day": hr % 24,
-                    "amount": amt,
-                })
-            except (ValueError, TypeError):
-                continue
+                amt = _parse_amount(_first_column(row, AMOUNT_COLUMNS))
+                day = _parse_day(_first_column(row, DAY_COLUMNS))
+                hr = _parse_hour(_first_column(row, HOUR_COLUMNS))
+            except ValueError as exc:
+                raise ValueError(f"POS CSV row {line_no} is invalid: {exc}") from None
+            records.append({
+                "day_of_week": day,
+                "hour_of_day": hr,
+                "amount": amt,
+            })
         return records
 
     def calculate_demand_matrix(
