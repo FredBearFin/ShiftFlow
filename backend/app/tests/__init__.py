@@ -24,6 +24,7 @@ _modules = [
     "test_shift_handover",
     "test_auth",
     "test_input_validation",
+    "test_solver_contracts",
 ]
 
 for _mod in _modules:
