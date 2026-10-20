@@ -179,3 +179,7 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Behavior.** A failed solve keeps the last schedule that was computed, and says so. The error banner shows the message and a Retry button. The solve request is debounced by 300 ms, so typing does not fire one request per keystroke. No schedule is replaced by an empty state on error.
   - **Limit.** `services/api.ts` is not changed in this PR, so it still returns one generic message for every non-OK response. The distinction between 422 (infeasible inputs) and 5xx (service down) therefore needs a later PR that is allowed to change `api.ts`.
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 10: roster fabrications removed (King).** Files: `frontend/src/components/MasterRosterView.tsx` and `frontend/src/App.tsx`, and no other file. Behavior PR under §3, approved for this batch.
+  - **Removed.** The "Saturday Callout" and "Shift Swap" buttons, their modals, their local state and their props. The modals showed a fixed scenario (Elena Rodriguez, an illegal clopening, a fake "executed successfully" alert) and call no endpoint. The `C` and `S` keyboard shortcuts that opened them are removed from `App.tsx`.
+  - **Computed.** The roster health badge shows the clopening count from `ergonomics_audit.clopening_violations`, not the constant "0 Clopenings".
+  - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
