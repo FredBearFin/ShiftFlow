@@ -112,7 +112,7 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
               Wage & Hour Statutory Compliance Console
             </h1>
             <p className="text-xs text-slate-300 mt-1 max-w-2xl">
-              Protects Downtown Foodmart against unannounced payroll inspections, back-wage claims,
+              Protects your staff against unannounced payroll inspections, back-wage claims,
               and 200% liquidated damages. Audits 7-minute punch rounding neutrality, 168-hour
               standalone workweeks, and 3-year immutable record durability.
             </p>

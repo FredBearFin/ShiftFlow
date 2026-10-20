@@ -15,7 +15,6 @@ import {
   exportRosterToCsvString,
   DEFAULT_TEMPLATES,
   DEFAULT_GUARDRAILS,
-  DEFAULT_DEMAND_MATRIX,
   INITIAL_STORE_EMPLOYEES,
 } from './services/api';
 
@@ -33,11 +32,13 @@ import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { CompletionNote } from './components/onboarding/CompletionNote';
 
+const FLAT_DEMAND_MATRIX: number[][] = Array.from({ length: 7 }, () => Array(24).fill(2));
+
 export function App() {
   const [archetypes, setArchetypes] = useState<ArchetypePreset[]>([]);
-  const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>('downtown_foodmart_omaha');
-  const [facilityName, setFacilityName] = useState<string>('Downtown Foodmart — 16th & Farnam (Omaha, NE)');
-  const [demandMatrix, setDemandMatrix] = useState<number[][]>(DEFAULT_DEMAND_MATRIX);
+  const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>('custom');
+  const [facilityName, setFacilityName] = useState<string>('');
+  const [demandMatrix, setDemandMatrix] = useState<number[][]>(FLAT_DEMAND_MATRIX);
   const [templates, setTemplates] = useState<ShiftTemplate[]>(DEFAULT_TEMPLATES);
   const [guardrails, setGuardrails] = useState<ErgonomicGuardrails>(DEFAULT_GUARDRAILS);
   const [leewayPct, setLeewayPct] = useState<number>(10.0);

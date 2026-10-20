@@ -14,7 +14,7 @@ export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) 
 
   // Fallback defaults if API is running standalone
   const defaultAudit: FinanceAudit = {
-    facility_name: solution.instance_name || 'Downtown Foodmart (Flagship)',
+    facility_name: solution.instance_name || 'Your business',
     annual_gross_revenue: 670000.0,
     active_headcount: solution.employee_count || 6,
     average_hourly_wage: solution.labor_analysis?.avg_hourly_wage || 16.50,
