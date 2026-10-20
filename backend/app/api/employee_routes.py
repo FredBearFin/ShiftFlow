@@ -48,15 +48,12 @@ class EmployeeUpdateSchema(BaseModel):
 
 class EmployeeDeactivateSchema(BaseModel):
     separation_category: SeparationCategory = Field(
-        default="voluntary_resignation",
         description="Legal separation classification to controvert pretextual retaliation claims under FLSA § 15(a)(3)",
     )
     separation_reason: str = Field(
-        default="Voluntary separation initiated by employee",
         description="Contemporaneous business justification and factual narrative",
     )
     recorded_by: str = Field(
-        default="Store Manager",
         description="Manager or administrator certifying the separation",
     )
 
@@ -133,19 +130,16 @@ def update_employee(
 @router.post("/{employee_id}/deactivate", summary="Deactivate or separate employee with contemporaneous legal audit")
 def deactivate_employee(
     employee_id: str,
-    payload: Optional[EmployeeDeactivateSchema] = None,
+    payload: EmployeeDeactivateSchema,
     db: sqlite3.Connection = Depends(get_db),
 ):
     repo = ShiftFlowRepository(db)
-    sep_cat = payload.separation_category if payload else "voluntary_resignation"
-    sep_reason = payload.separation_reason if payload else "Employee voluntary separation"
-    recorded_by = payload.recorded_by if payload else "Store Manager"
 
     deactivated = repo.deactivate_employee(
         employee_id=employee_id,
-        separation_category=sep_cat,
-        separation_reason=sep_reason,
-        recorded_by=recorded_by,
+        separation_category=payload.separation_category,
+        separation_reason=payload.separation_reason,
+        recorded_by=payload.recorded_by,
     )
     if not deactivated:
         raise HTTPException(status_code=404, detail=f"Employee {employee_id} not found")

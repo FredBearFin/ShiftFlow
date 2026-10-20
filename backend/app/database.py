@@ -352,9 +352,9 @@ class ShiftFlowRepository:
     def deactivate_employee(
         self,
         employee_id: str,
-        separation_category: str = "voluntary_resignation",
-        separation_reason: str = "Employee voluntary separation",
-        recorded_by: str = "Store Manager",
+        separation_category: str,
+        separation_reason: str,
+        recorded_by: str,
     ) -> Optional[Dict[str, Any]]:
         """Deactivates employee, unassigns line, and records contemporaneous legal separation audit."""
         emp = self.get_employee(employee_id)

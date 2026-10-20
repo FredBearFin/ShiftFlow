@@ -146,7 +146,12 @@ class TestLegalComplianceAndAccommodations(unittest.TestCase):
             employee_id="EMP-LEGAL-01",
             accommodation_type="none",
         )
-        self.repo.deactivate_employee(employee_id="EMP-LEGAL-01", recorded_by="Store General Manager Marcus Vance")
+        self.repo.deactivate_employee(
+            employee_id="EMP-LEGAL-01",
+            separation_category="voluntary_resignation",
+            separation_reason="Deactivation set up for delete-refusal test scenario",
+            recorded_by="Test Manager",
+        )
 
         with self.assertRaises(SeparationAuditExistsError):
             self.repo.delete_employee("EMP-LEGAL-01")

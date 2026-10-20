@@ -106,7 +106,12 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         self.assertEqual(deactivated["recorded_by"], "Store Manager")
 
         # Repeated deactivate does not add a second audit row
-        self.repo.deactivate_employee("EMP-TEST-99")
+        self.repo.deactivate_employee(
+            "EMP-TEST-99",
+            separation_category="voluntary_resignation",
+            separation_reason="Repeat deactivation attempt in test scenario",
+            recorded_by="Test Manager",
+        )
         audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
         self.assertEqual(len([a for a in audits if a["employee_id"] == "EMP-TEST-99"]), 1)
 
@@ -219,7 +224,11 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         self.assertEqual(matching[0]["recorded_by"], "Store General Manager")
 
         # Repeated deactivate over REST does not duplicate the audit row
-        again_resp = self.client.post(f"/api/employees/{created_id}/deactivate", json={"recorded_by": "Other"})
+        again_resp = self.client.post(f"/api/employees/{created_id}/deactivate", json={
+                "separation_category": "voluntary_resignation",
+                "separation_reason": "Repeat deactivation attempt in test scenario",
+                "recorded_by": "Test Manager",
+            })
         self.assertEqual(again_resp.status_code, 200)
         audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
         self.assertEqual(len([a for a in audits if a["employee_id"] == created_id]), 1)
