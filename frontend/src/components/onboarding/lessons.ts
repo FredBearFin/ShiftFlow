@@ -17,13 +17,13 @@ export interface Lesson {
 export const LESSONS: Lesson[] = [
   {
     stepId: 1,
-    title: 'Pick your business type',
+    title: 'Tell us about your business',
     explanation:
-      'Hear now the first choice: pick the business type closest to yours. Then the wizard fills in typical hours, shift times and rules for that kind, and you may change any of them in the steps that follow. And the balance between extra cost and staff comfort waits for you on the final step.',
+      'Hear now the first step: answer in plain words, because no two businesses are the same. Say which days you are open, when you open and close, and when you are busiest and quietest, and the wizard builds the shift count and shift times from your own answers. And the balance between extra cost and staff comfort still waits for you on the final step, and every rule from step 4 still applies.',
     example:
-      'And a corner café opened at 6:00 and closed at 15:00. Next, its owner chose the Retail and food service type, so the typical hours were filled in at once. Then, in step 2, the owner changed the count for each hour.',
+      'And a corner café opened at 6:00 and closed at 15:00, busiest in the morning. Then the wizard filled the morning hours with more shifts than the slow afternoon, from that one answer.',
     whyItMatters:
-      'Hear that a close match spares you from typing everything from scratch and gives you a sensible starting point.',
+      'Hear that your own answers describe your business better than a label like "retail" or "healthcare" ever could, so this step is the honest starting point.',
   },
   {
     stepId: 2,
