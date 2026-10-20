@@ -1,8 +1,8 @@
 # ShiftFlow Studio: Customer ROI & Financial Justification Model
 
-## Executive Summary: 12.9× Annual ROI with a 26.3-Day Payback
+## Executive Summary: 11.0× Annual ROI with a 30.5-Day Payback
 
-For an independent retail store, liquor store, or convenience grocery running 6 to 8 employees, ShiftFlow Studio costs **$79/month ($948/year)** while generating **$13,148/year in quantifiable hard-dollar labor savings**.
+For an independent retail store, liquor store, or convenience grocery running 6 to 8 employees, ShiftFlow Studio costs **$79/month ($948/year)** while generating **$11,352/year in quantifiable hard-dollar labor savings**.
 
 ---
 
@@ -11,13 +11,13 @@ For an independent retail store, liquor store, or convenience grocery running 6 
 ### The Problem
 * The average cost to recruit, hire, background-check, and train a single replacement retail associate or cashier is **$4,129** (National Retail Federation & Society for Human Resource Management benchmarks).
 * Independent retail experiences an average annual employee turnover rate of **65%**.
-* In a store with 8 employees, that translates to **5.2 staff departures per year**, costing the owner **$21,470 annually** in direct replacement costs and lost register productivity.
+* In a store with 6 employees, that translates to **3.9 staff departures per year**, costing the owner **$16,103 annually** in direct replacement costs and lost register productivity.
 * Exit surveys consistently show that **unpredictable schedules and "clopenings" (closing late, opening early)** are the #1 cited reason for voluntary resignations.
 
 ### ShiftFlow Impact
 * By enforcing guaranteed 16+ hours rest and cyclic forward rotation ($M \to D \to E \to \text{Rest}$), ShiftFlow reduces voluntary fatigue-related turnover by an **assumed 35%**.
-* **Departures Prevented**: 1.8 employees / year.
-* **Annual Direct Cash Savings**: $4,129 × 1.8 = **$7,432 / year**.
+* **Departures Prevented**: 1.365 employees / year.
+* **Annual Direct Cash Savings**: $4,129 × 1.365 = **$5,636.09 / year**.
 
 ---
 
@@ -54,10 +54,10 @@ For an independent retail store, liquor store, or convenience grocery running 6 
 
 | Cost Category | Without ShiftFlow | With ShiftFlow Studio | Net Annual Store Savings |
 | :--- | :--- | :--- | :--- |
-| **Turnover Replacement Costs** | $21,470 / yr | $14,038 / yr | **+$7,432 / year** |
+| **Turnover Replacement Costs** | $16,103 / yr | $10,467 / yr | **+$5,636 / year** |
 | **Unintended Overtime Premiums** | $2,359 / yr | $354 / yr | **+$2,005 / year** |
 | **Manager Scheduling Hours** | $6,370 / yr (182 hrs) | $455 / yr (13 hrs) | **+$3,711 / year** (reclaimed) |
-| **Total Annual Operational Cost** | **$30,199 / yr** | **$14,847 / yr** | **+$13,148 / year** |
+| **Total Annual Operational Cost** | **$24,832 / yr** | **$11,276 / yr** | **+$11,352 / year** |
 | **ShiftFlow Studio Subscription** | $0 | $948 / yr ($79/mo) | −$948 / year |
-| **Net Financial Return (ROI)** | — | — | **+$12,200 / year (12.9× ROI: $12,200 ÷ $948 = 12.87)** |
-| **Payback Period** | — | — | **26.3 Days** |
+| **Net Financial Return (ROI)** | — | — | **+$10,404 / year (11.0× ROI: $10,404 ÷ $948 = 10.97)** |
+| **Payback Period** | — | — | **30.5 Days** |
