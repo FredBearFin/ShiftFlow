@@ -65,6 +65,16 @@ export const LESSONS: Lesson[] = [
     whyItMatters:
       'Hear that a higher extra cost allowed lets the schedule trade cost for rest, and you choose how far to go.',
   },
+  {
+    stepId: 6,
+    title: 'Add the people who actually work here',
+    explanation:
+      'Hear now the last step: everything so far only describes the shape of a schedule, not real people. Add each staff member\'s name, role, hourly wage and the days they can work, so the schedule assigns real people to real shifts. And it still keeps every rule, extra cost choice and staff comfort balance you already set.',
+    example:
+      'And a shop added Priya as a Cashier at $16.50 an hour, available every day. Then the schedule placed her on real shifts instead of leaving the line unassigned.',
+    whyItMatters:
+      'Hear that a schedule with no staff on it cannot pay anyone or show anyone their hours, so this step is what makes it yours.',
+  },
 ];
 
 /** Returns the lesson for a wizard step, or undefined if there is none. */

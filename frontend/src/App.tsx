@@ -82,6 +82,7 @@ export function App() {
 
   const [staffAssignments, setStaffAssignments] = useState<StaffMemberAssignment[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [employeesLoaded, setEmployeesLoaded] = useState<boolean>(false);
   const [staffError, setStaffError] = useState<string | null>(null);
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
@@ -136,6 +137,9 @@ export function App() {
       })
       .catch((err: unknown) => {
         if (isMounted) setStaffError(err instanceof Error ? err.message : 'Staff records could not be loaded.');
+      })
+      .finally(() => {
+        if (isMounted) setEmployeesLoaded(true);
       });
     return () => {
       isMounted = false;
@@ -192,10 +196,19 @@ export function App() {
     employees,
   ]);
 
-  // Close the wizard when a solve fails so the failed-solve alert is visible.
+  // There is no such thing as a real schedule with no staff on it: until at least one
+  // employee exists, setup cannot be skipped or dismissed.
+  const needsOnboarding = employeesLoaded && employees.length === 0;
+
   useEffect(() => {
-    if (solveStatus === 'error') setIsWizardOpen(false);
-  }, [solveStatus]);
+    if (needsOnboarding) setIsWizardOpen(true);
+  }, [needsOnboarding]);
+
+  // Close the wizard when a solve fails so the failed-solve alert is visible,
+  // unless setup is still mandatory (no staff yet).
+  useEffect(() => {
+    if (solveStatus === 'error' && !needsOnboarding) setIsWizardOpen(false);
+  }, [solveStatus, needsOnboarding]);
 
   const advanceWeek = useCallback((delta: number) => {
     if (!solution || solution.employee_count === 0) return;
@@ -213,7 +226,7 @@ export function App() {
         if (e.key === 'Escape') {
           setIsShortcutsOpen(false);
           setIsAddEmpOpen(false);
-          setIsWizardOpen(false);
+          if (!needsOnboarding) setIsWizardOpen(false);
         }
         return;
       }
@@ -223,7 +236,7 @@ export function App() {
       if (e.key === 'Escape') {
         setIsShortcutsOpen(false);
         setIsAddEmpOpen(false);
-        setIsWizardOpen(false);
+        if (!needsOnboarding) setIsWizardOpen(false);
         return;
       }
       if (!singleKeyEnabled && e.key !== '?') return;
@@ -265,7 +278,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [advanceWeek, singleKeyEnabled, isShortcutsOpen, isAddEmpOpen, isWizardOpen]);
+  }, [advanceWeek, singleKeyEnabled, isShortcutsOpen, isAddEmpOpen, isWizardOpen, needsOnboarding]);
 
   const handleSelectArchetype = (preset: ArchetypePreset) => {
     setSelectedArchetypeId(preset.id);
@@ -492,6 +505,9 @@ export function App() {
         onChangeLeewayPct={setLeewayPct}
         onCompleteWizard={() => setIsWizardOpen(false)}
         onClose={() => setIsWizardOpen(false)}
+        employees={employees}
+        onAddEmployee={handleAddEmployee}
+        canSkip={!needsOnboarding}
       />
 
       <KeyboardShortcutsModal

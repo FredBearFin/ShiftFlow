@@ -20,10 +20,10 @@ function lessonText(lesson: { title: string; explanation: string; example: strin
 }
 
 describe('lessons', () => {
-  it('has exactly one lesson for each wizard step from 1 to 5', () => {
-    expect(LESSONS).toHaveLength(5);
+  it('has exactly one lesson for each wizard step from 1 to 6', () => {
+    expect(LESSONS).toHaveLength(6);
     const stepIds = LESSONS.map((lesson) => lesson.stepId).sort((a, b) => a - b);
-    expect(stepIds).toEqual([1, 2, 3, 4, 5]);
+    expect(stepIds).toEqual([1, 2, 3, 4, 5, 6]);
   });
 
   it('gives every lesson a non-empty title, explanation, example and whyItMatters', () => {
@@ -52,7 +52,7 @@ describe('lessons', () => {
   });
 
   it('getLesson returns the matching lesson for each step', () => {
-    for (let step = 1; step <= 5; step += 1) {
+    for (let step = 1; step <= 6; step += 1) {
       const expected = LESSONS.find((lesson) => lesson.stepId === step);
       expect(getLesson(step)).toBe(expected);
       expect(getLesson(step)?.stepId).toBe(step);
@@ -61,6 +61,6 @@ describe('lessons', () => {
 
   it('getLesson returns undefined for a step with no lesson', () => {
     expect(getLesson(0)).toBeUndefined();
-    expect(getLesson(6)).toBeUndefined();
+    expect(getLesson(7)).toBeUndefined();
   });
 });
