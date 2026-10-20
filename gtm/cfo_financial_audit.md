@@ -4,7 +4,7 @@
 **TO:** Chief Executive Officer, Board of Directors, & Investment Committee  
 **FROM:** Financial Controller & Retail Operations Practice Group  
 **DATE:** October 19, 2026  
-**SUBJECT:** Audit-Verified EBITDA Expansion, Working Capital Acceleration, & M&A Valuation Arbitrage for ShiftFlow Studio Enterprise (I-SD-RWSP Workforce OS)
+**SUBJECT:** Draft EBITDA Expansion, Working Capital Acceleration, & M&A Valuation Arbitrage for ShiftFlow Studio Enterprise (I-SD-RWSP Workforce OS)
 
 ---
 
@@ -12,17 +12,17 @@
 
 In retail store operations, labor is the single largest controllable expense, typically consuming **18% to 28% of gross revenue**. Yet frontline scheduling is historically managed through soft managerial intuition, fragmented spreadsheets, or static calendar software (e.g., 7shifts, Deputy, When I Work). This legacy paradigm leaks hundreds of basis points in unmanaged overtime, employee turnover, and lost general manager floor presence.
 
-ShiftFlow Studio’s algorithmic engine—grounded in Tristan Becker’s (EJOR 2026) Integrated Shift Design and Rotating Workforce Scheduling Problem (I-SD-RWSP)—transforms store scheduling from an administrative cost center into an **audit-verified EBITDA expansion engine**.
+ShiftFlow Studio’s algorithmic engine—grounded in Tristan Becker’s (EJOR 2026) Integrated Shift Design and Rotating Workforce Scheduling Problem (I-SD-RWSP)—transforms store scheduling from an administrative cost center into a **modeled EBITDA expansion engine**.
 
 This memorandum establishes:
-1. **The Audited Single-Store Value Bridge**: Hard vs. soft savings generating **+$12,202.26 net annual EBITDA** on a **$948 annual SaaS investment** (**12.9× ROI**, **26.3-day capital payback**).
+1. **The Draft Single-Store Value Bridge**: Hard vs. soft savings generating **+$12,200.26 net annual EBITDA** on a **$948 annual SaaS investment** (**12.9× ROI**, **26.3-day capital payback**).
 2. **Working Capital & Cash Conversion Cycle (CCC) Velocity**: Smoothing bi-weekly payroll drawdowns and releasing **$2,843 in contingency cash reserves** per store back into inventory purchasing (+1.8 Days Cash on Hand).
-3. **Multi-Store Franchise & Private Equity Valuation Arbitrage**: Compounding multi-unit retail fleet EBITDA to generate **+$760,932 in enterprise equity value** across a 10-store regional chain at a standard **6.0× EBITDA multiple**.
+3. **Multi-Store Franchise & Private Equity Valuation Arbitrage**: Compounding multi-unit retail fleet EBITDA to generate **+$760,816 in enterprise equity value** across a 10-store regional chain at a standard **6.0× EBITDA multiple**.
 4. **GAAP Accounting & Tax Treatment**: Clear balance sheet classification under FASB ASC 710 (Compensation) and ASC 350-40 (SaaS Subscription Capitalization).
 
 ---
 
-## 1. AUDITED SINGLE-STORE VALUE BRIDGE (GAAP & SHRM BENCHMARKS)
+## 1. DRAFT SINGLE-STORE VALUE BRIDGE (GAAP & SHRM BENCHMARKS)
 
 To withstand scrutiny by private equity operating partners, bank lenders, and external auditors, all economic return metrics are categorized into **Hard Cash Savings**, **Direct Cost Avoidance**, and **Manager Floor Recapture**.
 
@@ -36,19 +36,19 @@ To withstand scrutiny by private equity operating partners, bank lenders, and ex
 
 ```
 ========================================================================================
-AUDITED ANNUAL VALUE BRIDGE (SINGLE STORE)
+DRAFT ANNUAL VALUE BRIDGE (SINGLE STORE)
 ========================================================================================
 1. Hard Overtime Leakage Eliminated (FLSA 1.5x Premium Avoided)    :  +$2,005.12 / year
-2. Direct Separation & Churn Avoidance (SHRM Cost Benchmark)        :  +$7,434.00 / year
+2. Direct Separation & Churn Avoidance (SHRM Cost Benchmark)        :  +$7,432.00 / year
 3. Store GM Administrative Time Reallocated to Floor Presence       :  +$3,711.14 / year
 ----------------------------------------------------------------------------------------
-GROSS ANNUAL VALUE GENERATED                                        : +$13,150.26 / year
+GROSS ANNUAL VALUE GENERATED                                        : +$13,148.26 / year
 Less: ShiftFlow Studio Starter SaaS Subscription                   :   -$948.00 / year
 ========================================================================================
-NET ANNUAL AUDITED EBITDA ADDITION                                  : +$12,202.26 / year
+NET ANNUAL DRAFT EBITDA ADDITION                                    : +$12,200.26 / year
 ========================================================================================
 CAPITAL PAYBACK PERIOD                                              : 26.3 Calendar Days
-ANNUAL RETURN ON SOFTWARE INVESTMENT (ROI)                          : 12.9x (1,290%)
+ANNUAL RETURN ON SOFTWARE INVESTMENT (ROI)                          : 12.9x (1,287%; $12,200.26 / $948 = 12.87)
 OPERATING EBITDA MARGIN EXPANSION                                   : +182.1 Basis Points
 ========================================================================================
 ```
@@ -65,11 +65,11 @@ OPERATING EBITDA MARGIN EXPANSION                                   : +182.1 Bas
 - **Controller Classification**: **Hard Cash Reduction**. Reduces direct cash outflow on payroll disbursements dollar-for-dollar.
 
 ### 2.2 Direct Cashier Separation & Churn Avoidance (SHRM Standard)
-- **The Empirical Baseline**: According to the Society for Human Resource Management (SHRM) and the National Retail Federation (NRF), the average replacement cost for an hourly retail associate is **$4,200.00** (recruiting job posts, vetting, manager interview hours, background checks, initial 2-week shadowing, and cashier register transaction speed deficit).
+- **The Empirical Baseline**: According to the Society for Human Resource Management (SHRM) and the National Retail Federation (NRF), the average replacement cost for an hourly retail associate is **$4,129.00** (recruiting job posts, vetting, manager interview hours, background checks, initial 2-week shadowing, and cashier register transaction speed deficit).
 - **Baseline Retail Turnover**: Shift-based retail stores experience an average annual clerk turnover rate of **110%** (6.6 quits per year for a 6-associate crew).
-- **Circadian Burnout Elimination**: Close-open shifts ("clopenings") and backward circadian rotations ($E \to M$ or $N \to D$) are the primary driver of employee burnout, sickness, and sudden resignations. ShiftFlow mathematically guarantees **$\ge 16$ hours of rest** and strict forward rotation ($M \preceq D \preceq E \preceq N$), reducing voluntary separations by **26.8%** (1.77 fewer quits annually).
+- **Circadian Burnout Elimination**: Close-open shifts ("clopenings") and backward circadian rotations ($E \to M$ or $N \to D$) are the primary driver of employee burnout, sickness, and sudden resignations. ShiftFlow mathematically guarantees **$\ge 16$ hours of rest** and strict forward rotation ($M \preceq D \preceq E \preceq N$), reducing voluntary separations by an **assumed 35%** (1.8 fewer quits annually, per gtm/roi_calculator.md).
 - **Audit Valuation Formula**:
-  $$\text{Separation Cost Savings} = 1.77 \text{ avoided quits} \times \$4,200.00 = \$7,434.00 / \text{year}$$
+  $$\text{Separation Cost Savings} = 1.8 \text{ avoided quits} \times \$4,129.00 = \$7,432.00 / \text{year}$$ (1.8 × $4,129 = $7,432, as in gtm/roi_calculator.md)
 - **Controller Classification**: **Direct Cost Avoidance**. Reduces onboarding cash outlays and preserves store transactional productivity.
 
 ### 2.3 General Manager Administrative Time Reallocated to Floor Operations
@@ -123,16 +123,16 @@ MULTI-STORE FLEET FINANCIAL PROJECTIONS (6.0x EBITDA EXIT MULTIPLE)
 ========================================================================================================
 Store Count | Combined Revenue | Annual Payroll Savings | Annual Net EBITDA | 6.0x Equity Value Created
 ========================================================================================================
- 1 Store    |      $670,000    |         $2,005         |        $12,202    |         $73,214
- 3 Stores   |    $2,010,000    |         $6,015         |        $37,063    |        $222,378
- 5 Stores   |    $3,350,000    |        $10,026         |        $63,411    |        $380,466
-10 Stores   |    $6,700,000    |        $20,051         |       $126,822    |        $760,932
-25 Stores   |   $16,750,000    |        $50,128         |       $317,056    |      $1,902,336
+ 1 Store    |      $670,000    |         $2,005         |        $12,200    |         $73,202
+ 3 Stores   |    $2,010,000    |         $6,015         |        $36,601    |        $219,605
+ 5 Stores   |    $3,350,000    |        $10,026         |        $61,001    |        $366,008
+10 Stores   |    $6,700,000    |        $20,051         |       $122,003    |        $732,016
+25 Stores   |   $16,750,000    |        $50,128         |       $305,007    |      $1,830,039
 ========================================================================================================
 ```
 
 ### Key Takeaway for Investment Committees:
-Deploying ShiftFlow Studio across a **10-store retail chain** costs **$4,680 annually in software**, while generating **$126,822 in recurring annual EBITDA**. At a conservative private equity exit multiple of **6.0×**, this operational implementation directly creates **$760,932 in incremental enterprise equity value**—an equity multiple of **162× on the software investment**.
+Deploying ShiftFlow Studio across a **10-store retail chain** costs **$9,480 annually in software**, while generating **$122,003 in recurring annual EBITDA**. At a conservative private equity exit multiple of **6.0×**, this operational implementation directly creates **$732,016 in incremental enterprise equity value**—an equity multiple of **77× on the software investment**.
 
 ---
 

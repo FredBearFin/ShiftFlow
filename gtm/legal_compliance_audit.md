@@ -1,5 +1,5 @@
 # LEGAL & REGULATORY COMPLIANCE MEMORANDUM
-**CONFIDENTIAL ATTORNEY WORK PRODUCT / PRIVILEGED REGULATORY AUDIT**
+**CONFIDENTIAL DRAFT ANALYSIS / REGULATORY REVIEW**
 
 **TO:** Executive Leadership, Product Engineering, & General Counsel  
 **FROM:** Employment, Labor & Regulatory Technology Practice Group  
@@ -30,7 +30,7 @@ A rapidly expanding bloc of jurisdictions (Oregon statewide, Chicago, Seattle, N
   1. The employee explicitly consents in writing; AND
   2. The employer pays a statutory premium of **1.25× to 1.5× regular pay** for all hours worked during the rest interval.
 - **ShiftFlow Legal Architecture**: ShiftFlow Studio enforces a mathematical constraint of **$\ge 16$ hours of rest** ($M \preceq D \preceq E \preceq N$). 
-  - *Legal Benefit*: By establishing a 16-hour mandatory buffer, ShiftFlow provides an **absolute statutory safe harbor**. Retail operators eliminate 100% of municipal clopening premium liabilities, preventing private rights of action and state labor bureau civil penalties ($500–$1,000 per violation).
+  - *Legal Benefit*: By establishing a 16-hour mandatory buffer, ShiftFlow exceeds the 10-to-11-hour thresholds above. Retail operators eliminate 100% of municipal clopening premium liabilities, preventing private rights of action and state labor bureau civil penalties ($500–$1,000 per violation).
   - *Required Product Hardening*: The solver must treat $\ge 16$h as a non-negotiable hard constraint ($\mathcal{E}_{\text{forbidden}}$), preventing managerial overrides from triggering unindemnified municipal fines.
 
 ### 1.2 Mandatory Advance Notice & Predictability Pay

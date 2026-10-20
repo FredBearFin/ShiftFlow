@@ -43,7 +43,7 @@ Most store owners I talk to tell me their biggest headache isn't customer traffi
 
 We built **ShiftFlow Studio** to run store schedules on complete autopilot:
 1. **Zero Sunday Work**: You enter your register needs once; the system rotates staff through a fair forward wheel that rolls over with 1 click every Monday.
-2. **Zero "Clopenings"**: Mathematically guarantees at least 16 hours of rest after every close, cutting frontline turnover by 35%.
+2. **Zero "Clopenings"**: Mathematically guarantees at least 16 hours of rest after every close, cutting frontline turnover by an assumed 35%.
 3. **Live Labor Tracking**: Calculates your exact payroll and warns you of overtime before you publish.
 
 Would you be open to a 10-minute demo this Thursday at 11:00 AM to see what {{store_name}}'s schedule looks like on an automated rotation?

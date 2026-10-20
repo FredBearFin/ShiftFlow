@@ -37,7 +37,7 @@
 * **Turnover Reduction**: Saves $7,400+ per store annually by eliminating burnout.
 * **Overtime Avoidance**: Saves $2,000+ per store in accidental overtime.
 * **Time Saved**: Gives managers 3 hours of their weekend back every single week.
-* **Net ROI**: **13.8× annual return on investment** ($12,200 net savings for $79/mo).
+* **Net ROI**: **12.9× annual return on investment** ($12,200 net savings ÷ $948 per year).
 
 ## Slide 9: 5-Minute Onboarding
 * **Step 1**: Choose your store operating hours (e.g. 6:00 AM to midnight).
