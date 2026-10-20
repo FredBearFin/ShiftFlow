@@ -279,7 +279,7 @@ export interface ArchetypePreset {
 }
 
 
-export type ActiveTabId = 'roster' | 'staff' | 'labor' | 'cfo' | 'pos' | 'coverage' | 'pareto' | 'ergonomics' | 'compliance';
+export type ActiveTabId = 'roster' | 'staff' | 'labor' | 'coverage' | 'pareto' | 'ergonomics' | 'compliance';
 
 
 export interface CalloutCandidate {

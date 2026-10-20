@@ -42,27 +42,29 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
 
   return (
     <div className="space-y-5">
-      {/* Top Explanation & Becker Table 7 Law Card */}
+      {/* Plain-language explanation */}
       <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
-              Schedule Flexibility vs. Overtime Optimization
+              Pay a little more, get a better-rested schedule
             </span>
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
-              <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Best-Balance</Term> Trade-Off Between Shift Quality and Staff Comfort
+              Every point below is a real, complete schedule — not a theory
             </h2>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              ShiftFlow Studio maps the exact <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">best-balance</Term> options. Click any point on
-              the curve or table below to immediately re-calibrate the active roster.
+              Moving right costs more in payroll. Moving down means less of the stuff that burns
+              people out — long stretches without a day off, back-to-back closing-then-opening
+              shifts, lost weekends. Click any point on the curve or table below to switch your
+              actual schedule to it; each one shows its real weekly payroll cost.
             </p>
           </div>
           <div className="card p-4 text-xs">
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
-              Active Calibration
+              Currently applied
             </span>
             <span className="text-sm font-bold font-mono-tabular text-[#2B3A42]">
-              +{selectedLeewayPct}% Scheduling Flexibility
+              +{selectedLeewayPct}% extra payroll allowed
             </span>
           </div>
         </div>
@@ -73,18 +75,18 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="lg:col-span-8 card p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Interactive <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Best-Balance</Term> Frontier (Click Any Point to Apply)
+              Cost vs. rest — click any point to apply it
             </h3>
             <div className="flex items-center gap-3 text-xs">
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  {knee.leeway_pct}% Best-Value Point (+{knee.becker_theoretical_improvement_pct.toFixed(2)}% comfort gain, theoretical)
+                  {knee.leeway_pct}% is the sweet spot (${Math.round(knee.estimated_weekly_payroll).toLocaleString()}/wk)
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
-                Active Schedule
+                Currently applied
               </span>
             </div>
           </div>
@@ -127,7 +129,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 textAnchor="middle"
                 className="text-xs font-semibold fill-slate-700"
               >
-                Shift Design Cost →
+                More scheduling cost →
               </text>
               <text
                 x={16}
@@ -136,7 +138,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 transform={`rotate(-90, 16, ${padT + plotH / 2})`}
                 className="text-xs font-semibold fill-slate-700"
               >
-                Staff Comfort Penalty ↓
+                Less staff strain ↓
               </text>
 
               {/* Pareto Curve Polyline */}
@@ -188,7 +190,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         y={cy - 8}
                         className="text-xs font-mono-tabular font-bold fill-slate-800"
                       >
-                        +{pt.leeway_pct}% (−{pt.ergo_improvement_pct}% comfort gain, theoretical)
+                        +{pt.leeway_pct}% cost · ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
                       </text>
                     )}
                   </g>
@@ -202,14 +204,14 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="lg:col-span-4 card p-5 flex flex-col justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
-              Operational Rest & Efficiency Benchmark
+              Where the money buys the most rest
             </span>
             <h3 className="text-sm font-bold text-slate-900 mt-1">
-              {knee ? `Why the ${knee.leeway_pct}% Best-Value Point Matters` : 'Frontier Benchmark'}
+              {knee ? `Why ${knee.leeway_pct}% extra cost is the sweet spot` : 'Cost vs. rest, point by point'}
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              The <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">best-balance</Term> frontier descends
-              steeply at first before flattening:
+              The first bit of extra spending buys a lot of improvement; after a point, paying more
+              barely helps. Pick any row — its real weekly payroll is shown next to it:
             </p>
 
             <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
@@ -231,15 +233,15 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                   >
                     <div>
                       <span className="font-mono-tabular font-bold text-slate-900">
-                        +{pt.leeway_pct}% Flexibility
+                        +{pt.leeway_pct}% cost
                       </span>
                       <span className="block text-xs text-slate-500">
                         {pt.label}
-                        {pt.is_knee_point ? ' (Best-Value Point)' : ''}
+                        {pt.is_knee_point ? ' (sweet spot)' : ''}
                       </span>
                     </div>
                     <span className="font-mono-tabular font-bold text-[#2B3A42]">
-                      +{pt.becker_theoretical_improvement_pct.toFixed(2)}% comfort gain (theoretical)
+                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
                     </span>
                   </div>
                 );
@@ -253,20 +255,21 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-slate-50">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Enumerated <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Best-Balance</Term> Schedule Points
+            Every option, side by side
           </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500 bg-white">
-                <th className="py-3 px-4"><Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Trade-off Setting</Term></th>
-                <th className="py-3 px-3 text-right">Flexibility</th>
-                <th className="py-3 px-3 text-right">Shift Design Cost</th>
-                <th className="py-3 px-3 text-right">Staff Comfort Penalty</th>
-                <th className="py-3 px-3 text-right">Comfort gain (theoretical)</th>
+                <th className="py-3 px-4">Option</th>
+                <th className="py-3 px-3 text-right">Extra cost</th>
+                <th className="py-3 px-3 text-right">Weekly payroll</th>
+                <th className="py-3 px-3 text-right">
+                  <Term explanation="A rough score of how much scheduling strain is in this version — long stretches without a day off, back-to-back closing-then-opening shifts, and similar. Lower is better.">Staff strain</Term>
+                </th>
                 <th className="py-3 px-3 text-right">Headcount</th>
-                <th className="py-3 px-3 text-right">Free Weekends</th>
+                <th className="py-3 px-3 text-right">Full weekends off</th>
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
@@ -282,19 +285,16 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       {pt.label}
                       {pt.is_knee_point && (
                         <span className="ml-2 px-1.5 py-0.5 rounded text-xs bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
-                          Best-Value Point
+                          Sweet spot
                         </span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right">+{pt.leeway_pct}%</td>
                     <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                      {pt.obj_shift.toFixed(1)}
+                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}
                     </td>
                     <td className="py-2.5 px-3 text-right font-bold text-[#2B3A42]">
                       {pt.obj_ergo.toFixed(1)}
-                    </td>
-                    <td className="py-2.5 px-3 text-right text-[#2B3A42] font-bold">
-                      +{pt.ergo_improvement_pct.toFixed(2)}%
                     </td>
                     <td className="py-2.5 px-3 text-right">{pt.employee_count}</td>
                     <td className="py-2.5 px-3 text-right">{pt.full_weekends_off_pct}%</td>

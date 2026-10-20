@@ -32,13 +32,19 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
       <div className="card p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
-            24-Hour Register & Floor Coverage Verification
+            24-Hour Coverage
           </span>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
-            Scheduled vs. <Term explanation="How many people you need in each hour.">required</Term> staff, across all 168 Weekly Time Intervals
+            Scheduled vs. <Term explanation="How many people you need in each hour.">required</Term> staff, hour by hour across the week
           </h2>
           <p className="text-xs text-slate-600 mt-0.5">
             Check scheduled staff each hour against the need: short or extra.
+          </p>
+          <p className="text-xs text-slate-500 mt-1.5 max-w-2xl">
+            "Scheduled" counts rotation <Term explanation="A repeating work/rest pattern over the cycle — not necessarily one specific named person, especially before real staff are assigned.">lines</Term> on duty that hour, not individual people — in planning
+            mode (no real staff added yet) this can look uneven day to day even though the underlying
+            demand is smooth, simply because a small number of rotating lines happen to line up
+            differently on different days. That evens out once real staff are assigned across lines.
           </p>
         </div>
 

@@ -34,11 +34,9 @@ import { OnboardingWizard } from './components/OnboardingWizard';
 import { MasterRosterView } from './components/MasterRosterView';
 import { StaffDirectoryView } from './components/StaffDirectoryView';
 import { LaborAnalysisView } from './components/LaborAnalysisView';
-import { POSIntegrationView } from './components/POSIntegrationView';
 import { CoverageHeatmapView } from './components/CoverageHeatmapView';
 import { ParetoExplorerView } from './components/ParetoExplorerView';
 import { ErgonomicsAuditView } from './components/ErgonomicsAuditView';
-import { CFODashboardView } from './components/CFODashboardView';
 import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { CompletionNote } from './components/onboarding/CompletionNote';
@@ -277,14 +275,12 @@ export function App() {
       } else if (e.key === '2') {
         setActiveTab('labor');
       } else if (e.key === '3') {
-        setActiveTab('cfo');
-      } else if (e.key === '4') {
         setActiveTab('coverage');
-      } else if (e.key === '5') {
+      } else if (e.key === '4') {
         setActiveTab('pareto');
-      } else if (e.key === '6') {
+      } else if (e.key === '5') {
         setActiveTab('ergonomics');
-      } else if (e.key === '7') {
+      } else if (e.key === '6') {
         setActiveTab('compliance');
       } else if (e.key.toLowerCase() === 'd') {
         setIsDirectoryOpen((prev) => !prev);
@@ -421,7 +417,7 @@ export function App() {
         onLogout={handleLogout}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {planningOnly && employees.length === 0 && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
             <span>
@@ -497,10 +493,9 @@ export function App() {
                 onUpdateAvailability={handleUpdateAvailability}
               />
             )}
-            {activeTab === 'labor' && <LaborAnalysisView solution={solution} />}
-            {activeTab === 'cfo' && <CFODashboardView solution={solution} />}
-            {activeTab === 'pos' && (
-              <POSIntegrationView
+            {activeTab === 'labor' && (
+              <LaborAnalysisView
+                solution={solution}
                 facilityId={STAFF_FACILITY_ID}
                 onDemandUpdated={(newDemand) => setDemandMatrix(newDemand)}
               />

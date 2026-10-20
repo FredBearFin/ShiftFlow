@@ -5,11 +5,10 @@ import { ActiveTabId, SolveResponse } from '../types';
 const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
   roster: 1,
   labor: 2,
-  cfo: 3,
-  coverage: 4,
-  pareto: 5,
-  ergonomics: 6,
-  compliance: 7,
+  coverage: 3,
+  pareto: 4,
+  ergonomics: 5,
+  compliance: 6,
 };
 
 interface HeaderProps {
@@ -50,14 +49,6 @@ export const Header: React.FC<HeaderProps> = ({
         : undefined,
     },
     {
-      id: 'cfo',
-      label: 'CFO Financial Model',
-    },
-    {
-      id: 'pos',
-      label: 'POS Demand Upload',
-    },
-    {
       id: 'coverage',
       label: '24h Coverage Heatmap',
       badge: '168 Intervals',
@@ -80,7 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 no-print">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-between py-3.5 gap-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#2B3A42] text-white flex items-center justify-center font-bold text-sm">
@@ -174,7 +165,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Primary View Navigation Tabs */}
-        <nav className="flex items-center gap-1 overflow-x-auto py-2" aria-label="Workspace Views">
+        <nav className="flex flex-wrap items-center gap-1 py-2" aria-label="Workspace Views">
           {navTabs.map((tab, idx) => {
             const isActive = activeTab === tab.id;
             return (

@@ -49,7 +49,7 @@ const STEP_LABELS = [
   { step: 2, title: 'Staffing needs', subtitle: 'How many people, each hour' },
   { step: 3, title: 'Shift times', subtitle: 'When shifts start and end' },
   { step: 4, title: 'Scheduling rules', subtitle: 'Rest and fairness for staff' },
-  { step: 5, title: 'Cost vs. fairness', subtitle: 'Choose your balance' },
+  { step: 5, title: 'Cost vs. rest', subtitle: 'Pay more, strain less' },
   { step: 6, title: 'Add your staff', subtitle: 'Who actually works here' },
 ];
 
@@ -168,21 +168,37 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     onChangeDemandMatrix(next);
   };
 
+  /** Adjusts only the currently selected day, matching the day tabs above it. */
   const adjustDayWindowDemand = (startHr: number, endHr: number, delta: number) => {
-    const next = demandMatrix.map((row) =>
-      row.map((c, hr) =>
-        hr >= startHr && hr < endHr ? Math.max(0, Math.min(40, c + delta)) : c
-      )
+    const next = demandMatrix.map((row, dayIdx) =>
+      dayIdx === selectedDayTab
+        ? row.map((c, hr) => (hr >= startHr && hr < endHr ? Math.max(0, Math.min(40, c + delta)) : c))
+        : row
     );
     onChangeDemandMatrix(next);
   };
 
+  // Keeps min_duration <= preferred_duration <= max_duration true after every edit, so a
+  // user's chosen shift length is never silently clamped by the solver without them knowing.
   const updateTemplateField = <K extends keyof ShiftTemplate>(
     code: ShiftTemplate['code'],
     field: K,
     value: ShiftTemplate[K]
   ) => {
-    const next = templates.map((t) => (t.code === code ? { ...t, [field]: value } : t));
+    const next = templates.map((t) => {
+      if (t.code !== code) return t;
+      const updated = { ...t, [field]: value };
+      if (field === 'preferred_duration') {
+        const preferred = value as number;
+        if (preferred > updated.max_duration) updated.max_duration = preferred;
+        if (preferred < updated.min_duration) updated.min_duration = preferred;
+      } else if (field === 'max_duration' && (value as number) < updated.preferred_duration) {
+        updated.preferred_duration = value as number;
+      } else if (field === 'min_duration' && (value as number) > updated.preferred_duration) {
+        updated.preferred_duration = value as number;
+      }
+      return updated;
+    });
     onChangeTemplates(next);
   };
 
@@ -509,21 +525,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     onClick={() => adjustDayWindowDemand(6, 14, 1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    +1 person, 6am–2pm
+                    +1 person, 6am–2pm, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(14, 22, 1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    +1 person, 2pm–10pm
+                    +1 person, 2pm–10pm, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(0, 24, -1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    −1 person, all hours
+                    −1 person, all hours, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                 </div>
               </div>
@@ -930,13 +946,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
-                  Cost vs. fairness
+                  How much extra would you spend for a better-rested schedule?
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Choose how much extra cost you allow, using the slider or one of the buttons below.
+                  The cheapest possible schedule often means more back-to-back closing-then-opening
+                  shifts, longer stretches without a day off, and fewer full weekends off. Allowing a
+                  bit more payroll gives the solver room to avoid those.
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Allowing a little more cost can make schedules noticeably fairer for staff. Pick the balance that suits you.
+                  You'll see the real payroll difference for your own numbers on the Rest &amp; Fatigue
+                  Balance tab once setup is done — these figures are a general guide for now.
                 </p>
               </div>
 
@@ -947,12 +966,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       htmlFor="leeway-range"
                       className="block text-xs font-bold uppercase tracking-wider text-slate-500"
                     >
-                      Extra cost allowed
+                      Extra payroll you're willing to spend
                     </label>
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
-                      +{leewayPct}% cost →{' '}
+                      +{leewayPct}% payroll →{' '}
                       <span className="text-emerald-700">
-                        +{expectedErgoGain}% ergonomic score (theoretical)
+                        {expectedErgoGain}% less scheduling strain (rough guide)
                       </span>
                     </div>
                   </div>
@@ -1004,7 +1023,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             : 'text-emerald-700 font-semibold'
                         }`}
                       >
-                        +{pt.gain}% ergonomic score (theoretical)
+                        {pt.gain}% less strain (rough guide)
                       </div>
                     </button>
                   ))}
