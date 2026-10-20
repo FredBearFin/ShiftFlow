@@ -66,11 +66,10 @@ class TestShiftHandover(unittest.TestCase):
         self.assertEqual(resp1.status_code, 501)
         self.assertEqual(resp1.json()["detail"], "not implemented: no source data")
 
-        # 2. Checklists endpoint
+        # 2. Checklists endpoint: no stored checklist status, so it answers 501
         resp2 = self.client.get("/api/handover/checklists/FAC-OMAHA-01")
-        self.assertEqual(resp2.status_code, 200)
-        data2 = resp2.json()
-        self.assertIn("morning_to_midday", data2)
+        self.assertEqual(resp2.status_code, 501)
+        self.assertEqual(resp2.json()["detail"], "not implemented: no source data")
 
         # 3. Overlap analysis endpoint: no stored overlap data, so it answers 501
         resp3 = self.client.get("/api/handover/overlap-analysis")
@@ -98,11 +97,8 @@ class TestShiftHandover(unittest.TestCase):
             "audited_by": "Marcus Vance",
             "witnessed_by": "Devon Taylor"
         })
-        self.assertEqual(resp5.status_code, 200)
-        self.assertEqual(resp5.json()["reconciliation_status"], "balanced")
-        self.assertEqual(resp5.json()["variance"], 0.0)
-        self.assertNotIn("safe_drop_receipt", resp5.json())
-        self.assertIn("Float retained at $200.00", resp5.json()["message"])
+        self.assertEqual(resp5.status_code, 501)
+        self.assertEqual(resp5.json()["detail"], "not implemented: no source data")
 
         # Float is required: no $200 default is supplied by the server
         resp6 = self.client.post("/api/handover/till-audit", json={
@@ -133,11 +129,10 @@ class TestShiftHandover(unittest.TestCase):
         self.assertEqual(task_data["task"], payload["task"])
         self.assertEqual(task_data["status"], "pending")
 
-        # Verify task is returned in the checklists endpoint
+        # The checklists endpoint has no stored source data, so it answers 501
         resp2 = self.client.get("/api/handover/checklists/FAC-OMAHA-01")
-        self.assertEqual(resp2.status_code, 200)
-        mm_list = resp2.json()["morning_to_midday"]
-        self.assertTrue(any("ice merchandiser" in item["task"].lower() for item in mm_list))
+        self.assertEqual(resp2.status_code, 501)
+        self.assertEqual(resp2.json()["detail"], "not implemented: no source data")
 
 
 if __name__ == "__main__":

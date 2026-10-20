@@ -62,8 +62,9 @@ def get_handover_checklists(facility_id: str):
     """
     Returns the standardized opening, midday handover, and closing checklists,
     including any custom tasks configured by the store supervisor.
+    Returns 501: no checklist completion data is stored, so no checklist status is reported.
     """
-    return ShiftHandoverEngine.get_standard_handover_checklists()
+    raise HTTPException(status_code=501, detail="not implemented: no source data")
 
 
 @router.post("/task", response_model=ChecklistItem)
@@ -113,28 +114,6 @@ def toggle_checklist_item(request: ChecklistToggleRequest):
 def submit_till_audit(request: TillSubmitRequest):
     """
     Submits a cash drawer till audit and computes cash variance against the POS system total.
-    No receipt is issued: nothing is persisted.
+    Returns 501: no till audit data is stored, so no reconciliation is recorded.
     """
-    retained_float = request.opening_float
-    total_reconciled = request.cash_dropped_to_safe + retained_float
-    variance = round(request.closing_cash_counted - request.expected_system_cash, 2)
-
-    status = "balanced"
-    if variance < -2.00:
-        status = "under"
-    elif variance > 2.00:
-        status = "over"
-
-    return {
-        "status": "success",
-        "register_id": request.register_id,
-        "opening_float": request.opening_float,
-        "retained_float": retained_float,
-        "cash_dropped_to_safe": request.cash_dropped_to_safe,
-        "expected_system_cash": request.expected_system_cash,
-        "variance": variance,
-        "reconciliation_status": status,
-        "audited_by": request.audited_by,
-        "witnessed_by": request.witnessed_by,
-        "message": f"Cash drawer status: {status}. Variance {variance:+.2f}. Float retained at ${retained_float:.2f}."
-    }
+    raise HTTPException(status_code=501, detail="not implemented: no source data")
