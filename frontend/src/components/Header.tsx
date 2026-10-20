@@ -1,6 +1,17 @@
 import React from 'react';
 import { ActiveTabId, SolveResponse } from '../types';
 
+// Number keys bound in App.tsx keyboard handler; tabs without a key show no badge.
+const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
+  roster: 1,
+  labor: 2,
+  cfo: 3,
+  coverage: 4,
+  pareto: 5,
+  ergonomics: 6,
+  compliance: 7,
+};
+
 interface HeaderProps {
   activeTab: ActiveTabId;
   onSelectTab: (tab: ActiveTabId) => void;
@@ -164,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
                 }`}
               >
-                {idx < 7 && (
+                {TAB_KEY_NUMBERS[tab.id] !== undefined && (
                   <kbd
                     className={`px-1 py-0.2 rounded text-[10px] font-mono-tabular font-bold ${
                       isActive
@@ -172,7 +183,7 @@ export const Header: React.FC<HeaderProps> = ({
                         : 'bg-slate-100 text-slate-500'
                     }`}
                   >
-                    {idx + 1}
+                    {TAB_KEY_NUMBERS[tab.id]}
                   </kbd>
                 )}
                 <span>{tab.label}</span>

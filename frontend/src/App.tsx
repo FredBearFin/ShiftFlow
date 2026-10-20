@@ -168,7 +168,7 @@ export function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement as HTMLElement | null;
       const activeTag = activeEl ? activeEl.tagName : '';
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || activeEl?.isContentEditable) {
+      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(activeTag) || activeEl?.isContentEditable) {
         if (e.key === 'Escape') {
           setIsShortcutsOpen(false);
           setIsAddEmpOpen(false);

@@ -29,15 +29,19 @@ function overtimeLine(rosterLines: RosterLine[]): string {
     : `About ${hours} hours of overtime are planned each week`;
 }
 
-function restLine(rosterLines: RosterLine[]): string {
+function restLine(rosterLines: RosterLine[], clopeningViolations: number): string {
   const flagged = rosterLines.filter(
     (line) =>
       line.statutory_accommodation_violation === true ||
       line.fair_workweek_predictability_warning === true
   ).length;
-  return flagged > 0
-    ? 'Some roster lines have warnings to review'
-    : 'No rest or fairness warnings';
+  if (flagged > 0) {
+    return 'Some roster lines have warnings to review';
+  }
+  if (clopeningViolations > 0) {
+    return 'Some shifts are clopenings (closing then opening with too little rest); review them';
+  }
+  return 'No rest or fairness warnings';
 }
 
 export function CompletionNote({ solution }: CompletionNoteProps) {
@@ -58,7 +62,7 @@ export function CompletionNote({ solution }: CompletionNoteProps) {
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>{coverageLine(solution)}</li>
         <li>{overtimeLine(rosterLines)}</li>
-        <li>{restLine(rosterLines)}</li>
+        <li>{restLine(rosterLines, solution.ergonomics_audit.clopening_violations)}</li>
       </ul>
     </section>
   );

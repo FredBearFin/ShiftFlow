@@ -42,8 +42,6 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
     {
       category: 'Frontline Floor Operations',
       items: [
-        { keys: ['C'], desc: 'Floor Crisis Dispatch (Saturday 8:00 PM Emergency Callout)' },
-        { keys: ['S'], desc: 'Peer-to-Peer Shift Trade Validator (Fair Workweek Safe Harbor)' },
         { keys: ['D'], desc: 'Toggle Staff Roster & Availability Directory' },
         { keys: ['A'], desc: 'Add New Workforce Associate Modal' },
         { keys: ['P'], desc: 'Print Wall Board / Export High-Contrast Breakroom PDF' },
