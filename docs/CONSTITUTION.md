@@ -227,3 +227,9 @@ Only the King amends this document. Each amendment is recorded below with its da
   - **Table 7 parity.** `interpolateBeckerTable7` returns the same anchor values as `backend/app/config.py`.
   - **Not in this PR.** An App-level test of the solve effect is deferred; `App.tsx` pulls in the whole wizard and needs a larger harness.
   - **Acceptance.** `cd frontend && npm run build` and `npm test` exit 0. One PR is one commit under Art. 1.
+- **2026-10-20. PR 20: CI and reproducible installs (King).** Files: `.github/workflows/frontend-build.yml`, `.github/workflows/backend-tests.yml` (new), `frontend/Dockerfile`, `frontend/.dockerignore` (new), `backend/.dockerignore` (new), and no other file. Build and CI configuration only.
+  - **Frontend CI.** Installs with `npm ci` from the lockfile, runs the build and `npm test`, and sets `permissions: contents: read`.
+  - **Backend CI.** New workflow: Python 3.11, installs `backend/requirements.txt`, runs `python run_all_tests.py`.
+  - **Frontend image.** Copies the lockfile and runs `npm ci`, so the image builds from the locked versions. `.dockerignore` keeps `node_modules` and `dist` out of the build context.
+  - **Not in this PR.** Action references stay as major-version tags. Pinning them to commit SHAs needs lookups that were not possible in this session, so that is left open.
+  - **Acceptance.** Local `npm ci`, `npm run build` and `npm test` exit 0 in `frontend/`; `python run_all_tests.py` exits 0 in `backend/`. One PR is one commit under Art. 1.
