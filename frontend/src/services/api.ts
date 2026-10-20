@@ -262,7 +262,6 @@ export async function fetchArchetypes(): Promise<ArchetypePreset[]> {
 }
 
 export async function solveScheduleApi(request: SolveRequest): Promise<SolveResponse> {
-  const unavailable = 'The scheduling service is unavailable, so no schedule was computed.';
   let res: Response;
   try {
     res = await fetch('/api/v1/schedules/solve', {
@@ -270,10 +269,10 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
       headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
       body: JSON.stringify(request),
     });
-  } catch {
-    throw new Error(unavailable);
+  } catch (err) {
+    throw new Error(`The scheduling service could not be reached: ${err instanceof Error ? err.message : String(err)}`);
   }
-  if (res.status === 422) {
+  if (!res.ok) {
     let detail: string | undefined;
     try {
       const body = await res.json();
@@ -281,9 +280,8 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
     } catch {
       // Body is not JSON; fall back to the plain message below.
     }
-    throw new Error(detail ?? 'The schedule cannot be built from these inputs.');
+    throw new Error(detail ?? `The scheduling service returned an error (HTTP ${res.status}).`);
   }
-  if (!res.ok) throw new Error(unavailable);
   return await res.json();
 }
 
