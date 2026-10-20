@@ -40,7 +40,13 @@ class IdempotencyStore:
                 row = cursor.fetchone()
                 if not row:
                     return None
-                return dict(row)
+                record = dict(row)
+                expires_at = record.get("expires_at")
+                if expires_at is not None and expires_at < time.time():
+                    cursor.execute("DELETE FROM idempotency_records WHERE key = ?", (key,))
+                    conn.commit()
+                    return None
+                return record
             finally:
                 conn.close()
 
@@ -279,6 +285,8 @@ class IdempotencyMiddleware:
                             response_headers=header_dict,
                             response_body=response_body.decode("utf-8", errors="replace"),
                         )
+                    else:
+                        IdempotencyStore.clear_failed_request(idempotency_key)
             else:
                 await send(message)
 
