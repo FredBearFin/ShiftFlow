@@ -48,7 +48,7 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
     id: 'downtown_foodmart_omaha',
     name: 'Sample retail store (fallback preset)',
     sector: 'Urban Retail & Convenience',
-    tagline: '18-hour daily grocery/market floor (6am–12am)',
+    tagline: 'Urban retail and convenience',
     description:
       'Fallback preset used when the server cannot list presets. Opening (6a–2p), Midday Rush (11a–7p) and Closing (4p–12a) shifts form a continuous forward rotation.',
     operating_hours_label: '06:00–12:00 AM Daily (126 hrs/wk)',
