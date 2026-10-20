@@ -22,18 +22,19 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       'Regular Hours',
       'Overtime Hours',
       'Hourly Wage',
-      'Gross Pay ($)',
+      'Estimated payroll ($)',
       'Notes',
     ];
+    // Ruling 24: no invented value. A field the solution does not carry is left empty.
     const rows = solution.roster_lines.map((l) => [
-      l.assigned_employee_id || `LINE-${l.line_number.toString().padStart(2, '0')}`,
-      `"${l.assigned_person || `Rotation Line ${l.line_number}`}"`,
-      `"${l.qualification_tier || 'Clerk'}"`,
+      l.assigned_employee_id || '',
+      l.assigned_person ? `"${l.assigned_person}"` : '',
+      l.qualification_tier ? `"${l.qualification_tier}"` : '',
       l.regular_hours.toFixed(2),
       l.overtime_hours.toFixed(2),
       l.hourly_wage.toFixed(2),
       l.estimated_weekly_payroll.toFixed(2),
-      `"ShiftFlow Cyclic Line ${l.line_number}"`,
+      '',
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -50,6 +51,8 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   };
 
   const handleDownloadAdp = () => {
+    // Ruling 24: the solution carries no company code, batch ID or pay code.
+    // Those columns keep their place with empty cells, and no literal is written.
     const headers = [
       'Co Code',
       'Batch ID',
@@ -62,14 +65,14 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       'Gross Amount',
     ];
     const rows = solution.roster_lines.map((l) => [
-      'SF99',
-      'WK_01',
-      l.assigned_employee_id || `L${l.line_number.toString().padStart(2, '0')}`,
-      `"${l.assigned_person || `Associate ${l.line_number}`}"`,
+      '',
+      '',
+      l.assigned_employee_id || '',
+      l.assigned_person ? `"${l.assigned_person}"` : '',
       l.regular_hours.toFixed(2),
       l.overtime_hours.toFixed(2),
       l.hourly_wage.toFixed(2),
-      'REG',
+      '',
       l.estimated_weekly_payroll.toFixed(2),
     ]);
 
