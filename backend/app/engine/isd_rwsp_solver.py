@@ -248,6 +248,7 @@ class ISDRWSPSolver:
                     counts[(g, st["type_id"])] = 0
                     continue
                 sorted_reqs = sorted(req_vals)
+                # The 0.65 quantile is a value the author chose. No source for it is recorded in this repository. It is not from Becker (2026) unless a source is added.
                 q_idx = int(len(sorted_reqs) * 0.65)
                 base_needed = sorted_reqs[min(len(sorted_reqs) - 1, q_idx)]
                 counts[(g, st["type_id"])] = max(0, int(round(base_needed)))
