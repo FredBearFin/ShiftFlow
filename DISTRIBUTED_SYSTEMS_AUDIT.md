@@ -16,7 +16,7 @@ ShiftFlow Studio’s mathematical foundation—grounded in Tristan Becker’s (E
 $$L_{t+1} = (L_t \bmod N) + 1$$
 
 This audit verifies:
-1. **$O(1)$ Thundering Herd Elimination**: 1,000 store rollovers execute in **47.3 ms total wall-clock time** (**21,127 rollovers/sec**) with a **p99 latency of 0.0015 ms** (<15 ms SLA target), delivering a **278,000× efficiency arbitrage** over cold re-solving.
+1. **$O(1)$ Thundering Herd Elimination**: 1,000 store rollovers: wall-clock time **not measured**, throughput **not measured**, **p99 latency not measured** (SLA target: not measured), efficiency versus cold re-solving **not measured**.
 2. **Distributed Idempotency Key Architecture**: Pure ASGI middleware guaranteeing exactly-once mutation semantics for emergency callout dispatches, peer shift trades, and legal employee separations over lossy mobile retail network connections.
 3. **Multi-Tenant Sharding Strategy**: Citus/PostgreSQL distributed partitioning keyed by `facility_id`, completely isolating store transactions and preventing cross-tenant lock contention.
 4. **Resilient Container Health Probes**: Production Kubernetes liveness (`/health/liveness`) and readiness (`/health/readiness`) probes tracking microsecond database pool latencies and solver availability.
@@ -46,15 +46,15 @@ SHIFTFLOW DISTRIBUTED BENCHMARK: MONDAY 00:00 THUNDERING HERD AUDIT
 Metric                                | Cold Re-Solve Engine | ShiftFlow O(1) Ring Buffer
 =====================================================================================
 Execution Paradigm                    | Cold Eulerian Solve  | Ring Buffer Pointer Adv.
-Total Duration (1,000 Stores)         | 47,570.0 ms (47.6 s) | 47.33 ms (0.047 s)
-Sustained System Throughput           | 21.0 req / sec       | 21,127.1 req / sec
-p50 Median Latency                    | 45.20 ms             | 0.0002 ms
-p95 Latency                           | 62.10 ms             | 0.0005 ms
-p99 Latency (SLA Threshold < 15.0 ms) | 84.30 ms             | 0.0015 ms
+Total Duration (1,000 Stores)         | not measured | not measured 
+Sustained System Throughput           | not measured | not measured 
+p50 Median Latency                    | not measured | not measured 
+p95 Latency                           | not measured | not measured 
+p99 Latency (SLA Threshold: not measured) | not measured | not measured 
 State Allocation Delta                | ~4.2 MB / solve      | 0 MB (Zero allocation)
 CPU Throttling Risk                   | High (Cascade crash) | Zero (O(1) deterministic)
 -------------------------------------------------------------------------------------
-EFFICIENCY ARBITRAGE                  : ShiftFlow is 278,186x faster than cold re-solve!
+EFFICIENCY ARBITRAGE                  : not measured
 =====================================================================================
 ```
 
@@ -145,8 +145,8 @@ ShiftFlow implements decoupled probes in `main.py`:
   If the connection pool drops or database latency spikes above statutory thresholds, it emits **HTTP 503 Service Unavailable**, causing Kubernetes kubelet to route traffic away from degraded pods automatically.
 
 ### 4.2 Production Enterprise SLA Commitments
-- **Monthly Uptime SLA**: **99.99%** (< 4.38 minutes allowable downtime per month).
-- **Monday Rollover API Latency**: **p99 < 15.0 ms** under peak multi-tenant load.
+- **Monthly Uptime SLA**: **not measured**.
+- **Monday Rollover API Latency**: **not measured** under peak multi-tenant load.
 - **Roster Snapshot Retention**: **100% durability** across 3-year statutory FLSA recordkeeping windows via append-only immutable tables.
 - **Idempotency Guarantee**: **100% exactly-once execution** on all mutating endpoints.
 
