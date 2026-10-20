@@ -9,6 +9,7 @@ import {
   ArchetypePreset,
   EmployeeRecord,
   ErgonomicGuardrails,
+  SeparationCategory,
   ShiftTemplate,
   SolveRequest,
   SolveResponse,
@@ -276,5 +277,42 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
     throw new Error(unavailable);
   }
   if (!res.ok) throw new Error(unavailable);
+  return await res.json();
+}
+
+/** Records a separation (audit row) and deactivates the employee on the backend. */
+export async function deactivateEmployee(
+  empId: string,
+  payload: { category: SeparationCategory; reason: string; recorded_by: string }
+): Promise<{
+  status: string;
+  employee: {
+    active: boolean;
+    assigned_line: number | null;
+    separation_category: SeparationCategory | null;
+    separation_reason: string | null;
+    separation_timestamp: string | null;
+    recorded_by: string | null;
+  };
+}> {
+  const res = await fetch(`/api/employees/${encodeURIComponent(empId)}/deactivate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      separation_category: payload.category,
+      separation_reason: payload.reason,
+      recorded_by: payload.recorded_by,
+    }),
+  });
+  if (!res.ok) {
+    let detail = `Separation could not be recorded (HTTP ${res.status}).`;
+    try {
+      const body = await res.json();
+      if (typeof body?.detail === 'string') detail = body.detail;
+    } catch {
+      // Keep the generic message when the body is not JSON.
+    }
+    throw new Error(detail);
+  }
   return await res.json();
 }

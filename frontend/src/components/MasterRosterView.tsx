@@ -3,10 +3,18 @@ import {
   EmployeeRecord,
   NewEmployeeInput,
   RosterLine,
+  SeparationCategory,
   SolveResponse,
   StaffMemberAssignment,
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+
+const SEPARATION_OPTIONS: { value: SeparationCategory; label: string }[] = [
+  { value: 'voluntary_resignation', label: 'Voluntary resignation' },
+  { value: 'mutual_agreement', label: 'Mutual agreement' },
+  { value: 'involuntary_for_cause', label: 'Involuntary (for cause)' },
+  { value: 'layoff_reduction', label: 'Layoff / reduction in force' },
+];
 
 interface MasterRosterViewProps {
   solution: SolveResponse;
@@ -17,7 +25,10 @@ interface MasterRosterViewProps {
   onResetWeek: () => void;
   onUpdateStaffAssignments: (assignments: StaffMemberAssignment[]) => void;
   onAddEmployee: (emp: NewEmployeeInput) => void;
-  onToggleEmployeeStatus: (empId: string) => void;
+  onToggleEmployeeStatus: (
+    empId: string,
+    separation?: { category: SeparationCategory; reason: string; recorded_by: string }
+  ) => void;
   onUpdateEmployee: (emp: EmployeeRecord) => void;
   onExportCsv: () => void;
   showCalloutModal?: boolean;
@@ -74,6 +85,28 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   const [newRole, setNewRole] = useState('Frontline Associate');
   const [newWage, setNewWage] = useState('16.50');
   const [newAvailDays, setNewAvailDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+
+  // Inline separation form state (one employee's form open at a time)
+  const [sepEmpId, setSepEmpId] = useState<string | null>(null);
+  const [sepCategory, setSepCategory] = useState<SeparationCategory>('voluntary_resignation');
+  const [sepReason, setSepReason] = useState('');
+  const [sepRecordedBy, setSepRecordedBy] = useState('');
+
+  const openSeparationForm = (empId: string) => {
+    setSepEmpId(empId);
+    setSepCategory('voluntary_resignation');
+    setSepReason('');
+    setSepRecordedBy('');
+  };
+
+  const submitSeparation = (e: React.FormEvent, empId: string) => {
+    e.preventDefault();
+    const reason = sepReason.trim();
+    const recordedBy = sepRecordedBy.trim();
+    if (!reason || !recordedBy) return;
+    onToggleEmployeeStatus(empId, { category: sepCategory, reason, recorded_by: recordedBy });
+    setSepEmpId(null);
+  };
 
   const activeEmployees = employees.filter((e) => e.is_active);
   const inactiveEmployees = employees.filter((e) => !e.is_active);
@@ -430,18 +463,91 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     <span className="text-[10px] text-slate-400 font-mono-tabular">
                       ID: {emp.employee_id}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => onToggleEmployeeStatus(emp.employee_id)}
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        emp.is_active
-                          ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
-                          : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                      }`}
-                    >
-                      {emp.is_active ? 'Deactivate / Fire' : 'Reactivate'}
-                    </button>
+                    {!(emp.is_active && sepEmpId === emp.employee_id) && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          emp.is_active
+                            ? openSeparationForm(emp.employee_id)
+                            : onToggleEmployeeStatus(emp.employee_id)
+                        }
+                        className={`px-2 py-1 rounded text-xs font-semibold ${
+                          emp.is_active
+                            ? 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
+                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                        }`}
+                      >
+                        {emp.is_active ? 'Deactivate / Fire' : 'Reactivate'}
+                      </button>
+                    )}
                   </div>
+
+                  {emp.is_active && sepEmpId === emp.employee_id && (
+                    <form
+                      onSubmit={(e) => submitSeparation(e, emp.employee_id)}
+                      className="mt-3 pt-3 border-t border-slate-100 space-y-2"
+                    >
+                      <div>
+                        <label htmlFor={`sep-category-${emp.employee_id}`} className="text-[10px] text-slate-500 block">
+                          Separation category
+                        </label>
+                        <select
+                          id={`sep-category-${emp.employee_id}`}
+                          value={sepCategory}
+                          onChange={(e) => setSepCategory(e.target.value as SeparationCategory)}
+                          className="w-full px-2 py-1 border border-slate-200 rounded text-xs bg-white"
+                        >
+                          {SEPARATION_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label htmlFor={`sep-reason-${emp.employee_id}`} className="text-[10px] text-slate-500 block">
+                          Reason (required)
+                        </label>
+                        <input
+                          id={`sep-reason-${emp.employee_id}`}
+                          type="text"
+                          required
+                          value={sepReason}
+                          onChange={(e) => setSepReason(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-200 rounded text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor={`sep-recorded-by-${emp.employee_id}`} className="text-[10px] text-slate-500 block">
+                          Recorded by (required)
+                        </label>
+                        <input
+                          id={`sep-recorded-by-${emp.employee_id}`}
+                          type="text"
+                          required
+                          value={sepRecordedBy}
+                          onChange={(e) => setSepRecordedBy(e.target.value)}
+                          className="w-full px-2 py-1 border border-slate-200 rounded text-xs"
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setSepEmpId(null)}
+                          className="px-2 py-1 border border-slate-300 rounded text-xs font-semibold text-slate-600 bg-white"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={!sepReason.trim() || !sepRecordedBy.trim()}
+                          className="px-2 py-1 rounded text-xs font-semibold bg-red-600 hover:bg-red-700 text-white disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
+                        >
+                          Confirm Deactivate
+                        </button>
+                      </div>
+                    </form>
+                  )}
                 </div>
               ))}
             </div>

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 import sqlite3
 
-from app.database import get_db, ShiftFlowRepository
+from app.database import get_db, ShiftFlowRepository, SeparationAuditExistsError
 
 router = APIRouter(prefix="/api/employees", tags=["Workforce & Employees"])
 
@@ -154,7 +154,10 @@ def delete_employee(
     db: sqlite3.Connection = Depends(get_db),
 ):
     repo = ShiftFlowRepository(db)
-    success = repo.delete_employee(employee_id)
+    try:
+        success = repo.delete_employee(employee_id)
+    except SeparationAuditExistsError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
     if not success:
         raise HTTPException(status_code=404, detail=f"Employee {employee_id} not found")
     return {"status": "deleted", "id": employee_id}

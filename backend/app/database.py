@@ -131,6 +131,10 @@ def init_db() -> None:
     conn.close()
 
 
+class SeparationAuditExistsError(Exception):
+    """Raised when deleting an employee whose separation audit rows must be retained."""
+
+
 class ShiftFlowRepository:
     """Repository handling CRUD operations for facilities, staff, rosters, and POS data."""
 
@@ -326,6 +330,9 @@ class ShiftFlowRepository:
         emp = self.get_employee(employee_id)
         if not emp:
             return None
+        if not emp["active"]:
+            # Already separated: no second audit row and no overwrite of the first record.
+            return emp
 
         cursor = self.conn.cursor()
         # 1. Update employee record
@@ -374,8 +381,13 @@ class ShiftFlowRepository:
         ]
 
     def delete_employee(self, employee_id: str) -> bool:
+        """Deletes an employee record. Refused while separation audits exist (FLSA/Title VII retention)."""
         cursor = self.conn.cursor()
-        cursor.execute("DELETE FROM separation_audits WHERE employee_id = ?", (employee_id,))
+        cursor.execute("SELECT COUNT(*) FROM separation_audits WHERE employee_id = ?", (employee_id,))
+        if cursor.fetchone()[0] > 0:
+            raise SeparationAuditExistsError(
+                f"Employee {employee_id} has separation audit records and cannot be deleted"
+            )
         cursor.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
         self.conn.commit()
         return cursor.rowcount > 0

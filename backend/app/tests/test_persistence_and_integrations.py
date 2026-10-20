@@ -35,10 +35,16 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
     def setUp(self):
         self.conn = get_db_connection()
         self.repo = ShiftFlowRepository(self.conn)
-        self.repo.delete_employee("EMP-TEST-99")
+        self._purge("EMP-TEST-99")
 
     def tearDown(self):
         self.conn.close()
+
+    def _purge(self, employee_id):
+        """Test-only cleanup. Audits are retained by design, so the fixture removes its own rows directly."""
+        self.conn.execute("DELETE FROM separation_audits WHERE employee_id = ?", (employee_id,))
+        self.conn.commit()
+        self.repo.delete_employee(employee_id)
 
     def test_01_facility_upsert_and_retrieval(self):
         """Verify facility creation, demand matrix persistence, and retrieval."""
@@ -86,12 +92,24 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         self.assertEqual(updated["available_days"], [1, 2, 3, 4, 5])
 
         # Deactivate / fire
-        deactivated = self.repo.deactivate_employee("EMP-TEST-99")
+        deactivated = self.repo.deactivate_employee(
+            "EMP-TEST-99",
+            separation_category="mutual_agreement",
+            separation_reason="Agreed end of contract",
+            recorded_by="Store Manager",
+        )
         self.assertFalse(deactivated["active"])
         self.assertIsNone(deactivated["assigned_line"])
+        self.assertEqual(deactivated["separation_category"], "mutual_agreement")
+        self.assertEqual(deactivated["recorded_by"], "Store Manager")
 
-        # Clean up
-        self.repo.delete_employee("EMP-TEST-99")
+        # Repeated deactivate does not add a second audit row
+        self.repo.deactivate_employee("EMP-TEST-99")
+        audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
+        self.assertEqual(len([a for a in audits if a["employee_id"] == "EMP-TEST-99"]), 1)
+
+        # Clean up (audit rows are retained, so the test removes them directly)
+        self._purge("EMP-TEST-99")
 
     def test_03_pos_csv_parsing_and_demand_projection(self):
         """Verify POS transaction ingestion and hourly demand curve projection."""
@@ -181,14 +199,38 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         self.assertEqual(post_resp.status_code, 200)
         created_id = post_resp.json()["id"]
 
-        # 3. Deactivate employee
-        deact_resp = self.client.post(f"/api/employees/{created_id}/deactivate")
+        # 3. Deactivate employee with separation payload; it must be stored as an audit row
+        deact_resp = self.client.post(
+            f"/api/employees/{created_id}/deactivate",
+            json={
+                "separation_category": "layoff_reduction",
+                "separation_reason": "Workforce reduction, role eliminated",
+                "recorded_by": "Store General Manager",
+            },
+        )
         self.assertEqual(deact_resp.status_code, 200)
         self.assertFalse(deact_resp.json()["employee"]["active"])
+        self.assertEqual(deact_resp.json()["employee"]["separation_category"], "layoff_reduction")
+        audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
+        matching = [a for a in audits if a["employee_id"] == created_id]
+        self.assertEqual(len(matching), 1)
+        self.assertEqual(matching[0]["recorded_by"], "Store General Manager")
 
-        # 4. Clean up delete
+        # Repeated deactivate over REST does not duplicate the audit row
+        again_resp = self.client.post(f"/api/employees/{created_id}/deactivate", json={"recorded_by": "Other"})
+        self.assertEqual(again_resp.status_code, 200)
+        audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
+        self.assertEqual(len([a for a in audits if a["employee_id"] == created_id]), 1)
+
+        # 4. Delete is refused with 409 and the audit rows are kept
         del_resp = self.client.delete(f"/api/employees/{created_id}")
-        self.assertEqual(del_resp.status_code, 200)
+        self.assertEqual(del_resp.status_code, 409)
+        self.assertIsNotNone(self.repo.get_employee(created_id))
+        audits = self.repo.list_separation_audits(facility_id="FAC-TEST-01")
+        self.assertEqual(len([a for a in audits if a["employee_id"] == created_id]), 1)
+
+        # Test-only cleanup of the fixture
+        self._purge(created_id)
 
         # 5. Gusto and ADP exports
         g_resp = self.client.get("/api/payroll/export/gusto?facility_id=FAC-TEST-01")

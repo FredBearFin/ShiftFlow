@@ -5,11 +5,13 @@ import {
   EmployeeRecord,
   ErgonomicGuardrails,
   NewEmployeeInput,
+  SeparationCategory,
   ShiftTemplate,
   SolveResponse,
   StaffMemberAssignment,
 } from './types';
 import {
+  deactivateEmployee,
   fetchArchetypes,
   solveScheduleApi,
   exportRosterToCsvString,
@@ -57,6 +59,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<ActiveTabId>('roster');
   const [solution, setSolution] = useState<SolveResponse | null>(null);
   const [solveError, setSolveError] = useState<string | null>(null);
+  const [separationError, setSeparationError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchArchetypes().then((list) => {
@@ -221,6 +224,33 @@ export function App() {
     );
   };
 
+  const handleSeparateEmployee = async (
+    empId: string,
+    sep: { category: SeparationCategory; reason: string; recorded_by: string }
+  ) => {
+    setSeparationError(null);
+    try {
+      const { employee } = await deactivateEmployee(empId, sep);
+      setEmployees((prev) =>
+        prev.map((e) =>
+          e.employee_id === empId
+            ? {
+                ...e,
+                is_active: employee.active,
+                assigned_line_id: employee.assigned_line,
+                separation_category: employee.separation_category,
+                separation_reason: employee.separation_reason,
+                separation_timestamp: employee.separation_timestamp,
+                recorded_by: employee.recorded_by,
+              }
+            : e
+        )
+      );
+    } catch (err) {
+      setSeparationError(err instanceof Error ? err.message : 'Separation could not be recorded.');
+    }
+  };
+
   const handleUpdateEmployee = (updated: EmployeeRecord) => {
     setEmployees((prev) =>
       prev.map((e) => (e.employee_id === updated.employee_id ? updated : e))
@@ -259,6 +289,11 @@ export function App() {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {separationError && (
+          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {separationError}
+          </div>
+        )}
         {solveError && (
           <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             The scheduling service is unavailable, so no schedule was computed. Try again later.
@@ -277,7 +312,9 @@ export function App() {
                 onResetWeek={() => setRotationWeekOffset(0)}
                 onUpdateStaffAssignments={setStaffAssignments}
                 onAddEmployee={handleAddEmployee}
-                onToggleEmployeeStatus={handleToggleEmployeeStatus}
+                onToggleEmployeeStatus={(empId, sep) =>
+                  sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)
+                }
                 onUpdateEmployee={handleUpdateEmployee}
                 onExportCsv={handleExportCsv}
                 showCalloutModal={isCalloutOpen}
@@ -295,7 +332,9 @@ export function App() {
                 employees={employees}
                 rosterLines={solution.roster_lines}
                 onAddEmployee={handleAddEmployee}
-                onToggleActive={handleToggleEmployeeStatus}
+                onToggleActive={(empId, sep) =>
+                  sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)
+                }
                 onUpdateAvailability={handleUpdateAvailability}
               />
             )}
