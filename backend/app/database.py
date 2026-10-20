@@ -10,9 +10,11 @@ import uuid
 _NOT_SENT = object()
 
 # Durable SQLite file. Set SHIFTFLOW_DB_PATH to a path on a mounted volume in containers.
+# Serverless platforms (e.g. Vercel) only allow writes under /tmp, so default there when
+# no path is configured; /tmp is not durable across cold starts on those platforms.
 DB_FILE = os.environ.get(
     "SHIFTFLOW_DB_PATH",
-    os.path.join("data", "shiftflow.db"),
+    os.path.join("/tmp", "shiftflow.db") if os.environ.get("VERCEL") else os.path.join("data", "shiftflow.db"),
 )
 
 
