@@ -150,34 +150,30 @@ def kubernetes_readiness():
     """Production Kubernetes readiness probe - validates database connectivity and solver worker status."""
     db_ok = False
     db_latency_ms = 0.0
+    t0 = time.time()
     try:
-        t0 = time.time()
         conn = get_db_connection()
-        conn.execute("SELECT 1;").fetchone()
-        conn.close()
+        try:
+            conn.execute("SELECT 1;").fetchone()
+        finally:
+            conn.close()
         db_latency_ms = round((time.time() - t0) * 1000, 3)
         db_ok = True
     except Exception as e:
         db_ok = False
 
-    if not db_ok:
-        raise HTTPException(
-            status_code=503,
-            detail={"status": "not_ready", "reason": "Database connection pool unresponsive"}
-        )
-
     solver_check = _check_solver_engine()
     idempotency_check = _check_idempotency_store()
     checks = {
         "database": {
-            "status": "healthy",
+            "status": "healthy" if db_ok else "unhealthy",
             "latency_ms": db_latency_ms,
         },
         "solver_engine": solver_check,
         "idempotency_store": idempotency_check,
     }
 
-    if solver_check["status"] != "healthy" or idempotency_check["status"] != "healthy":
+    if not db_ok or solver_check["status"] != "healthy" or idempotency_check["status"] != "healthy":
         return JSONResponse(
             status_code=503,
             content={"status": "not_ready", "checks": checks},
