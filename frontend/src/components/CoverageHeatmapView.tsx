@@ -29,7 +29,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Coverage Equation Banner */}
-      <div className="enterprise-card p-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
             24-Hour Register & Floor Coverage Verification
@@ -59,13 +59,13 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
             <strong className="text-indigo-900 text-sm">{totalOver}h</strong>
           </div>
 
-          <div className="inline-flex rounded-lg border border-slate-300 p-0.5 bg-slate-100">
+          <div className="inline-flex rounded-md border border-[#7F8A92] p-0.5 bg-slate-100">
             <button
               type="button"
               onClick={() => setDisplayMode('scheduled')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'scheduled'
-                  ? 'bg-white text-slate-900 shadow-2xs'
+                  ? 'bg-white text-slate-900 shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
                   : 'text-slate-600'
               }`}
             >
@@ -76,7 +76,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
               onClick={() => setDisplayMode('deviation')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'deviation'
-                  ? 'bg-white text-slate-900 shadow-2xs'
+                  ? 'bg-white text-slate-900 shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
                   : 'text-slate-600'
               }`}
             >
@@ -87,7 +87,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
       </div>
 
       {/* 7 x 24 Interval Heatmap Matrix */}
-      <div className="enterprise-card-elevated p-5 overflow-x-auto">
+      <div className="card p-5 overflow-x-auto">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
           24-Hour × 7-Day Interval Staffing Heatmap
         </h3>
@@ -156,7 +156,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
       </div>
 
       {/* Shift Design Utilization Table (xi_{gt} & phi_t) */}
-      <div className="enterprise-card p-5">
+      <div className="card p-5">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
           Shift Design Decision Variables (ϕ_t & ξ_gt per Shift Type t ∈ T)
         </h3>

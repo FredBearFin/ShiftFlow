@@ -129,7 +129,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Action Header with Export Buttons */}
-      <div className="enterprise-card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
+      <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 block">
             Payroll & Cost Analytics
@@ -151,7 +151,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           <Button
             variant="primary"
             onClick={handleDownloadGusto}
-            className="!bg-emerald-700 hover:!bg-emerald-800 font-bold"
+            className="font-bold"
           >
             <span>↓ Gusto CSV</span>
           </Button>
@@ -173,7 +173,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
 
       {/* Top Payroll & Hours Economics KPI Banner */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
-        <div className="enterprise-card p-4">
+        <div className="card p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Est. Weekly Payroll
           </span>
@@ -188,7 +188,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           {unpricedBadge && <div className="mt-1.5">{unpricedBadge}</div>}
         </div>
 
-        <div className="enterprise-card p-4">
+        <div className="card p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Scheduled Labor Hours
           </span>
@@ -205,7 +205,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </p>
         </div>
 
-        <div className="enterprise-card p-4">
+        <div className="card p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Overtime Exposure
           </span>
@@ -227,7 +227,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           )}
         </div>
 
-        <div className="enterprise-card p-4">
+        <div className="card p-4">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Blended Average Wage
           </span>
@@ -241,7 +241,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </p>
         </div>
 
-        <div className="enterprise-card p-4 col-span-2 lg:col-span-1">
+        <div className="card p-4 col-span-2 lg:col-span-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
             Required ÷ scheduled hours
           </span>
@@ -258,7 +258,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       </div>
 
       {/* Daily Labor Cost & Hours Distribution */}
-      <div className="enterprise-card p-5">
+      <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -288,10 +288,10 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             return (
               <div
                 key={dayName}
-                className={`p-3 rounded-xl border flex flex-col justify-between ${
+                className={`p-3 rounded-lg border flex flex-col justify-between ${
                   isWeekend
-                    ? 'bg-slate-100/70 border-slate-300'
-                    : 'bg-slate-50 border-slate-200'
+                    ? 'bg-slate-100/70 border-[#7F8A92]'
+                    : 'bg-slate-50 border-[#7F8A92]'
                 }`}
               >
                 <div>
@@ -327,7 +327,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       </div>
 
       {/* Rotation Line Payroll Table */}
-      <div className="enterprise-card overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Rotation Line Payroll & Overtime Breakdown

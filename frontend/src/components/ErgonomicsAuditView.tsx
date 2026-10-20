@@ -14,7 +14,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
     <div className="space-y-5">
       {/* Top Compliance & Theorem 1 Summary Banner */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="enterprise-card p-5">
+        <div className="card p-5">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Occupational Rest & Circadian Health Standard
           </span>
@@ -32,7 +32,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </p>
         </div>
 
-        <div className="enterprise-card p-5">
+        <div className="card p-5">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Zero-Clopening & Circadian Guardrail
           </span>
@@ -51,7 +51,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </p>
         </div>
 
-        <div className="enterprise-card p-5">
+        <div className="card p-5">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Cyclic Line Fairness & Continuity
           </span>
@@ -67,7 +67,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       </div>
 
       {/* The 8 Ergonomics Objective Criteria Table (Becker 2026, Table 4) */}
-      <div className="enterprise-card-elevated overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
           <h2 className="text-base font-bold text-slate-900">
             Staff Health & Anti-Burnout Protection Standards
@@ -138,7 +138,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       </div>
 
       {/* Directed Multigraph Flow Conservation Verification (Constraints 7 & 8) */}
-      <div className="enterprise-card p-5">
+      <div className="card p-5">
         <div className="mb-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Directed Multigraph G = (V, E) Node Degree Balance (Constraints 7 & 8)
@@ -161,7 +161,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             return (
               <div
                 key={g}
-                className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs"
+                className="p-3 rounded-lg bg-slate-50 border border-[#7F8A92] space-y-2 text-xs"
               >
                 <div className="font-bold text-slate-900 flex items-center justify-between">
                   <span>{wNode?.day_name}</span>

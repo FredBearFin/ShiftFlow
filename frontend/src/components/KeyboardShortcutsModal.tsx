@@ -62,11 +62,11 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="shortcuts-title"
-      className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white border border-[#7F8A92] rounded-lg max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -93,7 +93,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-colors focus:ring-2 focus:ring-indigo-400"
+            className="text-xs px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-colors focus:ring-2 focus:ring-indigo-400"
             aria-label="Close shortcuts modal"
           >
             ✕ Esc
@@ -123,7 +123,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                         ) : (
                           <kbd
                             key={kIdx}
-                            className="px-2 py-1 rounded bg-slate-100 border border-slate-300 text-[11px] font-mono-tabular font-bold text-slate-800 shadow-2xs"
+                            className="px-2 py-1 rounded bg-slate-100 border border-slate-300 text-[11px] font-mono-tabular font-bold text-slate-800"
                           >
                             {k}
                           </kbd>
@@ -145,7 +145,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition-colors"
+            className="px-4 py-1.5 bg-[#2B3A42] hover:bg-[#1E2A31] text-[#FFFFFF] rounded-md text-xs font-bold shadow-[0_1px_2px_rgba(43,58,66,0.08)] transition-colors"
           >
             Got It
           </button>

@@ -43,7 +43,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Top Explanation & Becker Table 7 Law Card */}
-      <div className="enterprise-card p-5">
+      <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700">
@@ -58,7 +58,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               the curve or table below to immediately re-calibrate the active roster.
             </p>
           </div>
-          <div className="px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-xs">
+          <div className="px-4 py-2.5 rounded-lg bg-indigo-50 border border-indigo-200 text-xs">
             <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 block">
               Active Calibration
             </span>
@@ -71,7 +71,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
 
       {/* Interactive SVG Pareto Curve + Knee-Point Callout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div className="lg:col-span-8 enterprise-card-elevated p-5">
+        <div className="lg:col-span-8 card p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
               Interactive <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-Efficient Frontier (Click Any Point to Apply)
@@ -93,7 +93,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
           <div className="w-full overflow-x-auto">
             <svg
               viewBox={`0 0 ${svgW} ${svgH}`}
-              className="w-full h-auto bg-slate-50/60 rounded-xl border border-slate-200"
+              className="w-full h-auto bg-slate-50/60 rounded-lg border border-[#7F8A92]"
             >
               {/* Horizontal Grid Lines */}
               {[0, 0.25, 0.5, 0.75, 1].map((frac, idx) => {
@@ -200,7 +200,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         </div>
 
         {/* Becker (2026) Table 7 Empirical Benchmark Reference */}
-        <div className="lg:col-span-4 enterprise-card p-5 flex flex-col justify-between">
+        <div className="lg:col-span-4 card p-5 flex flex-col justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
               Operational Rest & Efficiency Benchmark
@@ -223,7 +223,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     className={`p-2.5 rounded-lg border cursor-pointer transition-colors flex items-center justify-between text-xs ${
                       isSel
                         ? 'bg-indigo-50 border-indigo-500 font-semibold'
-                        : 'bg-slate-50 border-slate-200 hover:bg-white'
+                        : 'bg-slate-50 border-[#7F8A92] hover:bg-white'
                     }`}
                   >
                     <div>
@@ -247,7 +247,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       </div>
 
       {/* Pareto Frontier Enumeration Table */}
-      <div className="enterprise-card overflow-hidden">
+      <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-slate-50">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
             Enumerated <Term explanation="A balance between extra cost and staff comfort: no other setting gives more of one without less of the other.">Pareto</Term>-Optimal Schedule Points

@@ -10,13 +10,16 @@ export interface ButtonProps
   loading?: boolean;
 }
 
+// Buttons are the only elements allowed a box-shadow in the design system.
+const BUTTON_SHADOW = 'shadow-[0_1px_2px_rgba(43,58,66,0.08)]';
+
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
-  primary: 'bg-slate-900 text-white hover:bg-slate-800 shadow-xs font-semibold',
-  secondary: 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 font-semibold',
-  ghost: 'text-slate-700 hover:bg-slate-100 font-semibold',
-  danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-xs font-semibold',
-  // Accent carries its own padding (py-2.5), so it skips the size classes below.
-  accent: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm font-bold px-5 py-2.5 text-xs',
+  primary: `bg-[#2B3A42] text-[#FFFFFF] hover:bg-[#1E2A31] ${BUTTON_SHADOW} font-semibold`,
+  secondary: 'border border-[#7F8A92] bg-[#FFFFFF] text-[#2B3A42] hover:bg-[#F4F1EA] font-semibold',
+  ghost: 'text-[#2B3A42] hover:bg-[#F4F1EA] font-semibold',
+  danger: `bg-[var(--danger)] text-[#FFFFFF] hover:bg-[#862F28] ${BUTTON_SHADOW} font-semibold`,
+  // Accent is for one key action per view. It carries its own padding (py-2.5), so it skips the size classes below.
+  accent: `bg-[#4A6B5D] text-[#FFFFFF] hover:bg-[#3E5C50] ${BUTTON_SHADOW} font-bold px-5 py-2.5 text-xs`,
 };
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
@@ -37,7 +40,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...rest
 }) => {
   const classes = [
-    'inline-flex items-center justify-center gap-2 rounded-lg',
+    'inline-flex items-center justify-center gap-2 rounded-md',
     'disabled:opacity-40',
     VARIANT_CLASSES[variant],
     variant === 'accent' ? '' : SIZE_CLASSES[size],
