@@ -131,3 +131,16 @@ Only the King amends this document. Each amendment is recorded below with its da
   - Order: built after PR 24. Total becomes 31 PRs including 0A.
   - Acceptance: `cd frontend && npm install && npm run build` exits 0; `cd frontend && npm test` exits 0; `grep -rn "solveClientSideISDRWSP\|TEMPLATE_ORDER" frontend/src` returns no matches; `git diff 2e6ee18 -- frontend/src/services/api.ts` shows only the deletion in (a) and the change in (b); with the solve request rejected, the banner shows and no schedule renders.
   - Reason: the browser-side solver is a second scheduler that runs when the backend fails and shows a schedule the backend did not compute. The King removes it so the only schedule shown is one the backend computed.
+- **2026-10-20. Post-plan PR 12a: build Tailwind through PostCSS and remove the runtime CDN (King).** Source: AUDIT_PLAN.md section 12, PR 12a. Scope: these files only.
+  - `frontend/index.html`: remove only the `<script src="https://cdn.tailwindcss.com"></script>` tag (line 13). No other line changes.
+  - `frontend/tailwind.config.js` (new): `content` globs `./index.html` and `./src/**/*.{ts,tsx}`; `theme` empty unless the build requires otherwise; no plugins.
+  - `frontend/postcss.config.js` (new): plugins `tailwindcss` and `autoprefixer`.
+  - Unchanged: `frontend/src/index.css`, `frontend/package.json`, `frontend/package-lock.json` and every other file. The devDependencies tailwindcss 3.4, postcss and autoprefixer already exist, so Art. 6 and Art. 7 are not touched.
+  - Behavior: a build and source change that must leave app behavior unchanged under §3. Visible styling must come from the built CSS. The classes listed under "Audit-fix PRs" (2026-10-20) are left as they are and are not fixed here.
+  - Acceptance: `cd frontend && npm install && npm run build` exits 0; the built CSS contains generated utilities and no literal `@tailwind` directive; `index.html` contains no `cdn.tailwindcss.com` reference.
+  - Order: no dependency on PRs 19 to 25, and it edits none of their files. Total becomes 32 PRs including 0A.
+
+### Audit-fix PRs
+
+- **2026-10-20. PR 12a: Tailwind through PostCSS, runtime CDN removed (King).** Files: `frontend/index.html` (the cdn.tailwindcss.com script tag only), `frontend/tailwind.config.js` (new) and `frontend/postcss.config.js` (new). Reason: the production CSS currently contains no utilities, because the build never processes Tailwind, and an offline or blocked CDN leaves the app unstyled.
+  - Known-unsupported list: classes that Tailwind v3.4 does not provide, found in `frontend/src/components/` by grep. They stay as written and are recorded here, not fixed: `shadow-xs`, `shadow-2xs`, `backdrop-blur-xs`, `py-0.2`. The Play CDN is also Tailwind v3, so these classes already generate no CSS today, and PR 12a does not change their output.
