@@ -355,8 +355,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
                     <div className="mt-2.5 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="text-[10px] text-slate-500 block">Wage ($/hr)</label>
-                        <input
+                        <label htmlFor={`roster-wage-${emp.employee_id}`} className="text-[10px] text-slate-500 block">Wage ($/hr)</label>
+                        <input id={`roster-wage-${emp.employee_id}`}
                           type="number"
                           step="0.5"
                           disabled={!emp.is_active}
@@ -371,8 +371,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="text-[10px] text-slate-500 block">Assigned Line</label>
-                        <select
+                        <label htmlFor={`roster-line-${emp.employee_id}`} className="text-[10px] text-slate-500 block">Assigned Line</label>
+                        <select id={`roster-line-${emp.employee_id}`}
                           disabled={!emp.is_active}
                           value={emp.assigned_line_id || ''}
                           onChange={(e) =>
@@ -569,7 +569,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 className="text-base font-bold text-slate-900">Add New Workforce Associate</h3>
-              <button
+              <button aria-label="Close"
                 type="button"
                 onClick={() => setShowAddModal(false)}
                 className="text-slate-400 hover:text-slate-600 font-bold"
@@ -580,10 +580,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
             <form onSubmit={submitNewEmployee} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="roster-new-name" className="block text-xs font-semibold text-slate-700 mb-1">
                   Full Name
                 </label>
-                <input
+                <input id="roster-new-name"
                   type="text"
                   required
                   value={newName}
@@ -595,10 +595,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="roster-new-role" className="block text-xs font-semibold text-slate-700 mb-1">
                     Role / Position
                   </label>
-                  <input
+                  <input id="roster-new-role"
                     type="text"
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
@@ -606,10 +606,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="roster-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">
                     Hourly Wage ($/hr)
                   </label>
-                  <input
+                  <input id="roster-new-wage"
                     type="number"
                     step="0.25"
                     min="7.25"
@@ -680,7 +680,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 </span>
                 <h3 className="text-base font-bold text-slate-900 mt-1">Saturday Evening Callout Rebalancing (8:00 PM)</h3>
               </div>
-              <button onClick={() => setShowCalloutModal(false)} className="text-slate-400 font-bold">✕</button>
+              <button type="button" aria-label="Close" onClick={() => setShowCalloutModal(false)} className="text-slate-400 font-bold">✕</button>
             </div>
 
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900">
@@ -699,7 +699,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     ✓ 21.0h prior rest • ✓ 40.0h next rest • 32h → <strong>40.0h total ($0 overtime)</strong>
                   </p>
                 </div>
-                <button
+                <button type="button"
                   onClick={() => {
                     alert("Assigned Devon Taylor to cover Saturday Closing. Next Monday rotation lines remain 100% preserved.");
                     setShowCalloutModal(false);
@@ -720,14 +720,14 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     ❌ <strong>Illegal Clopening</strong>: Scheduled to open Sunday at 06:00 (only 6.0h turnaround from midnight!).
                   </p>
                 </div>
-                <button disabled className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-400 text-xs font-semibold cursor-not-allowed">
+                <button type="button" disabled className="px-3 py-1.5 rounded-lg bg-slate-200 text-slate-400 text-xs font-semibold cursor-not-allowed">
                   Blocked by Law
                 </button>
               </div>
             </div>
 
             <div className="pt-3 border-t border-slate-200 flex justify-end">
-              <button onClick={() => setShowCalloutModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Close</button>
+              <button type="button" onClick={() => setShowCalloutModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Close</button>
             </div>
           </div>
         </div>
@@ -739,11 +739,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <div className="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 className="text-base font-bold text-slate-900">Peer-to-Peer Shift Trade Validator</h3>
-              <button onClick={() => setShowSwapModal(false)} className="text-slate-400 font-bold">✕</button>
+              <button type="button" aria-label="Close" onClick={() => setShowSwapModal(false)} className="text-slate-400 font-bold">✕</button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <button
+              <button type="button"
                 onClick={() => setSwapScenario('danger')}
                 className={`p-3 rounded-xl border text-left transition-all ${
                   swapScenario === 'danger' ? 'border-2 border-red-500 bg-red-50' : 'border-slate-300 bg-slate-50'
@@ -752,7 +752,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 <span className="text-xs font-bold text-slate-900 block">Scenario A: Hazardous Swap</span>
                 <span className="text-[11px] text-slate-500 mt-1 block">Carlos (Wed Eve) ⇄ Devon (Thu Day)</span>
               </button>
-              <button
+              <button type="button"
                 onClick={() => setSwapScenario('safe')}
                 className={`p-3 rounded-xl border text-left transition-all ${
                   swapScenario === 'safe' ? 'border-2 border-emerald-500 bg-emerald-50' : 'border-slate-300 bg-slate-50'
@@ -782,8 +782,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
             </div>
 
             <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
-              <button onClick={() => setShowSwapModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Cancel</button>
-              <button
+              <button type="button" onClick={() => setShowSwapModal(false)} className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold">Cancel</button>
+              <button type="button"
                 disabled={swapScenario === 'danger'}
                 onClick={() => {
                   alert("Shift swap executed successfully! Master Monday rotation progression remains 100% intact.");

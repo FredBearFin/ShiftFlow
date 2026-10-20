@@ -97,7 +97,7 @@ export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) 
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button
+            <button type="button"
               onClick={() => window.print()}
               className="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 shadow-sm flex items-center gap-1.5"
             >
@@ -319,10 +319,10 @@ export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6 p-4 rounded-xl bg-slate-50 border border-slate-200">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-bold text-slate-800">Store Locations in Fleet</label>
+              <label htmlFor="cfo-store-count" className="text-xs font-bold text-slate-800">Store Locations in Fleet</label>
               <span className="text-base font-mono-tabular font-bold text-indigo-700">{storeCount} Locations</span>
             </div>
-            <input
+            <input id="cfo-store-count"
               type="range"
               min={1}
               max={25}
@@ -345,7 +345,7 @@ export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) 
             </div>
             <div className="grid grid-cols-4 gap-2">
               {[5.0, 6.0, 7.0, 8.0].map((m) => (
-                <button
+                <button type="button"
                   key={m}
                   onClick={() => setValuationMultiple(m)}
                   className={`py-1.5 rounded-lg text-xs font-mono-tabular font-bold border ${

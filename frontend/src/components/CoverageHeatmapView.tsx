@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SolveResponse } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import { Term } from './ui/Term';
 
 interface CoverageHeatmapViewProps {
   solution: SolveResponse;
@@ -34,11 +35,11 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
             24-Hour Register & Floor Coverage Verification
           </span>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
-            ∑ ξ_gt = R_gi + τ_gi − ω_gi across all 168 Weekly Time Intervals
+            ∑ ξ_gt = <Term explanation="How many people you need in each hour.">R_gi</Term> + τ_gi − ω_gi across all 168 Weekly Time Intervals
           </h2>
           <p className="text-xs text-slate-600 mt-0.5">
             Inspect hourly scheduled coverage (<span className="font-mono-tabular">∑ ξ_gt</span>) against
-            required staffing (<span className="font-mono-tabular">R_gi</span>), understaffing (
+            required staffing (<span className="font-mono-tabular"><Term explanation="How many people you need in each hour.">R_gi</Term></span>), understaffing (
             <span className="font-mono-tabular">τ_gi</span>), and overstaffing (
             <span className="font-mono-tabular">ω_gi</span>).
           </p>

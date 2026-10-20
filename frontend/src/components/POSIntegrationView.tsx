@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DAYS_OF_WEEK } from '../services/api';
+import { Term } from './ui/Term';
 
 interface POSIntegrationViewProps {
   onDemandUpdated?: (newDemand: number[][]) => void;
@@ -10,7 +11,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
 }) => {
   const [selectedPOS, setSelectedPOS] = useState<'square' | 'clover' | 'toast'>('square');
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<React.ReactNode>(null);
   const [salesSummary, setSalesSummary] = useState<{
     weekly_sales: number;
     weekly_transactions: number;
@@ -27,7 +28,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
     setIsUploading(true);
     setTimeout(() => {
       setIsUploading(false);
-      setUploadStatus('Successfully synced POS hourly demand. Demand matrix R_gi updated.');
+      setUploadStatus(<>Successfully synced POS hourly demand. Demand matrix <Term explanation="How many people you need in each hour.">R_gi</Term> updated.</>);
       setSalesSummary({
         weekly_sales: 42180.5,
         weekly_transactions: 1580,
@@ -58,13 +59,13 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
             Auto-Calibrate Register Demand from Real Sales Velocity
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Connect Square, Clover, or Toast POS transaction receipts to continuously adjust staffing requirements $R_{'{gi}'}$.
+            Connect Square, Clover, or Toast POS transaction receipts to continuously adjust staffing requirements $<Term explanation="How many people you need in each hour.">R_{'{gi}'}</Term>$.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {(['square', 'clover', 'toast'] as const).map((pos) => (
-            <button
+            <button type="button"
               key={pos}
               onClick={() => setSelectedPOS(pos)}
               className={`px-3 py-1.5 rounded-lg border text-xs font-semibold capitalize ${
@@ -152,7 +153,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
             </p>
             <p className="text-[11px] text-slate-400 mt-1">Supports Square, Clover, Toast standard CSV exports</p>
 
-            <button
+            <button type="button"
               onClick={handleSimulatedUpload}
               disabled={isUploading}
               className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-xs disabled:opacity-50"

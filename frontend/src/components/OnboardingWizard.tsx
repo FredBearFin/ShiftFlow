@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ArchetypePreset,
   ErgonomicGuardrails,
@@ -6,6 +6,15 @@ import {
 } from '../types';
 import { DAYS_OF_WEEK, interpolateBeckerTable7 } from '../services/api';
 import { Button } from './ui/Button';
+import { BardPanel } from './onboarding/BardPanel';
+import { ExplainThis } from './onboarding/ExplainThis';
+import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
+import {
+  FirstRunTour,
+  clearTourDone,
+  markTourDone,
+  readTourDone,
+} from './onboarding/FirstRunTour';
 
 interface OnboardingWizardProps {
   isOpen: boolean;
@@ -34,6 +43,13 @@ const STEP_LABELS = [
   { step: 5, title: 'Cost vs. fairness', subtitle: 'Choose your balance' },
 ];
 
+const SHIFT_PLAIN_NAMES: Record<string, string> = {
+  M: 'Morning',
+  D: 'Midday',
+  E: 'Evening',
+  N: 'Night',
+};
+
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   isOpen,
   archetypes,
@@ -54,8 +70,20 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedDayTab, setSelectedDayTab] = useState<number>(0);
+  const [tourOpen, setTourOpen] = useState<boolean>(() => !readTourDone());
+  const showTourAgainRef = useRef<HTMLButtonElement>(null);
 
   if (!isOpen) return null;
+
+  const handleTourDone = () => {
+    markTourDone();
+    setTourOpen(false);
+  };
+
+  const handleShowTourAgain = () => {
+    clearTourDone();
+    setTourOpen(true);
+  };
 
   const updateDemandCell = (dayIdx: number, hourIdx: number, val: number) => {
     const clamped = Math.max(0, Math.min(40, val));
@@ -96,7 +124,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Wizard Top Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-[10px] font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
@@ -110,13 +138,23 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               Set up your schedule
             </h2>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
-          >
-            Skip setup ✕
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              ref={showTourAgainRef}
+              onClick={handleShowTourAgain}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              Show the tour again
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+            >
+              Skip setup ✕
+            </button>
+          </div>
         </div>
 
         {/* 5-Step Progress Stepper */}
@@ -163,9 +201,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
         {/* Wizard Body Content */}
         <div className="p-6 overflow-y-auto flex-1 space-y-5">
+          <ExplainThis stepId={currentStep} />
           {/* STEP 1: INDUSTRY ARCHETYPE SELECTION */}
           {currentStep === 1 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
@@ -176,10 +216,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   </p>
                 </div>
                 <div className="w-full sm:w-72">
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  <label
+                    htmlFor="onboarding-facility-name"
+                    className="block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1"
+                  >
                     Store or unit name
                   </label>
                   <input
+                    id="onboarding-facility-name"
                     type="text"
                     value={facilityName}
                     onChange={(e) => onChangeFacilityName(e.target.value)}
@@ -195,7 +239,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   return (
                     <div
                       key={arch.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={isSelected}
                       onClick={() => onSelectArchetype(arch)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSelectArchetype(arch);
+                        }
+                      }}
                       className={`p-4 rounded-xl border cursor-pointer transition-all ${
                         isSelected
                           ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
@@ -204,14 +257,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-700 border border-slate-200">
+                          <h4 className="text-sm font-bold text-slate-900">
                             {arch.sector}
-                          </span>
-                          <h4 className="text-sm font-bold text-slate-900 mt-1.5">
-                            {arch.name}
                           </h4>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            {presetLabelFor(arch.id, arch.sector)}
+                          </p>
                         </div>
                         <span
+                          aria-hidden="true"
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                             isSelected
                               ? 'bg-indigo-600 text-white'
@@ -222,7 +276,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                        {arch.description}
+                        {PRESET_LABELS[arch.id]?.description ?? ''}
                       </p>
                       <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-medium">
                         <span>Hours: {arch.operating_hours_label}</span>
@@ -235,11 +289,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 })}
               </div>
             </div>
+            <BardPanel stepId={1} className="w-full lg:w-72 shrink-0" />
+            </div>
           )}
 
           {/* STEP 2: OPERATING SCHEDULE & 24-HOUR DAILY DEMAND MATRIX */}
           {currentStep === 2 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
@@ -276,7 +333,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               </div>
 
               {/* Day Filter Pills for Mobile/Compact Inspection + Full 7x24 Matrix */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {DAYS_OF_WEEK.map((day, dIdx) => (
                   <button
                     key={day}
@@ -310,16 +367,23 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     </strong>
                   </span>
                 </div>
+                <p className="text-xs text-slate-600 mb-3">
+                  Tab moves between hours. Type the number of people needed.
+                </p>
                 <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
                   {demandMatrix[selectedDayTab].map((val, hr) => (
                     <div
                       key={hr}
                       className="p-2 rounded-lg bg-white border border-slate-200 flex flex-col items-center"
                     >
-                      <span className="text-[10px] font-mono-tabular text-slate-500">
-                        {String(hr).padStart(2, '0')}:00
-                      </span>
+                      <label
+                        htmlFor={`demand-hour-${selectedDayTab}-${hr}`}
+                        className="text-[10px] font-mono-tabular text-slate-500"
+                      >
+                        Hour {String(hr).padStart(2, '0')}:00
+                      </label>
                       <input
+                        id={`demand-hour-${selectedDayTab}-${hr}`}
                         type="number"
                         min={0}
                         max={40}
@@ -331,7 +395,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             parseInt(e.target.value || '0', 10)
                           )
                         }
-                        className="w-12 text-center font-mono-tabular font-bold text-xs text-slate-900 border border-slate-200 rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
+                        className="w-full sm:w-12 text-center font-mono-tabular font-bold text-xs text-slate-900 border border-slate-200 rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
                       />
                       <span className="text-[9px] text-slate-400">
                         {hr < 6 ? 'Night' : hr < 14 ? 'Morn' : hr < 22 ? 'Eve' : 'Night'}
@@ -341,11 +405,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
               </div>
             </div>
+            <BardPanel stepId={2} className="w-full lg:w-72 shrink-0" />
+            </div>
           )}
 
           {/* STEP 3: SHIFT DESIGN TEMPLATES */}
           {currentStep === 3 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
                   Shift times
@@ -367,13 +434,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">
+                          {SHIFT_PLAIN_NAMES[tpl.code] ? `${SHIFT_PLAIN_NAMES[tpl.code]} shift` : 'Shift'}
+                        </span>
                         <span
                           className={`shift-pill-${tpl.code} px-2.5 py-0.5 rounded-md text-xs font-bold font-mono-tabular`}
                         >
                           {tpl.code}
-                        </span>
-                        <span className="text-sm font-bold text-slate-900">
-                          {tpl.name}
                         </span>
                       </div>
                       <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
@@ -391,10 +458,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-preferred-start`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Usual start (hour, 0–23)
                         </label>
                         <input
+                          id={`shift-${tpl.code}-preferred-start`}
                           type="number"
                           min={0}
                           max={23}
@@ -411,10 +482,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-preferred-duration`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Usual length (hours)
                         </label>
                         <input
+                          id={`shift-${tpl.code}-preferred-duration`}
                           type="number"
                           min={6}
                           max={12}
@@ -431,10 +506,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-earliest-start`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Earliest allowed start
                         </label>
                         <input
+                          id={`shift-${tpl.code}-earliest-start`}
                           type="number"
                           min={0}
                           max={23}
@@ -451,10 +530,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         />
                       </div>
                       <div>
-                        <label className="block text-[11px] text-slate-500 font-medium mb-1">
+                        <label
+                          htmlFor={`shift-${tpl.code}-max-duration`}
+                          className="block text-[11px] text-slate-500 font-medium mb-1"
+                        >
                           Longest allowed (hours)
                         </label>
                         <input
+                          id={`shift-${tpl.code}-max-duration`}
                           type="number"
                           min={7}
                           max={12}
@@ -475,11 +558,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 ))}
               </div>
             </div>
+            <BardPanel stepId={3} className="w-full lg:w-72 shrink-0" />
+            </div>
           )}
 
           {/* STEP 4: ERGONOMIC GUARDRAIL POLICIES */}
           {currentStep === 4 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
                   Scheduling rules
@@ -496,10 +582,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-min-work-days" className="block text-slate-600 mb-1 font-medium">
                         Min Work Stretch (days)
                       </label>
                       <input
+                        id="rule-min-work-days"
                         type="number"
                         min={2}
                         max={5}
@@ -514,10 +601,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-work-days" className="block text-slate-600 mb-1 font-medium">
                         Max Work Stretch (days)
                       </label>
                       <input
+                        id="rule-max-work-days"
                         type="number"
                         min={3}
                         max={7}
@@ -532,10 +620,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-nights" className="block text-slate-600 mb-1 font-medium">
                         Max nights in a row
                       </label>
                       <input
+                        id="rule-max-nights"
                         type="number"
                         min={1}
                         max={4}
@@ -550,10 +639,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       />
                     </div>
                     <div>
-                      <label className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-evenings" className="block text-slate-600 mb-1 font-medium">
                         Max evenings in a row
                       </label>
                       <input
+                        id="rule-max-evenings"
                         type="number"
                         min={1}
                         max={5}
@@ -626,11 +716,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
               </div>
             </div>
+            <BardPanel stepId={4} className="w-full lg:w-72 shrink-0" />
+            </div>
           )}
 
           {/* STEP 5: PARETO FRONTIER CALIBRATION */}
           {currentStep === 5 && (
-            <div className="space-y-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+            <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
                   Cost vs. fairness
@@ -643,9 +736,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <label
+                      htmlFor="leeway-range"
+                      className="block text-xs font-bold uppercase tracking-wider text-slate-500"
+                    >
                       Extra cost allowed
-                    </span>
+                    </label>
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
                       +{leewayPct}% cost →{' '}
                       <span className="text-emerald-700">
@@ -663,6 +759,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 <input
+                  id="leeway-range"
                   type="range"
                   min={0}
                   max={75}
@@ -707,6 +804,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
               </div>
             </div>
+            <BardPanel stepId={5} className="w-full lg:w-72 shrink-0" />
+            </div>
           )}
         </div>
 
@@ -741,6 +840,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           </div>
         </div>
       </div>
+      {tourOpen && (
+        <FirstRunTour onDone={handleTourDone} returnFocusTo={showTourAgainRef} />
+      )}
     </div>
   );
 };
