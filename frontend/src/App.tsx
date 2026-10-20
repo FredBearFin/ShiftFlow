@@ -59,6 +59,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<ActiveTabId>('roster');
   const [solution, setSolution] = useState<SolveResponse | null>(null);
   const [solveError, setSolveError] = useState<string | null>(null);
+  const [solveAttempt, setSolveAttempt] = useState(0);
   const [separationError, setSeparationError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,31 +70,34 @@ export function App() {
 
   useEffect(() => {
     let isMounted = true;
-    solveScheduleApi({
-      archetype_id: selectedArchetypeId,
-      facility_name: facilityName,
-      demand_matrix: demandMatrix,
-      templates,
-      guardrails,
-      pareto_leeway_pct: leewayPct,
-      rotation_week_offset: rotationWeekOffset,
-      staff_assignments: staffAssignments,
-      employees: employees,
-    }).then((res) => {
-      if (isMounted) {
-        setSolution(res);
-        setSolveError(null);
-      }
-    }).catch((err: unknown) => {
-      if (isMounted) {
-        setSolution(null);
-        setSolveError(err instanceof Error ? err.message : 'The scheduling service is unavailable.');
-      }
-    });
+    const timer = window.setTimeout(() => {
+      solveScheduleApi({
+        archetype_id: selectedArchetypeId,
+        facility_name: facilityName,
+        demand_matrix: demandMatrix,
+        templates,
+        guardrails,
+        pareto_leeway_pct: leewayPct,
+        rotation_week_offset: rotationWeekOffset,
+        staff_assignments: staffAssignments,
+        employees: employees,
+      }).then((res) => {
+        if (isMounted) {
+          setSolution(res);
+          setSolveError(null);
+        }
+      }).catch((err: unknown) => {
+        // Keep the last schedule that was computed; only the error changes.
+        if (isMounted) {
+          setSolveError(err instanceof Error ? err.message : 'The scheduling service is unavailable.');
+        }
+      });
+    }, 300);
     return () => {
       isMounted = false;
+      window.clearTimeout(timer);
     };
-  }, [
+  }, [solveAttempt, 
     selectedArchetypeId,
     facilityName,
     demandMatrix,
@@ -295,8 +299,18 @@ export function App() {
           </div>
         )}
         {solveError && (
-          <div role="alert" className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            The scheduling service is unavailable, so no schedule was computed. Try again later.
+          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            <span>
+              {solveError}
+              {solution ? ' The schedule shown is the last one that was computed.' : ''}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSolveAttempt((n) => n + 1)}
+              className="rounded-md border border-red-300 bg-white px-3 py-1 font-semibold text-red-800 hover:bg-red-100"
+            >
+              Retry
+            </button>
           </div>
         )}
         {solution ? (
