@@ -31,6 +31,7 @@ import { ErgonomicsAuditView } from './components/ErgonomicsAuditView';
 import { CFODashboardView } from './components/CFODashboardView';
 import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { CompletionNote } from './components/onboarding/CompletionNote';
 
 export function App() {
   const [archetypes, setArchetypes] = useState<ArchetypePreset[]>([]);
@@ -250,6 +251,7 @@ export function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {solution ? (
           <>
+            {activeTab === 'roster' && solution !== null && <CompletionNote solution={solution} />}
             {activeTab === 'roster' && (
               <MasterRosterView
                 solution={solution}
