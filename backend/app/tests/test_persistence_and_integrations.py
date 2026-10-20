@@ -234,7 +234,17 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         # Test-only cleanup of the fixture
         self._purge(created_id)
 
-        # 5. Gusto and ADP exports
+        # 5. Gusto and ADP exports. With no active staff the export is refused.
+        empty_resp = self.client.get("/api/payroll/export/gusto?facility_id=FAC-TEST-01")
+        self.assertEqual(empty_resp.status_code, 409)
+        staff_resp = self.client.post(
+            "/api/employees",
+            json={"facility_id": "FAC-TEST-01", "name": "Export Tester", "role": "Clerk", "wage": 17.25,
+                  "available_days": [0, 1, 2, 3]},
+        )
+        self.assertEqual(staff_resp.status_code, 200)
+        export_staff_id = staff_resp.json()["id"]
+
         g_resp = self.client.get("/api/payroll/export/gusto?facility_id=FAC-TEST-01")
         self.assertEqual(g_resp.status_code, 200)
         self.assertIn("Regular Hours", g_resp.text)
@@ -242,6 +252,7 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         a_resp = self.client.get("/api/payroll/export/adp?facility_id=FAC-TEST-01")
         self.assertEqual(a_resp.status_code, 200)
         self.assertIn("Co Code", a_resp.text)
+        self._purge(export_staff_id)
 
         # 6. POS CSV Upload
         dummy_pos_csv = b"Day,Hour,Total\n0,8,$450.00\n0,12,$1200.00\n"

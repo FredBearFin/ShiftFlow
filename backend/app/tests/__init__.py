@@ -23,6 +23,7 @@ _modules = [
     "test_timecard_audit",
     "test_shift_handover",
     "test_auth",
+    "test_input_validation",
 ]
 
 for _mod in _modules:

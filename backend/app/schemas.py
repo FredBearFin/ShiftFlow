@@ -5,7 +5,9 @@ rotating workforce scheduling'. Cross-version compatible with Pydantic v1 & v2.
 """
 
 from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel as _PydanticBaseModel, Field
+from pydantic import BaseModel as _PydanticBaseModel, Field, field_validator, model_validator
+
+MAX_DEMAND_PER_INTERVAL = 500
 
 
 class BaseModel(_PydanticBaseModel):
@@ -44,6 +46,16 @@ class ShiftTemplateSchema(BaseModel):
     preferred_start: int = Field(..., ge=0, le=23, description="Default canonical start hour")
     preferred_duration: int = Field(default=8, ge=4, le=12, description="Default canonical duration in hours")
     enabled: bool = Field(default=True, description="Whether this template is active in the current facility")
+
+    @model_validator(mode="after")
+    def _check_window_cross_fields(self):
+        if self.min_duration > self.max_duration:
+            raise ValueError("min_duration must not exceed max_duration")
+        if not self.min_duration <= self.preferred_duration <= self.max_duration:
+            raise ValueError("preferred_duration must lie between min_duration and max_duration")
+        if not self.earliest_start <= self.preferred_start < self.latest_end:
+            raise ValueError("preferred_start must lie inside the earliest_start to latest_end window")
+        return self
 
 
 class ErgonomicGuardrailsSchema(BaseModel):
@@ -280,6 +292,19 @@ class SolveRequestSchema(BaseModel):
     rotation_week_offset: int = Field(default=0, ge=0, description="Weekly cyclic offset for advancing lines")
     staff_assignments: Optional[List[StaffMemberAssignment]] = None
     employees: Optional[List[EmployeeRecord]] = None
+
+    @field_validator("demand_matrix")
+    @classmethod
+    def _check_demand_matrix(cls, matrix: List[List[int]]) -> List[List[int]]:
+        if len(matrix) != 7 or any(len(row) != 24 for row in matrix):
+            raise ValueError("demand_matrix must be 7 rows of 24 hourly values")
+        for row in matrix:
+            for value in row:
+                if not 0 <= value <= MAX_DEMAND_PER_INTERVAL:
+                    raise ValueError(
+                        f"demand values must be between 0 and {MAX_DEMAND_PER_INTERVAL} people per hour"
+                    )
+        return matrix
 
 
 class SolveResponseSchema(BaseModel):
