@@ -892,7 +892,7 @@ class ISDRWSPSolver:
             hours_per_day=daily_hours_sum,
             cost_per_day=[round(c, 2) for c in daily_cost_sum],
             overtime_lines_count=overtime_lines_count,
-            labor_efficiency_pct=min(100.0, labor_eff),
+            labor_efficiency_pct=labor_eff,
         )
 
         sw = settings.shift_weights

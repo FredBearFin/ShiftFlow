@@ -198,7 +198,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
 
         <div className="enterprise-card p-4 col-span-2 lg:col-span-1">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 block">
-            Labor Efficiency Ratio
+            Required ÷ scheduled hours
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-indigo-700">
@@ -206,7 +206,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             </span>
             <span className="text-xs text-slate-500">Coverage</span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-[11px] text-slate-500 mt-1">Above 100% means scheduled hours fall short of required hours{" "}
             Floor requirements vs hours paid
           </p>
         </div>

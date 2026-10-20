@@ -54,6 +54,23 @@ class SolverContractTests(unittest.TestCase):
             ISDRWSPSolver(req).solve()
         self.assertIn("fewer than 14 work shifts", str(ctx.exception))
 
+    def test_demand_needing_more_hours_than_scheduled_reports_ratio_above_100(self):
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
+        req = SolveRequestSchema(
+            archetype_id=preset.id,
+            facility_name=preset.name,
+            demand_matrix=[[1] * 24 for _ in range(7)],
+            templates=preset.templates,
+            guardrails=preset.guardrails,
+            pareto_leeway_pct=preset.default_leeway_pct,
+        )
+        solution = ISDRWSPSolver(req).solve()
+        self.assertLess(
+            solution.labor_analysis.total_scheduled_hours, 168,
+            "precondition: schedule must fall short of the 168 required hours",
+        )
+        self.assertGreater(solution.labor_analysis.labor_efficiency_pct, 100.0)
+
     def test_concurrent_request_with_same_key_returns_409(self):
         body = json.dumps({"demand_matrix": [[1] * 24 for _ in range(7)], "templates": [
             {"code": "M", "name": "Morning", "earliest_start": 6, "latest_end": 15,
