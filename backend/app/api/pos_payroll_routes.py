@@ -9,7 +9,7 @@ from app.database import get_db, ShiftFlowRepository
 from app.engine.pos_sync import POSDemandForecaster
 from app.engine.payroll_export import PayrollExportEngine
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
-from app.schemas import SolveRequestSchema, ShiftTemplateSchema
+from app.schemas import EmployeeRecord, SolveRequestSchema, ShiftTemplateSchema
 
 router = APIRouter(prefix="/api", tags=["POS & Payroll Integrations"])
 
@@ -50,7 +50,10 @@ async def upload_pos_csv(
         raise HTTPException(status_code=400, detail="POS CSV must be UTF-8 text.")
 
     forecaster = POSDemandForecaster()
-    records = forecaster.parse_pos_csv(csv_text)
+    try:
+        records = forecaster.parse_pos_csv(csv_text)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"{exc} Nothing was saved.")
     if not records:
         raise HTTPException(
             status_code=400,
@@ -91,6 +94,24 @@ def _require_payroll_inputs(repo: ShiftFlowRepository, facility_id: str) -> Dict
             detail="No active staff records for this facility. Add staff before exporting payroll.",
         )
     return fac
+
+
+def _solver_staff(repo: ShiftFlowRepository, facility_id: str) -> List[EmployeeRecord]:
+    """Returns the facility's active staff as solver input, so payroll rows use real staff records."""
+    return [
+        EmployeeRecord(
+            employee_id=str(e["id"]),
+            name=e["name"],
+            role=e["role"],
+            hourly_wage=e["wage"],
+            is_active=True,
+            available_days=e["available_days"],
+            assigned_line_id=e["assigned_line"],
+            accommodation_type=e["accommodation_type"],
+            statutory_notes=e["statutory_notes"],
+        )
+        for e in repo.list_employees(facility_id=facility_id, active_only=True)
+    ]
 
 
 def _get_default_templates() -> List[ShiftTemplateSchema]:
@@ -136,6 +157,7 @@ def export_gusto_payroll(
             demand_matrix=fac["demand_matrix"],
             templates=templates,
             facility_name=fac["name"],
+            employees=_solver_staff(repo, facility_id),
         )
     )
     result = solver.solve()
@@ -163,6 +185,7 @@ def export_adp_payroll(
             demand_matrix=fac["demand_matrix"],
             templates=templates,
             facility_name=fac["name"],
+            employees=_solver_staff(repo, facility_id),
         )
     )
     result = solver.solve()
