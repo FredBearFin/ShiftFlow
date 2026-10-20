@@ -1,10 +1,10 @@
 # CHIEF FINANCIAL OFFICER & CONTROLLER AUDIT MEMORANDUM
-**CONFIDENTIAL EXECUTIVE WORK PRODUCT / GAAP & STATUTORY AUDIT SPECIFICATION**
+**CONFIDENTIAL EXECUTIVE WORK PRODUCT / UNAUDITED FINANCIAL MODEL MEMO. ShiftFlow is software. This memo does not assert that ShiftFlow or any customer complies with any statute.**
 
 **TO:** Chief Executive Officer, Board of Directors, & Investment Committee  
 **FROM:** Financial Controller & Retail Operations Practice Group  
 **DATE:** October 19, 2026  
-**SUBJECT:** Draft EBITDA Expansion, Working Capital Acceleration, & M&A Valuation Arbitrage for ShiftFlow Studio Enterprise (I-SD-RWSP Workforce OS)
+**SUBJECT:** Draft Modeled Net Value & Multi-Store Model for ShiftFlow Studio Enterprise (I-SD-RWSP Workforce OS)
 
 ---
 
@@ -12,19 +12,17 @@
 
 In retail store operations, labor is the single largest controllable expense, typically consuming **18% to 28% of gross revenue**. Yet frontline scheduling is historically managed through soft managerial intuition, fragmented spreadsheets, or static calendar software (e.g., 7shifts, Deputy, When I Work). This legacy paradigm leaks hundreds of basis points in unmanaged overtime, employee turnover, and lost general manager floor presence.
 
-ShiftFlow Studio’s algorithmic engine—grounded in Tristan Becker’s (EJOR 2026) Integrated Shift Design and Rotating Workforce Scheduling Problem (I-SD-RWSP)—transforms store scheduling from an administrative cost center into a **modeled EBITDA expansion engine**.
+ShiftFlow Studio’s algorithmic engine—grounded in Tristan Becker’s (EJOR 2026) Integrated Shift Design and Rotating Workforce Scheduling Problem (I-SD-RWSP)—transforms store scheduling from an administrative cost center into a **tool modeled to reduce labor-cost leakage**.
 
 This memorandum establishes:
-1. **The Draft Single-Store Value Bridge**: Hard vs. soft savings generating **+$12,608 net annual EBITDA** on a **$948 annual SaaS investment** (**13.3× ROI**, **25.5-day capital payback**).
-2. **Working Capital & Cash Conversion Cycle (CCC) Velocity**: Smoothing bi-weekly payroll drawdowns and releasing **$2,843 in contingency cash reserves** per store back into inventory purchasing (+1.8 Days Cash on Hand).
-3. **Multi-Store Franchise & Private Equity Valuation Arbitrage**: Compounding multi-unit retail fleet EBITDA to generate **+$756,480 in enterprise equity value** across a 10-store regional chain at a standard **6.0× EBITDA multiple**.
-4. **GAAP Accounting & Tax Treatment**: Clear balance sheet classification under FASB ASC 710 (Compensation) and ASC 350-40 (SaaS Subscription Capitalization).
-
+1. **The Draft Single-Store Value Bridge**: Hard vs. soft savings generating **+$12,608 net modeled annual value** on a **$948 annual SaaS investment** (**13.3× ROI**, **25.5-day capital payback**).
+2. **Working Capital & Cash Conversion Cycle (CCC)**: Not modeled. The repo holds no reserve or cash-release figure, so none is claimed.
+3. **Multi-Store Franchise & Private Equity Valuation Arbitrage**: Compounding multi-unit retail fleet modeled net value to generate **+$785,280 in modeled enterprise equity value** across a 10-store regional chain at an assumed **6.0×** multiple.
 ---
 
-## 1. DRAFT SINGLE-STORE VALUE BRIDGE (GAAP & SHRM BENCHMARKS)
+## 1. DRAFT SINGLE-STORE VALUE BRIDGE (MODELED INPUTS)
 
-To withstand scrutiny by private equity operating partners, bank lenders, and external auditors, all economic return metrics are categorized into **Hard Cash Savings**, **Direct Cost Avoidance**, and **Manager Floor Recapture**.
+Each line is split into Hard Cash Savings, Direct Cost Avoidance and Manager Floor Recapture, so each input can be checked.
 
 ### Single-Store Operating Baseline (Downtown Foodmart Flagship)
 - **Annual Gross Top-Line Revenue**: $670,000.00
@@ -38,18 +36,18 @@ To withstand scrutiny by private equity operating partners, bank lenders, and ex
 ========================================================================================
 DRAFT ANNUAL VALUE BRIDGE (SINGLE STORE)
 ========================================================================================
-1. Hard Overtime Leakage Eliminated (FLSA 1.5x Premium Avoided)    :  +$2,005.12 / year
-2. Direct Separation & Churn Avoidance (SHRM Cost Benchmark)        :  +$5,636.09 / year
+1. Hard Overtime Leakage Eliminated (1.5x Premium Avoided)    :  +$2,005 / year
+2. Direct Separation & Churn Avoidance (assumed benchmark; not verified in this repo)        :  +$5,636.09 / year
 3. Store GM Administrative Time Reallocated to Floor Presence       :  +$5,915.00 / year
 ----------------------------------------------------------------------------------------
 GROSS ANNUAL VALUE GENERATED                                        : +$13,556 / year
 Less: ShiftFlow Studio Starter SaaS Subscription                   :   -$948.00 / year
 ========================================================================================
-NET ANNUAL DRAFT EBITDA ADDITION                                    : +$12,608 / year
+NET ANNUAL DRAFT MODELED NET VALUE                                    : +$12,608 / year
 ========================================================================================
 CAPITAL PAYBACK PERIOD                                              : 25.5 Calendar Days
 ANNUAL RETURN ON SOFTWARE INVESTMENT (ROI)                          : 13.3x (1,330%; $12,608 / $948 = 13.30)
-OPERATING EBITDA MARGIN EXPANSION                                   : +188.2 Basis Points
+MODELED NET VALUE / STORE REVENUE                                   : +188.2 Basis Points
 ========================================================================================
 ```
 
@@ -57,24 +55,24 @@ OPERATING EBITDA MARGIN EXPANSION                                   : +188.2 Bas
 
 ## 2. LINE-ITEM AUDIT METHODOLOGY & EMPIRICAL JUSTIFICATIONS
 
-### 2.1 Hard Overtime Leakage Elimination (FLSA 29 U.S.C. § 207)
-- **The Empirical Baseline**: High-turnover retail stores with erratic scheduling average **3.5 hours of unmanaged overtime per week** across a 6-person crew. This arises from unexpected shift extensions, manual coverage patching, and erratic call-ins.
-- **The ShiftFlow Elimination**: By deploying standardized cyclic rotation lines (`Line 1` to `Line N`), every shift is balanced precisely to 40 regular hours across single standalone workweeks (Mon 00:00 to Sun 23:59). Overtime exposure is reduced by **2.5 hours/week** (130 hours annually).
+### 2.1 Overtime Premium Elimination (1.5x premium; multiplier source: 29 U.S.C. § 207)
+- **The Empirical Baseline**: Baseline 5.5 hours of unintended overtime per week (assumed). This arises from unexpected shift extensions, manual coverage patching, and erratic call-ins.
+- **The ShiftFlow Elimination**: By deploying standardized cyclic rotation lines (`Line 1` to `Line N`), every shift is balanced precisely to 40 regular hours across single standalone workweeks (Mon 00:00 to Sun 23:59). ShiftFlow cuts it by an assumed **85%**. $2,005 a year = 5.5 x 0.85 x 52 x $8.25, truncated.
 - **Audit Valuation Formula**:
   $$\text{Hard OT Savings} = \$2,005 / \text{year}$$ (source: `gtm/roi_calculator.md` line 35)
 - **Controller Classification**: **Hard Cash Reduction**. Reduces direct cash outflow on payroll disbursements dollar-for-dollar.
 
-### 2.2 Direct Cashier Separation & Churn Avoidance (SHRM Standard)
-- **The Empirical Baseline**: According to the Society for Human Resource Management (SHRM) and the National Retail Federation (NRF), the average replacement cost for an hourly retail associate is **$4,129.00** (recruiting job posts, vetting, manager interview hours, background checks, initial 2-week shadowing, and cashier register transaction speed deficit).
-- **Baseline Retail Turnover**: Shift-based retail stores experience an average annual clerk turnover rate of **65%** (3.9 quits per year for a 6-associate crew).
-- **Circadian Burnout Elimination**: Close-open shifts ("clopenings") and backward circadian rotations ($E \to M$ or $N \to D$) are the primary driver of employee burnout, sickness, and sudden resignations. ShiftFlow mathematically guarantees **$\ge 16$ hours of rest** and strict forward rotation ($M \preceq D \preceq E \preceq N$), reducing voluntary separations by an **assumed 35%** (1.365 fewer quits annually, per gtm/roi_calculator.md).
+### 2.2 Direct Cashier Separation & Churn Avoidance (assumed benchmark)
+- **The Empirical Baseline**: **Assumed benchmark attributed to NRF/SHRM; not verified in this repo.** The replacement cost for an hourly retail associate is **$4,129.00** (recruiting job posts, vetting, manager interview hours, background checks, initial 2-week shadowing, and cashier register transaction speed deficit).
+- **Baseline Retail Turnover**: Shift-based retail stores experience an assumed annual clerk turnover of **65%** (3.9 quits per year for a 6-associate crew).
+- **Circadian Burnout Elimination**: ShiftFlow's solver schedules at least 16 hours of rest between shifts where it can, and the roster audit flags any shorter gap. The 35% drop in quits is an assumption.
 - **Audit Valuation Formula**:
   $$\text{Separation Cost Savings} = 1.365 \text{ avoided quits} \times \$4,129.00 = \$5,636.09 / \text{year}$$ (1.365 × $4,129 = $5,636.09, as in gtm/roi_calculator.md)
 - **Controller Classification**: **Direct Cost Avoidance**. Reduces onboarding cash outlays and preserves store transactional productivity.
 
 ### 2.3 General Manager Administrative Time Reallocated to Floor Operations
-- **The Empirical Baseline**: Store General Managers spend an average of **3.75 hours per week** building rosters from scratch, resolving text message disputes, adjusting shift swaps, and managing call-ins.
-- **ShiftFlow 1-Click Rollover**: Because rotation sequences are mathematically determined along the cyclic multigraph chain, Monday rollovers take **0.5 hours per week** (1-click rollover + availability audit), recovering **3.25 hours per week** (169 hours annually).
+- **The Empirical Baseline**: Store General Managers spend an average of **3.5 hours per week** building rosters from scratch, resolving text message disputes, adjusting shift swaps, and managing call-ins.
+- **ShiftFlow 1-Click Rollover**: Because rotation sequences are mathematically determined along the cyclic multigraph chain, Monday rollovers take **0.25 hours (15 minutes) per week** (1-click rollover + availability audit), recovering **3.25 hours per week** (169 hours annually).
 - **Valuation Basis**: The 169 hours are valued at **$35.00/hr**, an opportunity rate for supervised floor time. It is an assumption, not a wage: the General Manager's wage is $22.00/hr (line 34). No realization factor is applied, and shrink and truck-unloading benefits are not valued.
 - **Audit Valuation Formula**:
   $$\text{Manager Reallocation} = 169 \text{ hrs} \times \$35.00/\text{hr} = \$5,915.00 / \text{year}$$
@@ -84,7 +82,6 @@ OPERATING EBITDA MARGIN EXPANSION                                   : +188.2 Bas
 
 ## 3. WORKING CAPITAL VELOCITY & CASH CONVERSION CYCLE (CCC)
 
-Working capital management is critical for independent retail operators operating on thin cash buffers.
 
 ```
 +---------------------------------------------------------------------------------------+
@@ -93,19 +90,12 @@ Working capital management is critical for independent retail operators operatin
 | Metric                             | Legacy Ad-Hoc Rosters | ShiftFlow Studio OS      |
 +------------------------------------+-----------------------+--------------------------+
 | Bi-Weekly Payroll Volatility       | +/- 14.8% Spikes      | +/- 1.2% Controlled      |
-| Emergency Payroll Cash Reserve     | $3,200.00 / store     | $356.67 / store          |
-| Working Capital Released to Cash   | $0.00                 | $2,843.33 / store        |
-| Days Cash on Hand (DCOH) Gain      | Baseline              | +1.8 Days                |
 | Merchant Credit Line Drawdown Cost | $480.00 / year        | $0.00 (Zero drawdowns)   |
-| FLSA § 778.104 Wage Audit Risk     | Uninsulated ($$$)     | Not claimed; counsel to advise |
+| Wage-law exposure     | Not modeled     | Not assessed; counsel to advise. |
 +------------------------------------+-----------------------+--------------------------+
 ```
 
-### 3.1 Elimination of the "Payroll Whiplash"
-Traditional manual scheduling creates erratic payroll spikes when overtime clusters on specific bi-weekly cycles. Store owners are forced to maintain **$3,200 in idle cash reserves** or tap merchant lines of credit (18%–24% APR) to ensure Friday payroll clearance. ShiftFlow smooths weekly payroll disbursements to a predictable variance of $\pm 1.2\%$, releasing **$2,843.33 in liquid working capital** directly back into inventory purchasing (e.g., high-margin beverage, tobacco, or specialty retail inventory).
 
-### 3.2 Statutory Liquidated Damages Defense
-Under FLSA 29 U.S.C. § 216(b), employers found liable for unrecorded or averaged overtime face mandatory **200% liquidated damages** plus plaintiff attorney fees. ShiftFlow’s single workweek standalone accounting provides contemporaneous, mathematically verified proof of zero-overtime compliance, shielding the business from crippling statutory wage liabilities.
 
 ---
 
@@ -115,35 +105,32 @@ For multi-unit franchisees and private equity rollups, software ROI is judged by
 
 ### Multi-Store Scale Pricing & Compounding Economics
 - **Fleet SaaS Subscription**: **$39.00 / store / month** ($468.00 / store / year) for 4+ locations.
-- **Valuation Multiple Benchmark**: Regional shift-heavy retail chains and franchise portfolios trade at **5.0× to 7.5× EBITDA**.
+- **Valuation Multiple Benchmark**: 6.0× is an assumed exit multiple, not sourced.
 
 ```
 ========================================================================================================
-MULTI-STORE FLEET FINANCIAL PROJECTIONS (6.0x EBITDA EXIT MULTIPLE)
+MULTI-STORE FLEET FINANCIAL PROJECTIONS (ASSUMED 6.0x VALUE MULTIPLE, UNSOURCED)
 ========================================================================================================
-Store Count | Combined Revenue | Annual Payroll Savings | Annual Net EBITDA | 6.0x Equity Value Created
+Store Count | Combined Revenue | Annual Payroll Savings | Modeled net value | 6.0x Equity Value Created
 ========================================================================================================
- 1 Store    |      $670,000    |         $2,005         |        $12,608    |         $75,648
- 3 Stores   |    $2,010,000    |         $6,015         |        $37,824    |        $226,944
- 5 Stores   |    $3,350,000    |        $10,026         |        $63,040    |        $378,240
-10 Stores   |    $6,700,000    |        $20,051         |       $126,080    |        $756,480
-25 Stores   |   $16,750,000    |        $50,128         |       $315,200    |      $1,891,200
+ 1 Store    |      $670,000    |         $2,005         |        $12,608    |         $75,648 (Starter $948)
+ 3 Stores   |    $2,010,000    |         $6,015         |        $38,280    |        $229,680 (Growth $2,388)
+10 Stores   |    $6,700,000    |        $20,050         |       $130,880    |        $785,280 (Enterprise $4,680)
+25 Stores   |   $16,750,000    |        $50,125         |       $327,200    |      $1,963,200 (Enterprise $11,700)
 ========================================================================================================
 ```
 
 ### Key Takeaway for Investment Committees:
-Deploying ShiftFlow Studio across a **10-store retail chain** costs **$9,480 annually in software**, while generating **$126,080 in recurring annual EBITDA**. At a conservative private equity exit multiple of **6.0×**, this operational implementation directly creates **$756,480 in incremental enterprise equity value**—an equity multiple of **80× on the software investment**.
+A 10-store chain costs $4,680 a year at Enterprise pricing and has a modeled net value of $130,880 a year. At an assumed 6.0x multiple that is $785,280 of modeled equity value.
 
 ---
 
-## 5. GAAP REVENUE RECOGNITION & TAX CLASSIFICATION
+## 5. REVENUE RECOGNITION & TAX CLASSIFICATION (NOT ASSESSED)
 
-1. **Subscription Expense Classification**: ShiftFlow Studio SaaS fees are classified under **Operating Expenses (OpEx) — General & Administrative (G&A) / Software Subscriptions**, deductible in full during the tax year incurred under Internal Revenue Code (IRC) § 162.
-2. **Compensation Accounting (FASB ASC 710)**: Realized payroll savings directly reduce Cost of Goods Sold (COGS) or Store Labor Expense, flowing through to Operating Income prior to Interest, Taxes, Depreciation, and Amortization.
-3. **Statutory Record Retention (29 C.F.R. § 516.5)**: ShiftFlow’s append-only immutable `roster_snapshots` database tables satisfy federal 3-year recordkeeping requirements, creating an audit-ready digital archive for DOL and IRS audits.
+Accounting and tax treatment is not assessed here; the company's accountant must confirm.
 
 ---
 
 ### ACTIONABLE RECOMMENDATION
 
-The Chief Financial Officer recommends immediate authorization for full operational rollout of ShiftFlow Studio Enterprise across all corporate and franchise store locations. The platform amortizes fully within **25.5 days** of deployment and delivers **+$12,608 per store in recurring annual EBITDA**.
+The Chief Financial Officer recommends immediate authorization for full operational rollout of ShiftFlow Studio Enterprise across all corporate and franchise store locations. The platform amortizes fully within **25.5 days** of deployment and delivers **+$12,608 per store in recurring modeled net value a year**.

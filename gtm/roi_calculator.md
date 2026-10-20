@@ -9,13 +9,13 @@ For an independent retail store, liquor store, or convenience grocery running 6 
 ## 1. Cost Pillar 1: Frontline Employee Turnover Avoidance
 
 ### The Problem
-* The average cost to recruit, hire, background-check, and train a single replacement retail associate or cashier is **$4,129** (National Retail Federation & Society for Human Resource Management benchmarks).
+* The average cost to recruit, hire, background-check, and train a single replacement retail associate or cashier is **$4,129** (assumed benchmark attributed to NRF/SHRM; not verified in this repo).
 * Independent retail experiences an average annual employee turnover rate of **65%**.
 * In a store with 6 employees, that translates to **3.9 staff departures per year**, costing the owner **$16,103 annually** in direct replacement costs and lost register productivity.
 * Exit surveys consistently show that **unpredictable schedules and "clopenings" (closing late, opening early)** are the #1 cited reason for voluntary resignations.
 
 ### ShiftFlow Impact
-* By enforcing guaranteed 16+ hours rest and cyclic forward rotation ($M \to D \to E \to \text{Rest}$), ShiftFlow reduces voluntary fatigue-related turnover by an **assumed 35%**.
+* By scheduling for at least 16 hours' rest where possible and cyclic forward rotation ($M \to D \to E \to \text{Rest}$), ShiftFlow reduces voluntary fatigue-related turnover by an **assumed 35%**.
 * **Departures Prevented**: 1.365 employees / year.
 * **Annual Direct Cash Savings**: $4,129 × 1.365 = **$5,636.09 / year**.
 
