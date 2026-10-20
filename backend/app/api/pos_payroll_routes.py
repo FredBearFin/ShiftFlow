@@ -96,22 +96,31 @@ def _require_payroll_inputs(repo: ShiftFlowRepository, facility_id: str) -> Dict
     return fac
 
 
-def _solver_staff(repo: ShiftFlowRepository, facility_id: str) -> List[EmployeeRecord]:
-    """Returns the facility's active staff as solver input, so payroll rows use real staff records."""
-    return [
-        EmployeeRecord(
-            employee_id=str(e["id"]),
-            name=e["name"],
-            role=e["role"],
-            hourly_wage=e["wage"],
-            is_active=True,
-            available_days=e["available_days"],
-            assigned_line_id=e["assigned_line"],
-            accommodation_type=e["accommodation_type"],
-            statutory_notes=e["statutory_notes"],
+def _solver_staff(repo: ShiftFlowRepository, facility_id: str) -> tuple[List[EmployeeRecord], List[str]]:
+    """Returns the facility's active staff as solver input, plus the employee IDs of staff left out for a null wage.
+
+    A staff member with no stored wage is not paid a placeholder; they are skipped and their IDs returned instead.
+    """
+    staff: List[EmployeeRecord] = []
+    excluded: List[str] = []
+    for e in repo.list_employees(facility_id=facility_id, active_only=True):
+        if e["wage"] is None:
+            excluded.append(str(e["id"]))
+            continue
+        staff.append(
+            EmployeeRecord(
+                employee_id=str(e["id"]),
+                name=e["name"],
+                role=e["role"],
+                hourly_wage=e["wage"],
+                is_active=True,
+                available_days=e["available_days"],
+                assigned_line_id=e["assigned_line"],
+                accommodation_type=e["accommodation_type"],
+                statutory_notes=e["statutory_notes"],
+            )
         )
-        for e in repo.list_employees(facility_id=facility_id, active_only=True)
-    ]
+    return staff, excluded
 
 
 def _get_default_templates() -> List[ShiftTemplateSchema]:
@@ -151,13 +160,14 @@ def export_gusto_payroll(
     repo = ShiftFlowRepository(db)
     fac = _require_payroll_inputs(repo, facility_id)
 
+    staff, excluded = _solver_staff(repo, facility_id)
     templates = _get_default_templates()
     solver = ISDRWSPSolver(
         SolveRequestSchema(
             demand_matrix=fac["demand_matrix"],
             templates=templates,
             facility_name=fac["name"],
-            employees=_solver_staff(repo, facility_id),
+            employees=staff,
         )
     )
     result = solver.solve()
@@ -167,7 +177,10 @@ def export_gusto_payroll(
     return Response(
         content=csv_data,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=shiftflow_gusto_payroll.csv"},
+        headers={
+            "Content-Disposition": "attachment; filename=shiftflow_gusto_payroll.csv",
+            "X-Excluded-Staff": ",".join(excluded),
+        },
     )
 
 
@@ -179,13 +192,14 @@ def export_adp_payroll(
     repo = ShiftFlowRepository(db)
     fac = _require_payroll_inputs(repo, facility_id)
 
+    staff, excluded = _solver_staff(repo, facility_id)
     templates = _get_default_templates()
     solver = ISDRWSPSolver(
         SolveRequestSchema(
             demand_matrix=fac["demand_matrix"],
             templates=templates,
             facility_name=fac["name"],
-            employees=_solver_staff(repo, facility_id),
+            employees=staff,
         )
     )
     result = solver.solve()
@@ -195,5 +209,8 @@ def export_adp_payroll(
     return Response(
         content=csv_data,
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=shiftflow_adp_payroll.csv"},
+        headers={
+            "Content-Disposition": "attachment; filename=shiftflow_adp_payroll.csv",
+            "X-Excluded-Staff": ",".join(excluded),
+        },
     )
