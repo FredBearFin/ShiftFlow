@@ -246,7 +246,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
 
                 {emp.statutory_notes && (
-                  <div className="mt-2 text-[10px] text-slate-500 italic bg-slate-50 p-1.5 rounded border border-slate-200">
+                  <div className="mt-2 text-[10px] text-slate-500 italic bg-slate-50 p-1.5 rounded border border-slate-200 no-print">
                     Doc: {emp.statutory_notes}
                   </div>
                 )}
