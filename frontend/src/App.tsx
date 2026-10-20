@@ -363,9 +363,7 @@ export function App() {
         {solveStatus === 'error' && (
           <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             <span>
-              The schedule could not be calculated.
-              {solveError ? ` ${solveError}` : ''}
-              {solution ? ' The schedule shown is the last one that was computed.' : ''}
+              {solveError ? 'The scheduling service is unavailable, so no schedule was computed. Try again later.' : null}
             </span>
             <button
               type="button"

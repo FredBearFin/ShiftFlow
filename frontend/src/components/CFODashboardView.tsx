@@ -5,7 +5,7 @@ interface CFODashboardViewProps {
   solution: SolveResponse;
 }
 
-type NumericLineKey = 'overtime_hours' | 'estimated_weekly_payroll';
+type NumericLineKey = 'overtime_hours';
 
 // Sums one numeric field across roster lines; returns null if any line lacks it
 const sumLineField = (lines: RosterLine[], key: NumericLineKey): number | null => {
@@ -64,13 +64,12 @@ export const CFODashboardView: React.FC<CFODashboardViewProps> = ({ solution }) 
 
   if (rosterLines.length > 0) {
     const payroll = sumPayrollPriced(rosterLines);
-    figures.push({
-      label: 'Estimated weekly payroll',
-      value: payroll.priced > 0
-        ? `$${payroll.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : '—',
-      note: payroll.unpriced > 0 ? `${payroll.unpriced} lines unpriced` : undefined
-    });
+    if (payroll.unpriced === 0) {
+      figures.push({
+        label: 'Estimated weekly payroll',
+        value: `$${payroll.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      });
+    }
   }
 
   const avgHourlyWage = solution.labor_analysis?.avg_hourly_wage;

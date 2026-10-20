@@ -219,6 +219,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                   <div
                     key={pt.point_index}
                     onClick={() => onSelectLeewayPct(pt.leeway_pct)}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSel}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectLeewayPct(pt.leeway_pct); } }}
                     className={`p-2.5 rounded-lg border cursor-pointer transition-colors flex items-center justify-between text-xs ${
                       isSel
                         ? 'bg-white border-[#7F8A92] border-l-4 border-l-[#2B3A42] font-semibold'

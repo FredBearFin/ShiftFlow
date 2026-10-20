@@ -407,10 +407,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                             const draft = wageDrafts[emp.employee_id];
                             if (draft === undefined) return;
                             const wage = parseWage(draft);
-                            // Invalid draft stays visible (aria-invalid) and nothing is saved.
-                            if (wage !== null && wage !== emp.hourly_wage) {
-                              onUpdateEmployee({ ...emp, hourly_wage: wage });
-                            }
+                            if (wage === null) return;
+                            if (wage !== emp.hourly_wage) onUpdateEmployee({ ...emp, hourly_wage: wage });
+                            setWageDrafts((d) => { const next = { ...d }; delete next[emp.employee_id]; return next; });
                           }}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') e.currentTarget.blur();
