@@ -122,7 +122,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="bg-white border border-slate-200 rounded-2xl max-w-[min(96vw,1600px)] w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Wizard Top Header */}
         <div className="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -200,7 +200,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         </div>
 
         {/* Wizard Body Content */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-5">
+        <div className="p-6 overflow-y-auto flex-1 min-h-0 space-y-5">
           <ExplainThis stepId={currentStep} />
           {/* STEP 1: INDUSTRY ARCHETYPE SELECTION */}
           {currentStep === 1 && (
