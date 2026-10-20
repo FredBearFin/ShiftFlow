@@ -78,7 +78,7 @@ class EmployeeRecord(BaseModel):
     employee_id: str = Field(..., description="Unique employee identifier")
     name: str = Field(..., description="Employee full name")
     role: str = Field(default="Frontline Associate", description="Operational role / title")
-    hourly_wage: float = Field(default=16.50, ge=7.25, le=150.0, description="Base hourly wage rate ($/hr)")
+    hourly_wage: float = Field(..., ge=7.25, le=150.0, description="Base hourly wage rate ($/hr)")
     max_weekly_hours: int = Field(default=40, ge=10, le=60, description="Target max weekly hours before overtime")
     is_active: bool = Field(default=True, description="Active status; False if fired / deactivated")
     available_days: List[int] = Field(
@@ -107,7 +107,7 @@ class StaffMemberAssignment(BaseModel):
     cohort_label: str = Field(..., description="Standardized Rotation Line label (e.g., Line 1)")
     assigned_staff_name: Optional[str] = Field(default=None, description="Optional mapped employee name")
     qualification_tier: str = Field(default="Frontline Associate", description="Employee operational role")
-    hourly_wage: float = Field(default=16.50, description="Hourly wage rate for labor economics ($)")
+    hourly_wage: float = Field(..., description="Hourly wage rate for labor economics ($)")
     employee_id: Optional[str] = Field(default=None, description="Unique foreign key linking to EmployeeRecord")
 
 

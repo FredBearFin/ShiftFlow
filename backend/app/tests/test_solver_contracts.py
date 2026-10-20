@@ -103,6 +103,13 @@ class SolverContractTests(unittest.TestCase):
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.headers.get("retry-after"), "2")
 
+    def test_employee_record_requires_hourly_wage(self):
+        from pydantic import ValidationError
+        from app.schemas import EmployeeRecord
+
+        with self.assertRaises(ValidationError):
+            EmployeeRecord(employee_id="E-NOWAGE", name="No Wage")
+
 
 if __name__ == "__main__":
     unittest.main()
