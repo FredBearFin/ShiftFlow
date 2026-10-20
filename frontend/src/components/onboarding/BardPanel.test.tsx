@@ -4,6 +4,8 @@ import { BardPanel, BARD_HIDDEN_KEY } from './BardPanel';
 import { getLesson } from './lessons';
 
 describe('BardPanel', () => {
+  const originalMatchMedia = window.matchMedia;
+
   beforeEach(() => {
     window.localStorage.clear();
   });
@@ -14,6 +16,10 @@ describe('BardPanel', () => {
     window.localStorage.clear();
   });
 
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+  });
+
   it('renders the lesson title for step 1', () => {
     const lesson = getLesson(1);
     expect(lesson).toBeDefined();
@@ -22,6 +28,12 @@ describe('BardPanel', () => {
   });
 
   it('hides and shows the body and updates aria-expanded on toggle', () => {
+    window.matchMedia = vi.fn().mockReturnValue({ matches: true }) as unknown as typeof window.matchMedia;
+    const narrow = render(<BardPanel stepId={1} />);
+    expect(screen.getByRole('button', { name: 'Show the guide' }).getAttribute('aria-expanded')).toBe('false');
+    narrow.unmount();
+
+    window.matchMedia = vi.fn().mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
     render(<BardPanel stepId={1} />);
     const toggle = screen.getByRole('button', { name: 'Hide the guide' });
     expect(toggle.getAttribute('type')).toBe('button');

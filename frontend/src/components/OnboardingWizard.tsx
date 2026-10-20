@@ -124,7 +124,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-2xl max-w-5xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Wizard Top Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-[10px] font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
@@ -138,7 +138,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               Set up your schedule
             </h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               ref={showTourAgainRef}
@@ -333,7 +333,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               </div>
 
               {/* Day Filter Pills for Mobile/Compact Inspection + Full 7x24 Matrix */}
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 {DAYS_OF_WEEK.map((day, dIdx) => (
                   <button
                     key={day}
@@ -395,7 +395,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             parseInt(e.target.value || '0', 10)
                           )
                         }
-                        className="w-12 text-center font-mono-tabular font-bold text-xs text-slate-900 border border-slate-200 rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
+                        className="w-full sm:w-12 text-center font-mono-tabular font-bold text-xs text-slate-900 border border-slate-200 rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
                       />
                       <span className="text-[9px] text-slate-400">
                         {hr < 6 ? 'Night' : hr < 14 ? 'Morn' : hr < 22 ? 'Eve' : 'Night'}

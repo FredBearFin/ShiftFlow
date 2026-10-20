@@ -3,13 +3,25 @@ import { getLesson } from './lessons';
 
 export const BARD_HIDDEN_KEY = 'shiftflow.bard.hidden';
 
-function readHidden(): boolean {
+// Phones (below 640px) start collapsed; wider screens start expanded.
+// A missing or throwing matchMedia counts as expanded.
+function isNarrowViewport(): boolean {
   try {
-    return window.localStorage.getItem(BARD_HIDDEN_KEY) === '1';
+    return window.matchMedia('(max-width: 639px)').matches;
   } catch {
-    // Storage is unavailable (private window, blocked site data): default to shown.
     return false;
   }
+}
+
+function readHidden(): boolean {
+  try {
+    const saved = window.localStorage.getItem(BARD_HIDDEN_KEY);
+    if (saved === '1') return true;
+    if (saved === '0') return false;
+  } catch {
+    // Storage is unavailable (private window, blocked site data): use the width default.
+  }
+  return isNarrowViewport();
 }
 
 function writeHidden(hidden: boolean): void {
