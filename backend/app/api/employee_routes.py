@@ -75,7 +75,17 @@ def create_employee(
 ):
     repo = ShiftFlowRepository(db)
     if repo.get_facility(payload.facility_id) is None:
-        raise HTTPException(status_code=404, detail=f"Facility {payload.facility_id} not found.")
+        # Nothing in the app exposes an explicit "create a facility" step - a facility row
+        # today only exists as a side effect of uploading POS data. Adding staff shouldn't
+        # depend on having used an unrelated, optional feature first.
+        repo.upsert_facility(
+            facility_id=payload.facility_id,
+            name=payload.facility_id,
+            location="",
+            operating_hours="",
+            demand_matrix=[[0] * 24 for _ in range(7)],
+            shift_templates=[],
+        )
     emp = repo.create_employee(
         facility_id=payload.facility_id,
         name=payload.name,

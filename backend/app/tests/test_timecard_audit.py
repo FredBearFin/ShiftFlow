@@ -1,20 +1,13 @@
-"""Unit tests for Wage and Hour regulatory compliance engine and REST API routes."""
+"""Unit tests for the Wage and Hour regulatory compliance engine."""
 
 import datetime
 import unittest
-from fastapi.testclient import TestClient
-
-from app.tests import TEST_HEADERS
 
 from app.engine.timecard_audit import TimecardAuditor
-from app.main import app
 
 
 class TestTimecardAuditor(unittest.TestCase):
     """Verifies FLSA Part 785, Part 778, and Part 516 statutory compliance."""
-
-    def setUp(self):
-        self.client = TestClient(app, headers=TEST_HEADERS)
 
     def test_01_seven_minute_rounding_rules_29_cfr_785_48(self):
         """Verifies 29 C.F.R. § 785.48(b) 15-minute / 7-minute boundary rounding."""
@@ -104,37 +97,6 @@ class TestTimecardAuditor(unittest.TestCase):
         self.assertTrue(audit["cfr_516_5_compliant"])
         self.assertEqual(audit["deficiency_count"], 0)
         self.assertEqual(audit["audit_readiness_verdict"], "PASS")
-
-    def test_05_fastapi_compliance_endpoints(self):
-        """Stored-data audits return 501 because no stored timecards exist; the POST audits its request body."""
-        # 1. Timecard Rounding Audit: no stored punches
-        res1 = self.client.get("/api/compliance/timecard-rounding-audit")
-        self.assertEqual(res1.status_code, 501)
-        self.assertEqual(res1.json()["detail"], "not implemented: no source data")
-
-        # 2. Standalone Workweek Overtime Audit: no stored hours
-        res2 = self.client.get("/api/compliance/workweek-overtime-audit?hourly_wage=18.00")
-        self.assertEqual(res2.status_code, 501)
-        self.assertEqual(res2.json()["detail"], "not implemented: no source data")
-
-        # 3. Recordkeeping Certificate: no stored payroll records
-        res3 = self.client.get("/api/compliance/recordkeeping-certificate")
-        self.assertEqual(res3.status_code, 501)
-        self.assertEqual(res3.json()["detail"], "not implemented: no source data")
-
-        # 4. Custom Rounding Neutrality Test POST
-        payload = {
-            "interval_minutes": 15,
-            "punch_pairs": [
-                {"clock_in": "2026-10-19T05:58:00", "clock_out": "2026-10-19T14:02:00"},
-                {"clock_in": "2026-10-20T10:55:00", "clock_out": "2026-10-20T19:04:00"},
-            ],
-        }
-        res4 = self.client.post("/api/compliance/test-rounding-neutrality", json=payload)
-        self.assertEqual(res4.status_code, 200)
-        data4 = res4.json()
-        self.assertEqual(data4["total_shifts_audited"], 2)
-        self.assertNotIn("investigator_verdict", data4)
 
 
 if __name__ == "__main__":

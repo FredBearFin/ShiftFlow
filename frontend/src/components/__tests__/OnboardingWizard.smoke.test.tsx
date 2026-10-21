@@ -107,6 +107,8 @@ describe('OnboardingWizard smoke test', () => {
         onChangeLeewayPct={noop}
         onCompleteWizard={noop}
         onClose={noop}
+        employees={[]}
+        onAddEmployee={noop}
       />
     );
     expect(screen.getByText('Set up your schedule')).toBeTruthy();

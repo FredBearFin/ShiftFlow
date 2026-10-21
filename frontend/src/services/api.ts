@@ -262,7 +262,6 @@ export async function fetchArchetypes(): Promise<ArchetypePreset[]> {
 }
 
 export async function solveScheduleApi(request: SolveRequest): Promise<SolveResponse> {
-  const unavailable = 'The scheduling service is unavailable, so no schedule was computed.';
   let res: Response;
   try {
     res = await fetch('/api/v1/schedules/solve', {
@@ -270,10 +269,10 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
       headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
       body: JSON.stringify(request),
     });
-  } catch {
-    throw new Error(unavailable);
+  } catch (err) {
+    throw new Error(`The scheduling service could not be reached: ${err instanceof Error ? err.message : String(err)}`);
   }
-  if (res.status === 422) {
+  if (!res.ok) {
     let detail: string | undefined;
     try {
       const body = await res.json();
@@ -281,9 +280,8 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
     } catch {
       // Body is not JSON; fall back to the plain message below.
     }
-    throw new Error(detail ?? 'The schedule cannot be built from these inputs.');
+    throw new Error(detail ?? `The scheduling service returned an error (HTTP ${res.status}).`);
   }
-  if (!res.ok) throw new Error(unavailable);
   return await res.json();
 }
 
@@ -418,4 +416,46 @@ export async function deactivateEmployee(
     throw new Error(detail);
   }
   return await res.json();
+}
+
+/** Whether account login is configured on the backend, and who (if anyone) is signed in. */
+export async function authStatusApi(): Promise<{ login_required: boolean; logged_in: boolean; email: string | null }> {
+  try {
+    const res = await fetch('/api/auth/status');
+    if (!res.ok) return { login_required: false, logged_in: true, email: null };
+    return await res.json();
+  } catch {
+    return { login_required: false, logged_in: true, email: null };
+  }
+}
+
+async function authFormRequest(path: string, email: string, password: string): Promise<string | null> {
+  try {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (res.ok) return null;
+    const body = await res.json().catch(() => null);
+    if (typeof body?.detail === 'string') return body.detail;
+    if (Array.isArray(body?.detail) && body.detail[0]?.msg) return body.detail[0].msg;
+    return 'Something went wrong.';
+  } catch {
+    return 'Could not reach the login service.';
+  }
+}
+
+/** Returns an error message on failure, or null on success (a session cookie is now set). */
+export async function loginApi(email: string, password: string): Promise<string | null> {
+  return authFormRequest('/api/auth/login', email, password);
+}
+
+/** Creates a new account and signs in. Returns an error message on failure, or null on success. */
+export async function signupApi(email: string, password: string): Promise<string | null> {
+  return authFormRequest('/api/auth/signup', email, password);
+}
+
+export async function logoutApi(): Promise<void> {
+  await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
 }

@@ -1,7 +1,9 @@
 import React, { useRef, useState } from 'react';
 import {
   ArchetypePreset,
+  EmployeeRecord,
   ErgonomicGuardrails,
+  NewEmployeeInput,
   ShiftTemplate,
 } from '../types';
 import { DAYS_OF_WEEK, interpolateBeckerTable7 } from '../services/api';
@@ -9,6 +11,7 @@ import { Button } from './ui/Button';
 import { BardPanel } from './onboarding/BardPanel';
 import { ExplainThis } from './onboarding/ExplainThis';
 import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
+import { BusinessAnswers, BusyPeriod, WeekendPattern, buildDemandMatrix, buildShiftTemplates } from './onboarding/deriveSchedule';
 import {
   FirstRunTour,
   clearTourDone,
@@ -33,15 +36,30 @@ interface OnboardingWizardProps {
   onChangeLeewayPct: (leeway: number) => void;
   onCompleteWizard: () => void;
   onClose: () => void;
+  employees: EmployeeRecord[];
+  onAddEmployee: (emp: NewEmployeeInput) => void;
+  /** False while there is no real staff yet: setup cannot be skipped or dismissed. */
+  canSkip?: boolean;
+  /** Explicitly finishes setup without any staff - planning a schedule's shape, not running one. */
+  onPlanWithoutStaff?: () => void;
 }
 
 const STEP_LABELS = [
-  { step: 1, title: 'Business type', subtitle: 'Start from a close match' },
+  { step: 1, title: 'Your business', subtitle: 'Hours, busy times, staffing' },
   { step: 2, title: 'Staffing needs', subtitle: 'How many people, each hour' },
   { step: 3, title: 'Shift times', subtitle: 'When shifts start and end' },
   { step: 4, title: 'Scheduling rules', subtitle: 'Rest and fairness for staff' },
-  { step: 5, title: 'Cost vs. fairness', subtitle: 'Choose your balance' },
+  { step: 5, title: 'Cost vs. rest', subtitle: 'Pay more, strain less' },
+  { step: 6, title: 'Add your staff', subtitle: 'Who actually works here' },
 ];
+
+const WAGE_MIN = 7.25;
+const WAGE_MAX = 100;
+const parseWage = (raw: string): number | null => {
+  if (raw.trim() === '') return null;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= WAGE_MIN && n <= WAGE_MAX ? n : null;
+};
 
 const SHIFT_PLAIN_NAMES: Record<string, string> = {
   M: 'Morning',
@@ -67,11 +85,68 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   onChangeLeewayPct,
   onCompleteWizard,
   onClose,
+  employees,
+  onAddEmployee,
+  canSkip = true,
+  onPlanWithoutStaff,
 }) => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedDayTab, setSelectedDayTab] = useState<number>(0);
   const [tourOpen, setTourOpen] = useState<boolean>(() => !readTourDone());
   const showTourAgainRef = useRef<HTMLButtonElement>(null);
+
+  const [showExamples, setShowExamples] = useState(false);
+  const [answers, setAnswers] = useState<BusinessAnswers>({
+    openDays: [0, 1, 2, 3, 4, 5, 6],
+    runs24Hours: false,
+    openHour: 8,
+    closeHour: 20,
+    busyPeriod: 'midday',
+    peakStaff: 4,
+    minStaff: 1,
+    weekendPattern: 'same',
+  });
+
+  const toggleOpenDay = (d: number) => {
+    setAnswers((prev) => {
+      if (prev.openDays.includes(d)) {
+        if (prev.openDays.length <= 1) return prev;
+        return { ...prev, openDays: prev.openDays.filter((x) => x !== d) };
+      }
+      return { ...prev, openDays: [...prev.openDays, d].sort() };
+    });
+  };
+
+  // Keep the computed demand matrix and shift templates in sync with the answers live,
+  // the same way every other step in this wizard updates as you type.
+  React.useEffect(() => {
+    onChangeDemandMatrix(buildDemandMatrix(answers));
+    onChangeTemplates(buildShiftTemplates(answers));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answers]);
+
+  const [staffName, setStaffName] = useState('');
+  const [staffRole, setStaffRole] = useState('Frontline Associate');
+  const [staffWage, setStaffWage] = useState('');
+  const [staffDays, setStaffDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
+  const staffWageValue = parseWage(staffWage);
+
+  const toggleStaffDay = (d: number) => {
+    if (staffDays.includes(d)) {
+      if (staffDays.length > 1) setStaffDays(staffDays.filter((x) => x !== d));
+    } else {
+      setStaffDays([...staffDays, d].sort());
+    }
+  };
+
+  const submitStaffMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!staffName.trim() || staffWageValue === null) return;
+    onAddEmployee({ name: staffName.trim(), role: staffRole, wage: staffWageValue, days: staffDays });
+    setStaffName('');
+    setStaffWage('');
+    setStaffDays([0, 1, 2, 3, 4, 5, 6]);
+  };
 
   if (!isOpen) return null;
 
@@ -93,21 +168,37 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     onChangeDemandMatrix(next);
   };
 
+  /** Adjusts only the currently selected day, matching the day tabs above it. */
   const adjustDayWindowDemand = (startHr: number, endHr: number, delta: number) => {
-    const next = demandMatrix.map((row) =>
-      row.map((c, hr) =>
-        hr >= startHr && hr < endHr ? Math.max(0, Math.min(40, c + delta)) : c
-      )
+    const next = demandMatrix.map((row, dayIdx) =>
+      dayIdx === selectedDayTab
+        ? row.map((c, hr) => (hr >= startHr && hr < endHr ? Math.max(0, Math.min(40, c + delta)) : c))
+        : row
     );
     onChangeDemandMatrix(next);
   };
 
+  // Keeps min_duration <= preferred_duration <= max_duration true after every edit, so a
+  // user's chosen shift length is never silently clamped by the solver without them knowing.
   const updateTemplateField = <K extends keyof ShiftTemplate>(
     code: ShiftTemplate['code'],
     field: K,
     value: ShiftTemplate[K]
   ) => {
-    const next = templates.map((t) => (t.code === code ? { ...t, [field]: value } : t));
+    const next = templates.map((t) => {
+      if (t.code !== code) return t;
+      const updated = { ...t, [field]: value };
+      if (field === 'preferred_duration') {
+        const preferred = value as number;
+        if (preferred > updated.max_duration) updated.max_duration = preferred;
+        if (preferred < updated.min_duration) updated.min_duration = preferred;
+      } else if (field === 'max_duration' && (value as number) < updated.preferred_duration) {
+        updated.preferred_duration = value as number;
+      } else if (field === 'min_duration' && (value as number) > updated.preferred_duration) {
+        updated.preferred_duration = value as number;
+      }
+      return updated;
+    });
     onChangeTemplates(next);
   };
 
@@ -133,7 +224,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-xs font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
-                5 quick steps
+                6 quick steps
               </span>
               <span className="text-xs text-slate-400">
                 Tell us how your store runs. We'll build the schedule.
@@ -152,13 +243,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             >
               Show the tour again
             </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
-            >
-              Skip setup for now
-            </button>
+            {canSkip && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+              >
+                Skip setup for now
+              </button>
+            )}
           </div>
         </div>
 
@@ -207,20 +300,18 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         {/* Wizard Body Content */}
         <div className="p-6 overflow-y-auto flex-1 min-h-0 space-y-5">
           <ExplainThis stepId={currentStep} />
-          {/* STEP 1: INDUSTRY ARCHETYPE SELECTION */}
+          {/* STEP 1: PLAIN QUESTIONS ABOUT THE BUSINESS, NOT A STEREOTYPE PICKER */}
           {currentStep === 1 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
             <div className="space-y-4 flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Pick the closest match
+                    Tell us about your business
                   </h3>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Choose the business type closest to yours, then type your store or unit name.
-                  </p>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    We'll fill in typical hours, shift times and rules. You can change any of them in the next steps.
+                    Every business is different, so answer for yours — the schedule is built from your
+                    answers, not from a label like "retail" or "healthcare."
                   </p>
                 </div>
                 <div className="w-full sm:w-72">
@@ -228,7 +319,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     htmlFor="onboarding-facility-name"
                     className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1"
                   >
-                    Store or unit name
+                    Business or location name
                   </label>
                   <input
                     id="onboarding-facility-name"
@@ -241,53 +332,170 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                {archetypes.map((arch) => {
-                  const isSelected = arch.id === selectedArchetypeId;
-                  return (
-                    <button
-                      key={arch.id}
-                      type="button"
-                      aria-pressed={isSelected}
-                      onClick={() => onSelectArchetype(arch)}
-                      className={`w-full text-left p-4 rounded-xl border cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
-                          : 'bg-white border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      <span className="flex items-start justify-between gap-2">
-                        <span className="block">
-                          <span className="block text-sm font-bold text-slate-900">
-                            {arch.sector}
-                          </span>
+              <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                    Which days are you open?
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DAYS_OF_WEEK.map((d, idx) => (
+                      <button
+                        key={d}
+                        type="button"
+                        aria-pressed={answers.openDays.includes(idx)}
+                        onClick={() => toggleOpenDay(idx)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                          answers.openDays.includes(idx)
+                            ? 'bg-slate-900 text-white border-slate-900'
+                            : 'bg-white text-slate-600 border-slate-300'
+                        }`}
+                      >
+                        {d}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                    <input
+                      type="checkbox"
+                      checked={answers.runs24Hours}
+                      onChange={(e) => setAnswers((p) => ({ ...p, runs24Hours: e.target.checked }))}
+                      className="rounded"
+                    />
+                    Open around the clock (24 hours)
+                  </label>
+                  {!answers.runs24Hours && (
+                    <div className="flex items-center gap-3 mt-1">
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Opens at</label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={23}
+                          value={answers.openHour}
+                          onChange={(e) => setAnswers((p) => ({ ...p, openHour: Math.max(0, Math.min(23, parseInt(e.target.value || '0', 10))) }))}
+                          className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
+                        />
+                        <span className="text-xs text-slate-400 ml-1">:00</span>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-slate-500 mb-1">Closes at</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={24}
+                          value={answers.closeHour}
+                          onChange={(e) => setAnswers((p) => ({ ...p, closeHour: Math.max(1, Math.min(24, parseInt(e.target.value || '0', 10))) }))}
+                          className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
+                        />
+                        <span className="text-xs text-slate-400 ml-1">:00 (24 = midnight)</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="busy-period" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                    When are you busiest?
+                  </label>
+                  <select
+                    id="busy-period"
+                    value={answers.busyPeriod}
+                    onChange={(e) => setAnswers((p) => ({ ...p, busyPeriod: e.target.value as BusyPeriod }))}
+                    className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg py-1.5 px-2"
+                  >
+                    <option value="morning">Morning</option>
+                    <option value="midday">Midday</option>
+                    <option value="evening">Evening</option>
+                    <option value="night">Late night</option>
+                    <option value="steady">About the same all day</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 max-w-md">
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      People needed at your busiest
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={answers.peakStaff}
+                      onChange={(e) => setAnswers((p) => ({ ...p, peakStaff: Math.max(1, parseInt(e.target.value || '1', 10)) }))}
+                      className="w-full text-center font-mono-tabular text-sm border border-slate-300 rounded py-1.5"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      People needed at your quietest (while open)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={answers.minStaff}
+                      onChange={(e) => setAnswers((p) => ({ ...p, minStaff: Math.max(0, parseInt(e.target.value || '0', 10)) }))}
+                      className="w-full text-center font-mono-tabular text-sm border border-slate-300 rounded py-1.5"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="weekend-pattern" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                    Weekends, compared to weekdays
+                  </label>
+                  <select
+                    id="weekend-pattern"
+                    value={answers.weekendPattern}
+                    onChange={(e) => setAnswers((p) => ({ ...p, weekendPattern: e.target.value as WeekendPattern }))}
+                    className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg py-1.5 px-2"
+                  >
+                    <option value="busier">Busier</option>
+                    <option value="same">About the same</option>
+                    <option value="quieter">Quieter</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowExamples((v) => !v)}
+                  className="text-xs font-semibold text-indigo-700 hover:text-indigo-900 underline underline-offset-2"
+                >
+                  {showExamples ? 'Hide examples' : "Not sure where to start? Load an example you can edit"}
+                </button>
+                {showExamples && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                    {archetypes.map((arch) => {
+                      const isSelected = arch.id === selectedArchetypeId;
+                      return (
+                        <button
+                          key={arch.id}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => onSelectArchetype(arch)}
+                          className={`w-full text-left p-3 rounded-xl border cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
+                              : 'bg-white border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <span className="block text-sm font-bold text-slate-900">{arch.sector}</span>
                           <span className="block text-xs text-slate-500 mt-0.5">
                             {presetLabelFor(arch.id, arch.sector)}
                           </span>
-                        </span>
-                        <span
-                          aria-hidden="true"
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                            isSelected
-                              ? 'bg-indigo-600 text-white'
-                              : 'border border-slate-300 text-transparent'
-                          }`}
-                        >
-                          ✓
-                        </span>
-                      </span>
-                      <span className="block text-xs text-slate-600 mt-2 leading-relaxed">
-                        {PRESET_LABELS[arch.id]?.description ?? ''}
-                      </span>
-                      <span className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
-                        <span>Hours: {arch.operating_hours_label}</span>
-                        <span className="font-mono-tabular text-slate-700">
-                          {arch.typical_crew_size}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
+                          <span className="block text-xs text-slate-600 mt-2 leading-relaxed">
+                            {PRESET_LABELS[arch.id]?.description ?? ''}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
             <BardPanel stepId={1} className="w-full lg:w-72 shrink-0" />
@@ -317,21 +525,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     onClick={() => adjustDayWindowDemand(6, 14, 1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    +1 person, 6am–2pm
+                    +1 person, 6am–2pm, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(14, 22, 1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    +1 person, 2pm–10pm
+                    +1 person, 2pm–10pm, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(0, 24, -1)}
                     className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
                   >
-                    −1 person, all hours
+                    −1 person, all hours, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                 </div>
               </div>
@@ -738,13 +946,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
-                  Cost vs. fairness
+                  How much extra would you spend for a better-rested schedule?
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Choose how much extra cost you allow, using the slider or one of the buttons below.
+                  The cheapest possible schedule often means more back-to-back closing-then-opening
+                  shifts, longer stretches without a day off, and fewer full weekends off. Allowing a
+                  bit more payroll gives the solver room to avoid those.
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Allowing a little more cost can make schedules noticeably fairer for staff. Pick the balance that suits you.
+                  You'll see the real payroll difference for your own numbers on the Rest &amp; Fatigue
+                  Balance tab once setup is done — these figures are a general guide for now.
                 </p>
               </div>
 
@@ -755,12 +966,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       htmlFor="leeway-range"
                       className="block text-xs font-bold uppercase tracking-wider text-slate-500"
                     >
-                      Extra cost allowed
+                      Extra payroll you're willing to spend
                     </label>
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
-                      +{leewayPct}% cost →{' '}
+                      +{leewayPct}% payroll →{' '}
                       <span className="text-emerald-700">
-                        +{expectedErgoGain}% ergonomic score (theoretical)
+                        {expectedErgoGain}% less scheduling strain (rough guide)
                       </span>
                     </div>
                   </div>
@@ -812,7 +1023,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             : 'text-emerald-700 font-semibold'
                         }`}
                       >
-                        +{pt.gain}% ergonomic score (theoretical)
+                        {pt.gain}% less strain (rough guide)
                       </div>
                     </button>
                   ))}
@@ -820,6 +1031,102 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               </div>
             </div>
             <BardPanel stepId={5} className="w-full lg:w-72 shrink-0" />
+            </div>
+          )}
+
+          {/* STEP 6: ADD STAFF */}
+          {currentStep === 6 && (
+            <div className="flex flex-col lg:flex-row gap-4 items-start">
+              <div className="space-y-4 flex-1 min-w-0">
+                <div className="pb-3 border-b border-slate-200">
+                  <h3 className="text-base font-bold text-slate-900">Who actually works here?</h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    The schedule above is just a shape until real people are assigned to it. Add at
+                    least one staff member to finish setup — you can add the rest anytime from the
+                    Staff Directory.
+                  </p>
+                </div>
+
+                <form onSubmit={submitStaffMember} className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+                      <input
+                        value={staffName}
+                        onChange={(e) => setStaffName(e.target.value)}
+                        className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Role</label>
+                      <input
+                        value={staffRole}
+                        onChange={(e) => setStaffRole(e.target.value)}
+                        className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-600 mb-1">Hourly wage ($)</label>
+                      <input
+                        value={staffWage}
+                        onChange={(e) => setStaffWage(e.target.value)}
+                        placeholder="e.g. 17.50"
+                        className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 mb-1">Available days</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DAYS_OF_WEEK.map((d, idx) => (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => toggleStaffDay(idx)}
+                          className={`px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors ${
+                            staffDays.includes(idx)
+                              ? 'bg-slate-900 text-white border-slate-900'
+                              : 'bg-white text-slate-600 border-slate-300'
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    disabled={!staffName.trim() || staffWageValue === null}
+                  >
+                    + Add this person
+                  </Button>
+                </form>
+
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                    Staff added so far ({employees.length})
+                  </h4>
+                  {employees.length === 0 ? (
+                    <p className="text-xs text-slate-500 italic">Nobody yet — add at least one person above.</p>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      {employees.map((e) => (
+                        <li
+                          key={e.employee_id}
+                          className="flex items-center justify-between px-3 py-2 rounded-md bg-white border border-slate-200 text-sm"
+                        >
+                          <span className="font-semibold text-slate-900">{e.name}</span>
+                          <span className="text-slate-500 text-xs">
+                            {e.role} · ${e.hourly_wage.toFixed(2)}/hr
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+              <BardPanel stepId={6} className="w-full lg:w-72 shrink-0" />
             </div>
           )}
         </div>
@@ -835,22 +1142,31 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           </Button>
 
           <div className="flex items-center gap-2.5">
-            {currentStep < 5 ? (
+            {currentStep < 6 ? (
               <Button
                 variant="primary"
                 size="lg"
-                onClick={() => setCurrentStep((s) => Math.min(5, s + 1))}
+                onClick={() => setCurrentStep((s) => Math.min(6, s + 1))}
               >
                 Next: {STEP_LABELS[currentStep].title} →
               </Button>
             ) : (
-              <Button
-                variant="accent"
-                onClick={onCompleteWizard}
-              >
-                <span>Finish setup</span>
-                <span>→</span>
-              </Button>
+              <>
+                {employees.length === 0 && onPlanWithoutStaff && (
+                  <Button variant="secondary" onClick={onPlanWithoutStaff}>
+                    I'm just planning — no real staff yet
+                  </Button>
+                )}
+                <Button
+                  variant="accent"
+                  disabled={employees.length === 0}
+                  title={employees.length === 0 ? 'Add at least one staff member, or choose "just planning"' : undefined}
+                  onClick={onCompleteWizard}
+                >
+                  <span>Finish setup</span>
+                  <span>→</span>
+                </Button>
+              </>
             )}
           </div>
         </div>

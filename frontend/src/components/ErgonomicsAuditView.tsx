@@ -1,5 +1,6 @@
 import React from 'react';
 import { SolveResponse } from '../types';
+import { criterionLabelFor, criterionExplanationFor } from './criteriaLabels';
 
 interface ErgonomicsAuditViewProps {
   solution: SolveResponse;
@@ -9,51 +10,64 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
   solution,
 }) => {
   const audit = solution.ergonomics_audit;
+  const criteria = audit.criteria_breakdown;
+  const maxPenalty = Math.max(...criteria.map((c) => c.weighted_penalty), 1);
+
+  // Simple horizontal bar chart: one row per criterion, length proportional to its penalty.
+  const chartW = 640;
+  const rowH = 32;
+  const chartH = criteria.length * rowH;
+  const labelW = 190;
+  const barAreaW = chartW - labelW - 60;
+
+  const statusColor = (status: string) =>
+    status === 'optimal' ? '#059669' : status === 'acceptable' ? '#4f46e5' : '#b45309';
 
   return (
     <div className="space-y-5">
-      {/* Top Compliance & Theorem 1 Summary Banner */}
+      {/* Plain-language summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Occupational Rest & Circadian Health Standard
+            Workload Score
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-emerald-700">
-              {audit.total_ergo_objective.toFixed(1)}
-            </span>
-            <span className="text-xs text-slate-500 line-through font-mono-tabular">
-              Seq. Fixed-SD: {audit.sequential_baseline_ergo.toFixed(1)}
+              {audit.health_index_score}/100
             </span>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Integrated planning reduces total ergonomic penalty by{' '}
-            <strong className="text-indigo-700">+{audit.ergo_improvement_pct}%</strong> (theoretical, Becker Table 7 target).
+            Lower is better here, measured in penalty points — {audit.total_ergo_objective.toFixed(1)}{' '}
+            points total across the 8 checks below, versus {audit.sequential_baseline_ergo.toFixed(1)}{' '}
+            for a schedule built without any of them in mind. That's a{' '}
+            <strong className="text-indigo-700">{audit.ergo_improvement_pct}%</strong> reduction in
+            the things that burn people out.
           </p>
         </div>
 
         <div className="card p-5">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Zero-Clopening & Circadian Guardrail
+            Rest Between Shifts
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-slate-900">
               {audit.min_rest_hours_observed}h
             </span>
             {audit.clopening_violations > 0 && (
-              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                {audit.clopening_violations} Alerts
+              <span className="px-2 py-0.5 rounded text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                {audit.clopening_violations} too-short
               </span>
             )}
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Minimum rest between consecutive shifts (≥16h required; 0 backward rotations).
+            Shortest gap between the end of one shift and the start of the next, anywhere in the
+            schedule. This tool never schedules less than 16 hours of rest between shifts.
           </p>
         </div>
 
         <div className="card p-5">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Cyclic Line Fairness & Continuity
+            Rotation Balance
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-indigo-700">
@@ -61,61 +75,93 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            All 14 (day, work/rest) nodes satisfy <span className="font-mono-tabular">in_deg = out_deg</span>.
+            How many of the 14 weekly work/rest hand-offs (one pair per day) line up cleanly, so the
+            6-week rotation repeats without gaps or overlaps.
           </p>
         </div>
       </div>
 
-      {/* The 8 Ergonomics Objective Criteria Table (Becker 2026, Table 4) */}
+      {/* Visual breakdown of the 8 checks */}
+      <div className="card p-5">
+        <h2 className="text-base font-bold text-slate-900">
+          What's pulling the score down
+        </h2>
+        <p className="text-xs text-slate-500 mt-0.5 mb-3">
+          Each bar is one thing this tool watches for. A longer bar means more of it is happening in
+          this schedule.
+        </p>
+        <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto">
+          {criteria.map((c, idx) => {
+            const barW = (c.weighted_penalty / maxPenalty) * barAreaW;
+            const y = idx * rowH;
+            return (
+              <g key={c.criterion_id}>
+                <text
+                  x={labelW - 10}
+                  y={y + rowH / 2 + 4}
+                  textAnchor="end"
+                  className="fill-slate-700"
+                  style={{ fontSize: 11, fontWeight: 600 }}
+                >
+                  {criterionLabelFor(c.criterion_id, c.name)}
+                </text>
+                <rect
+                  x={labelW}
+                  y={y + 6}
+                  width={Math.max(2, barW)}
+                  height={rowH - 14}
+                  rx={3}
+                  fill={statusColor(c.status)}
+                  opacity={0.85}
+                />
+                <text
+                  x={labelW + Math.max(2, barW) + 8}
+                  y={y + rowH / 2 + 4}
+                  className="fill-slate-500"
+                  style={{ fontSize: 10, fontFamily: 'monospace' }}
+                >
+                  {c.weighted_penalty.toFixed(1)} pts{c.raw_violations_count > 0 ? ` · ${c.raw_violations_count}×` : ''}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+
+      {/* Plain-language breakdown table */}
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
           <h2 className="text-base font-bold text-slate-900">
-            Staff Health & Anti-Burnout Protection Standards
+            The 8 things this tool checks to avoid burning people out
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Detailed evaluation of each component in Equation (2) comparing the integrated I-SD-RWSP
-            solution against the sequential fixed shift design baseline.
-          </p>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="py-3 px-4">Symbol</th>
-                <th className="py-3 px-4">Ergonomic Criterion</th>
-                <th className="py-3 px-3">Ideal Range</th>
-                <th className="py-3 px-3 text-center">Weight (Base / Comp)</th>
-                <th className="py-3 px-3 text-right">Violations</th>
-                <th className="py-3 px-3 text-right">Integrated Penalty</th>
-                <th className="py-3 px-3 text-right">Sequential Fixed-SD</th>
+                <th className="py-3 px-4">Check</th>
+                <th className="py-3 px-3 text-right">How often</th>
+                <th className="py-3 px-3 text-right">Penalty</th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {audit.criteria_breakdown.map((c) => (
+              {criteria.map((c) => (
                 <tr key={c.criterion_id} className="hover:bg-slate-50/80">
-                  <td className="py-3 px-4 font-mono-tabular font-bold text-indigo-700">
-                    {c.symbol}
-                  </td>
                   <td className="py-3 px-4">
-                    <div className="font-semibold text-slate-900">{c.name}</div>
-                    <div className="text-xs text-slate-500 mt-0.5">{c.explanation}</div>
-                  </td>
-                  <td className="py-3 px-3 font-mono-tabular text-slate-700">
-                    {c.ideal_range}
-                  </td>
-                  <td className="py-3 px-3 text-center font-mono-tabular text-slate-600">
-                    {c.base_weight} × [{c.component_weight_range}]
+                    <div className="font-semibold text-slate-900">
+                      {criterionLabelFor(c.criterion_id, c.name)}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {criterionExplanationFor(c.criterion_id, c.explanation)}
+                    </div>
                   </td>
                   <td className="py-3 px-3 text-right font-mono-tabular font-semibold text-slate-800">
-                    {c.raw_violations_count}
+                    {c.raw_violations_count}×
                   </td>
                   <td className="py-3 px-3 text-right font-mono-tabular font-bold text-emerald-700">
                     {c.weighted_penalty.toFixed(1)}
-                  </td>
-                  <td className="py-3 px-3 text-right font-mono-tabular text-slate-500">
-                    {c.sequential_baseline_penalty.toFixed(1)}
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span
@@ -137,16 +183,15 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         </div>
       </div>
 
-      {/* Directed Multigraph Flow Conservation Verification (Constraints 7 & 8) */}
+      {/* Weekly rotation hand-off balance */}
       <div className="card p-5">
         <div className="mb-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Directed Multigraph G = (V, E) Node Degree Balance (Constraints 7 & 8)
+            Weekly rotation hand-offs
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Verifies equal in-degree and out-degree across all 7 work nodes{' '}
-            <span className="font-mono-tabular">(g, work)</span> and 7 rest nodes{' '}
-            <span className="font-mono-tabular">continuous rest required for zero-clopening line rotations.</span>
+            For each day, how many people are starting a work stretch versus starting a rest
+            stretch — these should match up so the 6-week rotation keeps repeating cleanly.
           </p>
         </div>
 
@@ -167,13 +212,13 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   <span>{wNode?.day_name}</span>
                 </div>
                 <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
-                  <span className="text-slate-600">(g, work)</span>
+                  <span className="text-slate-600">Starting work</span>
                   <span className="font-bold text-slate-900">
                     in:{wNode?.in_degree ?? '—'} / out:{wNode?.out_degree ?? '—'}
                   </span>
                 </div>
                 <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
-                  <span className="text-slate-600">(g, rest)</span>
+                  <span className="text-slate-600">Starting rest</span>
                   <span className="font-bold text-slate-900">
                     in:{rNode?.in_degree ?? '—'} / out:{rNode?.out_degree ?? '—'}
                   </span>

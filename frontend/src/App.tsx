@@ -22,18 +22,21 @@ import {
   exportRosterToCsvString,
   DEFAULT_TEMPLATES,
   DEFAULT_GUARDRAILS,
+  authStatusApi,
+  loginApi,
+  signupApi,
+  logoutApi,
 } from './services/api';
 
 import { Header } from './components/Header';
+import { LoginView } from './components/LoginView';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { MasterRosterView } from './components/MasterRosterView';
 import { StaffDirectoryView } from './components/StaffDirectoryView';
 import { LaborAnalysisView } from './components/LaborAnalysisView';
-import { POSIntegrationView } from './components/POSIntegrationView';
 import { CoverageHeatmapView } from './components/CoverageHeatmapView';
 import { ParetoExplorerView } from './components/ParetoExplorerView';
 import { ErgonomicsAuditView } from './components/ErgonomicsAuditView';
-import { CFODashboardView } from './components/CFODashboardView';
 import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { CompletionNote } from './components/onboarding/CompletionNote';
@@ -77,6 +80,7 @@ export function App() {
 
   const [staffAssignments, setStaffAssignments] = useState<StaffMemberAssignment[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [employeesLoaded, setEmployeesLoaded] = useState<boolean>(false);
   const [staffError, setStaffError] = useState<string | null>(null);
 
   const [isWizardOpen, setIsWizardOpen] = useState<boolean>(false);
@@ -90,6 +94,42 @@ export function App() {
   });
   const [isAddEmpOpen, setIsAddEmpOpen] = useState<boolean>(false);
   const [isDirectoryOpen, setIsDirectoryOpen] = useState<boolean>(false);
+  // An explicit choice to plan a schedule's shape without adding real staff yet
+  // (e.g. a hypothetical business, a job site being planned before anyone is hired).
+  // Deliberately opt-in, not a default fallback, so the empty-staff bug this was
+  // built to fix can't silently reappear.
+  const [planningOnly, setPlanningOnly] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem('shiftflow.planningOnly') === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const [authState, setAuthState] = useState<'checking' | 'needs-login' | 'ready'>('checking');
+
+  useEffect(() => {
+    authStatusApi().then(({ login_required, logged_in }) => {
+      setAuthState(login_required && !logged_in ? 'needs-login' : 'ready');
+    });
+  }, []);
+
+  const handleLogin = async (email: string, password: string): Promise<string | null> => {
+    const err = await loginApi(email, password);
+    if (!err) setAuthState('ready');
+    return err;
+  };
+
+  const handleSignup = async (email: string, password: string): Promise<string | null> => {
+    const err = await signupApi(email, password);
+    if (!err) setAuthState('ready');
+    return err;
+  };
+
+  const handleLogout = async () => {
+    await logoutApi();
+    setAuthState('needs-login');
+  };
 
   const [activeTab, setActiveTab] = useState<ActiveTabId>('roster');
   const [solution, setSolution] = useState<SolveResponse | null>(null);
@@ -106,6 +146,9 @@ export function App() {
       })
       .catch((err: unknown) => {
         if (isMounted) setStaffError(err instanceof Error ? err.message : 'Staff records could not be loaded.');
+      })
+      .finally(() => {
+        if (isMounted) setEmployeesLoaded(true);
       });
     return () => {
       isMounted = false;
@@ -162,10 +205,29 @@ export function App() {
     employees,
   ]);
 
-  // Close the wizard when a solve fails so the failed-solve alert is visible.
+  // There is no such thing as a real schedule with no staff on it: until at least one
+  // employee exists, setup cannot be skipped or dismissed.
+  const needsOnboarding = employeesLoaded && employees.length === 0 && !planningOnly;
+
+  const handlePlanWithoutStaff = () => {
+    setPlanningOnly(true);
+    try {
+      window.localStorage.setItem('shiftflow.planningOnly', '1');
+    } catch {
+      // Storage can be blocked; the choice then lasts for this visit only.
+    }
+    setIsWizardOpen(false);
+  };
+
   useEffect(() => {
-    if (solveStatus === 'error') setIsWizardOpen(false);
-  }, [solveStatus]);
+    if (needsOnboarding) setIsWizardOpen(true);
+  }, [needsOnboarding]);
+
+  // Close the wizard when a solve fails so the failed-solve alert is visible,
+  // unless setup is still mandatory (no staff yet).
+  useEffect(() => {
+    if (solveStatus === 'error' && !needsOnboarding) setIsWizardOpen(false);
+  }, [solveStatus, needsOnboarding]);
 
   const advanceWeek = useCallback((delta: number) => {
     if (!solution || solution.employee_count === 0) return;
@@ -183,7 +245,7 @@ export function App() {
         if (e.key === 'Escape') {
           setIsShortcutsOpen(false);
           setIsAddEmpOpen(false);
-          setIsWizardOpen(false);
+          if (!needsOnboarding) setIsWizardOpen(false);
         }
         return;
       }
@@ -193,7 +255,7 @@ export function App() {
       if (e.key === 'Escape') {
         setIsShortcutsOpen(false);
         setIsAddEmpOpen(false);
-        setIsWizardOpen(false);
+        if (!needsOnboarding) setIsWizardOpen(false);
         return;
       }
       if (!singleKeyEnabled && e.key !== '?') return;
@@ -213,14 +275,12 @@ export function App() {
       } else if (e.key === '2') {
         setActiveTab('labor');
       } else if (e.key === '3') {
-        setActiveTab('cfo');
-      } else if (e.key === '4') {
         setActiveTab('coverage');
-      } else if (e.key === '5') {
+      } else if (e.key === '4') {
         setActiveTab('pareto');
-      } else if (e.key === '6') {
+      } else if (e.key === '5') {
         setActiveTab('ergonomics');
-      } else if (e.key === '7') {
+      } else if (e.key === '6') {
         setActiveTab('compliance');
       } else if (e.key.toLowerCase() === 'd') {
         setIsDirectoryOpen((prev) => !prev);
@@ -235,7 +295,7 @@ export function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [advanceWeek, singleKeyEnabled, isShortcutsOpen, isAddEmpOpen, isWizardOpen]);
+  }, [advanceWeek, singleKeyEnabled, isShortcutsOpen, isAddEmpOpen, isWizardOpen, needsOnboarding]);
 
   const handleSelectArchetype = (preset: ArchetypePreset) => {
     setSelectedArchetypeId(preset.id);
@@ -338,6 +398,13 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
+  if (authState === 'checking') {
+    return <div className="min-h-screen bg-[#F4F1EA]" />;
+  }
+  if (authState === 'needs-login') {
+    return <LoginView onLogin={handleLogin} onSignup={handleSignup} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F1EA] text-[#2B3A42]">
       <Header
@@ -347,9 +414,28 @@ export function App() {
         onOpenShortcuts={() => setIsShortcutsOpen(true)}
         solution={solution}
         leewayPct={leewayPct}
+        onLogout={handleLogout}
       />
 
-      <main className="flex-1 max-w-[min(96vw,1600px)] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {planningOnly && employees.length === 0 && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+            <span>
+              Planning mode: this schedule has no real staff on it yet, so lines show as
+              unassigned. Add your team when you're ready to run it for real.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('roster');
+                setIsAddEmpOpen(true);
+              }}
+              className="rounded-md border border-indigo-300 bg-white px-3 py-1 font-semibold text-indigo-800 hover:bg-indigo-100 whitespace-nowrap"
+            >
+              Add your team
+            </button>
+          </div>
+        )}
         {staffError && (
           <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             {staffError}
@@ -362,9 +448,7 @@ export function App() {
         )}
         {solveStatus === 'error' && (
           <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
-            <span>
-              {solveError ? 'The scheduling service is unavailable, so no schedule was computed. Try again later.' : null}
-            </span>
+            <span>{solveError}</span>
             <button
               type="button"
               onClick={() => setSolveAttempt((n) => n + 1)}
@@ -409,10 +493,9 @@ export function App() {
                 onUpdateAvailability={handleUpdateAvailability}
               />
             )}
-            {activeTab === 'labor' && <LaborAnalysisView solution={solution} />}
-            {activeTab === 'cfo' && <CFODashboardView solution={solution} />}
-            {activeTab === 'pos' && (
-              <POSIntegrationView
+            {activeTab === 'labor' && (
+              <LaborAnalysisView
+                solution={solution}
                 facilityId={STAFF_FACILITY_ID}
                 onDemandUpdated={(newDemand) => setDemandMatrix(newDemand)}
               />
@@ -456,6 +539,10 @@ export function App() {
         onChangeLeewayPct={setLeewayPct}
         onCompleteWizard={() => setIsWizardOpen(false)}
         onClose={() => setIsWizardOpen(false)}
+        employees={employees}
+        onAddEmployee={handleAddEmployee}
+        canSkip={!needsOnboarding}
+        onPlanWithoutStaff={handlePlanWithoutStaff}
       />
 
       <KeyboardShortcutsModal

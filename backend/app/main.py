@@ -11,9 +11,9 @@ from app.api.schedule_routes import router as schedule_router
 from app.api.employee_routes import router as employee_router
 from app.api.pos_payroll_routes import router as pos_payroll_router
 from app.api.emergency_routes import router as emergency_router
-from app.api.compliance_routes import router as compliance_router
 from app.api.handover_routes import router as handover_router
-from app.auth import require_api_key
+from app.api.auth_routes import router as auth_router
+from app.auth import require_login
 from app.config import settings
 from app.database import init_db, get_db_connection
 from fastapi.responses import JSONResponse
@@ -31,7 +31,7 @@ app = FastAPI(
         "Enterprise SaaS Workforce Optimization Engine implementing Tristan Becker (EJOR 2026), "
         "'A unifying approach to shift design and rotating workforce scheduling' (I-SD-RWSP)."
     ),
-    dependencies=[Depends(require_api_key)],
+    dependencies=[Depends(require_login)],
 )
 
 cors_origins = [
@@ -68,8 +68,8 @@ app.include_router(schedule_router, prefix=settings.api_prefix)
 app.include_router(employee_router)
 app.include_router(pos_payroll_router)
 app.include_router(emergency_router)
-app.include_router(compliance_router)
 app.include_router(handover_router)
+app.include_router(auth_router)
 
 
 @app.get("/health", tags=["System"])

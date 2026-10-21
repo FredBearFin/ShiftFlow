@@ -10,9 +10,11 @@ import uuid
 _NOT_SENT = object()
 
 # Durable SQLite file. Set SHIFTFLOW_DB_PATH to a path on a mounted volume in containers.
+# Serverless platforms (e.g. Vercel) only allow writes under /tmp, so default there when
+# no path is configured; /tmp is not durable across cold starts on those platforms.
 DB_FILE = os.environ.get(
     "SHIFTFLOW_DB_PATH",
-    os.path.join("data", "shiftflow.db"),
+    os.path.join("/tmp", "shiftflow.db") if os.environ.get("VERCEL") else os.path.join("data", "shiftflow.db"),
 )
 
 
@@ -117,6 +119,13 @@ def init_db() -> None:
         items_count INTEGER NOT NULL DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (facility_id) REFERENCES facilities(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS idempotency_records (
@@ -421,6 +430,31 @@ class ShiftFlowRepository:
         cursor.execute("DELETE FROM employees WHERE id = ?", (employee_id,))
         self.conn.commit()
         return cursor.rowcount > 0
+
+    # -------------------------------------------------------------
+    # User Accounts
+    # -------------------------------------------------------------
+    def create_user(self, email: str, password_hash: str) -> Dict[str, Any]:
+        user_id = f"USR-{uuid.uuid4().hex[:8].upper()}"
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?);",
+            (user_id, email, password_hash),
+        )
+        self.conn.commit()
+        return self.get_user_by_id(user_id)  # type: ignore
+
+    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
     # -------------------------------------------------------------
     # Roster Snapshots & Labor Audits (3-Year FLSA Retention)

@@ -2,19 +2,25 @@ import React, { useState } from 'react';
 import { SolveResponse } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 import { Button } from './ui/Button';
+import { POSIntegrationView } from './POSIntegrationView';
 
 interface LaborAnalysisViewProps {
   solution: SolveResponse;
+  facilityId?: string;
+  onDemandUpdated?: (newDemand: number[][]) => void;
 }
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   solution,
+  facilityId,
+  onDemandUpdated,
 }) => {
   const labor = solution.labor_analysis;
   const maxDayCost = Math.max(...labor.cost_per_day, 100);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
+  const [showPosUpload, setShowPosUpload] = useState(false);
 
   // A line is priced when it carries a numeric estimated payroll and a numeric hours value.
   const pricedLines = solution.roster_lines.filter(
@@ -168,8 +174,17 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           >
             Print Audit
           </Button>
+          {facilityId && (
+            <Button variant="secondary" onClick={() => setShowPosUpload((v) => !v)}>
+              {showPosUpload ? 'Hide POS upload' : 'Update demand from POS data'}
+            </Button>
+          )}
         </div>
       </div>
+
+      {facilityId && showPosUpload && (
+        <POSIntegrationView facilityId={facilityId} onDemandUpdated={onDemandUpdated} />
+      )}
 
       {/* Top Payroll & Hours Economics KPI Banner */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
