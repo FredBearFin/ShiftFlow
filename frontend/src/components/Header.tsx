@@ -32,16 +32,29 @@ export const Header: React.FC<HeaderProps> = ({
   leewayPct,
   onLogout,
 }) => {
-  const navTabs: { id: ActiveTabId; label: string; badge?: string }[] = [
+  // badgeReserve holds the space a data-dependent badge will occupy once the
+  // solve returns. Without it the nav row reflows between the loading and
+  // loaded states and the tabs move under the cursor. It is rendered
+  // invisible and aria-hidden while badge is undefined, so it reserves width
+  // without being announced. Tabs whose badge never depends on a solve
+  // (coverage, pareto) and tabs with no badge (compliance) need no reserve.
+  const navTabs: {
+    id: ActiveTabId;
+    label: string;
+    badge?: string;
+    badgeReserve?: string;
+  }[] = [
     {
       id: 'roster',
       label: 'Weekly Schedule',
       badge: solution ? `${solution.employee_count} Shift Patterns` : undefined,
+      badgeReserve: '00 Shift Patterns',
     },
     {
       id: 'staff',
       label: 'Staff Directory & Availability',
       badge: solution ? `${solution.employees.length} Associates` : undefined,
+      badgeReserve: '000 Associates',
     },
     {
       id: 'labor',
@@ -49,6 +62,7 @@ export const Header: React.FC<HeaderProps> = ({
       badge: solution
         ? formatCurrency(solution.labor_analysis.total_payroll_cost)
         : undefined,
+      badgeReserve: formatCurrency(100000),
     },
     {
       id: 'coverage',
@@ -64,6 +78,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'ergonomics',
       label: 'Ergonomics Health Audit',
       badge: solution ? `${solution.ergonomics_audit.health_index_score}/100` : undefined,
+      badgeReserve: '000/100',
     },
     {
       id: 'compliance',
@@ -161,38 +176,41 @@ export const Header: React.FC<HeaderProps> = ({
         <nav className="flex flex-wrap items-center gap-1 py-2" aria-label="Workspace Views">
           {navTabs.map((tab, idx) => {
             const isActive = activeTab === tab.id;
+            // Active is encoded three ways — a 2px accent bottom border, --ink
+            // text and a --surface-sunken fill — and never by font weight,
+            // because a weight change resizes the tab and moves the rest of
+            // the row.
             return (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => onSelectTab(tab.id)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-t-md text-xs font-semibold transition-colors flex items-center gap-2 whitespace-nowrap border-b-2 ${
                   isActive
-                    ? 'bg-[#E4E9EC] text-[#2B3A42] border border-slate-200/80 shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
+                    ? 'border-accent text-ink bg-surface-sunken'
+                    : 'border-transparent text-muted hover:text-ink hover:bg-surface'
                 }`}
               >
                 {TAB_KEY_NUMBERS[tab.id] !== undefined && (
                   <kbd
                     className={`px-1 py-0.5 rounded text-xs font-mono-tabular font-bold ${
                       isActive
-                        ? 'bg-white text-[#2B3A42]'
-                        : 'bg-slate-100 text-slate-500'
+                        ? 'bg-card text-ink'
+                        : 'bg-surface text-muted'
                     }`}
                   >
                     {TAB_KEY_NUMBERS[tab.id]}
                   </kbd>
                 )}
                 <span>{tab.label}</span>
-                {tab.badge && (
+                {(tab.badge ?? tab.badgeReserve) && (
                   <span
-                    className={`px-1.5 py-0.5 rounded text-xs font-mono-tabular ${
-                      isActive
-                        ? 'bg-white text-[#2B3A42] font-bold'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
+                    aria-hidden={tab.badge ? undefined : true}
+                    className={`px-1.5 py-0.5 rounded text-xs font-mono-tabular font-semibold text-center ${
+                      tab.badge ? '' : 'invisible'
+                    } ${isActive ? 'bg-card text-ink' : 'bg-surface text-muted'}`}
                   >
-                    {tab.badge}
+                    {tab.badge ?? tab.badgeReserve}
                   </span>
                 )}
               </button>
