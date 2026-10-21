@@ -54,6 +54,15 @@ function preset(id: string, sector: string): ArchetypePreset {
 }
 
 const BLOCKED_ID = 'healthcare_24_7';
+
+// The mechanism is tested with a blocker this test registers itself, not with a
+// real example that happens to be broken. Every bundled example solves at every
+// flexibility setting now, so PRESET_SOLVE_BLOCKERS ships empty; registering one
+// here keeps the picker's warning path covered for the next time one does break.
+const TEST_BLOCKER = {
+  badge: 'Needs extra setup',
+  message: 'No shift start time and length fits these hours while the rest rules hold.',
+};
 const SOLVABLE_ID = 'downtown_foodmart_omaha';
 
 function renderWizard() {
@@ -92,9 +101,11 @@ function presetButton(sector: string): HTMLElement {
 describe('OnboardingWizard preset solve failures', () => {
   beforeEach(() => {
     window.localStorage.setItem(TOUR_DONE_KEY, '1');
+    PRESET_SOLVE_BLOCKERS[BLOCKED_ID] = { ...TEST_BLOCKER };
   });
 
   afterEach(() => {
+    delete PRESET_SOLVE_BLOCKERS[BLOCKED_ID];
     cleanup();
     window.localStorage.clear();
   });

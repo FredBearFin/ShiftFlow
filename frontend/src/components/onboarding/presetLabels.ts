@@ -47,19 +47,13 @@ export interface PresetSolveBlocker {
  * Delete an entry here as soon as its example builds a schedule again - the
  * marker in the picker and the warning both disappear with it.
  */
-const NO_SHIFT_FITS =
-  'No shift start time and length fits these hours while the rest rules hold. ' +
-  'Add a shift, or ease a rest rule.';
-
+// Empty on purpose. The two 24/7 examples listed here could not be solved at all,
+// so the picker warned about them before a user spent six steps finding out. The
+// cause turned out to be a bug in the solver's zero-clopening check rather than
+// anything wrong with the examples, and with that fixed every example solves at
+// every flexibility setting. The mechanism stays: if an example ever stops
+// solving again, naming it here is how the picker says so.
 export const PRESET_SOLVE_BLOCKERS: Record<string, PresetSolveBlocker> = {
-  healthcare_24_7: {
-    badge: 'Needs extra setup',
-    message: NO_SHIFT_FITS,
-  },
-  manufacturing_24_7: {
-    badge: 'Needs extra setup',
-    message: NO_SHIFT_FITS,
-  },
 };
 
 /** Returns the known solve blocker for a preset id, or undefined when it solves. */
