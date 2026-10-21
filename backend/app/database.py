@@ -156,6 +156,21 @@ def init_db() -> None:
     CREATE INDEX IF NOT EXISTS idx_facility_owners_owner_user ON facility_owners (owner_user_id, facility_id);
     CREATE INDEX IF NOT EXISTS idx_facility_owners_token ON facility_owners (invite_token);
 
+    -- The onboarding wizard's solve configuration (demand matrix, shift templates,
+    -- ergonomic guardrails) for a facility, additive alongside the `facilities` row
+    -- itself. Kept as its own table, rather than folded into `facilities`, because a
+    -- facility row today only ever comes into existence as a side effect of adding
+    -- staff or uploading POS data (see employee_routes.create_employee) - a manager must
+    -- be able to save this setup from the wizard before any of that has happened.
+    -- config_json is stored keyed by the same owner-prefixed, stored facility id that
+    -- roster_snapshots and labor_analyses use (see ShiftFlowRepository._stored_facility_id),
+    -- so an accepted owner reads and writes the same row the manager does.
+    CREATE TABLE IF NOT EXISTS facility_solve_config (
+        facility_id TEXT PRIMARY KEY,
+        config_json TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS idempotency_records (
         key TEXT PRIMARY KEY,
         method TEXT NOT NULL,
@@ -205,26 +220,33 @@ class ShiftFlowRepository:
     exactly like one that does not exist. With owner_id None (login explicitly disabled
     for local development) ids are stored as given.
 
-    linked_manager_ids extends that scoping, additively, to cover facilities this signed-in
+    linked_facility_ids extends that scoping, additively, to cover facilities this signed-in
     user did not create themselves but has been given real access to as an *accepted*
-    business-owner link (see facility_owners / app/api/owner_routes.py): the manager_user_id
-    of every such accepted link. For a plain manager session this is empty and every method
-    behaves exactly as before. For a linked owner, a facility id that does not exist under
-    their own prefix but does exist under one of these linked manager prefixes resolves to
-    - and reads/writes go to - that manager's own rows, so the owner is acting on the same
-    shared data the manager sees, not a separate copy. See get_repo in app/deps.py, which
-    assembles this list from facility_owners for every request.
+    business-owner link (see facility_owners / app/api/owner_routes.py): a map of
+    manager_user_id -> the specific facility ids (that manager's own, unprefixed ids) named
+    by an accepted invite for this user. For a plain manager session this is empty and every
+    method behaves exactly as before. For a linked owner, a facility id that does not exist
+    under their own prefix but is both (a) one of these linked manager/facility pairs and
+    (b) actually stored under that manager's prefix resolves to - and reads/writes go to -
+    that manager's own row for that facility, so the owner is acting on the same shared data
+    the manager sees for the facility they were invited to, not a separate copy and not the
+    manager's other facilities. See get_repo in app/deps.py, which assembles this map from
+    facility_owners for every request.
     """
 
     def __init__(
         self,
         conn: sqlite3.Connection,
         owner_id: Optional[str] = None,
-        linked_manager_ids: Optional[List[str]] = None,
+        linked_facility_ids: Optional[Dict[str, List[str]]] = None,
     ):
         self.conn = conn
         self.owner_id = owner_id
-        self.linked_manager_ids = [m for m in (linked_manager_ids or []) if m]
+        self.linked_facility_ids: Dict[str, List[str]] = {
+            manager_id: list(facility_ids)
+            for manager_id, facility_ids in (linked_facility_ids or {}).items()
+            if manager_id and facility_ids
+        }
 
     # -------------------------------------------------------------
     # Owner scoping
@@ -232,7 +254,7 @@ class ShiftFlowRepository:
     def _candidate_owner_ids(self) -> List[str]:
         """owner_id first, then any linked (accepted-owner) manager ids, deduplicated."""
         candidates: List[str] = []
-        for candidate in (self.owner_id, *self.linked_manager_ids):
+        for candidate in (self.owner_id, *self.linked_facility_ids.keys()):
             if candidate and candidate not in candidates:
                 candidates.append(candidate)
         return candidates
@@ -242,15 +264,23 @@ class ShiftFlowRepository:
 
         Checked against the facilities table, so a brand-new facility id (not yet stored
         under anyone) resolves to None and callers fall back to self.owner_id - i.e. a
-        manager's own prefix, same as before this existed.
+        manager's own prefix, same as before this existed. A linked manager id is only a
+        candidate for the specific facility ids that manager's accepted invite named - not
+        every facility that manager happens to own - so an owner invited to one facility
+        never resolves into another, unrelated facility of the same manager.
         """
         if not self.owner_id:
             return None
         cursor = self.conn.cursor()
-        for candidate in self._candidate_owner_ids():
-            cursor.execute("SELECT 1 FROM facilities WHERE id = ?", (f"{candidate}:{facility_id}",))
+        cursor.execute("SELECT 1 FROM facilities WHERE id = ?", (f"{self.owner_id}:{facility_id}",))
+        if cursor.fetchone() is not None:
+            return self.owner_id
+        for manager_id, facility_ids in self.linked_facility_ids.items():
+            if facility_id not in facility_ids:
+                continue
+            cursor.execute("SELECT 1 FROM facilities WHERE id = ?", (f"{manager_id}:{facility_id}",))
             if cursor.fetchone() is not None:
-                return candidate
+                return manager_id
         return None
 
     def _stored_facility_id(self, facility_id: str) -> str:
@@ -260,16 +290,29 @@ class ShiftFlowRepository:
         return f"{resolved or self.owner_id}:{facility_id}"
 
     def _caller_facility_id(self, stored_facility_id: str) -> str:
-        for candidate in self._candidate_owner_ids():
-            prefix = f"{candidate}:"
-            if stored_facility_id.startswith(prefix):
-                return stored_facility_id[len(prefix):]
+        prefix = f"{self.owner_id}:"
+        if self.owner_id and stored_facility_id.startswith(prefix):
+            return stored_facility_id[len(prefix):]
+        for manager_id, facility_ids in self.linked_facility_ids.items():
+            manager_prefix = f"{manager_id}:"
+            if stored_facility_id.startswith(manager_prefix):
+                raw = stored_facility_id[len(manager_prefix):]
+                if raw in facility_ids:
+                    return raw
         return stored_facility_id
 
     def _owns_stored_facility(self, stored_facility_id: str) -> bool:
         if not self.owner_id:
             return True
-        return any(stored_facility_id.startswith(f"{candidate}:") for candidate in self._candidate_owner_ids())
+        if stored_facility_id.startswith(f"{self.owner_id}:"):
+            return True
+        for manager_id, facility_ids in self.linked_facility_ids.items():
+            manager_prefix = f"{manager_id}:"
+            if stored_facility_id.startswith(manager_prefix):
+                raw = stored_facility_id[len(manager_prefix):]
+                if raw in facility_ids:
+                    return True
+        return False
 
     # -------------------------------------------------------------
     # Facility Operations
@@ -324,6 +367,44 @@ class ShiftFlowRepository:
         )
         self.conn.commit()
         return self.get_facility(facility_id)  # type: ignore
+
+    # -------------------------------------------------------------
+    # Onboarding wizard solve configuration (demand matrix, shift templates,
+    # ergonomic guardrails - see facility_solve_config above). Server-side mirror of
+    # what used to live only in the manager's browser localStorage, so a linked owner
+    # opening the app for the first time on their own device sees the manager's real
+    # setup instead of defaults. Scoped by the same _stored_facility_id/owner-prefix
+    # mechanism as get_facility/upsert_facility above - no separate access check.
+    # -------------------------------------------------------------
+    def get_solve_config(self, facility_id: str) -> Optional[Dict[str, Any]]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT config_json, updated_at FROM facility_solve_config WHERE facility_id = ?",
+            (self._stored_facility_id(facility_id),),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "facility_id": facility_id,
+            "config": json.loads(row["config_json"]),
+            "updated_at": row["updated_at"],
+        }
+
+    def save_solve_config(self, facility_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO facility_solve_config (facility_id, config_json, updated_at)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(facility_id) DO UPDATE SET
+                config_json = excluded.config_json,
+                updated_at = CURRENT_TIMESTAMP;
+            """,
+            (self._stored_facility_id(facility_id), json.dumps(config)),
+        )
+        self.conn.commit()
+        return self.get_solve_config(facility_id)  # type: ignore
 
     # -------------------------------------------------------------
     # Employee Operations (with Title VII/ADA Accommodations & Audit)
@@ -720,19 +801,26 @@ class ShiftFlowRepository:
         )
         return [dict(r) for r in cursor.fetchall()]
 
-    def list_linked_manager_ids(self, owner_user_id: str) -> List[str]:
-        """Every manager_user_id this user has an *accepted* owner link to.
+    def list_linked_facility_ids(self, owner_user_id: str) -> Dict[str, List[str]]:
+        """manager_user_id -> the specific facility ids this user has an *accepted* owner
+        link to under that manager.
 
-        Feeds ShiftFlowRepository's linked_manager_ids (see get_repo in app/deps.py), which
+        Feeds ShiftFlowRepository's linked_facility_ids (see get_repo in app/deps.py), which
         is how an accepted owner's requests reach the manager's own facility rows alongside
-        their own, without ever needing to be the manager's own login.
+        their own, without ever needing to be the manager's own login - and only for the
+        facilities actually named by an accepted invite, never every facility that manager
+        owns.
         """
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT DISTINCT manager_user_id FROM facility_owners WHERE owner_user_id = ? AND accepted_at IS NOT NULL",
+            "SELECT DISTINCT manager_user_id, facility_id FROM facility_owners "
+            "WHERE owner_user_id = ? AND accepted_at IS NOT NULL",
             (owner_user_id,),
         )
-        return [r["manager_user_id"] for r in cursor.fetchall()]
+        linked: Dict[str, List[str]] = {}
+        for row in cursor.fetchall():
+            linked.setdefault(row["manager_user_id"], []).append(row["facility_id"])
+        return linked
 
     def delete_user(self, user_id: str) -> bool:
         """Removes a login (e.g. the original manager's). Facility/employee/roster rows are

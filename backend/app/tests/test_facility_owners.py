@@ -204,6 +204,45 @@ class FacilityOwnerInviteTests(unittest.TestCase):
         self.assertEqual(len(visible), 1)
         self.assertEqual(visible[0]["name"], "Alex Associate")
 
+    def test_owner_invited_to_one_facility_cannot_reach_the_managers_other_facility(self):
+        """An accepted invite grants access to the facility it named - not to every other
+        facility the same manager happens to own. (Regression test: linked_manager_ids used
+        to grant access manager-wide instead of being scoped per invited facility.)"""
+        secret_created = self.manager.post(
+            "/api/employees",
+            json={
+                "facility_id": "FAC-SECRET-TWO",
+                "name": "Secret Employee",
+                "wage": 99.0,
+                "available_days": [0, 1, 2],
+            },
+        )
+        self.assertEqual(secret_created.status_code, 200, secret_created.text)
+
+        # Invite is for FACILITY ("FAC-OMAHA-01") only - never FAC-SECRET-TWO.
+        invite = self._invite(self._unique_owner_email("owner"))
+        owner_client = TestClient(app, base_url="https://testserver")
+        accept = owner_client.post(invite["accept_path"], json={"password": "ownerpassword1"})
+        self.assertEqual(accept.status_code, 200, accept.text)
+
+        # The invited facility is reachable, as expected.
+        own_facility = owner_client.get("/api/employees", params={"facility_id": FACILITY})
+        self.assertEqual(own_facility.status_code, 200)
+        self.assertEqual([e["name"] for e in own_facility.json()], ["Alex Associate"])
+
+        # The manager's *other* facility must not be reachable through the same link -
+        # the owner should see nothing (their own, separate, empty FAC-SECRET-TWO), never
+        # the manager's "Secret Employee" row.
+        other_facility = owner_client.get("/api/employees", params={"facility_id": "FAC-SECRET-TWO"})
+        self.assertEqual(other_facility.status_code, 200)
+        names = [e["name"] for e in other_facility.json()]
+        self.assertNotIn("Secret Employee", names)
+        self.assertEqual(names, [])
+
+        # Nor can the owner read/act on it through the owner-summary endpoint either.
+        summary = owner_client.get("/api/owners/facility/FAC-SECRET-TWO/summary")
+        self.assertEqual(summary.status_code, 404)
+
     def test_accept_refused_when_an_account_with_that_email_already_exists(self):
         existing_owner, existing_email = new_account("existing-owner")
         invite = self._invite(existing_email)
