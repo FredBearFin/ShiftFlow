@@ -2,6 +2,7 @@
 
 import json
 import os
+import secrets
 import sqlite3
 from typing import Any, Dict, Generator, List, Optional
 import uuid
@@ -134,6 +135,26 @@ def init_db() -> None:
         failed_at REAL NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_login_failures_key ON login_failures (throttle_key, failed_at);
+
+    -- A second, independent login on an existing facility/account ("business owner" tier).
+    -- Additive only: it links a manager's user id to an invited owner's email/login by
+    -- string id, the same way facility rows themselves are keyed by owner id (see
+    -- ShiftFlowRepository's owner-scoping docstring above) - never by a foreign key to the
+    -- users table. So this table, and the facility rows it points at, stay intact even if
+    -- the manager_user_id row in `users` is later deleted or disabled.
+    CREATE TABLE IF NOT EXISTS facility_owners (
+        id TEXT PRIMARY KEY,
+        manager_user_id TEXT NOT NULL,
+        facility_id TEXT NOT NULL,
+        owner_email TEXT NOT NULL,
+        owner_user_id TEXT,
+        invite_token TEXT NOT NULL UNIQUE,
+        invited_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        accepted_at TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_facility_owners_manager ON facility_owners (manager_user_id, facility_id);
+    CREATE INDEX IF NOT EXISTS idx_facility_owners_owner_user ON facility_owners (owner_user_id, facility_id);
+    CREATE INDEX IF NOT EXISTS idx_facility_owners_token ON facility_owners (invite_token);
 
     CREATE TABLE IF NOT EXISTS idempotency_records (
         key TEXT PRIMARY KEY,
@@ -580,3 +601,89 @@ class ShiftFlowRepository:
         )
         self.conn.commit()
         return analysis_id
+
+    # -------------------------------------------------------------
+    # Facility owners (second, independent "owner" login per facility/account)
+    #
+    # Deliberately global, not owner-scoped like the methods above: this table's job is
+    # to be reachable by its own id columns (manager_user_id, owner_user_id) regardless of
+    # which account is making the call, so an invited owner can be linked to a manager's
+    # facility without the manager's facility id ever needing to be guessed or exposed.
+    # -------------------------------------------------------------
+    def create_owner_invite(self, manager_user_id: str, facility_id: str, owner_email: str) -> Dict[str, Any]:
+        invite_id = f"INV-{uuid.uuid4().hex[:8].upper()}"
+        token = secrets.token_urlsafe(24)
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            INSERT INTO facility_owners (id, manager_user_id, facility_id, owner_email, invite_token)
+            VALUES (?, ?, ?, ?, ?);
+            """,
+            (invite_id, manager_user_id, facility_id, owner_email, token),
+        )
+        self.conn.commit()
+        return self.get_owner_invite_by_token(token)  # type: ignore
+
+    def get_owner_invite_by_token(self, token: str) -> Optional[Dict[str, Any]]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM facility_owners WHERE invite_token = ?", (token,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def list_owner_invites(self, manager_user_id: str, facility_id: str) -> List[Dict[str, Any]]:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM facility_owners WHERE manager_user_id = ? AND facility_id = ? ORDER BY invited_at DESC",
+            (manager_user_id, facility_id),
+        )
+        return [dict(r) for r in cursor.fetchall()]
+
+    def accept_owner_invite(self, token: str, owner_user_id: str) -> Optional[Dict[str, Any]]:
+        """Links owner_user_id to the invite. Returns the updated invite, or None for a bad token."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "UPDATE facility_owners SET owner_user_id = ?, accepted_at = CURRENT_TIMESTAMP WHERE invite_token = ?",
+            (owner_user_id, token),
+        )
+        self.conn.commit()
+        if cursor.rowcount == 0:
+            return None
+        return self.get_owner_invite_by_token(token)
+
+    def find_owner_link(self, owner_user_id: str, facility_id: str) -> Optional[Dict[str, Any]]:
+        """The accepted invite making owner_user_id a read-only owner of facility_id, or None.
+
+        Looked up directly by owner_user_id/facility_id, never through manager_user_id's
+        row in `users`, so this still resolves after the manager's login is deleted.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT * FROM facility_owners
+            WHERE owner_user_id = ? AND facility_id = ? AND accepted_at IS NOT NULL
+            ORDER BY accepted_at DESC LIMIT 1
+            """,
+            (owner_user_id, facility_id),
+        )
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def list_owner_links_for_user(self, owner_user_id: str) -> List[Dict[str, Any]]:
+        """Every facility owner_user_id has accepted an invite for, across any manager."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT * FROM facility_owners WHERE owner_user_id = ? AND accepted_at IS NOT NULL ORDER BY accepted_at DESC",
+            (owner_user_id,),
+        )
+        return [dict(r) for r in cursor.fetchall()]
+
+    def delete_user(self, user_id: str) -> bool:
+        """Removes a login (e.g. the original manager's). Facility/employee/roster rows are
+        keyed by user id only as a string prefix on their own id (see ShiftFlowRepository's
+        owner-scoping docstring), never by a foreign key to this table, so deleting a user
+        here never deletes or touches that data - including facility_owners rows that still
+        name this user_id as manager_user_id or owner_user_id."""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        self.conn.commit()
+        return cursor.rowcount > 0

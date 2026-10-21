@@ -83,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
                   ShiftFlow Studio
                 </h1>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#E4E9EC] text-[#2B3A42] border border-slate-200">
-                  Enterprise Workforce OS
+                  Schedule Builder
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">

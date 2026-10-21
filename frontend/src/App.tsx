@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ActiveTabId,
   ArchetypePreset,
+  BillingSignupInput,
+  BillingSignupResult,
   EmployeeRecord,
   ErgonomicGuardrails,
   NewEmployeeInput,
@@ -26,6 +28,9 @@ import {
   loginApi,
   signupApi,
   logoutApi,
+  billingSignupApi,
+  listMyOwnerLinksApi,
+  OwnerLink,
   loadSolveConfig,
   saveSolveConfig,
   clearSolveConfig,
@@ -34,6 +39,9 @@ import {
 
 import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
+import { PricingView } from './components/PricingView';
+import { OwnerAcceptView } from './components/OwnerAcceptView';
+import { OwnerSummaryView } from './components/OwnerSummaryView';
 import { OnboardingWizard } from './components/OnboardingWizard';
 import { MasterRosterView } from './components/MasterRosterView';
 import { StaffDirectoryView } from './components/StaffDirectoryView';
@@ -124,6 +132,34 @@ export function App() {
 
   const [authState, setAuthState] = useState<'checking' | 'needs-login' | 'ready'>('checking');
   const [signupAllowed, setSignupAllowed] = useState(true);
+  // A brand-new visitor lands on the pricing page first (the self-serve funnel); 'login'
+  // is reached either by clicking "Sign in instead" there, or directly if sign-up is closed.
+  const [preAuthView, setPreAuthView] = useState<'pricing' | 'login'>('pricing');
+
+  // An invite link for a second, independent "owner" login (see OwnerAccessPanel.tsx /
+  // owner_routes.py) carries its token in the URL rather than through a router, since this
+  // app has none. It works regardless of whether anyone is currently signed in.
+  const [ownerInviteToken] = useState<string | null>(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('owner_invite');
+    } catch {
+      return null;
+    }
+  });
+  const handleOwnerInviteAccepted = () => {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('owner_invite');
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Not essential - the invite still worked even if the URL could not be cleaned up.
+    }
+    setAuthState('ready');
+  };
+
+  // Facilities the signed-in account has been given read-only owner access to. null means
+  // "not checked yet"; an ordinary manager's own account resolves to an empty array.
+  const [ownerLinks, setOwnerLinks] = useState<OwnerLink[] | null>(null);
 
   useEffect(() => {
     authStatusApi().then(({ login_required, logged_in, signup_allowed }) => {
@@ -131,6 +167,17 @@ export function App() {
       setAuthState(login_required && !logged_in ? 'needs-login' : 'ready');
     });
   }, []);
+
+  useEffect(() => {
+    if (authState !== 'ready') return;
+    let isMounted = true;
+    listMyOwnerLinksApi().then((links) => {
+      if (isMounted) setOwnerLinks(links);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [authState]);
 
   const handleLogin = async (email: string, password: string): Promise<string | null> => {
     const err = await loginApi(email, password);
@@ -144,11 +191,22 @@ export function App() {
     return err;
   };
 
+  /** The pricing page's "Start my plan" action. See billingSignupApi / billing_routes.py:
+   *  this both creates the account and signs it in, same as handleSignup above. */
+  const handleBillingSignup = async (
+    input: BillingSignupInput
+  ): Promise<{ result: BillingSignupResult | null; error: string | null }> => {
+    const outcome = await billingSignupApi(input);
+    if (!outcome.error) setAuthState('ready');
+    return outcome;
+  };
+
   const handleLogout = async () => {
     await logoutApi();
     // The saved setup is per-browser, not per-account, so it must not be left behind
     // for whoever signs in next on this machine.
     clearSolveConfig();
+    setOwnerLinks(null);
     setAuthState('needs-login');
   };
 
@@ -445,11 +503,32 @@ export function App() {
     URL.revokeObjectURL(url);
   };
 
-  if (authState === 'checking') {
+  // An owner invite link works whether or not anyone is currently signed in, and takes
+  // over the whole page until it's been accepted - it is not part of the normal app.
+  if (ownerInviteToken) {
+    return <OwnerAcceptView token={ownerInviteToken} onAccepted={handleOwnerInviteAccepted} />;
+  }
+
+  if (authState === 'checking' || (authState === 'ready' && ownerLinks === null)) {
     return <div className="min-h-screen bg-[#F4F1EA]" />;
   }
   if (authState === 'needs-login') {
-    return <LoginView onLogin={handleLogin} onSignup={handleSignup} signupAllowed={signupAllowed} />;
+    if (signupAllowed && preAuthView === 'pricing') {
+      return <PricingView onStartPlan={handleBillingSignup} onSignInInstead={() => setPreAuthView('login')} />;
+    }
+    return (
+      <LoginView
+        onLogin={handleLogin}
+        onSignup={handleSignup}
+        signupAllowed={signupAllowed}
+        onViewPricing={signupAllowed ? () => setPreAuthView('pricing') : undefined}
+      />
+    );
+  }
+  // An account that is only an invited owner (no facility of its own) gets the read-only
+  // summary instead of the full scheduling tool - see OwnerSummaryView.tsx.
+  if (ownerLinks && ownerLinks.length > 0) {
+    return <OwnerSummaryView links={ownerLinks} onLogout={handleLogout} />;
   }
 
   return (
@@ -582,6 +661,7 @@ export function App() {
               <StaffDirectoryView
                 employees={employees}
                 rosterLines={solution.roster_lines}
+                facilityId={STAFF_FACILITY_ID}
                 onAddEmployee={handleAddEmployee}
                 onToggleActive={(empId, sep) =>
                   sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)

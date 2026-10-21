@@ -353,3 +353,27 @@ export interface ShiftSwapValidationResponse {
   validation_messages: string[];
   next_monday_rotation_impact: string;
 }
+
+/**
+ * Pricing / checkout (see PricingView.tsx and gtm/commercial_pricing.md for the tiers
+ * these ids name). Additive to the plain email/password signup in types above - a billing
+ * plan is layered on top of the same account, not a separate account system.
+ */
+export type BillingPlanId = 'personal' | 'business';
+
+export interface BillingSignupInput {
+  email: string;
+  password: string;
+  plan: BillingPlanId;
+  /** Only meaningful for the 'business' plan; optional for 'personal'. */
+  businessName?: string;
+}
+
+/** What /api/billing/signup returns on success. billing_status is a stub until real
+ *  Stripe billing exists - see backend/app/api/billing_routes.py. */
+export interface BillingSignupResult {
+  status: string;
+  email: string;
+  plan: BillingPlanId;
+  billing_status: string;
+}

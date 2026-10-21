@@ -13,6 +13,23 @@ export function buildOwnerShareSummary(solution: SolveResponse): string {
   const money = (n: number) =>
     `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+  // Blended wage over priced (assigned, wage-known) hours only - matching the
+  // "Blended Average Wage" tile on screen. labor.avg_hourly_wage is not used here:
+  // the solver computes it as total regular payroll divided by total scheduled
+  // regular hours across every shift pattern, including ones nobody is assigned
+  // to yet (unpaid, $0 hours). Early on - most patterns still unassigned - that
+  // drags the figure down to a fraction of any real employee's wage, which would
+  // mislead an owner reading this summary.
+  let wageHours = 0;
+  let wageSum = 0;
+  for (const l of solution.roster_lines) {
+    if (typeof l.hourly_wage === 'number' && typeof l.weekly_hours === 'number') {
+      wageHours += l.weekly_hours;
+      wageSum += l.hourly_wage * l.weekly_hours;
+    }
+  }
+  const blendedWage = wageHours > 0 ? wageSum / wageHours : null;
+
   const lines: string[] = [
     `Labor cost summary — ${solution.instance_name}`,
     '',
@@ -24,8 +41,8 @@ export function buildOwnerShareSummary(solution: SolveResponse): string {
     `Coverage (required ÷ scheduled hours): ${labor.labor_efficiency_pct}%`,
   ];
 
-  if (labor.avg_hourly_wage !== null) {
-    lines.push(`Blended average wage: $${labor.avg_hourly_wage.toFixed(2)}/hr`);
+  if (blendedWage !== null) {
+    lines.push(`Blended average wage: $${blendedWage.toFixed(2)}/hr`);
   }
 
   lines.push(`Staffing: ${solution.employee_count} shift patterns`);

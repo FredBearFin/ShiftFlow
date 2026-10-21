@@ -5,9 +5,12 @@ interface LoginViewProps {
   onSignup: (email: string, password: string) => Promise<string | null>;
   /** When false the server has closed public sign-up, so only Sign In is offered. */
   signupAllowed?: boolean;
+  /** When set, shows a link back to the pricing page (see PricingView.tsx) for a new
+   *  visitor who landed here first instead of picking a plan. Omit to hide the link. */
+  onViewPricing?: () => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupAllowed = true }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupAllowed = true, onViewPricing }) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -109,6 +112,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
           {submitting ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
         </button>
       </form>
+
+      {signupAllowed && onViewPricing && (
+        <p className="mt-4 text-xs text-slate-500">
+          New here?{' '}
+          <button type="button" onClick={onViewPricing} className="font-semibold underline">
+            View plans and pricing
+          </button>
+        </p>
+      )}
     </div>
   );
 };

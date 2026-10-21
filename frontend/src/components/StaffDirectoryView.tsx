@@ -3,6 +3,7 @@ import { useDialogFocus } from './ui/useDialogFocus';
 import { Term } from './ui/Term';
 import { AccommodationType, EmployeeRecord, RosterLine, SeparationCategory } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import { OwnerAccessPanel } from './OwnerAccessPanel';
 
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -19,6 +20,9 @@ const parseWage = (raw: string): number | null => {
 interface StaffDirectoryViewProps {
   employees: EmployeeRecord[];
   rosterLines: RosterLine[];
+  /** The facility this directory belongs to, so the owner-invite panel can be scoped to it.
+   *  Defaults to the app's single-facility id, matching every other view in this app. */
+  facilityId?: string;
   onAddEmployee: (emp: {
     name: string;
     role: string;
@@ -41,6 +45,7 @@ interface StaffDirectoryViewProps {
 export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
   employees,
   rosterLines,
+  facilityId = 'FAC-OMAHA-01',
   onAddEmployee,
   onToggleActive,
   onUpdateAvailability,
@@ -111,6 +116,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
   return (
     <div className="space-y-5 no-print">
+      <OwnerAccessPanel facilityId={facilityId} />
+
       {/* Directory Action Header */}
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>

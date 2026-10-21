@@ -5,6 +5,8 @@
 
 import {
   ArchetypePreset,
+  BillingSignupInput,
+  BillingSignupResult,
   ErgonomicGuardrails,
   PersistedSolveConfig,
   SeparationCategory,
@@ -633,4 +635,161 @@ export async function signupApi(email: string, password: string): Promise<string
 
 export async function logoutApi(): Promise<void> {
   await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined);
+}
+
+/**
+ * The pricing page's checkout action: creates the account and starts the chosen plan
+ * (see PricingView.tsx and backend/app/api/billing_routes.py). On success this is also a
+ * sign-in, exactly like signupApi above - the caller can treat it the same way.
+ * Returns the created plan/status on success, or an error message on failure.
+ */
+export async function billingSignupApi(
+  input: BillingSignupInput
+): Promise<{ result: BillingSignupResult | null; error: string | null }> {
+  try {
+    const res = await fetch('/api/billing/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: input.email,
+        password: input.password,
+        plan: input.plan,
+        business_name: input.businessName || undefined,
+      }),
+    });
+    if (res.ok) return { result: await res.json(), error: null };
+    const body = await res.json().catch(() => null);
+    if (typeof body?.detail === 'string') return { result: null, error: body.detail };
+    if (Array.isArray(body?.detail) && body.detail[0]?.msg) return { result: null, error: body.detail[0].msg };
+    return { result: null, error: 'Something went wrong.' };
+  } catch {
+    return { result: null, error: 'Could not reach the billing service.' };
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * Facility owners - a second, independent "owner" login per facility/account
+ * (see backend/app/api/owner_routes.py). Deliberately minimal: an invite by
+ * email, a read-only summary, nothing role-based beyond that.
+ * ------------------------------------------------------------------------- */
+
+async function ownerErrorDetail(res: Response, fallback: string): Promise<string> {
+  const body = await res.json().catch(() => null);
+  if (typeof body?.detail === 'string') return body.detail;
+  if (Array.isArray(body?.detail) && body.detail[0]?.msg) return body.detail[0].msg;
+  return fallback;
+}
+
+export interface OwnerInviteResult {
+  invite_token: string;
+  accept_path: string;
+  owner_email: string;
+  facility_id: string;
+  note: string;
+}
+
+/** Invites a second, independent "owner" login onto a facility. No email service is
+ *  configured here, so the returned link is what a real deployment would send by email. */
+export async function createOwnerInviteApi(
+  facilityId: string,
+  ownerEmail: string
+): Promise<{ result: OwnerInviteResult | null; error: string | null }> {
+  try {
+    const res = await fetch('/api/owners/invite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facility_id: facilityId, owner_email: ownerEmail }),
+    });
+    if (res.ok) return { result: await res.json(), error: null };
+    return { result: null, error: await ownerErrorDetail(res, 'The invite could not be created.') };
+  } catch {
+    return { result: null, error: 'Could not reach the server.' };
+  }
+}
+
+export interface OwnerInviteRecord {
+  id: string;
+  owner_email: string;
+  accept_path: string;
+  invited_at: string;
+  accepted_at: string | null;
+}
+
+export async function listOwnerInvitesApi(facilityId: string): Promise<OwnerInviteRecord[]> {
+  const res = await fetch(`/api/owners/facility/${encodeURIComponent(facilityId)}/invites`);
+  if (!res.ok) throw new Error('Owner invites could not be loaded.');
+  return await res.json();
+}
+
+export interface OwnerLink {
+  facility_id: string;
+  facility_name: string;
+}
+
+/** Facilities the signed-in account has accepted owner access to (empty for an ordinary manager). */
+export async function listMyOwnerLinksApi(): Promise<OwnerLink[]> {
+  try {
+    const res = await fetch('/api/owners/my-links');
+    if (!res.ok) return [];
+    return await res.json();
+  } catch {
+    return [];
+  }
+}
+
+export interface OwnerFacilitySummary {
+  facility_id: string;
+  facility_name: string;
+  active_employee_count: number;
+  estimated_weekly_hours: number;
+  estimated_weekly_payroll: number;
+  average_hourly_wage: number | null;
+  note: string;
+}
+
+export async function fetchOwnerFacilitySummaryApi(facilityId: string): Promise<OwnerFacilitySummary> {
+  const res = await fetch(`/api/owners/facility/${encodeURIComponent(facilityId)}/summary`);
+  if (!res.ok) throw new Error('This facility summary could not be loaded.');
+  return await res.json();
+}
+
+export interface OwnerInvitePreview {
+  facility_id: string;
+  facility_name: string;
+  owner_email: string;
+  already_accepted: boolean;
+}
+
+export async function previewOwnerInviteApi(
+  token: string
+): Promise<{ result: OwnerInvitePreview | null; error: string | null }> {
+  try {
+    const res = await fetch(`/api/owners/accept/${encodeURIComponent(token)}`);
+    if (res.ok) return { result: await res.json(), error: null };
+    return { result: null, error: await ownerErrorDetail(res, 'This invite link is not valid.') };
+  } catch {
+    return { result: null, error: 'Could not reach the server.' };
+  }
+}
+
+/** Accepts an owner invite: creates+signs in a new account (password required), or links
+ *  the invite to the caller's already-signed-in account (matching email, no password). */
+export async function acceptOwnerInviteApi(
+  token: string,
+  password?: string
+): Promise<{ status: string | null; facilityId: string | null; error: string | null }> {
+  try {
+    const res = await fetch(`/api/owners/accept/${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(password ? { password } : {}),
+    });
+    if (res.ok) {
+      const body = await res.json();
+      return { status: body.status, facilityId: body.facility_id, error: null };
+    }
+    return { status: null, facilityId: null, error: await ownerErrorDetail(res, 'The invite could not be accepted.') };
+  } catch {
+    return { status: null, facilityId: null, error: 'Could not reach the server.' };
+  }
 }

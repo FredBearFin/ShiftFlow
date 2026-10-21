@@ -13,6 +13,8 @@ from app.api.pos_payroll_routes import router as pos_payroll_router
 from app.api.emergency_routes import router as emergency_router
 from app.api.handover_routes import router as handover_router
 from app.api.auth_routes import router as auth_router
+from app.api.owner_routes import router as owner_router
+from app.api.billing_routes import router as billing_router
 from app.auth import require_login, validate_auth_config
 from app.config import settings
 from app.database import init_db, get_db_connection
@@ -99,6 +101,8 @@ app.include_router(
 )
 
 app.include_router(auth_router)
+app.include_router(owner_router)
+app.include_router(billing_router)
 
 
 @app.get("/health", tags=["System"])

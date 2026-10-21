@@ -35,7 +35,20 @@ from app.database import get_db_connection
 
 SESSION_COOKIE = "shiftflow_session"
 SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60
-_EXEMPT_PATH_PREFIXES = ("/health", "/api/auth/login", "/api/auth/signup", "/api/auth/logout", "/api/auth/status")
+_EXEMPT_PATH_PREFIXES = (
+    "/health",
+    "/api/auth/login",
+    "/api/auth/signup",
+    "/api/auth/logout",
+    "/api/auth/status",
+    # Preview and acceptance of an owner invite happen before the invited owner has (or is
+    # signed into) an account, so this one path must work without a session - see
+    # app/api/owner_routes.py. Every other /api/owners/* route stays behind login.
+    "/api/owners/accept/",
+    # The pricing-page checkout stub (app.api.billing_routes) creates its own account,
+    # so a visitor who is not signed in yet must be able to reach it, same as /api/auth/signup.
+    "/api/billing/signup",
+)
 _PBKDF2_ITERATIONS = 390_000
 
 MIN_SECRET_LENGTH = 32
