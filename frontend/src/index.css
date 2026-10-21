@@ -6,15 +6,61 @@
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-heading: 'Source Sans 3', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* ---------------------------------------------------------------------
+     Colour tokens. Every colour the app renders has exactly one name here.
+     Use the Tailwind utilities generated from these (bg-canvas, text-muted,
+     border-border-control, …) — never a raw hex and never a default-palette
+     slate- or indigo- utility. See scripts/README-codemod-tokens.md.
+
+     Contrast (measured, vs #FFFFFF card / #F4F1EA canvas):
+       ink 11.75 / 10.42   ink-soft 9.67 / 8.57   muted 5.79 / 5.13
+       accent 5.91 / 5.24  danger 6.72  warning-ink 6.74
+     --warning (2.97) is a FILL/STROKE token only; never use it for text.
+     --------------------------------------------------------------------- */
+
+  /* Surfaces: warm page, white cards, neutral fills. */
   --canvas: #F4F1EA;
   --card: #FFFFFF;
+  --surface-subtle: #F8FAFC;
+  --surface: #F1F5F9;
+  --surface-sunken: #E4E9EC;
+  --surface-sunken-strong: #D9DFE3;
+
+  /* Borders, lightest to heaviest. --border-control edges inputs and cards. */
+  --border-subtle: #E2E8F0;
   --border: #D1D5DB;
   --border-control: #7F8A92;
+
+  /* Text, darkest to lightest. One darkest value and one muted value. */
   --ink: #2B3A42;
+  --ink-strong: #1E2A31;
+  --ink-soft: #3A4650;
   --muted: #5C6770;
+
+  /* Brand + state. *-strong are hover/active, *-soft are tint backgrounds. */
   --accent: #4A6B5D;
-  --danger: #9F3A32;
+  --accent-strong: #3E5C50;
+  --accent-soft: #EAF0EC;
   --warning: #C28B47;
+  --warning-ink: #7A5420;
+  --warning-soft: #F7EFE3;
+  --danger: #9F3A32;
+  --danger-strong: #862F28;
+  --danger-soft: #F7EAE8;
+
+  /* Ordered 3-step status ramp, good -> watch -> bad. Ordered by hue
+     (154deg green -> 32deg amber -> 5deg red) so severity ranks by colour.
+     Always pair with a label or shape: colour alone is not an encoding. */
+  --status-ok: var(--accent);
+  --status-ok-soft: var(--accent-soft);
+  --status-ok-ink: var(--accent-strong);
+  --status-watch: var(--warning);
+  --status-watch-soft: var(--warning-soft);
+  --status-watch-ink: var(--warning-ink);
+  --status-risk: var(--danger);
+  --status-risk-soft: var(--danger-soft);
+  --status-risk-ink: var(--danger-strong);
 }
 
 body {
@@ -47,40 +93,40 @@ kbd {
    .enterprise-card is kept as an alias for views outside this change. */
 .card,
 .enterprise-card {
-  background-color: #ffffff;
+  background-color: var(--card);
   border: 1px solid var(--border-control);
   border-radius: 0.5rem;
 }
 
 /* Neutral shift pills (dual-encoded: fill + label; OFF is dashed) */
 .shift-pill-M {
-  background-color: #E4E9EC;
-  color: #2B3A42;
-  border: 1px solid #7F8A92;
+  background-color: var(--surface-sunken);
+  color: var(--ink);
+  border: 1px solid var(--border-control);
 }
 
 .shift-pill-D {
-  background-color: #FFFFFF;
-  color: #2B3A42;
-  border: 1px solid #7F8A92;
+  background-color: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--border-control);
 }
 
 .shift-pill-E {
-  background-color: #F4F1EA;
-  color: #2B3A42;
-  border: 1px solid #7F8A92;
+  background-color: var(--canvas);
+  color: var(--ink);
+  border: 1px solid var(--border-control);
 }
 
 .shift-pill-N {
-  background-color: #D9DFE3;
-  color: #2B3A42;
-  border: 1px solid #7F8A92;
+  background-color: var(--surface-sunken-strong);
+  color: var(--ink);
+  border: 1px solid var(--border-control);
 }
 
 .shift-pill-OFF {
-  background-color: #FFFFFF;
-  color: #5C6770;
-  border: 1px dashed #7F8A92;
+  background-color: var(--card);
+  color: var(--muted);
+  border: 1px dashed var(--border-control);
 }
 
 @media print {
@@ -88,7 +134,7 @@ kbd {
     display: none !important;
   }
   body {
-    background-color: #ffffff;
+    background-color: var(--card);
   }
 }
 
