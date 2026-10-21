@@ -34,8 +34,8 @@ describe('weekly schedule grid semantics', () => {
 
     expect(firstCell.tagName).toBe('TH');
     expect(firstCell.getAttribute('scope')).toBe('row');
-    expect(firstCell.textContent).toContain('LINE-01');
-    expect(firstCell.textContent).toContain('Alex Morgan');
+    expect(firstCell.textContent).toContain('PATTERN-01');
+    expect(firstCell.textContent).toContain('Staff 1');
   });
 
   it('scopes every real column header', () => {

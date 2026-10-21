@@ -5,6 +5,7 @@
 import type {
   ErgonomicCriterionBreakdown,
   IntervalCoverageCell,
+  ParetoPoint,
   MultigraphNode,
   RosterCell,
   RosterLine,
@@ -173,7 +174,7 @@ export function makeSolution(opts: FixtureOptions = {}): SolveResponse {
       full_weekends_off_count: lineCount,
       full_weekends_off_pct: 100,
       consolidated_rest_blocks_pct: 100,
-      criteria_breakdown: ['C1', 'C2'].map(makeCriterion),
+      criteria_breakdown: ['weekend_work', 'shift_duration'].map(makeCriterion),
       statutory_accommodation_violations_count: 0,
       fair_workweek_compliant: undefined,
       mandatory_rest_violations: 0,
@@ -199,7 +200,46 @@ export function makeSolution(opts: FixtureOptions = {}): SolveResponse {
 
 /**
  * A ready-made solution for tests that need a realistic response and do not care
- * about its particulars. Track E's accessibility tests use this; tests that need
- * to vary the shape call makeSolution() directly.
+ * about its particulars. Tests that need to vary the shape call makeSolution().
+ *
+ * It deliberately carries the three things the accessibility tests need a view to
+ * actually render: some understaffed hours (so the coverage summary has something
+ * to announce), a couple of closed hours (so the heatmap paints its closed-cell
+ * style), and a two-point Pareto frontier (so the explorer renders its Apply
+ * controls). makeSolution()'s bare defaults have none of those.
  */
-export const solutionFixture: SolveResponse = makeSolution();
+function paretoPoint(index: number, leeway: number, selected: boolean): ParetoPoint {
+  return {
+    point_index: index,
+    leeway_pct: leeway,
+    obj_shift: 100 + index,
+    obj_ergo: 180 - index * 60,
+    ergo_improvement_pct: index * 25,
+    becker_theoretical_improvement_pct: index * 25,
+    employee_count: 12 + index,
+    active_shift_types_count: 3,
+    total_understaffing_hours: index === 0 ? 102 : 60,
+    total_overstaffing_hours: 0,
+    full_weekends_off_pct: 25 + index * 40,
+    estimated_weekly_payroll: 720,
+    is_knee_point: index === 1,
+    is_selected: selected,
+    label: index === 0 ? 'No extra flexibility' : `+${leeway}% flexibility`,
+  };
+}
+
+export const solutionFixture: SolveResponse = makeSolution({
+  understaffPerCell: 1,
+  solution: {
+    pareto_frontier: [paretoPoint(0, 0, true), paretoPoint(1, 10, false)],
+  },
+});
+
+// Two closed hours (nothing required, nobody scheduled) so the heatmap has
+// closed cells to style; makeCoverage gives every hour a requirement of 2.
+for (const hour of [0, 1]) {
+  const cell = solutionFixture.interval_coverage[hour];
+  cell.required_staff = 0;
+  cell.scheduled_staff = 0;
+  cell.understaffing = 0;
+}

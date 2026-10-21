@@ -96,7 +96,7 @@ describe('lost content uses the muted token, not slate-400', () => {
       <CoverageHeatmapView solution={{ ...solutionFixture, interval_coverage: closed }} />
     );
     const closedCells = Array.from(container.querySelectorAll('tbody td div')).filter((d) =>
-      d.className.includes('bg-slate-50')
+      d.className.includes('bg-surface-subtle')
     );
     expect(closedCells.length).toBeGreaterThan(0);
     expect(closedCells.every((d) => d.className.includes('text-muted'))).toBe(true);

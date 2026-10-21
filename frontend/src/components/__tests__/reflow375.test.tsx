@@ -41,11 +41,13 @@ describe('375px reflow', () => {
       />
     );
 
-    const wageChip = Array.from(container.querySelectorAll('span')).find((s) =>
-      /^\$[\d.,]+\/hr$/.test((s.textContent || '').trim())
+    // Track A replaced the blended-wage chip in this KPI with the priced-lines
+    // fraction, so the row is located by the payroll total it still carries.
+    const totalChip = Array.from(container.querySelectorAll('span')).find((s) =>
+      /^\$[\d,]+\.\d{2}$/.test((s.textContent || '').trim())
     )!;
-    expect(wageChip).toBeTruthy();
-    const row = wageChip.parentElement!;
+    expect(totalChip).toBeTruthy();
+    const row = totalChip.parentElement!;
     expect(row.className).toContain('flex-wrap');
     expect(row.className).toContain('min-w-0');
     // Both ends of the row must be allowed to shrink, not just the container.
