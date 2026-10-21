@@ -1,6 +1,10 @@
 """Automated tests for legal compliance, Title VII/ADA accommodations, and separation audits."""
 
 import unittest
+
+from fastapi.testclient import TestClient
+
+from app.main import app
 from app.database import init_db, get_db_connection, ShiftFlowRepository, SeparationAuditExistsError
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
 from app.schemas import (
@@ -90,6 +94,40 @@ class TestLegalComplianceAndAccommodations(unittest.TestCase):
         # The ergonomics count is computed from the solved lines, not fixed at zero.
         expected_count = sum(1 for line in sol.roster_lines if line.statutory_accommodation_violation)
         self.assertEqual(sol.ergonomics_audit.statutory_accommodation_violations_count, expected_count)
+
+    def test_01b_accommodation_fields_can_no_longer_be_recorded(self):
+        """An accommodation the engine never reads is not accepted and not stored."""
+        client = TestClient(app)
+        res = client.post(
+            "/api/employees",
+            json={
+                "facility_id": "FAC-TEST-01",
+                "name": "Dana Reyes",
+                "role": "Clerk",
+                "wage": 18.0,
+                "available_days": [0, 1, 2, 3, 4, 5],
+                "accommodation_type": "religious",
+                "statutory_notes": "Sunday observance approved",
+            },
+        )
+        self.assertEqual(res.status_code, 200, res.text)
+        created = res.json()
+
+        # The request is accepted, but nothing records a legal accommodation that the
+        # solver would not act on.
+        self.assertEqual(created.get("accommodation_type"), "none")
+        self.assertIsNone(created.get("statutory_notes"))
+
+        # The same is true of an update.
+        upd = client.put(
+            f"/api/employees/{created['id']}",
+            json={"accommodation_type": "medical", "statutory_notes": "ADA note"},
+        )
+        self.assertEqual(upd.status_code, 200, upd.text)
+        self.assertEqual(upd.json().get("accommodation_type"), "none")
+        self.assertIsNone(upd.json().get("statutory_notes"))
+
+        self.repo.delete_employee(created["id"])
 
     def test_02_contemporaneous_separation_audit_logging(self):
         """Verify employee deactivation logs an immutable contemporaneous audit record for retaliation defense."""

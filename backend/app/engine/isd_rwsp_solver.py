@@ -773,7 +773,13 @@ class ISDRWSPSolver:
                 if curr_code != "OFF" and d not in avail_days:
                     is_avail_conflict = True
                     avail_conflicts += 1
-                    # Title VII Religious & ADA Medical Accommodation Enforcement
+                    # NOT an independent legal check: this only ever fires inside the
+                    # availability-conflict branch above, so it restates that conflict for an
+                    # employee who happens to carry an accommodation record. statutory_notes is
+                    # never read here and the day is never excluded from the solve. The product
+                    # no longer offers the accommodation field or surfaces this flag as a
+                    # compliance alert; nothing may present it as one without first making the
+                    # protected days a real constraint on the solve.
                     emp_record = emp_by_line.get(line_num)
                     if emp_record and getattr(emp_record, "accommodation_type", "none") in ("religious", "medical"):
                         is_statutory_conflict = True

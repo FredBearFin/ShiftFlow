@@ -9,7 +9,6 @@ from app.deps import get_repo
 
 router = APIRouter(prefix="/api/employees", tags=["Workforce & Employees"])
 
-AccommodationType = Literal["none", "religious", "medical", "academic"]
 SeparationCategory = Literal["voluntary_resignation", "mutual_agreement", "involuntary_for_cause", "layoff_reduction"]
 
 
@@ -20,11 +19,10 @@ class EmployeeCreateSchema(BaseModel):
     wage: float = Field(default=16.50, ge=7.25, le=150.0, description="Hourly wage rate ($)")
     available_days: List[int] = Field(default=[0, 1, 2, 3, 4, 5, 6], description="Day indices 0=Mon..6=Sun")
     assigned_line: Optional[int] = Field(default=None, description="Assigned shift pattern (1..N)")
-    accommodation_type: AccommodationType = Field(
-        default="none",
-        description="Statutory accommodation protection: none, religious (Title VII), medical (ADA), academic",
-    )
-    statutory_notes: Optional[str] = Field(default=None, description="Legal accommodation documentation notes")
+    # No accommodation_type / statutory_notes: the engine never read them, so recording a
+    # legal accommodation here changed nothing about the schedule it produced. The product
+    # no longer offers the field rather than offering one that does nothing. A staff
+    # member's protected days are recorded as days off in available_days.
 
 
 class EmployeeUpdateSchema(BaseModel):
@@ -34,12 +32,10 @@ class EmployeeUpdateSchema(BaseModel):
     active: Optional[bool] = None
     available_days: Optional[List[int]] = None
     assigned_line: Optional[int] = None
-    accommodation_type: Optional[AccommodationType] = None
-    statutory_notes: Optional[str] = None
 
     @model_validator(mode="after")
     def required_fields_not_null(self):
-        # An explicit null clears assigned_line and statutory_notes. On the other fields it is refused.
+        # An explicit null clears assigned_line. On the other fields it is refused.
         for field in ("name", "role", "wage", "available_days", "active"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"{field} cannot be null")
@@ -67,7 +63,7 @@ def list_employees(
     return repo.list_employees(facility_id=facility_id, active_only=active_only)
 
 
-@router.post("", summary="Add new workforce associate with Title VII/ADA protections")
+@router.post("", summary="Add new workforce associate")
 def create_employee(
     payload: EmployeeCreateSchema,
     repo: ShiftFlowRepository = Depends(get_repo),
@@ -91,8 +87,6 @@ def create_employee(
         wage=payload.wage,
         available_days=payload.available_days,
         assigned_line=payload.assigned_line,
-        accommodation_type=payload.accommodation_type,
-        statutory_notes=payload.statutory_notes,
     )
     return emp
 
@@ -116,7 +110,7 @@ def get_employee(
     return emp
 
 
-@router.put("/{employee_id}", summary="Update employee profile, accommodation & availability")
+@router.put("/{employee_id}", summary="Update employee profile & availability")
 def update_employee(
     employee_id: str,
     payload: EmployeeUpdateSchema,

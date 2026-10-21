@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useDialogFocus } from './ui/useDialogFocus';
-import { AccommodationType, EmployeeRecord, RosterLine, SeparationCategory } from '../types';
+import { EmployeeRecord, RosterLine, SeparationCategory } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -23,8 +23,6 @@ interface StaffDirectoryViewProps {
     role: string;
     wage: number;
     days: number[];
-    accommodation_type: AccommodationType;
-    statutory_notes?: string;
   }) => void;
   onToggleActive: (
     id: string,
@@ -52,8 +50,6 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
   const [newRole, setNewRole] = useState('Frontline Clerk');
   const [newWage, setNewWage] = useState('');
   const [newDays, setNewDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]);
-  const [newAccom, setNewAccom] = useState<AccommodationType>('none');
-  const [newStatNotes, setNewStatNotes] = useState('');
 
   // Structured Separation Modal State
   const [separatingEmp, setSeparatingEmp] = useState<EmployeeRecord | null>(null);
@@ -89,12 +85,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       role: newRole.trim(),
       wage: newWageValue,
       days: newDays,
-      accommodation_type: newAccom,
-      statutory_notes: newStatNotes.trim() || undefined,
     });
     setNewName('');
-    setNewStatNotes('');
-    setNewAccom('none');
     setShowAddModal(false);
   };
 
@@ -119,10 +111,12 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
             </span>
           </div>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
-            Staff Directory, Availability Matrix & Statutory Protections
+            Staff Directory & Availability Matrix
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage associate availability with hard religious/medical statutory constraints and legally documented separation workflows.
+            Manage which days each associate can work, and record separations with their
+            documentation. Days marked unavailable are reported as conflicts on the schedule, not
+            enforced as a hard constraint — review any conflict flagged on the Weekly Schedule tab.
           </p>
         </div>
 
@@ -178,11 +172,6 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     >
                       {emp.is_active ? 'Active' : 'Separated'}
                     </span>
-                    {emp.accommodation_type && emp.accommodation_type !== 'none' && (
-                      <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92] capitalize">
-                        {emp.accommodation_type === 'religious' ? 'Sabbath accom.' : `${emp.accommodation_type} Accom.`}
-                      </span>
-                    )}
                   </div>
                 </div>
 
@@ -210,9 +199,6 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     <span className="text-xs font-semibold text-slate-700">
                       Available Days (Mon – Sun):
                     </span>
-                    {emp.accommodation_type === 'religious' && (
-                      <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92]">Schedule restriction on file</span>
-                    )}
                   </div>
                   <div className="grid grid-cols-7 gap-1">
                     {DAYS_OF_WEEK.map((d, dIdx) => {
@@ -245,11 +231,6 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   </div>
                 </div>
 
-                {emp.statutory_notes && (
-                  <div className="mt-2 text-xs text-slate-500 italic bg-slate-50 p-1.5 rounded border border-slate-200 no-print">
-                    Doc: {emp.statutory_notes}
-                  </div>
-                )}
               </div>
 
               {/* Action Buttons */}
@@ -283,7 +264,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
         })}
       </div>
 
-      {/* Add Employee Modal with Title VII/ADA Selector */}
+      {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
@@ -330,37 +311,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
               </div>
 
-              {/* Title VII & ADA Statutory Protections */}
-              <div>
-                <label htmlFor="staff-new-accom" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Statutory Accommodation Protection (Title VII / ADA)
-                </label>
-                <select id="staff-new-accom"
-                  value={newAccom}
-                  onChange={(e) => setNewAccom(e.target.value as AccommodationType)}
-                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs bg-white"
-                >
-                  <option value="none">Standard Associate (No Statutory Exclusions)</option>
-                  <option value="religious">Religious Observance (Title VII Sabbath — Hard Invariant)</option>
-                  <option value="medical">Medical Restriction (ADA Certified — Hard Invariant)</option>
-                  <option value="academic">Academic Schedule (Student Class Exclusions)</option>
-                </select>
-              </div>
-
-              {newAccom !== 'none' && (
-                <div>
-                  <label htmlFor="staff-new-notes" className="block text-xs font-semibold text-slate-700 mb-1">
-                    Documentation Notes (Confidential HR Record)
-                  </label>
-                  <input id="staff-new-notes"
-                    type="text"
-                    placeholder="e.g., Friday sundown to Saturday sundown Sabbath observance approved"
-                    value={newStatNotes}
-                    onChange={(e) => setNewStatNotes(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#7F8A92] bg-[#FFFFFF] rounded-lg text-xs text-[#2B3A42] placeholder:text-[#5C6770]"
-                  />
-                </div>
-              )}
+              {/* No statutory-accommodation selector: the field it wrote to was never read by
+                  the scheduling engine, so recording a Title VII or ADA accommodation here
+                  changed nothing about the schedule while the compliance tab stayed green.
+                  Record a protected day by marking it unavailable below. */}
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">

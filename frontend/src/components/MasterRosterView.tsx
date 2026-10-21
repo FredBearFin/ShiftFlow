@@ -658,11 +658,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           {line.availability_conflicts_count} Avail Alert
                         </span>
                       )}
-                      {line.statutory_accommodation_violation && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
-                          Title VII / ADA Sabbath Alert
-                        </span>
-                      )}
+                      {/* No "Title VII / ADA Sabbath Alert" badge: the engine never read the
+                          accommodation record, so the badge was a relabelled availability
+                          conflict and the Avail Alert above already reports that honestly. */}
                       {line.fair_workweek_predictability_warning && (
                         <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
                           Predictability Pay Risk
