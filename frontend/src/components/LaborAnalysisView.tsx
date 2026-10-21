@@ -355,8 +355,14 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             Blended Average Wage
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
-              {avgWage === null ? '' : `$${avgWage.toFixed(2)}/hr`}
+            <span
+              className={
+                avgWage === null
+                  ? 'text-sm italic text-slate-500'
+                  : 'text-2xl font-bold font-mono-tabular text-slate-900'
+              }
+            >
+              {avgWage === null ? 'No staff priced yet' : `$${avgWage.toFixed(2)}/hr`}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">

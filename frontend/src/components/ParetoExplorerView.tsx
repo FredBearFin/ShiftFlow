@@ -94,6 +94,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
     .map((pt) => `${toX(pt.obj_shift).toFixed(1)},${toY(pt.obj_ergo).toFixed(1)}`)
     .join(' ');
 
+  // Several leeway levels can land on the exact same plotted pixel - e.g. with no
+  // staff priced yet, every leeway level costs the same $0/wk, so 0%/10%/the knee
+  // point can all coincide. Track how many labels have already claimed a spot so
+  // repeats stack underneath instead of drawing illegible overlapping text.
+  const labelPositionCounts = new Map<string, number>();
+
   return (
     <div className="space-y-5">
       {/* Plain-language explanation */}
@@ -209,6 +215,14 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 const cx = toX(pt.obj_shift);
                 const cy = toY(pt.obj_ergo);
                 const isSel = Math.abs(pt.leeway_pct - selectedLeewayPct) < 0.1;
+                const shouldLabel =
+                  pt.is_knee_point || isSel || pt.leeway_pct === 0 || pt.leeway_pct === 10 || pt.leeway_pct === 50;
+                let labelStackIndex = 0;
+                if (shouldLabel) {
+                  const posKey = `${Math.round(cx)},${Math.round(cy)}`;
+                  labelStackIndex = labelPositionCounts.get(posKey) ?? 0;
+                  labelPositionCounts.set(posKey, labelStackIndex + 1);
+                }
                 return (
                   <g
                     key={pt.point_index}
@@ -239,10 +253,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       stroke={pt.is_knee_point ? '#b45309' : '#4f46e5'}
                       strokeWidth="2"
                     />
-                    {(pt.is_knee_point || isSel || pt.leeway_pct === 0 || pt.leeway_pct === 10 || pt.leeway_pct === 50) && (
+                    {shouldLabel && (
                       <text
                         x={cx + 8}
-                        y={cy - 8}
+                        y={cy - 8 - labelStackIndex * 13}
                         className="text-xs font-mono-tabular font-bold fill-slate-800"
                       >
                         +{pt.leeway_pct}% cost · ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
