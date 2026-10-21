@@ -6,7 +6,7 @@ import {
   NewEmployeeInput,
   ShiftTemplate,
 } from '../types';
-import { DAYS_OF_WEEK, interpolateBeckerTable7 } from '../services/api';
+import { DAYS_OF_WEEK } from '../services/api';
 import { Button } from './ui/Button';
 import { BardPanel } from './onboarding/BardPanel';
 import { ExplainThis } from './onboarding/ExplainThis';
@@ -208,8 +208,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   ) => {
     onChangeGuardrails({ ...guardrails, [field]: value });
   };
-
-  const expectedErgoGain = interpolateBeckerTable7(leewayPct);
 
   return (
     <div
@@ -954,8 +952,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   bit more payroll gives the solver room to avoid those.
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  You'll see the real payroll difference for your own numbers on the Rest &amp; Fatigue
-                  Balance tab once setup is done — these figures are a general guide for now.
+                  Pick a starting point below — you'll see the real payroll cost and real workload
+                  scores for each option on the Rest &amp; Fatigue Balance tab once setup is done.
                 </p>
               </div>
 
@@ -969,19 +967,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       Extra payroll you're willing to spend
                     </label>
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
-                      +{leewayPct}% payroll →{' '}
-                      <span className="text-emerald-700">
-                        {expectedErgoGain}% less scheduling strain (rough guide)
-                      </span>
+                      +{leewayPct}% payroll
                     </div>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-200">
-                    {leewayPct === 5
-                      ? '★ Recommended'
-                      : leewayPct === 10
-                      ? 'Standard balance'
-                      : 'Custom balance'}
-                  </span>
                 </div>
 
                 <input
@@ -995,15 +983,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   className="w-full accent-indigo-600 cursor-pointer"
                 />
 
-                {/* Quick Preset Anchors from Becker (2026) Table 7 */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2">
                   {[
-                    { lw: 0, gain: '1.80%', tag: 'No extra cost' },
-                    { lw: 1, gain: '8.37%', tag: '+1% cost' },
-                    { lw: 5, gain: '27.34%', tag: '★ Recommended' },
-                    { lw: 10, gain: '39.46%', tag: '+10% cost' },
-                    { lw: 20, gain: '54.64%', tag: '+20% cost' },
-                    { lw: 50, gain: '79.06%', tag: '+50% cost' },
+                    { lw: 0, tag: 'No extra cost' },
+                    { lw: 1, tag: '+1% cost' },
+                    { lw: 5, tag: '+5% cost' },
+                    { lw: 10, tag: '+10% cost' },
+                    { lw: 20, tag: '+20% cost' },
+                    { lw: 50, tag: '+50% cost' },
                   ].map((pt) => (
                     <button
                       key={pt.lw}
@@ -1016,15 +1003,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       }`}
                     >
                       <div className="text-xs font-bold">{pt.tag}</div>
-                      <div
-                        className={`text-xs font-mono-tabular mt-0.5 ${
-                          Math.abs(leewayPct - pt.lw) < 0.1
-                            ? 'text-indigo-100'
-                            : 'text-emerald-700 font-semibold'
-                        }`}
-                      >
-                        {pt.gain}% less strain (rough guide)
-                      </div>
                     </button>
                   ))}
                 </div>

@@ -1,6 +1,5 @@
 """Configuration settings and mathematical constants for ShiftFlow Studio (I-SD-RWSP)."""
 
-from typing import Dict
 from pydantic import BaseModel
 
 
@@ -34,17 +33,6 @@ class AppConfig(BaseModel):
     min_rest_hours_between_shifts: int = 16
     shift_weights: ShiftDesignWeights = ShiftDesignWeights()
     ergo_weights: ErgonomicsWeights = ErgonomicsWeights()
-    # Becker (2026) Table 7 empirical trade-off law:
-    # Allowed increase in shift design objective (%) -> Average ergonomic improvement (%)
-    becker_table7_law: Dict[int, float] = {
-        0: 1.80,
-        1: 8.37,
-        5: 27.34,
-        10: 39.46,
-        20: 54.64,
-        50: 79.06,
-        75: 89.71,
-    }
 
 
 settings = AppConfig()

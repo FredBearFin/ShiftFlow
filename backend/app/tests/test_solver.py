@@ -34,7 +34,6 @@ from app.engine.isd_rwsp_solver import (
     extract_eulerian_cycle_hierholzer,
     verify_multigraph_eulerian_conditions,
 )
-from app.engine.pareto import interpolate_becker_table7
 from app.main import app
 from app.schemas import EmployeeRecord, SolveRequestSchema, StaffMemberAssignment
 
@@ -190,15 +189,10 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
                 rhs = cell.required_staff + cell.overstaffing - cell.understaffing
                 self.assertEqual(lhs, rhs)
 
-    def test_06_becker_table7_pareto_law_and_frontier(self) -> None:
-        """Verify exact Becker (2026) Table 7 anchors and Pareto frontier structure."""
-        self.assertAlmostEqual(interpolate_becker_table7(1.0), 8.37, places=2)
-        self.assertAlmostEqual(interpolate_becker_table7(5.0), 27.34, places=2)
-        self.assertAlmostEqual(interpolate_becker_table7(10.0), 39.46, places=2)
-        self.assertAlmostEqual(interpolate_becker_table7(20.0), 54.64, places=2)
-        self.assertAlmostEqual(interpolate_becker_table7(50.0), 79.06, places=2)
-        self.assertAlmostEqual(interpolate_becker_table7(75.0), 89.71, places=2)
-
+    def test_06_pareto_frontier_is_built_from_real_re_solves(self) -> None:
+        """Every frontier point must be the real output of an independent solve at that
+        leeway - not an estimate - and the frontier must trend toward more cost for less
+        workload strain."""
         preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
         req = SolveRequestSchema(
             archetype_id=preset.id,
@@ -210,13 +204,30 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         )
         sol = ISDRWSPSolver(req).solve()
         frontier = sol.pareto_frontier
-        self.assertGreaterEqual(len(frontier), 10)
+        self.assertGreaterEqual(len(frontier), 4)
+
+        # The point matching the main request's own leeway must be the main solve's own result.
+        selected = [p for p in frontier if p.is_selected]
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0].obj_shift, sol.obj_shift)
+        self.assertEqual(selected[0].employee_count, sol.employee_count)
+
+        # Workload strain never increases as leeway increases. (Cost is not asserted to be
+        # monotonic: this is a real heuristic, not a true optimizer, and an extra employee
+        # can occasionally let the shift-count split fit the week's demand curve more evenly,
+        # reducing both over- and under-staffing enough to lower total cost outright - a real
+        # property of integer scheduling, not a bug to hide by forcing a fake guarantee.)
         for idx in range(len(frontier) - 1):
-            self.assertLessEqual(frontier[idx].obj_shift, frontier[idx + 1].obj_shift)
             self.assertGreaterEqual(frontier[idx].obj_ergo, frontier[idx + 1].obj_ergo)
-        knee_pts = [p for p in frontier if p.is_knee_point]
-        self.assertEqual(len(knee_pts), 1)
-        self.assertEqual(knee_pts[0].leeway_pct, 5.0)
+
+        self.assertLessEqual(len([p for p in frontier if p.is_knee_point]), 1)
+
+        # PO-5: an arbitrary anchor point must equal a direct solve at the same leeway.
+        anchor = next(p for p in frontier if abs(p.leeway_pct - 20.0) < 1e-4)
+        direct = ISDRWSPSolver(req.model_copy(update={"pareto_leeway_pct": 20.0})).solve()
+        self.assertEqual(anchor.obj_shift, direct.obj_shift)
+        self.assertEqual(anchor.obj_ergo, direct.ergonomics_audit.total_ergo_objective)
+        self.assertEqual(anchor.employee_count, direct.employee_count)
 
     def test_07_rotation_week_advancement_and_staff_mapping(self) -> None:
         """Verify weekly rotation advancement and optional workforce line assignment."""

@@ -191,7 +191,12 @@ class SolverInfeasibleError(Exception):
 class ISDRWSPSolver:
     """Integrated Shift Design and Rotating Workforce Scheduling Solver (Becker, EJOR 2026)."""
 
-    def __init__(self, request: SolveRequestSchema, include_baseline: bool = True):
+    def __init__(
+        self,
+        request: SolveRequestSchema,
+        include_baseline: bool = True,
+        include_pareto_frontier: bool = True,
+    ):
         self.req = request
         self.demand = request.demand_matrix
         self.templates = [t for t in request.templates if t.enabled]
@@ -205,6 +210,9 @@ class ISDRWSPSolver:
         # solve at 0% leeway as its baseline, but that baseline solve must never request its
         # own baseline (it already IS the cheapest/tightest version of the schedule).
         self.include_baseline = include_baseline and self.leeway_pct > 0.0
+        # Guards against each pareto-frontier point spawning its own full frontier: only the
+        # single top-level solve the caller actually asked for builds a frontier.
+        self.include_pareto_frontier = include_pareto_frontier
 
     def _build_shift_types(self) -> List[Dict]:
         shift_types: List[Dict] = []
@@ -947,7 +955,9 @@ class ISDRWSPSolver:
         baseline_audit = None
         if self.include_baseline:
             baseline_request = self.req.model_copy(update={"pareto_leeway_pct": 0.0})
-            baseline_solution = ISDRWSPSolver(baseline_request, include_baseline=False).solve()
+            baseline_solution = ISDRWSPSolver(
+                baseline_request, include_baseline=False, include_pareto_frontier=False
+            ).solve()
             baseline_audit = baseline_solution.ergonomics_audit
 
         ergonomics_audit = evaluate_ergonomics_audit(
@@ -958,17 +968,13 @@ class ISDRWSPSolver:
             baseline_audit=baseline_audit,
         )
 
-        pareto_frontier = generate_pareto_frontier(
-            base_obj_shift=obj_shift_min_bound,
-            ub_ergo_sequential=ergonomics_audit.sequential_baseline_ergo,
-            base_employees=employee_count,
-            base_active_shift_types=active_shift_types_count,
-            base_understaffing=total_under,
-            base_overstaffing=total_over,
-            selected_leeway_pct=self.leeway_pct,
-        )
-        for p in pareto_frontier:
-            p.estimated_weekly_payroll = round(p.employee_count * total_payroll / max(1, employee_count), 2)
+        if self.include_pareto_frontier:
+            pareto_frontier = generate_pareto_frontier(
+                base_request=self.req,
+                selected_leeway_pct=self.leeway_pct,
+            )
+        else:
+            pareto_frontier = []
 
         if total_weekly_req_hours <= 800:
             size_cat = "Small"

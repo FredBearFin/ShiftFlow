@@ -59,11 +59,11 @@ export const LESSONS: Lesson[] = [
     stepId: 5,
     title: 'Balance extra cost and staff comfort',
     explanation:
-      'Hear now the slider named Extra cost allowed, which sets how much extra cost you accept. And the screen shows how much more staff comfort each setting buys. Then pick the balance that suits your business, and the schedule builds every shift under your scheduling rules.',
+      'Hear now the slider named Extra cost allowed, which sets how much extra cost you accept for this schedule\'s shifts. And a higher setting gives the schedule more room, within your scheduling rules, to avoid long work stretches and lost weekends. Then the real effect on staff comfort for your own schedule shows once setup is done, not before.',
     example:
-      'And suppose you set Extra cost allowed to 5%. Then the screen shows how much more staff comfort that buys, and the 5% setting is marked Recommended. And if you want no extra cost at all, choose the setting marked No extra cost.',
+      'And suppose you set Extra cost allowed to 10%. Then once setup finishes, the Rest and Fatigue Balance tab shows the real payroll cost and real staff comfort score for that choice, next to every other option you could have picked. And if you want no extra cost at all, choose the setting marked No extra cost.',
     whyItMatters:
-      'Hear that a higher extra cost allowed lets the schedule trade cost for rest, and you choose how far to go.',
+      'Hear that a higher extra cost allowed lets the schedule trade cost for rest, and you choose how far to go, with real numbers for your own schedule once setup finishes.',
   },
   {
     stepId: 6,

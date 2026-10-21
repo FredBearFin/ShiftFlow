@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { solveScheduleApi, exportRosterToCsvString, interpolateBeckerTable7 } from './api';
+import { solveScheduleApi, exportRosterToCsvString } from './api';
 import type { SolveRequest, SolveResponse } from '../types';
 
 const request = { demand_matrix: [], templates: [] } as unknown as SolveRequest;
@@ -54,14 +54,5 @@ describe('exportRosterToCsvString', () => {
     } as unknown as SolveResponse;
     const csv = exportRosterToCsvString(solution);
     expect(csv).toContain('"Smith, ""Jo"""');
-  });
-});
-
-describe('interpolateBeckerTable7 parity', () => {
-  it('returns the same anchor values as the backend Table 7 law', () => {
-    const backend: Record<number, number> = { 0: 1.8, 1: 8.37, 5: 27.34, 10: 39.46, 20: 54.64, 50: 79.06, 75: 89.71 };
-    for (const [x, y] of Object.entries(backend)) {
-      expect(interpolateBeckerTable7(Number(x))).toBeCloseTo(y, 2);
-    }
   });
 });

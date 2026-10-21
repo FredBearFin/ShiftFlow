@@ -227,30 +227,6 @@ export function exportRosterToCsvString(solution: SolveResponse): string {
   return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
 }
 
-const BECKER_TABLE7_ANCHORS: [number, number][] = [
-  [0.0, 1.80],
-  [1.0, 8.37],
-  [5.0, 27.34],
-  [10.0, 39.46],
-  [20.0, 54.64],
-  [50.0, 79.06],
-  [75.0, 89.71],
-];
-
-export function interpolateBeckerTable7(leewayPct: number): number {
-  if (leewayPct <= 0) return 1.80;
-  if (leewayPct >= 75) return 89.71;
-  for (let i = 0; i < BECKER_TABLE7_ANCHORS.length - 1; i++) {
-    const [x0, y0] = BECKER_TABLE7_ANCHORS[i];
-    const [x1, y1] = BECKER_TABLE7_ANCHORS[i + 1];
-    if (leewayPct >= x0 && leewayPct <= x1) {
-      const t = (leewayPct - x0) / (x1 - x0);
-      return Number((y0 + t * (y1 - y0)).toFixed(2));
-    }
-  }
-  return 27.34;
-}
-
 export async function fetchArchetypes(): Promise<ArchetypePreset[]> {
   try {
     const res = await fetch('/api/v1/archetypes');
