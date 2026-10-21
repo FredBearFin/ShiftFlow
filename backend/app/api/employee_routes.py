@@ -14,9 +14,9 @@ SeparationCategory = Literal["voluntary_resignation", "mutual_agreement", "invol
 
 
 class EmployeeCreateSchema(BaseModel):
-    facility_id: str = Field(default="FAC-OMAHA-01", description="Store facility ID")
-    name: str = Field(..., example="Marcus Vance")
-    role: str = Field(default="Frontline Clerk", example="Shift Lead")
+    facility_id: str = Field(default="FAC-OMAHA-01", max_length=64, description="Store facility ID")
+    name: str = Field(..., min_length=1, max_length=200, example="Marcus Vance")
+    role: str = Field(default="Frontline Clerk", max_length=200, example="Shift Lead")
     wage: float = Field(default=16.50, ge=7.25, le=150.0, description="Hourly wage rate ($)")
     available_days: List[int] = Field(default=[0, 1, 2, 3, 4, 5, 6], description="Day indices 0=Mon..6=Sun")
     assigned_line: Optional[int] = Field(default=None, description="Assigned shift pattern (1..N)")
@@ -24,18 +24,20 @@ class EmployeeCreateSchema(BaseModel):
         default="none",
         description="Statutory accommodation protection: none, religious (Title VII), medical (ADA), academic",
     )
-    statutory_notes: Optional[str] = Field(default=None, description="Legal accommodation documentation notes")
+    statutory_notes: Optional[str] = Field(
+        default=None, max_length=5000, description="Legal accommodation documentation notes"
+    )
 
 
 class EmployeeUpdateSchema(BaseModel):
-    name: Optional[str] = None
-    role: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    role: Optional[str] = Field(default=None, max_length=200)
     wage: Optional[float] = Field(default=None, ge=7.25, le=150.0)
     active: Optional[bool] = None
     available_days: Optional[List[int]] = None
     assigned_line: Optional[int] = None
     accommodation_type: Optional[AccommodationType] = None
-    statutory_notes: Optional[str] = None
+    statutory_notes: Optional[str] = Field(default=None, max_length=5000)
 
     @model_validator(mode="after")
     def required_fields_not_null(self):
@@ -51,9 +53,11 @@ class EmployeeDeactivateSchema(BaseModel):
         description="Legal separation classification to controvert pretextual retaliation claims under FLSA § 15(a)(3)",
     )
     separation_reason: str = Field(
+        max_length=5000,
         description="Contemporaneous business justification and factual narrative",
     )
     recorded_by: str = Field(
+        max_length=200,
         description="Manager or administrator certifying the separation",
     )
 

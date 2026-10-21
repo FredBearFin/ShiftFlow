@@ -110,3 +110,100 @@ describe('sharing the labor summary with the owner', () => {
     expect(await screen.findByText(/Could not copy automatically/)).toBeTruthy();
   });
 });
+
+describe('downloading the client-side Gusto/ADP payroll CSV', () => {
+  function stubDownload() {
+    const createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, configurable: true });
+    // jsdom attempts (and fails) to navigate when a real anchor with an href is
+    // clicked; the component only uses the click to trigger a download, so that
+    // navigation is irrelevant here and we no-op it.
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    return { createObjectURL, revokeObjectURL };
+  }
+
+  /** jsdom's Blob can't be read back with Response/.text(), so capture its source parts instead. */
+  function captureBlobParts() {
+    const parts: string[] = [];
+    const OriginalBlob = globalThis.Blob;
+    vi.spyOn(globalThis, 'Blob').mockImplementation((blobParts?: BlobPart[], options?: BlobPropertyBag) => {
+      parts.push((blobParts || []).join(''));
+      return new OriginalBlob(blobParts, options);
+    });
+    return parts;
+  }
+
+  function solutionWithFormulaShapedStaff(): SolveResponse {
+    const solution = baseSolution();
+    solution.roster_lines = [
+      {
+        line_number: 1,
+        cohort_id: 'C1',
+        display_label: 'Line C1',
+        assigned_person: '=HYPERLINK("http://evil.example/leak","click")',
+        assigned_employee_id: 'emp-1',
+        qualification_tier: '+1;@SUM(A1)',
+        hourly_wage: 15,
+        current_cycle_week: 1,
+        next_week_line_number: 1,
+        days: [],
+        weekly_hours: 40,
+        regular_hours: 40,
+        overtime_hours: 0,
+        estimated_weekly_payroll: 600,
+        work_days_count: 5,
+        rest_days_count: 2,
+        full_weekend_off: true,
+        availability_conflicts_count: 0,
+        line_ergo_penalty: 0,
+      } as SolveResponse['roster_lines'][number],
+    ];
+    return solution;
+  }
+
+  it('neutralizes a formula-shaped employee name/role in the Gusto CSV download', async () => {
+    const { createObjectURL } = stubDownload();
+    const blobParts = captureBlobParts();
+    render(<LaborAnalysisView solution={solutionWithFormulaShapedStaff()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Gusto CSV/ }));
+
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
+    const text = blobParts[0];
+
+    expect(text).toContain("'=HYPERLINK");
+    expect(text).toContain("'+1;@SUM(A1)");
+    expect(text).not.toMatch(/,=HYPERLINK/);
+  });
+
+  it('neutralizes a formula-shaped employee name in the ADP CSV download', async () => {
+    const { createObjectURL } = stubDownload();
+    const blobParts = captureBlobParts();
+    render(<LaborAnalysisView solution={solutionWithFormulaShapedStaff()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /ADP CSV/ }));
+
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
+    const text = blobParts[0];
+
+    expect(text).toContain("'=HYPERLINK");
+    expect(text).not.toMatch(/,=HYPERLINK/);
+  });
+
+  it('properly escapes an embedded quote in the assigned person name instead of breaking the CSV cell', async () => {
+    const { createObjectURL } = stubDownload();
+    const blobParts = captureBlobParts();
+    const solution = solutionWithFormulaShapedStaff();
+    solution.roster_lines[0].assigned_person = 'Smith, "Jo"';
+    render(<LaborAnalysisView solution={solution} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Gusto CSV/ }));
+
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
+    const text = blobParts[0];
+
+    expect(text).toContain('"Smith, ""Jo"""');
+  });
+});

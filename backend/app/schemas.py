@@ -74,9 +74,9 @@ class ErgonomicGuardrailsSchema(BaseModel):
 
 class EmployeeRecord(BaseModel):
     """Workforce personnel record with availability constraints, statutory accommodation status, wage rates, and active/fired status."""
-    employee_id: str = Field(..., description="Unique employee identifier")
-    name: str = Field(..., description="Employee full name")
-    role: str = Field(default="Frontline Associate", description="Operational role / title")
+    employee_id: str = Field(..., max_length=64, description="Unique employee identifier")
+    name: str = Field(..., max_length=200, description="Employee full name")
+    role: str = Field(default="Frontline Associate", max_length=200, description="Operational role / title")
     hourly_wage: float = Field(..., ge=7.25, le=150.0, description="Base hourly wage rate ($/hr)")
     max_weekly_hours: int = Field(default=40, ge=10, le=60, description="Target max weekly hours before overtime")
     is_active: bool = Field(default=True, description="Active status; False if fired / deactivated")
@@ -93,21 +93,31 @@ class EmployeeRecord(BaseModel):
         default="none",
         description="Statutory accommodation protection: none, religious (Title VII), medical (ADA), academic",
     )
-    statutory_notes: Optional[str] = Field(default=None, description="Legal accommodation documentation notes")
+    statutory_notes: Optional[str] = Field(
+        default=None, max_length=5000, description="Legal accommodation documentation notes"
+    )
     separation_category: Optional[SeparationCategory] = Field(default=None, description="Termination classification")
-    separation_reason: Optional[str] = Field(default=None, description="Contemporaneous termination justification")
+    separation_reason: Optional[str] = Field(
+        default=None, max_length=5000, description="Contemporaneous termination justification"
+    )
     separation_timestamp: Optional[str] = Field(default=None, description="ISO timestamp of separation")
-    recorded_by: Optional[str] = Field(default=None, description="Manager or administrator who recorded action")
+    recorded_by: Optional[str] = Field(
+        default=None, max_length=200, description="Manager or administrator who recorded action"
+    )
 
 
 class StaffMemberAssignment(BaseModel):
     """Optional mapping of a staff member to a shift pattern."""
     line_id: int = Field(..., ge=1, description="1-indexed shift pattern ID")
-    cohort_label: str = Field(..., description="Standardized shift pattern label (e.g., Pattern 1)")
-    assigned_staff_name: Optional[str] = Field(default=None, description="Optional mapped employee name")
-    qualification_tier: str = Field(default="Frontline Associate", description="Employee operational role")
+    cohort_label: str = Field(..., max_length=200, description="Standardized shift pattern label (e.g., Pattern 1)")
+    assigned_staff_name: Optional[str] = Field(
+        default=None, max_length=200, description="Optional mapped employee name"
+    )
+    qualification_tier: str = Field(default="Frontline Associate", max_length=200, description="Employee operational role")
     hourly_wage: float = Field(..., description="Hourly wage rate for labor economics ($)")
-    employee_id: Optional[str] = Field(default=None, description="Unique foreign key linking to EmployeeRecord")
+    employee_id: Optional[str] = Field(
+        default=None, max_length=64, description="Unique foreign key linking to EmployeeRecord"
+    )
 
 
 class ShiftTypeResultSchema(BaseModel):
@@ -325,7 +335,7 @@ class ParetoPointSchema(BaseModel):
 class SolveRequestSchema(BaseModel):
     """Full input specification for solving a weekly schedule."""
     archetype_id: str = Field(default="downtown_foodmart_omaha")
-    facility_name: str = Field(default="Downtown Foodmart — 16th & Farnam (Omaha, NE)")
+    facility_name: str = Field(default="Downtown Foodmart — 16th & Farnam (Omaha, NE)", max_length=200)
     demand_matrix: List[List[int]] = Field(
         ...,
         description="7x24 matrix of staff needed per hour: row = day (0=Mon..6=Sun), column = hour (0..23)",

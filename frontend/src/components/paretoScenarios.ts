@@ -1,4 +1,5 @@
 import { SolveResponse } from '../types';
+import { neutralizeCsvFormula } from '../csvSafety';
 
 /**
  * Lets a manager pin a handful of solved schedules (e.g. different leeway
@@ -101,7 +102,10 @@ export function saveSavedScenarios(scenarios: ScenarioSnapshot[]): boolean {
 const csvCell = (v: string | number) => {
   if (typeof v === 'number') return String(v);
   // Ruling 24 (as applied in LaborAnalysisView): quote text fields, don't invent values.
-  return `"${v.replace(/"/g, '""')}"`;
+  // Text fields include free text someone chose (assigned_person, qualification_tier,
+  // instance_name), so a leading '=' / '+' / '-' / '@' is neutralized before quoting -
+  // otherwise it would be read as a live formula by whatever opens this CSV.
+  return `"${neutralizeCsvFormula(v).replace(/"/g, '""')}"`;
 };
 
 /**

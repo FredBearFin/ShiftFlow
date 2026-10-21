@@ -14,6 +14,7 @@ import {
   SolveRequest,
   SolveResponse,
 } from '../types';
+import { neutralizeCsvFormula } from '../csvSafety';
 
 export const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -476,8 +477,11 @@ export function exportRosterToCsvString(solution: SolveResponse): string {
   const rows = solution.roster_lines.map((line) => [
     line.line_number,
     line.cohort_id,
-    line.assigned_person ?? '',
-    line.qualification_tier,
+    // assigned_person/qualification_tier are free text an employee or manager chose
+    // (a name, a role) - guard against a leading '=' / '+' / '-' / '@' being read as a
+    // live formula by whatever opens this CSV.
+    neutralizeCsvFormula(line.assigned_person ?? ''),
+    neutralizeCsvFormula(line.qualification_tier),
     line.hourly_wage === null ? '' : line.hourly_wage.toFixed(2),
     line.weekly_hours,
     line.overtime_hours,

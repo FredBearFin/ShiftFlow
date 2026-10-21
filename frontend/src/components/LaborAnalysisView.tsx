@@ -5,6 +5,7 @@ import { Button } from './ui/Button';
 import { Term } from './ui/Term';
 import { POSIntegrationView } from './POSIntegrationView';
 import { buildOwnerShareSummary } from './laborShareSummary';
+import { csvSafeCell } from '../csvSafety';
 
 // POS integration is a module from an earlier, broader "enterprise workforce OS" phase -
 // kept working (and its backend route still exists behind its own default-off flag), but
@@ -86,10 +87,14 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       'Notes',
     ];
     // Ruling 24: no invented value. A field the solution does not carry is left empty.
+    // assigned_person/qualification_tier are free text an employee or manager chose, so
+    // they go through csvSafeCell (not a bare quote-wrap, which left an embedded quote
+    // or comma able to break out of the cell): it both escapes RFC-4180-style and
+    // neutralizes a leading '=' / '+' / '-' / '@' so it can't be read as a formula.
     const rows = solution.roster_lines.map((l) => [
       l.assigned_employee_id || '',
-      l.assigned_person ? `"${l.assigned_person}"` : '',
-      l.qualification_tier ? `"${l.qualification_tier}"` : '',
+      csvSafeCell(l.assigned_person || ''),
+      csvSafeCell(l.qualification_tier || ''),
       l.regular_hours.toFixed(2),
       l.overtime_hours.toFixed(2),
       l.hourly_wage === null ? '' : l.hourly_wage.toFixed(2),
@@ -128,7 +133,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       '',
       '',
       l.assigned_employee_id || '',
-      l.assigned_person ? `"${l.assigned_person}"` : '',
+      csvSafeCell(l.assigned_person || ''),
       l.regular_hours.toFixed(2),
       l.overtime_hours.toFixed(2),
       l.hourly_wage === null ? '' : l.hourly_wage.toFixed(2),

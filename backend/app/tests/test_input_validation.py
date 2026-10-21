@@ -10,6 +10,9 @@ from app.main import app
 
 
 FACILITY_ID = "FAC-VALIDATION-01"
+# A separate facility for tests that add employees, so FACILITY_ID stays staff-free for
+# test_payroll_without_staff_returns_409 regardless of unittest's alphabetical test order.
+INJECTION_FACILITY_ID = "FAC-VALIDATION-INJECTION-01"
 
 
 def _template(**overrides):
@@ -27,9 +30,18 @@ class InputValidationTests(unittest.TestCase):
         cls.client = TestClient(app)
         init_db()
         conn = get_db_connection()
-        ShiftFlowRepository(conn).upsert_facility(
+        repo = ShiftFlowRepository(conn)
+        repo.upsert_facility(
             facility_id=FACILITY_ID,
             name="Validation Test Site",
+            location="Test City",
+            operating_hours="06:00-24:00",
+            demand_matrix=[[1] * 24 for _ in range(7)],
+            shift_templates=[],
+        )
+        repo.upsert_facility(
+            facility_id=INJECTION_FACILITY_ID,
+            name="Injection Test Site",
             location="Test City",
             operating_hours="06:00-24:00",
             demand_matrix=[[1] * 24 for _ in range(7)],
@@ -69,6 +81,28 @@ class InputValidationTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 422)
 
+    def test_facility_name_over_200_chars_is_rejected(self):
+        response = self.client.post(
+            "/api/v1/schedules/solve",
+            json=self._solve_body(facility_name="F" * 10_000),
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_solve_request_employee_name_over_200_chars_is_rejected(self):
+        response = self.client.post(
+            "/api/v1/schedules/solve",
+            json=self._solve_body(
+                employees=[
+                    {
+                        "employee_id": "EMP-1",
+                        "name": "A" * 10_000,
+                        "hourly_wage": 15.0,
+                    }
+                ]
+            ),
+        )
+        self.assertEqual(response.status_code, 422)
+
     def test_pos_upload_to_missing_facility_returns_404(self):
         response = self.client.post(
             "/api/pos/upload-csv",
@@ -101,6 +135,91 @@ class InputValidationTests(unittest.TestCase):
     def test_payroll_without_staff_returns_409(self):
         response = self.client.get("/api/payroll/export/adp", params={"facility_id": FACILITY_ID})
         self.assertEqual(response.status_code, 409)
+
+    def test_employee_name_over_200_chars_is_rejected(self):
+        response = self.client.post(
+            "/api/employees",
+            json={"facility_id": INJECTION_FACILITY_ID, "name": "A" * 10_000, "role": "Cashier", "wage": 15.0},
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_employee_statutory_notes_over_5000_chars_is_rejected(self):
+        response = self.client.post(
+            "/api/employees",
+            json={
+                "facility_id": INJECTION_FACILITY_ID,
+                "name": "Jordan Lee",
+                "role": "Cashier",
+                "wage": 15.0,
+                "statutory_notes": "N" * 10_000,
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_separation_reason_over_5000_chars_is_rejected(self):
+        emp = self.client.post(
+            "/api/employees",
+            json={"facility_id": INJECTION_FACILITY_ID, "name": "Pat Rivera", "role": "Cashier", "wage": 15.0},
+        ).json()
+        response = self.client.post(
+            f"/api/employees/{emp['id']}/deactivate",
+            json={
+                "separation_category": "voluntary_resignation",
+                "separation_reason": "R" * 10_000,
+                "recorded_by": "Manager",
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+
+    def test_sql_metacharacters_in_employee_name_are_stored_literally_not_executed(self):
+        """An employee name shaped like a SQL injection payload is stored as plain text and
+        the employees table survives - proof the parameterized insert never executed it."""
+        payload_name = "Robert'); DROP TABLE employees; --"
+        create = self.client.post(
+            "/api/employees",
+            json={
+                "facility_id": INJECTION_FACILITY_ID,
+                "name": payload_name,
+                "role": "Cashier' OR '1'='1",
+                "wage": 15.0,
+            },
+        )
+        self.assertEqual(create.status_code, 200)
+        self.assertEqual(create.json()["name"], payload_name)
+
+        listing = self.client.get("/api/employees", params={"facility_id": INJECTION_FACILITY_ID})
+        self.assertEqual(listing.status_code, 200)
+        self.assertTrue(any(e["name"] == payload_name for e in listing.json()))
+
+    def test_html_in_employee_name_is_returned_as_plain_text_for_react_to_escape(self):
+        """The API stores/returns a <script>-shaped name as literal text (no HTML
+        unescaping); React's default JSX text interpolation renders it as inert text."""
+        payload_name = "<script>alert(1)</script>"
+        create = self.client.post(
+            "/api/employees",
+            json={
+                "facility_id": INJECTION_FACILITY_ID,
+                "name": payload_name,
+                "role": "<img src=x onerror=alert(1)>",
+                "wage": 15.0,
+            },
+        )
+        self.assertEqual(create.status_code, 200)
+        body = create.json()
+        self.assertEqual(body["name"], payload_name)
+        self.assertEqual(body["role"], "<img src=x onerror=alert(1)>")
+
+    def test_facility_config_over_size_limit_returns_413(self):
+        oversized_config = {
+            "demand_matrix": [[1] * 24 for _ in range(7)],
+            "junk": "B" * 300_000,
+        }
+        response = self.client.put(
+            "/api/facility-config",
+            params={"facility_id": FACILITY_ID},
+            json={"config": oversized_config},
+        )
+        self.assertEqual(response.status_code, 413)
 
 
 if __name__ == "__main__":

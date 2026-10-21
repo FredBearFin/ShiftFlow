@@ -13,6 +13,7 @@ through the exact same get_repo scoping every other facility-scoped route alread
 (employee_routes, schedule_routes, ...). No new access-control logic is introduced here.
 """
 
+import json
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -22,6 +23,13 @@ from app.database import ShiftFlowRepository
 from app.deps import get_repo
 
 router = APIRouter(prefix="/api/facility-config", tags=["Facility Solve Configuration"])
+
+# This blob is intentionally opaque (see FacilityConfigSchema below) - the server does not
+# know or enforce the shape of the demand matrix/templates/guardrails it carries, so it
+# cannot bound it field-by-field the way a typed schema would. Bounding its overall
+# serialized size is the one guard that still applies regardless of shape, so a request
+# cannot grow one facility's stored config without limit.
+MAX_FACILITY_CONFIG_BYTES = 200_000
 
 
 class FacilityConfigSchema(BaseModel):
@@ -55,4 +63,11 @@ def put_facility_config(
     facility_id: str = Query(..., description="Facility id, as the caller's own account sees it"),
     repo: ShiftFlowRepository = Depends(get_repo),
 ):
+    config_size = len(json.dumps(payload.config))
+    if config_size > MAX_FACILITY_CONFIG_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Facility configuration must be {MAX_FACILITY_CONFIG_BYTES} bytes or smaller "
+            f"(got {config_size}).",
+        )
     return repo.save_solve_config(facility_id, payload.config)

