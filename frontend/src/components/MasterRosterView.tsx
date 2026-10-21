@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useDialogFocus } from './ui/useDialogFocus';
+import { Term } from './ui/Term';
 import {
   EmployeeRecord,
   NewEmployeeInput,
@@ -667,7 +668,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           viewed week. The Compliance tab says it is not assessed. */}
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
-                      <span>{line.qualification_tier}</span>
+                      <Term explanation="The pay and skill band this shift pattern is costed at, and what appears as the Role in the payroll file you export. &quot;Union Line Standard&quot; is the ordinary rate for the job, with nothing added for extra skills or seniority.">
+                        {line.qualification_tier}
+                      </Term>
                       <span>•</span>
                       <span className="font-mono-tabular">{line.hourly_wage === null ? '' : `$${line.hourly_wage.toFixed(2)}/hr`}</span>
                       <span>•</span>

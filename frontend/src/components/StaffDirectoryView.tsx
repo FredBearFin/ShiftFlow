@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useDialogFocus } from './ui/useDialogFocus';
+import { Term } from './ui/Term';
 import { EmployeeRecord, RosterLine, SeparationCategory } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 
@@ -181,7 +182,12 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
 
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-slate-500">Current Assignment:</span>
+                  <span className="text-slate-500">
+                    <Term explanation="Which shift pattern this person works: one repeating week of work days and days off that the schedule built, which a person is then put on. Unassigned Pool means nobody has been put on a pattern for them yet.">
+                      Current Assignment
+                    </Term>
+                    :
+                  </span>
                   <span className="font-semibold text-slate-800">
                     {assignedLine ? (
                       <span className="px-1.5 py-0.5 rounded bg-slate-900 text-white text-xs font-mono-tabular">

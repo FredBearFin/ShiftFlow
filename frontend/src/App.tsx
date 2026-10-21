@@ -527,7 +527,16 @@ export function App() {
           </div>
         )}
         {solveStatus === 'error' && !errorBannerDismissed && (
-          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+          // While the setup wizard is open its fixed inset-0 z-50 overlay sits on top of
+          // <main>, so an in-flow banner here is invisible. Lift it above the overlay.
+          <div
+            role="alert"
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32] ${
+              isWizardOpen
+                ? 'fixed inset-x-3 top-3 z-[60] mx-auto max-w-3xl sm:inset-x-6'
+                : 'mb-4'
+            }`}
+          >
             <span>
               {solveError} No schedule is shown for these settings — the last one that worked
               answered different settings, so it is not displayed, printed or exported here.

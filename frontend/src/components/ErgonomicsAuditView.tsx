@@ -1,6 +1,7 @@
 import React from 'react';
 import { SolveResponse } from '../types';
 import { criterionLabelFor, criterionExplanationFor } from './criteriaLabels';
+import { Term } from './ui/Term';
 
 interface ErgonomicsAuditViewProps {
   solution: SolveResponse;
@@ -82,7 +83,9 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
 
         <div className="card p-5">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Rotation Balance
+            <Term explanation="How many of the week's work and rest hand-offs line up. A hand-off is the point where one person's run of work days ends and their days off begin, so someone else has to pick the work up. When all 14 match, the rotation repeats week after week without gaps.">
+              Rotation Balance
+            </Term>
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-indigo-700">

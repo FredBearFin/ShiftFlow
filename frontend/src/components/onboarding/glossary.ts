@@ -62,6 +62,51 @@ export const GLOSSARY: GlossaryEntry[] = [
     plain: 'Evening shifts worked one after another with no evening off in between.',
     example: 'A limit of 3 consecutive evenings means the fourth evening in a row is not allowed.',
   },
+  {
+    term: 'role',
+    plain: 'The job title you give a person, which follows them onto the schedule and into the payroll file you export.',
+    example: 'Someone added as Frontline Associate is listed as Frontline Associate in the payroll file.',
+  },
+  {
+    term: 'hourly wage',
+    plain: 'What one hour of a person’s time costs, used to price every shift they are given.',
+    example: 'At $17.50 an hour, an 8-hour shift costs $140 before any overtime.',
+  },
+  {
+    term: 'available days',
+    plain: 'The days of the week a person can be scheduled at all. A day left off is never used for them.',
+    example: 'Someone available Monday to Friday is never put on a Saturday shift.',
+  },
+  {
+    term: 'shift pattern',
+    plain: 'One repeating week of work days and days off that the schedule builds, before any particular person is put on it.',
+    example: 'Pattern 01 might work Monday to Thursday one week and Wednesday to Saturday the next.',
+  },
+  {
+    term: 'qualification tier',
+    plain: 'The pay and skill band a shift pattern is costed at. It is also what appears as the Role in the payroll file you export.',
+    example: 'A pattern on the standard band is costed at the ordinary hourly rate for the job.',
+  },
+  {
+    term: 'Union Line Standard',
+    plain: 'The pay and skill band every shift pattern starts on: the ordinary rate, with nothing added for extra skills or seniority.',
+    example: 'Until you set a band of your own, every pattern is priced as Union Line Standard.',
+  },
+  {
+    term: 'rotation balance',
+    plain: 'How many of the week’s work and rest hand-offs line up, so the rotation can repeat week after week without gaps.',
+    example: '14 of 14 means every day’s hand-offs match and the rotation repeats cleanly.',
+  },
+  {
+    term: 'hand-off',
+    plain: 'The point where one person’s run of work days ends and their days off begin, so someone else has to pick the work up.',
+    example: 'If three people finish a work stretch on Friday, three others need to start one.',
+  },
+  {
+    term: 'workload score',
+    plain: 'How tiring the week looks for the people working it, counted in penalty points. Lower is better.',
+    example: 'A week scoring 40 penalty points is kinder to work than one scoring 90.',
+  },
 ];
 
 /**
