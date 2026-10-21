@@ -17,6 +17,7 @@ import uuid
 
 from fastapi.testclient import TestClient
 
+from app.config import settings
 from app.database import ShiftFlowRepository, get_db_connection, init_db
 from app.main import app
 
@@ -242,6 +243,53 @@ class FacilityOwnerInviteTests(unittest.TestCase):
         # Nor can the owner read/act on it through the owner-summary endpoint either.
         summary = owner_client.get("/api/owners/facility/FAC-SECRET-TWO/summary")
         self.assertEqual(summary.status_code, 404)
+
+    def test_owner_invited_to_one_facility_cannot_reach_the_managers_other_facility_through_facility_config_or_pos_routes(self):
+        """The same regression as the test above (linked_manager_ids used to grant access
+        manager-wide instead of being scoped per invited facility), re-run against routes
+        the original regression only implicitly covered: facility_config_routes.py (built
+        later, in its own piece of work) and the feature-flagged POS/payroll routes - not
+        just /api/employees and the owner-summary endpoint."""
+        secret_created = self.manager.post(
+            "/api/employees",
+            json={
+                "facility_id": "FAC-SECRET-THREE",
+                "name": "Secret Employee Three",
+                "wage": 77.0,
+                "available_days": [0, 1],
+            },
+        )
+        self.assertEqual(secret_created.status_code, 200, secret_created.text)
+        saved_config = self.manager.put(
+            "/api/facility-config",
+            params={"facility_id": "FAC-SECRET-THREE"},
+            json={"config": {"secret_sauce": "manager-only-config"}},
+        )
+        self.assertEqual(saved_config.status_code, 200, saved_config.text)
+
+        # Invite is for FACILITY ("FAC-OMAHA-01") only - never FAC-SECRET-THREE.
+        invite = self._invite(self._unique_owner_email("owner"))
+        owner_client = TestClient(app, base_url="https://testserver")
+        accept = owner_client.post(invite["accept_path"], json={"password": "ownerpassword1"})
+        self.assertEqual(accept.status_code, 200, accept.text)
+
+        # facility-config carries no feature flag (always reachable) - the owner's link to
+        # FACILITY must not reach FAC-SECRET-THREE's saved config through it.
+        other_config = owner_client.get("/api/facility-config", params={"facility_id": "FAC-SECRET-THREE"})
+        self.assertEqual(other_config.status_code, 404, other_config.text)
+
+        # POS/payroll routes are feature-flagged off by default; turn the flag on for this
+        # test only (same pattern as test_pos_payroll_routes.py) so the real routes - not a
+        # blanket 404 from the feature-flag guard - are exercised.
+        previous_flag = settings.enable_pos_integration
+        settings.enable_pos_integration = True
+        try:
+            other_payroll = owner_client.get(
+                "/api/payroll/export/gusto", params={"facility_id": "FAC-SECRET-THREE"}
+            )
+            self.assertEqual(other_payroll.status_code, 404, other_payroll.text)
+        finally:
+            settings.enable_pos_integration = previous_flag
 
     def test_accept_refused_when_an_account_with_that_email_already_exists(self):
         existing_owner, existing_email = new_account("existing-owner")
