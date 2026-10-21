@@ -12,13 +12,11 @@ vi.mock('../services/api', () => ({
 afterEach(cleanup);
 
 describe('PasswordResetView - request step', () => {
-  it('asks for an email and submits it to request a reset link', async () => {
+  it('asks for an email and submits it, without ever showing the actual reset link', async () => {
     const requestApi = vi.mocked(api.requestPasswordResetApi).mockResolvedValue({
       result: {
         status: 'ok',
         message: 'If an account exists for that email, a password reset link has been generated.',
-        reset_token: 'tok123',
-        reset_path: '/?password_reset=tok123',
         note: 'No email service is configured here.',
       },
       error: null,
@@ -26,11 +24,15 @@ describe('PasswordResetView - request step', () => {
     render(<PasswordResetView mode="request" onBackToLogin={vi.fn()} />);
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'manager@example.com' } });
-    fireEvent.click(screen.getByRole('button', { name: /get reset link/i }));
+    fireEvent.click(screen.getByRole('button', { name: /request reset link/i }));
 
     await waitFor(() => expect(requestApi).toHaveBeenCalledWith('manager@example.com'));
-    const linkInput = await screen.findByLabelText('Password reset link');
-    expect((linkInput as HTMLInputElement).value).toContain('password_reset=tok123');
+    const status = await screen.findByRole('status');
+    expect(status.textContent).toContain('reset link has been generated');
+    // The actual token/link is never rendered anywhere - an unauthenticated requester
+    // must not be handed the account's live reset link (see component docstring).
+    expect(screen.queryByLabelText('Password reset link')).toBeNull();
+    expect(document.body.textContent).not.toContain('password_reset=');
   });
 
   it('shows the server error when the request fails', async () => {
@@ -41,7 +43,7 @@ describe('PasswordResetView - request step', () => {
     render(<PasswordResetView mode="request" onBackToLogin={vi.fn()} />);
 
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'manager@example.com' } });
-    fireEvent.click(screen.getByRole('button', { name: /get reset link/i }));
+    fireEvent.click(screen.getByRole('button', { name: /request reset link/i }));
 
     expect((await screen.findByRole('alert')).textContent).toContain('Could not reach the server.');
   });

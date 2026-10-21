@@ -1,8 +1,12 @@
 """A locked-out self-serve manager must be able to get back into their own account with
 no support team involved (see app/api/auth_routes.py's /password-reset/request and
-/password-reset/confirm). No email service is configured in this environment, so the
-reset link is returned directly in the response - same pattern as the owner-invite flow
-in app/api/owner_routes.py (see test_facility_owners.py).
+/password-reset/confirm). Unlike the owner-invite flow in app/api/owner_routes.py, the
+actual reset token is never returned in the HTTP response or shown to the caller - this
+endpoint is unauthenticated and callable against any email, so handing the live link
+back to whoever asked (rather than only to the account's real inbox) would let anyone
+who knows or guesses an email take over that account. It is only written to the server
+log for now (no email service configured), so these tests read it straight out of the
+database, the way an operator checking the log would, not out of the API response.
 
 Covers: a valid reset works end to end, an expired token is rejected, a used token
 cannot be reused, a bad token is rejected, the request-reset response does not reveal
@@ -51,10 +55,30 @@ class PasswordResetTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200, resp.text)
         return resp.json()
 
+    def _latest_token_for_email(self, email: str) -> str:
+        """Reads the token straight out of the database - standing in for the operator
+        checking the server log, since the API response never carries it (see module
+        docstring)."""
+        conn = get_db_connection()
+        try:
+            repo = ShiftFlowRepository(conn)
+            user = repo.get_user_by_email(email)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT token FROM password_reset_tokens WHERE user_id = ? "
+                "ORDER BY expires_at DESC LIMIT 1",
+                (user["id"],),
+            )
+            row = cursor.fetchone()
+            self.assertIsNotNone(row, f"no reset token was stored for {email}")
+            return row["token"]
+        finally:
+            conn.close()
+
     def test_valid_reset_works_end_to_end(self):
         _owner_client, email = self._signup("resetme")
-        result = self._request_reset(email)
-        token = result["reset_token"]
+        self._request_reset(email)
+        token = self._latest_token_for_email(email)
 
         anon = TestClient(app, base_url="https://testserver")
         confirm = anon.post(
@@ -95,7 +119,8 @@ class PasswordResetTests(unittest.TestCase):
 
     def test_used_token_cannot_be_reused(self):
         _owner_client, email = self._signup("usedtoken")
-        token = self._request_reset(email)["reset_token"]
+        self._request_reset(email)
+        token = self._latest_token_for_email(email)
 
         anon = TestClient(app, base_url="https://testserver")
         first = anon.post(
@@ -129,27 +154,30 @@ class PasswordResetTests(unittest.TestCase):
         known = self._request_reset(real_email)
         unknown = self._request_reset(unknown_email)
 
-        # Identical shape and generic message either way - no "no such account" branch.
+        # Identical shape and generic message either way - no "no such account" branch,
+        # and critically, neither response carries the actual token (see module
+        # docstring for why that matters: this endpoint is unauthenticated).
         self.assertEqual(set(known.keys()), set(unknown.keys()))
         self.assertEqual(known["message"], unknown["message"])
         self.assertEqual(known["status"], unknown["status"])
-        self.assertTrue(known["reset_token"])
-        self.assertTrue(unknown["reset_token"])
-        self.assertNotEqual(known["reset_token"], unknown["reset_token"])
+        self.assertNotIn("reset_token", known)
+        self.assertNotIn("reset_path", known)
 
-        # But only the real account's token actually works - the other was never stored,
-        # so using it fails exactly like any other invalid token (never a distinct message).
+        # The real account really did get a token stored; a made-up token standing in
+        # for "whatever a snooper might guess for the unknown email" was never stored,
+        # and fails exactly like any other invalid token - never a distinct message.
+        real_token = self._latest_token_for_email(real_email)
         anon = TestClient(app, base_url="https://testserver")
         fake_confirm = anon.post(
             "/api/auth/password-reset/confirm",
-            json={"token": unknown["reset_token"], "password": "brandnewpassword1"},
+            json={"token": "guessed-token-nobody-actually-issued", "password": "brandnewpassword1"},
         )
         self.assertEqual(fake_confirm.status_code, 400)
         self.assertIn("invalid or has expired", fake_confirm.json()["detail"])
 
         real_confirm = anon.post(
             "/api/auth/password-reset/confirm",
-            json={"token": known["reset_token"], "password": "brandnewpassword1"},
+            json={"token": real_token, "password": "brandnewpassword1"},
         )
         self.assertEqual(real_confirm.status_code, 200, real_confirm.text)
 
@@ -160,7 +188,8 @@ class PasswordResetTests(unittest.TestCase):
 
     def test_new_password_must_pass_the_same_validation_as_signup(self):
         _owner_client, email = self._signup("weakpw")
-        token = self._request_reset(email)["reset_token"]
+        self._request_reset(email)
+        token = self._latest_token_for_email(email)
 
         anon = TestClient(app, base_url="https://testserver")
         too_short = anon.post(

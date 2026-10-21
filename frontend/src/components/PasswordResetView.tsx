@@ -17,15 +17,19 @@ interface PasswordResetViewProps {
 /**
  * Self-serve "I forgot my password" flow for a locked-out manager (see
  * backend/app/api/auth_routes.py's /password-reset/request and /password-reset/confirm).
- * There is no support team and no email service configured in this environment, so the
- * request step shows the reset link directly instead of emailing it - the manager copies
- * it and uses it themselves, or sends it to whoever on their team is locked out.
+ * Unlike owner invites, the request step never shows the actual reset link: this
+ * endpoint is unauthenticated and reachable against any email, so handing the live link
+ * back to whoever submitted the form - rather than only to the account's real inbox -
+ * would let anyone who knows or guesses a manager's email take over that account with no
+ * access to their email at all. There is no email service configured in this environment
+ * yet, so for now the link is only written to the server log, which a locked-out manager
+ * would need to ask the site operator for.
  */
 export const PasswordResetView: React.FC<PasswordResetViewProps> = ({ mode, token, onBackToLogin }) => {
   const [email, setEmail] = useState('');
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
-  const [resetLink, setResetLink] = useState<string | null>(null);
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
 
   const [password, setPassword] = useState('');
   const [confirmSubmitting, setConfirmSubmitting] = useState(false);
@@ -39,10 +43,10 @@ export const PasswordResetView: React.FC<PasswordResetViewProps> = ({ mode, toke
     const { result, error } = await requestPasswordResetApi(email.trim());
     setRequestSubmitting(false);
     if (error || !result) {
-      setRequestError(error ?? 'The reset link could not be created.');
+      setRequestError(error ?? 'The reset request could not be sent.');
       return;
     }
-    setResetLink(`${window.location.origin}/?password_reset=${result.reset_token}`);
+    setRequestSubmitted(true);
   };
 
   const handleConfirmSubmit = async (e: React.FormEvent) => {
@@ -133,13 +137,13 @@ export const PasswordResetView: React.FC<PasswordResetViewProps> = ({ mode, toke
         <div>
           <h1 className="text-lg font-bold tracking-tight">Reset your password</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Enter the email on your account. No email service is configured here, so we'll
-            show the reset link right on this page instead of sending it - copy it and use
-            it yourself, or send it to whoever on your team is locked out.
+            Enter the email on your account. No email service is configured here yet, so
+            the reset link isn't sent automatically - ask the site operator for it once
+            you've submitted this.
           </p>
         </div>
 
-        {!resetLink && (
+        {!requestSubmitted && (
           <form onSubmit={handleRequestSubmit} className="space-y-3">
             <div>
               <label htmlFor="password-reset-email" className="block text-xs font-semibold text-slate-600 mb-1.5">
@@ -166,25 +170,20 @@ export const PasswordResetView: React.FC<PasswordResetViewProps> = ({ mode, toke
               disabled={requestSubmitting || !email.trim()}
               className="w-full rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-sm font-semibold py-2 transition-colors"
             >
-              {requestSubmitting ? 'Please wait…' : 'Get reset link'}
+              {requestSubmitting ? 'Please wait…' : 'Request reset link'}
             </button>
           </form>
         )}
 
-        {resetLink && (
-          <div className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900 space-y-1">
+        {requestSubmitted && (
+          <div role="status" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
             <p className="font-semibold">
-              If an account exists for that email, this is its reset link. No email service
-              is configured here - in a real deployment it would be emailed automatically.
-              It only works once, and only if that email actually has an account.
+              If an account exists for that email, a one-time reset link has been generated.
             </p>
-            <input
-              readOnly
-              aria-label="Password reset link"
-              value={resetLink}
-              onFocus={(e) => e.currentTarget.select()}
-              className="w-full px-2 py-1.5 border border-amber-300 rounded bg-white text-xs font-mono"
-            />
+            <p className="mt-1">
+              No email service is configured here yet, so it wasn't sent anywhere - ask
+              whoever operates this site for the link rather than waiting on an email.
+            </p>
           </div>
         )}
 

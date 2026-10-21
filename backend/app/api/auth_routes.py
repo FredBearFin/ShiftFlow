@@ -204,6 +204,13 @@ def request_password_reset(payload: PasswordResetRequestInput, db: sqlite3.Conne
         token = secrets.token_urlsafe(32)
 
     reset_path = f"/?password_reset={token}"
+    # Deliberately not returned in the HTTP response: this endpoint is unauthenticated and
+    # callable against any email in the system, so handing the live reset link back to
+    # whoever asked - rather than only to the account's real inbox - would let anyone who
+    # knows or guesses a manager's email take over that account with no access to their
+    # email at all. A real deployment emails this link to the account holder; since no
+    # email service is configured here, it is only ever written to the server log, which
+    # only the operator (not the requester) can read.
     print(
         f"[password-reset] No email service is configured - if an account exists for "
         f"{email}, this link would be emailed to them in production. Reset link: {reset_path}"
@@ -211,12 +218,10 @@ def request_password_reset(payload: PasswordResetRequestInput, db: sqlite3.Conne
     return {
         "status": "ok",
         "message": _GENERIC_RESET_REQUEST_MESSAGE,
-        "reset_token": token,
-        "reset_path": reset_path,
         "note": (
-            "No email service is configured here. In a real deployment this link would be "
-            "emailed to the account holder; for now, share it with them yourself. It only "
-            "works if an account actually exists for the email you entered."
+            "No email service is configured here yet. If an account exists for that "
+            "email, a reset link has been generated and logged server-side - ask the "
+            "site operator for it for now, rather than it being emailed automatically."
         ),
     }
 

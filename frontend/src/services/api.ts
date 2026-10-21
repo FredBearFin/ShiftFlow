@@ -863,21 +863,22 @@ export async function acceptOwnerInviteApi(
 }
 
 /* -------------------------------------------------------------------------
- * Password reset (see backend/app/api/auth_routes.py). No email service is configured
- * here, so the request step returns the reset link directly, the same way owner
- * invites above return their accept link instead of emailing it.
+ * Password reset (see backend/app/api/auth_routes.py). Unlike owner invites, this
+ * endpoint is unauthenticated and callable against any email in the system, so the
+ * actual reset link/token is never returned here or shown to the caller - only logged
+ * server-side, where only the operator (not whoever submitted the form) can read it.
+ * Returning it to the caller would let anyone who knows or guesses an email take over
+ * that account with no access to its real inbox.
  * ------------------------------------------------------------------------- */
 
 export interface PasswordResetRequestResult {
   status: string;
   message: string;
-  reset_token: string;
-  reset_path: string;
   note: string;
 }
 
-/** Starts a password reset for an email. Always succeeds with a generic message and a
- *  link, whether or not that email has an account - see the backend docstring for why. */
+/** Starts a password reset for an email. Always succeeds with the same generic message,
+ *  whether or not that email has an account - see the backend docstring for why. */
 export async function requestPasswordResetApi(
   email: string
 ): Promise<{ result: PasswordResetRequestResult | null; error: string | null }> {
