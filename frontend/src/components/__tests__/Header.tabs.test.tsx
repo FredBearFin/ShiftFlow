@@ -63,6 +63,6 @@ describe('view tabs carry their state in markup', () => {
         leewayPct={10}
       />
     );
-    expect(screen.getAllByRole('status')[0].textContent).toContain('Cost vs. Rest Trade-off');
+    expect(screen.getAllByRole('status')[0].textContent).toContain('Flexibility vs. Rest');
   });
 });

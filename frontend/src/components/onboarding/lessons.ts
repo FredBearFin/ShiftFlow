@@ -61,7 +61,7 @@ export const LESSONS: Lesson[] = [
     explanation:
       'Hear now the slider named Staffing flexibility, which sets how far above the leanest possible shift count this schedule may go. And a higher setting gives the schedule more shifts to work with, within your scheduling rules, so it can avoid long work stretches and lost weekends. Then the real effect on staff comfort for your own schedule shows once setup is done, not before.',
     example:
-      'And suppose you set Staffing flexibility to 10%. Then once setup finishes, the Cost vs. Rest Trade-off tab shows that choice\'s own weekly payroll, its uncovered hours and its staff comfort score, next to every other option you could have picked. And if you want the leanest shift count, choose the setting marked No extra flexibility.',
+      'And suppose you set Staffing flexibility to 10%. Then once setup finishes, the Flexibility vs. Rest tab shows that choice\'s own weekly payroll, its uncovered hours and its staff comfort score, next to every other option you could have picked. And if you want the leanest shift count, choose the setting marked No extra flexibility.',
     whyItMatters:
       'Hear that the extra cost of more flexibility is paid in shifts, not automatically in money: the payroll figure and the uncovered hours each move on their own, so check both on that tab rather than assuming a higher setting costs more.',
   },

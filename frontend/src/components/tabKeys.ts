@@ -26,7 +26,7 @@ export const TAB_LABELS: { id: ActiveTabId; label: string }[] = [
   { id: 'staff', label: 'Staff Directory & Availability' },
   { id: 'labor', label: 'Labor & Payroll Economics' },
   { id: 'coverage', label: '24h Coverage Heatmap' },
-  { id: 'pareto', label: 'Cost vs. Rest Trade-off' },
+  { id: 'pareto', label: 'Flexibility vs. Rest' },
   { id: 'ergonomics', label: 'Ergonomics Health Audit' },
   { id: 'compliance', label: 'DOL Compliance' },
 ];

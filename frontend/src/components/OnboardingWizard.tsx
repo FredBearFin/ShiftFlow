@@ -1116,8 +1116,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   More flexibility is not the same as more money, and not the same as better
-                  coverage. Pick a starting point below — once setup is done, the Cost vs. Rest
-                  Trade-off tab shows each option's own weekly payroll, uncovered hours and workload
+                  coverage. Pick a starting point below — once setup is done, the Flexibility vs.
+                  Rest tab shows each option's own weekly payroll, uncovered hours and workload
                   score, and those can move either way.
                 </p>
               </div>

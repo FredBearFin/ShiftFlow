@@ -72,8 +72,8 @@ export const Header: React.FC<HeaderProps> = ({
     },
     {
       id: 'pareto',
-      label: 'Cost vs. Rest Trade-off',
-      badge: `+${leewayPct}% Leeway`,
+      label: 'Flexibility vs. Rest',
+      badge: `+${leewayPct}% flexibility`,
     },
     {
       id: 'ergonomics',
