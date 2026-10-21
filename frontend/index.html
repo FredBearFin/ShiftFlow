@@ -4,12 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ShiftFlow Studio — Workforce Scheduling</title>
+    <meta
+      name="description"
+      content="ShiftFlow Studio builds a weekly staff schedule from your coverage requirements, then shows what it costs in payroll, what it costs in rest, and where it breaks DOL rules."
+    />
+    <!-- Inline SVG favicon: the same SF monogram on --ink as the header mark,
+         so a tab pinned all shift is identifiable. Inline rather than a file
+         so there is no extra request and nothing to lose in a deploy. The two
+         colours are literals because a data URI cannot read a CSS variable;
+         they are --ink (#2B3A42) and --canvas (#F4F1EA). -->
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232B3A42'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-family='system-ui,sans-serif' font-size='15' font-weight='700' fill='%23F4F1EA'%3ESF%3C/text%3E%3C/svg%3E"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Source+Sans+3:wght@600;700&display=swap" rel="stylesheet" />
     <meta name="color-scheme" content="light" />
   </head>
-  <body class="bg-canvas text-ink antialiased selection:bg-indigo-600 selection:text-white">
+  <body class="bg-canvas text-ink antialiased selection:bg-accent selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

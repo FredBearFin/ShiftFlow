@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Button } from './ui/Button';
 
 interface LoginViewProps {
   onLogin: (email: string, password: string) => Promise<string | null>;
@@ -30,8 +31,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
           SF
         </div>
         <div>
-          <h1 className="text-lg font-bold tracking-tight">ShiftFlow Studio</h1>
-          <p className="text-xs text-slate-500 font-medium">Internal workforce scheduling tool</p>
+          <h1 className="type-section-title">ShiftFlow Studio</h1>
+          <p className="type-prose text-slate-500 font-medium">Internal workforce scheduling tool</p>
         </div>
       </div>
 
@@ -101,13 +102,14 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
           </div>
         )}
 
-        <button
+        <Button
+          variant="primary"
           type="submit"
           disabled={submitting || !email || !password}
-          className="w-full rounded-lg bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-sm font-semibold py-2 transition-colors"
+          className="w-full"
         >
           {submitting ? 'Please wait…' : mode === 'login' ? 'Sign In' : 'Create Account'}
-        </button>
+        </Button>
       </form>
     </div>
   );

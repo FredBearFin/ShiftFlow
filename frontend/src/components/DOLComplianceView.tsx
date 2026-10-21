@@ -1,6 +1,7 @@
 import React from 'react';
 import { SolveResponse } from '../types';
 import { Term } from './ui/Term';
+import { formatCurrency } from '../utils/format';
 
 interface DOLComplianceViewProps {
   solution: SolveResponse | null;
@@ -59,10 +60,10 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
         <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
           Compliance
         </span>
-        <h2 className="text-base font-bold text-slate-900 mt-0.5">
+        <h2 className="type-section-title text-slate-900 mt-0.5">
           What this schedule actually does, checked against common labor rules
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="type-prose text-slate-500 mt-0.5">
           These checks use the same schedule shown in Weekly Schedule and Ergonomics — nothing new is
           calculated here, it's the same numbers viewed as compliance checks instead of{' '}
           <Term explanation="How tiring the week looks for the people working it, counted in penalty points. Lower is better. The Ergonomics tab shows the same schedule scored this way.">
@@ -109,7 +110,7 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
           title="Overtime (over 40 hours/week)"
           detail={
             otHours > 0
-              ? `${otHours.toFixed(1)} overtime hours this week, costing $${labor.overtime_payroll_cost.toFixed(0)} at the 1.5× rate. Overtime isn't illegal by itself — just budget for the premium pay.`
+              ? `${otHours.toFixed(1)} overtime hours this week, costing ${formatCurrency(labor.overtime_payroll_cost)} at the 1.5× rate. Overtime isn't illegal by itself — just budget for the premium pay.`
               : 'No one is scheduled over 40 hours this week, so no overtime pay applies.'
           }
         />

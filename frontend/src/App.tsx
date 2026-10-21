@@ -43,6 +43,7 @@ import { ParetoExplorerView } from './components/ParetoExplorerView';
 import { ErgonomicsAuditView } from './components/ErgonomicsAuditView';
 import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
+import { Button } from './components/ui/Button';
 import { CompletionNote } from './components/onboarding/CompletionNote';
 
 type SolveStatus = 'loading' | 'error' | 'ready';
@@ -469,30 +470,31 @@ export function App() {
 
       <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {planningOnly && employees.length === 0 && !planningBannerDismissed && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent bg-accent-soft px-4 py-3 text-sm text-ink">
             <span>
               Planning mode: this schedule has no real staff on it yet, so lines show as
               unassigned. Add your team when you're ready to run it for real.
             </span>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setActiveTab('roster');
                   setIsAddEmpOpen(true);
                 }}
-                className="rounded-md border border-indigo-300 bg-white px-3 py-1 font-semibold text-indigo-800 hover:bg-indigo-100 whitespace-nowrap"
+                className="whitespace-nowrap"
               >
                 Add your team
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setPlanningBannerDismissed(true)}
                 aria-label="Dismiss"
-                className="rounded-md px-2 py-1 font-semibold text-indigo-700 hover:bg-indigo-100"
               >
                 ✕
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -542,21 +544,17 @@ export function App() {
               answered different settings, so it is not displayed, printed or exported here.
             </span>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSolveAttempt((n) => n + 1)}
-                className="rounded-md border border-[#9F3A32] bg-white px-3 py-1 font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setSolveAttempt((n) => n + 1)}>
                 Retry
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setErrorBannerDismissed(true)}
                 aria-label="Dismiss"
-                className="rounded-md px-2 py-1 font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
               >
                 ✕
-              </button>
+              </Button>
             </div>
           </div>
         )}

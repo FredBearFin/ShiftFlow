@@ -3,6 +3,8 @@ import { useDialogFocus } from './ui/useDialogFocus';
 import { Term } from './ui/Term';
 import { EmployeeRecord, RosterLine, SeparationCategory } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import { formatHourlyRate } from '../utils/format';
+import { Button } from './ui/Button';
 
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -111,10 +113,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               Workforce Management
             </span>
           </div>
-          <h2 className="text-base font-bold text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-slate-900 mt-0.5">
             Staff Directory & Availability Matrix
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="type-prose text-slate-500 mt-0.5">
             Manage which days each associate can work, and record separations with their
             documentation. Days marked unavailable are reported as conflicts on the schedule, not
             enforced as a hard constraint — review any conflict flagged on the Weekly Schedule tab.
@@ -122,22 +124,16 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <button type="button"
+          <Button
+            variant={filterActiveOnly ? 'primary' : 'secondary'}
+            size="sm"
             onClick={() => setFilterActiveOnly(!filterActiveOnly)}
-            className={`px-3 py-1.5 rounded-md border text-xs font-semibold ${
-              filterActiveOnly
-                ? 'bg-[#2B3A42] text-[#FFFFFF] border-[#2B3A42]'
-                : 'bg-[#FFFFFF] text-[#2B3A42] border-[#7F8A92] hover:bg-[#F4F1EA]'
-            }`}
           >
             {filterActiveOnly ? 'Showing Active Only' : 'Showing All Staff'}
-          </button>
-          <button type="button"
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-[#2B3A42] hover:bg-[#1E2A31] text-[#FFFFFF] rounded-md text-xs font-bold shadow-[0_1px_2px_rgba(43,58,66,0.08)] flex items-center gap-1.5"
-          >
+          </Button>
+          <Button variant="primary" onClick={() => setShowAddModal(true)}>
             <span>+ Add Employee</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -178,7 +174,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
                 <div className="mt-3 flex items-center justify-between text-xs font-mono-tabular">
                   <span className="text-slate-500">Hourly Wage:</span>
-                  <span className="font-bold text-slate-900">${emp.hourly_wage.toFixed(2)}/hr</span>
+                  <span className="font-bold text-slate-900">{formatHourlyRate(emp.hourly_wage)}</span>
                 </div>
 
                 <div className="mt-1 flex items-center justify-between text-xs">
@@ -243,26 +239,22 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs font-mono-tabular text-slate-400">{emp.employee_id}</span>
                 {emp.is_active ? (
-                  <button
-                    type="button"
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={() => {
                       setSeparatingEmp(emp);
                       setSepCategory('voluntary_resignation');
                       setSepReason('');
                       setRecordedBy('');
                     }}
-                    className="px-3 py-1 rounded-md text-xs font-semibold bg-[#9F3A32] text-[#FFFFFF] hover:bg-[#862F28] border border-[#9F3A32] transition-colors"
                   >
                     Separate / Deactivate
-                  </button>
+                  </Button>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => onToggleActive(emp.employee_id)}
-                    className="px-3 py-1 rounded-md text-xs font-semibold bg-[#FFFFFF] text-[#2B3A42] hover:bg-[#F4F1EA] border border-[#7F8A92] transition-colors"
-                  >
+                  <Button variant="secondary" size="sm" onClick={() => onToggleActive(emp.employee_id)}>
                     Rehire Associate
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -347,20 +339,12 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-[#7F8A92] rounded-md text-xs font-semibold text-[#2B3A42] bg-[#FFFFFF] hover:bg-[#F4F1EA]"
-                >
+                <Button variant="secondary" onClick={() => setShowAddModal(false)}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={newWageValue === null}
-                  className="px-4 py-2 bg-[#4A6B5D] hover:bg-[#3E5C50] text-[#FFFFFF] rounded-md text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
-                >
+                </Button>
+                <Button variant="accent" type="submit" disabled={newWageValue === null}>
                   Add staff member
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -439,21 +423,12 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
             </div>
 
             <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setSeparatingEmp(null)}
-                className="px-4 py-2 border border-[#7F8A92] rounded-md text-xs font-semibold text-[#2B3A42] bg-[#FFFFFF] hover:bg-[#F4F1EA]"
-              >
+              <Button variant="secondary" onClick={() => setSeparatingEmp(null)}>
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmSeparation}
-                disabled={!sepFormValid}
-                className="px-4 py-2 bg-[#9F3A32] hover:bg-[#862F28] text-[#FFFFFF] rounded-md text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
-              >
+              </Button>
+              <Button variant="danger" onClick={handleConfirmSeparation} disabled={!sepFormValid}>
                 Log Separation & Unbind Line
-              </button>
+              </Button>
             </div>
           </div>
         </div>

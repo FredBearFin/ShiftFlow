@@ -1,5 +1,7 @@
 import React from 'react';
 import { ActiveTabId, SolveResponse } from '../types';
+import { formatCurrency } from '../utils/format';
+import { Button } from './ui/Button';
 
 // Number keys bound in App.tsx keyboard handler; tabs without a key show no badge.
 const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
@@ -37,23 +39,37 @@ export const Header: React.FC<HeaderProps> = ({
     ? solution.roster_lines.filter((l) => l.estimated_weekly_payroll !== null).length
     : 0;
 
-  const navTabs: { id: ActiveTabId; label: string; badge?: string }[] = [
+  // badgeReserve holds the space a data-dependent badge will occupy once the
+  // solve returns. Without it the nav row reflows between the loading and
+  // loaded states and the tabs move under the cursor. It is rendered
+  // invisible and aria-hidden while badge is undefined, so it reserves width
+  // without being announced. Tabs whose badge never depends on a solve
+  // (coverage, pareto) and tabs with no badge (compliance) need no reserve.
+  const navTabs: {
+    id: ActiveTabId;
+    label: string;
+    badge?: string;
+    badgeReserve?: string;
+  }[] = [
     {
       id: 'roster',
       label: 'Weekly Schedule',
       badge: solution ? `${solution.employee_count} Shift Patterns` : undefined,
+      badgeReserve: '00 Shift Patterns',
     },
     {
       id: 'staff',
       label: 'Staff Directory & Availability',
       badge: solution ? `${solution.employees.length} Associates` : undefined,
+      badgeReserve: '000 Associates',
     },
     {
       id: 'labor',
       label: 'Labor & Payroll Economics',
       badge: solution
-        ? `$${Math.round(solution.labor_analysis.total_payroll_cost).toLocaleString()} · ${pricedLineCount}/${lineCount} priced`
+        ? `${formatCurrency(solution.labor_analysis.total_payroll_cost)} · ${pricedLineCount}/${lineCount} priced`
         : undefined,
+      badgeReserve: formatCurrency(100000),
     },
     {
       id: 'coverage',
@@ -69,6 +85,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'ergonomics',
       label: 'Ergonomics Health Audit',
       badge: solution ? `${solution.ergonomics_audit.health_index_score}/100` : undefined,
+      badgeReserve: '000/100',
     },
     {
       id: 'compliance',
@@ -95,7 +112,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {solution
-                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll · ${pricedLineCount} of ${lineCount} lines priced`
+                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • ${formatCurrency(solution.labor_analysis.total_payroll_cost)} Weekly Payroll · ${pricedLineCount} of ${lineCount} lines priced`
                   : 'Automated weekly schedule builder'}
               </p>
             </div>
@@ -107,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <div>
                   <span className="text-slate-500">Payroll:</span>
                   <span className="ml-1 font-mono-tabular font-bold text-slate-900">
-                    ${solution.labor_analysis.total_payroll_cost.toFixed(0)}
+                    {formatCurrency(solution.labor_analysis.total_payroll_cost)}
                   </span>
                   <span className="ml-1 font-mono-tabular text-slate-500">
                     ({pricedLineCount}/{lineCount} priced)
@@ -137,39 +154,30 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {onOpenShortcuts && (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={onOpenShortcuts}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-[0_1px_2px_rgba(43,58,66,0.08)] transition-colors"
                 title="Keyboard Shortcuts Cheatsheet (?)"
               >
                 <span>⌨️ Hotkeys</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-xs font-mono-tabular text-slate-600 font-bold">
                   ?
                 </kbd>
-              </button>
+              </Button>
             )}
 
-            <button
-              type="button"
-              onClick={onOpenWizard}
-              className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-sm flex items-center gap-2"
-            >
+            <Button variant="primary" onClick={onOpenWizard}>
               <span>Configure Facility Wizard</span>
               <span className="px-1.5 py-0.5 rounded bg-slate-700 text-xs font-mono-tabular text-slate-200">
                 5 Steps
               </span>
-            </button>
+            </Button>
 
             {onLogout && (
-              <button
-                type="button"
-                onClick={onLogout}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
-                title="Log out"
-              >
+              <Button variant="secondary" size="sm" onClick={onLogout} title="Log out">
                 Log out
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -178,38 +186,41 @@ export const Header: React.FC<HeaderProps> = ({
         <nav className="flex flex-wrap items-center gap-1 py-2" aria-label="Workspace Views">
           {navTabs.map((tab, idx) => {
             const isActive = activeTab === tab.id;
+            // Active is encoded three ways — a 2px accent bottom border, --ink
+            // text and a --surface-sunken fill — and never by font weight,
+            // because a weight change resizes the tab and moves the rest of
+            // the row.
             return (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => onSelectTab(tab.id)}
-                className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-t-md text-xs font-semibold transition-colors flex items-center gap-2 whitespace-nowrap border-b-2 ${
                   isActive
-                    ? 'bg-[#E4E9EC] text-[#2B3A42] border border-slate-200/80 shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-transparent'
+                    ? 'border-accent text-ink bg-surface-sunken'
+                    : 'border-transparent text-muted hover:text-ink hover:bg-surface'
                 }`}
               >
                 {TAB_KEY_NUMBERS[tab.id] !== undefined && (
                   <kbd
                     className={`px-1 py-0.5 rounded text-xs font-mono-tabular font-bold ${
                       isActive
-                        ? 'bg-white text-[#2B3A42]'
-                        : 'bg-slate-100 text-slate-500'
+                        ? 'bg-card text-ink'
+                        : 'bg-surface text-muted'
                     }`}
                   >
                     {TAB_KEY_NUMBERS[tab.id]}
                   </kbd>
                 )}
                 <span>{tab.label}</span>
-                {tab.badge && (
+                {(tab.badge ?? tab.badgeReserve) && (
                   <span
-                    className={`px-1.5 py-0.5 rounded text-xs font-mono-tabular ${
-                      isActive
-                        ? 'bg-white text-[#2B3A42] font-bold'
-                        : 'bg-slate-100 text-slate-600'
-                    }`}
+                    aria-hidden={tab.badge ? undefined : true}
+                    className={`px-1.5 py-0.5 rounded text-xs font-mono-tabular font-semibold text-center ${
+                      tab.badge ? '' : 'invisible'
+                    } ${isActive ? 'bg-card text-ink' : 'bg-surface text-muted'}`}
                   >
-                    {tab.badge}
+                    {tab.badge ?? tab.badgeReserve}
                   </span>
                 )}
               </button>

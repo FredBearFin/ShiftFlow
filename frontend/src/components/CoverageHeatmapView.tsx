@@ -34,10 +34,10 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
           <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
             24-Hour Coverage
           </span>
-          <h2 className="text-base font-bold text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-slate-900 mt-0.5">
             Scheduled vs. <Term explanation="How many people you need in each hour.">required</Term> staff, hour by hour across the week
           </h2>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="type-prose text-slate-600 mt-0.5">
             Check scheduled staff each hour against the need: short or extra.
           </p>
           <p className="text-xs text-slate-500 mt-1.5 max-w-2xl">
@@ -91,7 +91,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
 
       {/* 7 x 24 Interval Heatmap Matrix */}
       <div className="card p-5 overflow-x-auto">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
+        <h3 className="type-subsection-title text-slate-700 mb-3">
           24-Hour × 7-Day Interval Staffing Heatmap
         </h3>
         <table className="w-full border-collapse text-center text-xs font-mono-tabular">
@@ -117,13 +117,17 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                   </th>
                   {cells.map((c) => {
                     const diff = c.scheduled_staff - c.required_staff;
-                    let cellStyle = 'bg-emerald-50 text-emerald-900 border-emerald-200';
+                    // Ordered 3-step ramp: on target -> overstaffed -> understaffed.
+                    // Understaffed is the real problem, so it takes the risk step.
+                    // Every cell also carries stateLabel, so colour is never the
+                    // only encoding.
+                    let cellStyle = 'bg-status-ok-soft text-status-ok-ink border-status-ok';
                     if (c.required_staff === 0 && c.scheduled_staff === 0) {
-                      cellStyle = 'bg-slate-50 text-slate-400 border-slate-100';
+                      cellStyle = 'bg-surface-subtle text-muted border-border-subtle';
                     } else if (diff < 0) {
-                      cellStyle = 'bg-amber-50 text-amber-900 border-amber-300 font-bold';
+                      cellStyle = 'bg-status-risk-soft text-status-risk-ink border-status-risk font-bold';
                     } else if (diff > 0) {
-                      cellStyle = 'bg-indigo-50 text-indigo-900 border-indigo-200';
+                      cellStyle = 'bg-status-watch-soft text-status-watch-ink border-status-watch';
                     }
                     const stateLabel =
                       c.required_staff === 0 && c.scheduled_staff === 0
@@ -160,7 +164,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
 
       {/* Shift Design Utilization Table (xi_{gt} & phi_t) */}
       <div className="card p-5">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
+        <h3 className="type-subsection-title text-slate-700 mb-3">
           Shift Types: Active and Staff per Day
         </h3>
         <div className="overflow-x-auto">

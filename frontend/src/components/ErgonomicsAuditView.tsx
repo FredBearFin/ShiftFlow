@@ -26,8 +26,15 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
   const labelW = 190;
   const barAreaW = chartW - labelW - 60;
 
-  const statusColor = (status: string) =>
-    status === 'optimal' ? '#059669' : status === 'acceptable' ? '#4f46e5' : '#b45309';
+  // Ordered 3-step status ramp, ok -> watch -> risk (see index.css).
+  // Applied as a class, not a fill="…" attribute: CSS custom properties do
+  // not resolve inside SVG presentation attributes.
+  const statusFillClass = (status: string) =>
+    status === 'optimal'
+      ? 'fill-status-ok'
+      : status === 'acceptable'
+      ? 'fill-status-watch'
+      : 'fill-status-risk';
 
   return (
     <div className="space-y-5">
@@ -38,7 +45,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             Ergonomics Health Index
           </span>
           <div className="flex items-baseline gap-3 mt-1">
-            <span className="text-3xl font-bold font-mono-tabular text-emerald-700">
+            <span className="text-3xl font-bold font-mono-tabular text-ink">
               {audit.health_index_score}/100
             </span>
           </div>
@@ -46,12 +53,12 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             Higher is better. It is a score out of 100, not a percentage, and this tool only ever
             reports it between 55 and 99.5 — so a schedule never reads 0 and never reads 100.
           </p>
-          <p className="text-xs text-slate-600 mt-1.5 pt-1.5 border-t border-slate-100">
+          <p className="type-prose text-slate-600 mt-1.5 pt-1.5 border-t border-slate-100">
             Separately, the fatigue penalty behind it: {audit.total_ergo_objective.toFixed(1)}{' '}
             penalty points across the {criteria.length} checks below, where lower is better, versus{' '}
             {audit.sequential_baseline_ergo.toFixed(1)} for a schedule built without any of them in
             mind. That's a{' '}
-            <strong className="text-indigo-700">{audit.ergo_improvement_pct}%</strong> reduction in
+            <strong className="text-ink">{audit.ergo_improvement_pct}%</strong> reduction in
             the things that burn people out.
           </p>
         </div>
@@ -61,7 +68,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             Rest Between Shifts
           </span>
           <div className="flex items-baseline gap-3 mt-1">
-            <span className="text-3xl font-bold font-mono-tabular text-slate-900">
+            <span className="text-3xl font-bold font-mono-tabular text-ink">
               {audit.min_rest_hours_observed}h
             </span>
             {audit.clopening_violations > 0 && (
@@ -88,7 +95,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             </Term>
           </span>
           <div className="flex items-baseline gap-3 mt-1">
-            <span className="text-3xl font-bold font-mono-tabular text-indigo-700">
+            <span className="text-3xl font-bold font-mono-tabular text-ink">
               {balancedHandoffs}/{handoffCount}
             </span>
           </div>
@@ -101,10 +108,10 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
 
       {/* Visual breakdown of the 8 checks */}
       <div className="card p-5">
-        <h2 className="text-base font-bold text-slate-900">
+        <h2 className="type-section-title text-slate-900">
           What's pulling the score down
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5 mb-3">
+        <p className="type-prose text-slate-500 mt-0.5 mb-3">
           Each bar is one thing this tool watches for. A longer bar doesn't always mean a bigger
           problem on its own — some checks (like weekend coverage) are weighted more heavily per
           occurrence and come up on almost every schedule, so they often show the longest bar even
@@ -132,7 +139,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   width={Math.max(2, barW)}
                   height={rowH - 14}
                   rx={3}
-                  fill={statusColor(c.status)}
+                  className={statusFillClass(c.status)}
                   opacity={0.85}
                 />
                 <text
@@ -152,7 +159,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       {/* Plain-language breakdown table */}
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
-          <h2 className="text-base font-bold text-slate-900">
+          <h2 className="type-section-title text-slate-900">
             The {criteria.length} things this tool checks to avoid burning people out
           </h2>
         </div>
@@ -185,17 +192,17 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   <td className="py-3 px-3 text-right font-mono-tabular text-slate-500">
                     ×{c.base_weight}
                   </td>
-                  <td className="py-3 px-3 text-right font-mono-tabular font-bold text-emerald-700">
+                  <td className="py-3 px-3 text-right font-mono-tabular font-bold text-ink">
                     {c.weighted_penalty.toFixed(1)}
                   </td>
                   <td className="py-3 px-4 text-center">
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
                         c.status === 'optimal'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          ? 'bg-status-ok-soft text-status-ok-ink border border-status-ok'
                           : c.status === 'acceptable'
-                          ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                          : 'bg-amber-50 text-amber-800 border border-amber-200'
+                          ? 'bg-status-watch-soft text-status-watch-ink border border-status-watch'
+                          : 'bg-status-risk-soft text-status-risk-ink border border-status-risk'
                       }`}
                     >
                       {c.status}
@@ -211,10 +218,10 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       {/* Weekly rotation hand-off balance */}
       <div className="card p-5">
         <div className="mb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <h3 className="type-subsection-title text-slate-700">
             Weekly rotation hand-offs
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="type-prose text-slate-500 mt-0.5">
             For each day, how many people are starting a work stretch versus starting a rest
             stretch — these should match up so the {rotationWeeks}-week rotation keeps repeating
             cleanly.

@@ -2,6 +2,7 @@ import React from 'react';
 import { ParetoPoint, SolveResponse } from '../types';
 import { Term } from './ui/Term';
 import { Button } from './ui/Button';
+import { formatCurrency } from '../utils/format';
 
 interface ParetoExplorerViewProps {
   solution: SolveResponse;
@@ -57,10 +58,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
               Give the solver more room, get a better-rested schedule
             </span>
-            <h2 className="text-base font-bold text-slate-900 mt-0.5">
+            <h2 className="type-section-title text-slate-900 mt-0.5">
               Every point below is a real, complete schedule — not a theory
             </h2>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+            <p className="type-prose text-slate-600 mt-1 leading-relaxed">
               Staffing flexibility is how far above the leanest possible shift count the solver may
               go. Moving right means more shifts in the schedule. Moving down means less of the
               stuff that burns people out — long stretches without a day off, back-to-back
@@ -68,7 +69,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               money and not the same as better coverage: each option below shows its own weekly
               payroll and its own uncovered hours, and both can move either way.
             </p>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+            <p className="type-prose text-slate-600 mt-1 leading-relaxed">
               Every payroll figure below prices {pricedLineCount} of {lineCount} shift patterns —
               the ones that have somebody assigned. Patterns with nobody on them cost nothing here
               and would cost more once staffed.
@@ -89,20 +90,20 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-8 card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <h3 className="type-subsection-title text-slate-700">
               Flexibility vs. rest — click any point to apply it
             </h3>
             <div className="flex items-center gap-3 text-xs">
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-warning" />
                   {knee.leeway_pct}% flexibility is the sweet spot for rest
-                  (${Math.round(knee.estimated_weekly_payroll).toLocaleString()}/wk,{' '}
+                  ({formatCurrency(knee.estimated_weekly_payroll)}/wk,{' '}
                   {knee.total_understaffing_hours}h uncovered)
                 </span>
               )}
-              <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+              <span className="inline-flex items-center gap-1.5 text-accent font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent" />
                 Currently applied
               </span>
             </div>
@@ -161,7 +162,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               {/* Pareto Curve Polyline */}
               <polyline
                 fill="none"
-                stroke="#4f46e5"
+                className="stroke-accent"
                 strokeWidth="2.5"
                 points={polylinePoints}
               />
@@ -182,8 +183,8 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         cx={cx}
                         cy={cy}
                         r={11}
-                        fill="rgba(79, 70, 229, 0.15)"
-                        stroke="#4f46e5"
+                        className="stroke-accent"
+                        style={{ fill: 'var(--accent)', fillOpacity: 0.15 }}
                         strokeWidth="1.5"
                       />
                     )}
@@ -191,14 +192,13 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       cx={cx}
                       cy={cy}
                       r={pt.is_knee_point || isSel ? 6.5 : 5}
-                      fill={
+                      className={
                         isSel
-                          ? '#4f46e5'
+                          ? 'fill-accent stroke-accent'
                           : pt.is_knee_point
-                          ? '#f59e0b'
-                          : '#ffffff'
+                          ? 'fill-warning stroke-warning-ink'
+                          : 'fill-card stroke-accent'
                       }
-                      stroke={pt.is_knee_point ? '#b45309' : '#4f46e5'}
                       strokeWidth="2"
                     />
                     {(pt.is_knee_point || isSel || pt.leeway_pct === 0 || pt.leeway_pct === 10 || pt.leeway_pct === 50) && (
@@ -207,7 +207,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         y={cy - 8}
                         className="text-xs font-mono-tabular font-bold fill-slate-800"
                       >
-                        +{pt.leeway_pct}% flex · ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk · {pt.total_understaffing_hours}h uncovered
+                        +{pt.leeway_pct}% flex · {formatCurrency(pt.estimated_weekly_payroll)}/wk · {pt.total_understaffing_hours}h uncovered
                       </text>
                     )}
                   </g>
@@ -223,12 +223,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
               Where the flexibility buys the most rest
             </span>
-            <h3 className="text-sm font-bold text-slate-900 mt-1">
+            <h3 className="type-subsection-title text-slate-900 mt-1">
               {knee
                 ? `Why ${knee.leeway_pct}% staffing flexibility is the sweet spot`
                 : 'Flexibility vs. rest, point by point'}
             </h3>
-            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+            <p className="type-prose text-slate-600 mt-1.5 leading-relaxed">
               The first bit of extra flexibility buys a lot of improvement; after a point, allowing
               more barely helps. Pick any row — its own weekly payroll and uncovered hours are
               shown next to it:
@@ -260,8 +260,8 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         {pt.is_knee_point ? ' (sweet spot for rest)' : ''}
                       </span>
                     </div>
-                    <span className="font-mono-tabular font-bold text-[#2B3A42] text-right">
-                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
+                    <span className="font-mono-tabular font-bold text-ink text-right">
+                      {formatCurrency(pt.estimated_weekly_payroll)}/wk
                       <span className="block font-normal text-slate-500">
                         {pt.total_understaffing_hours}h uncovered
                       </span>
@@ -277,7 +277,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       {/* Pareto Frontier Enumeration Table */}
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-slate-50">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <h3 className="type-subsection-title text-slate-700">
             Every option, side by side
           </h3>
         </div>
@@ -311,7 +311,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 return (
                   <tr
                     key={pt.point_index}
-                    className={isSel ? 'bg-indigo-50/60' : 'hover:bg-slate-50'}
+                    className={isSel ? 'bg-accent-soft' : 'hover:bg-slate-50'}
                   >
                     <td className="py-2.5 px-4 font-sans font-semibold text-slate-900">
                       {pt.label}
@@ -323,7 +323,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     </td>
                     <td className="py-2.5 px-3 text-right">+{pt.leeway_pct}%</td>
                     <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}
+                      {formatCurrency(pt.estimated_weekly_payroll)}
                     </td>
                     <td
                       className={`py-2.5 px-3 text-right font-bold ${

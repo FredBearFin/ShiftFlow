@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { uploadPosCsvApi, PosUploadResult, DAYS_OF_WEEK } from '../services/api';
 import { Term } from './ui/Term';
 import { Button } from './ui/Button';
+import { formatCurrency } from '../utils/format';
 
 interface POSIntegrationViewProps {
   facilityId: string;
@@ -106,10 +107,10 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
         <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
           Point-of-Sale Integration
         </span>
-        <h2 className="text-base font-bold text-slate-900 mt-0.5">
+        <h2 className="type-section-title text-slate-900 mt-0.5">
           Recalculate Register Demand from a POS Export
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="type-prose text-slate-500 mt-0.5">
           Upload a transaction CSV to work out an hourly{' '}
           <Term explanation="How many people you need in each hour.">staff-needed</Term> table
           from your sales. You see it next to your current table and decide whether to use it.
@@ -125,10 +126,10 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
       </div>
 
       <div className="enterprise-card p-5 space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+        <h3 className="type-subsection-title text-slate-700">
           Upload POS Export CSV
         </h3>
-        <p className="text-xs text-slate-500">
+        <p className="type-prose text-slate-500">
           The file needs columns for the amount, day of week and hour of day. Nothing in your
           staffing table changes until you choose to use the result.
         </p>
@@ -200,7 +201,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
 
         {result && (
           <div className="p-3 bg-[#FFFFFF] border border-[#7F8A92] rounded-lg text-xs text-[#2B3A42] font-semibold space-y-1">
-            <div>Weekly sales in file: ${result.weekly_sales.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+            <div>Weekly sales in file: {formatCurrency(result.weekly_sales)}</div>
             <div>Weekly transactions in file: {result.weekly_transactions.toLocaleString()}</div>
           </div>
         )}
