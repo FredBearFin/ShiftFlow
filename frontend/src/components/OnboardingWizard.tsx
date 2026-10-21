@@ -964,10 +964,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       htmlFor="leeway-range"
                       className="block text-xs font-bold uppercase tracking-wider text-slate-500"
                     >
-                      Extra payroll you're willing to spend
+                      Staffing flexibility you'll allow
                     </label>
                     <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
-                      +{leewayPct}% payroll
+                      +{leewayPct}% flexibility
                     </div>
                   </div>
                 </div>
@@ -985,12 +985,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2">
                   {[
-                    { lw: 0, tag: 'No extra cost' },
-                    { lw: 1, tag: '+1% cost' },
-                    { lw: 5, tag: '+5% cost' },
-                    { lw: 10, tag: '+10% cost' },
-                    { lw: 20, tag: '+20% cost' },
-                    { lw: 50, tag: '+50% cost' },
+                    { lw: 0, tag: 'No extra flexibility' },
+                    { lw: 1, tag: '+1% flexibility' },
+                    { lw: 5, tag: '+5% flexibility' },
+                    { lw: 10, tag: '+10% flexibility' },
+                    { lw: 20, tag: '+20% flexibility' },
+                    { lw: 50, tag: '+50% flexibility' },
                   ].map((pt) => (
                     <button
                       key={pt.lw}

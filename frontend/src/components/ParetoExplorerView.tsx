@@ -25,6 +25,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   const lineCount = solution.roster_lines.length;
   const pricedLineCount = solution.roster_lines.filter((l) => l.estimated_weekly_payroll !== null).length;
 
+  // Coverage does not track the flexibility column, so the worst-coverage option is
+  // named rather than left for the reader to spot.
+  const worstUncovered = points.length > 0 ? Math.max(...points.map((p) => p.total_understaffing_hours)) : 0;
+
   // SVG Coordinate projection
   const svgW = 720;
   const svgH = 320;
@@ -51,17 +55,18 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
-              Pay a little more, get a better-rested schedule
+              Give the solver more room, get a better-rested schedule
             </span>
             <h2 className="text-base font-bold text-slate-900 mt-0.5">
               Every point below is a real, complete schedule — not a theory
             </h2>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Use this when you want to see what it'd cost to give your team an easier schedule.
-              Moving right costs more in payroll. Moving down means less of the stuff that burns
-              people out — long stretches without a day off, back-to-back closing-then-opening
-              shifts, lost weekends. Click any point on the curve or table below to switch your
-              actual schedule to it; each one shows its real weekly payroll cost.
+              Staffing flexibility is how far above the leanest possible shift count the solver may
+              go. Moving right means more shifts in the schedule. Moving down means less of the
+              stuff that burns people out — long stretches without a day off, back-to-back
+              closing-then-opening shifts, lost weekends. More flexibility is not the same as more
+              money and not the same as better coverage: each option below shows its own weekly
+              payroll and its own uncovered hours, and both can move either way.
             </p>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
               Every payroll figure below prices {pricedLineCount} of {lineCount} shift patterns —
@@ -74,7 +79,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Currently applied
             </span>
             <span className="text-sm font-bold font-mono-tabular text-[#2B3A42]">
-              +{selectedLeewayPct}% extra payroll allowed
+              +{selectedLeewayPct}% staffing flexibility allowed
             </span>
           </div>
         </div>
@@ -85,13 +90,15 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="lg:col-span-8 card p-5">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Cost vs. rest — click any point to apply it
+              Flexibility vs. rest — click any point to apply it
             </h3>
             <div className="flex items-center gap-3 text-xs">
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  {knee.leeway_pct}% is the sweet spot (${Math.round(knee.estimated_weekly_payroll).toLocaleString()}/wk)
+                  {knee.leeway_pct}% flexibility is the sweet spot for rest
+                  (${Math.round(knee.estimated_weekly_payroll).toLocaleString()}/wk,{' '}
+                  {knee.total_understaffing_hours}h uncovered)
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
@@ -139,7 +146,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 textAnchor="middle"
                 className="text-xs font-semibold fill-slate-700"
               >
-                More scheduling cost →
+                More shifts scheduled →
               </text>
               <text
                 x={16}
@@ -200,7 +207,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         y={cy - 8}
                         className="text-xs font-mono-tabular font-bold fill-slate-800"
                       >
-                        +{pt.leeway_pct}% cost · ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
+                        +{pt.leeway_pct}% flex · ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk · {pt.total_understaffing_hours}h uncovered
                       </text>
                     )}
                   </g>
@@ -214,14 +221,17 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         <div className="lg:col-span-4 card p-5 flex flex-col justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
-              Where the money buys the most rest
+              Where the flexibility buys the most rest
             </span>
             <h3 className="text-sm font-bold text-slate-900 mt-1">
-              {knee ? `Why ${knee.leeway_pct}% extra cost is the sweet spot` : 'Cost vs. rest, point by point'}
+              {knee
+                ? `Why ${knee.leeway_pct}% staffing flexibility is the sweet spot`
+                : 'Flexibility vs. rest, point by point'}
             </h3>
             <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-              The first bit of extra spending buys a lot of improvement; after a point, paying more
-              barely helps. Pick any row — its real weekly payroll is shown next to it:
+              The first bit of extra flexibility buys a lot of improvement; after a point, allowing
+              more barely helps. Pick any row — its own weekly payroll and uncovered hours are
+              shown next to it:
             </p>
 
             <div className="mt-3 space-y-2 max-h-80 overflow-y-auto">
@@ -243,15 +253,18 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                   >
                     <div>
                       <span className="font-mono-tabular font-bold text-slate-900">
-                        +{pt.leeway_pct}% cost
+                        +{pt.leeway_pct}% flexibility
                       </span>
                       <span className="block text-xs text-slate-500">
                         {pt.label}
-                        {pt.is_knee_point ? ' (sweet spot)' : ''}
+                        {pt.is_knee_point ? ' (sweet spot for rest)' : ''}
                       </span>
                     </div>
-                    <span className="font-mono-tabular font-bold text-[#2B3A42]">
+                    <span className="font-mono-tabular font-bold text-[#2B3A42] text-right">
                       ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
+                      <span className="block font-normal text-slate-500">
+                        {pt.total_understaffing_hours}h uncovered
+                      </span>
                     </span>
                   </div>
                 );
@@ -273,8 +286,13 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             <thead>
               <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500 bg-white">
                 <th className="py-3 px-4">Option</th>
-                <th className="py-3 px-3 text-right">Extra cost</th>
+                <th className="py-3 px-3 text-right">
+                  <Term explanation="How far above the leanest possible shift count this option lets the solver go. It is not a payroll budget: payroll and coverage are shown in their own columns and can move either way as this rises.">Staffing flexibility</Term>
+                </th>
                 <th className="py-3 px-3 text-right">Weekly payroll</th>
+                <th className="py-3 px-3 text-right">
+                  <Term explanation="Hours this week where fewer people are scheduled than you asked for, summed across all 168 hours. Higher is worse, and it does not track the flexibility column.">Uncovered hours</Term>
+                </th>
                 <th className="py-3 px-3 text-right">
                   <Term explanation="A rough score of how much scheduling strain is in this version — long stretches without a day off, back-to-back closing-then-opening shifts, and similar. Lower is better.">Staff strain</Term>
                 </th>
@@ -306,6 +324,18 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     <td className="py-2.5 px-3 text-right">+{pt.leeway_pct}%</td>
                     <td className="py-2.5 px-3 text-right font-bold text-slate-900">
                       ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}
+                    </td>
+                    <td
+                      className={`py-2.5 px-3 text-right font-bold ${
+                        pt.total_understaffing_hours > 0 ? 'text-amber-800' : 'text-emerald-700'
+                      }`}
+                    >
+                      {pt.total_understaffing_hours}h
+                      {pt.total_understaffing_hours === worstUncovered && worstUncovered > 0 && (
+                        <span className="block text-xs font-sans font-semibold text-amber-800">
+                          worst coverage here
+                        </span>
+                      )}
                     </td>
                     <td className="py-2.5 px-3 text-right font-bold text-[#2B3A42]">
                       {pt.obj_ergo.toFixed(1)}
