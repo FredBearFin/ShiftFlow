@@ -134,8 +134,9 @@ shiftflow/
 ├── .env.example
 ├── .github/workflows/          # backend-tests.yml, frontend-build.yml
 ├── docs/
-│   └── CONSTITUTION.md         # the project's working decision record
-├── gtm/                        # go-to-market and audit documents
+│   ├── CONSTITUTION.md         # the project's working decision record
+│   ├── SHIFT_HANDOVER_OPERATIONAL_AUDIT.md
+│   └── gtm/                    # go-to-market and audit documents
 ├── backend/
 │   ├── Dockerfile
 │   ├── requirements.txt
