@@ -107,9 +107,11 @@ export function App() {
   });
 
   const [authState, setAuthState] = useState<'checking' | 'needs-login' | 'ready'>('checking');
+  const [signupAllowed, setSignupAllowed] = useState(true);
 
   useEffect(() => {
-    authStatusApi().then(({ login_required, logged_in }) => {
+    authStatusApi().then(({ login_required, logged_in, signup_allowed }) => {
+      setSignupAllowed(signup_allowed);
       setAuthState(login_required && !logged_in ? 'needs-login' : 'ready');
     });
   }, []);
@@ -404,7 +406,7 @@ export function App() {
     return <div className="min-h-screen bg-[#F4F1EA]" />;
   }
   if (authState === 'needs-login') {
-    return <LoginView onLogin={handleLogin} onSignup={handleSignup} />;
+    return <LoginView onLogin={handleLogin} onSignup={handleSignup} signupAllowed={signupAllowed} />;
   }
 
   return (
@@ -459,7 +461,16 @@ export function App() {
           </div>
         )}
         {solveStatus === 'error' && !errorBannerDismissed && (
-          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+          // While the setup wizard is open its fixed inset-0 z-50 overlay sits on top of
+          // <main>, so an in-flow banner here is invisible. Lift it above the overlay.
+          <div
+            role="alert"
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32] ${
+              isWizardOpen
+                ? 'fixed inset-x-3 top-3 z-[60] mx-auto max-w-3xl sm:inset-x-6'
+                : 'mb-4'
+            }`}
+          >
             <span>{solveError}</span>
             <div className="flex items-center gap-2">
               <button

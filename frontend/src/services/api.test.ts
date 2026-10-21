@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { solveScheduleApi, exportRosterToCsvString } from './api';
+import { solveScheduleApi, exportRosterToCsvString, authStatusApi, createEmployeeApi } from './api';
 import type { SolveRequest, SolveResponse } from '../types';
 
 const request = { demand_matrix: [], templates: [] } as unknown as SolveRequest;
@@ -54,5 +54,51 @@ describe('exportRosterToCsvString', () => {
     } as unknown as SolveResponse;
     const csv = exportRosterToCsvString(solution);
     expect(csv).toContain('"Smith, ""Jo"""');
+  });
+});
+
+describe('requests no longer carry the retired X-API-Key header', () => {
+  it('sends only a JSON content type when saving a staff member', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'EMP-1' }) });
+    vi.stubGlobal('fetch', fetchMock);
+    await createEmployeeApi('FAC-OMAHA-01', { name: 'Pat' });
+    const init = fetchMock.mock.calls[0][1] as { headers: Record<string, string> };
+    expect(init.headers).toEqual({ 'Content-Type': 'application/json' });
+  });
+});
+
+describe('authStatusApi', () => {
+  it('passes through whether sign-up is open', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ login_required: true, logged_in: false, email: null, signup_allowed: false }),
+      })
+    );
+    expect(await authStatusApi()).toEqual({
+      login_required: true,
+      logged_in: false,
+      email: null,
+      signup_allowed: false,
+    });
+  });
+
+  it('treats a server that does not report sign-up as open, so an older backend still shows Create Account', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ login_required: true, logged_in: false, email: null }),
+      })
+    );
+    expect((await authStatusApi()).signup_allowed).toBe(true);
+  });
+
+  it('assumes no login screen is needed when the status call fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('offline')));
+    const status = await authStatusApi();
+    expect(status.login_required).toBe(false);
+    expect(status.logged_in).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import { SolveResponse } from '../types';
+import { Term } from './ui/Term';
 
 interface DOLComplianceViewProps {
   solution: SolveResponse | null;
@@ -54,7 +55,11 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
         </h2>
         <p className="text-xs text-slate-500 mt-0.5">
           These checks use the same schedule shown in Weekly Schedule and Ergonomics — nothing new is
-          calculated here, it's the same numbers viewed as compliance checks instead of comfort scores.
+          calculated here, it's the same numbers viewed as compliance checks instead of{' '}
+          <Term explanation="How tiring the week looks for the people working it, counted in penalty points. Lower is better. The Ergonomics tab shows the same schedule scored this way.">
+            comfort scores
+          </Term>
+          .
         </p>
       </div>
 

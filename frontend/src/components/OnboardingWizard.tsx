@@ -8,9 +8,10 @@ import {
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 import { Button } from './ui/Button';
+import { useDialogFocus } from './ui/useDialogFocus';
 import { BardPanel } from './onboarding/BardPanel';
 import { ExplainThis } from './onboarding/ExplainThis';
-import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
+import { PRESET_LABELS, presetLabelFor, presetSolveBlocker } from './onboarding/presetLabels';
 import { BusinessAnswers, BusyPeriod, WeekendPattern, buildDemandMatrix, buildShiftTemplates } from './onboarding/deriveSchedule';
 import {
   FirstRunTour,
@@ -94,8 +95,28 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const [selectedDayTab, setSelectedDayTab] = useState<number>(0);
   const [tourOpen, setTourOpen] = useState<boolean>(() => !readTourDone());
   const showTourAgainRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Same focus handling as every other dialog in the app: focus moves in on open,
+  // Tab stays inside, and focus returns to the trigger on close. Two departures,
+  // both deliberate:
+  //  - Escape only closes while setup is skippable, matching App's own Escape guard,
+  //    because setup with no staff yet cannot be dismissed.
+  //  - The trap is suspended while the first-run tour is open, so the tour's own trap
+  //    is the only one running and only one aria-modal element exists at a time.
+  useDialogFocus(dialogRef, isOpen && !tourOpen, () => {
+    if (canSkip) onClose();
+  });
 
   const [showExamples, setShowExamples] = useState(false);
+  // Set when the example just loaded is one the engine cannot schedule. Shown inside
+  // the wizard, on the click, instead of surfacing six steps later as a page banner
+  // the wizard's own overlay covers up.
+  const [blockedPreset, setBlockedPreset] = useState<{
+    id: string;
+    label: string;
+    message: string;
+  } | null>(null);
   const [answers, setAnswers] = useState<BusinessAnswers>({
     openDays: [0, 1, 2, 3, 4, 5, 6],
     runs24Hours: false,
@@ -211,8 +232,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
-      aria-modal="true"
+      aria-modal={tourOpen ? undefined : true}
       aria-labelledby="onboarding-wizard-title"
       className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
     >
@@ -367,8 +389,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   {!answers.runs24Hours && (
                     <div className="flex items-center gap-3 mt-1">
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Opens at</label>
+                        <label htmlFor="onboarding-opens-at" className="block text-xs text-slate-500 mb-1">Opens at</label>
                         <input
+                          id="onboarding-opens-at"
                           type="number"
                           min={0}
                           max={23}
@@ -379,8 +402,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         <span className="text-xs text-slate-400 ml-1">:00</span>
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Closes at</label>
+                        <label htmlFor="onboarding-closes-at" className="block text-xs text-slate-500 mb-1">Closes at</label>
                         <input
+                          id="onboarding-closes-at"
                           type="number"
                           min={1}
                           max={24}
@@ -414,10 +438,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
                 <div className="grid grid-cols-2 gap-4 max-w-md">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label htmlFor="onboarding-peak-staff" className="block text-xs text-slate-500 mb-1">
                       People needed at your busiest
                     </label>
                     <input
+                      id="onboarding-peak-staff"
                       type="number"
                       min={1}
                       max={100}
@@ -427,10 +452,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label htmlFor="onboarding-min-staff" className="block text-xs text-slate-500 mb-1">
                       People needed at your quietest (while open)
                     </label>
                     <input
+                      id="onboarding-min-staff"
                       type="number"
                       min={0}
                       max={100}
@@ -466,16 +492,81 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 >
                   {showExamples ? 'Hide examples' : "Not sure where to start? Load an example you can edit"}
                 </button>
+                {blockedPreset && (
+                  <div
+                    id="onboarding-preset-solve-warning"
+                    role="alert"
+                    className="mt-3 rounded-xl border border-[#9F3A32] bg-white p-3 text-xs text-[#9F3A32]"
+                  >
+                    <p className="font-bold">
+                      {blockedPreset.label} does not build a schedule on its own yet.
+                    </p>
+                    <p className="mt-1 text-slate-700">{blockedPreset.message}</p>
+                    <p className="mt-1 text-slate-700">
+                      Its hours and staffing numbers are loaded, so you can keep going — but add a
+                      shift or ease a rest rule before you finish, or the schedule will come back
+                      empty.
+                    </p>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setBlockedPreset(null);
+                          setCurrentStep(3);
+                        }}
+                      >
+                        Add a shift (step 3)
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setBlockedPreset(null);
+                          setCurrentStep(4);
+                        }}
+                      >
+                        Ease a rest rule (step 4)
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setBlockedPreset(null)}
+                        className="rounded-md px-2 py-1 text-xs font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {showExamples && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     {archetypes.map((arch) => {
                       const isSelected = arch.id === selectedArchetypeId;
+                      const blocker = presetSolveBlocker(arch.id);
                       return (
                         <button
                           key={arch.id}
                           type="button"
                           aria-pressed={isSelected}
-                          onClick={() => onSelectArchetype(arch)}
+                          aria-describedby={
+                            blockedPreset?.id === arch.id
+                              ? 'onboarding-preset-solve-warning'
+                              : undefined
+                          }
+                          onClick={() => {
+                            onSelectArchetype(arch);
+                            setBlockedPreset(
+                              blocker
+                                ? {
+                                    id: arch.id,
+                                    label: presetLabelFor(arch.id, arch.sector),
+                                    message: blocker.message,
+                                  }
+                                : null
+                            );
+                          }}
                           className={`w-full text-left p-3 rounded-xl border cursor-pointer transition-all ${
                             isSelected
                               ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
@@ -486,6 +577,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           <span className="block text-xs text-slate-500 mt-0.5">
                             {presetLabelFor(arch.id, arch.sector)}
                           </span>
+                          {blocker && (
+                            <span className="mt-1 inline-block rounded border border-[#9F3A32] px-1.5 py-0.5 text-xs font-bold text-[#9F3A32]">
+                              {blocker.badge}
+                            </span>
+                          )}
                           <span className="block text-xs text-slate-600 mt-2 leading-relaxed">
                             {PRESET_LABELS[arch.id]?.description ?? ''}
                           </span>
@@ -1028,24 +1124,27 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <form onSubmit={submitStaffMember} className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+                      <label htmlFor="onboarding-staff-name" className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
                       <input
+                        id="onboarding-staff-name"
                         value={staffName}
                         onChange={(e) => setStaffName(e.target.value)}
                         className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Role</label>
+                      <label htmlFor="onboarding-staff-role" className="block text-xs font-semibold text-slate-600 mb-1">Role</label>
                       <input
+                        id="onboarding-staff-role"
                         value={staffRole}
                         onChange={(e) => setStaffRole(e.target.value)}
                         className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Hourly wage ($)</label>
+                      <label htmlFor="onboarding-staff-wage" className="block text-xs font-semibold text-slate-600 mb-1">Hourly wage ($)</label>
                       <input
+                        id="onboarding-staff-wage"
                         value={staffWage}
                         onChange={(e) => setStaffWage(e.target.value)}
                         placeholder="e.g. 17.50"
@@ -1149,6 +1248,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           </div>
         </div>
       </div>
+      {/* While this is up it is the one aria-modal dialog on the page: the wizard
+          drops its own aria-modal above, so assistive tech is never told that two
+          nested dialogs are both the only thing on screen. */}
       {tourOpen && (
         <FirstRunTour onDone={handleTourDone} returnFocusTo={showTourAgainRef} />
       )}

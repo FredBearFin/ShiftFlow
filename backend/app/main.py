@@ -13,7 +13,7 @@ from app.api.pos_payroll_routes import router as pos_payroll_router
 from app.api.emergency_routes import router as emergency_router
 from app.api.handover_routes import router as handover_router
 from app.api.auth_routes import router as auth_router
-from app.auth import require_login
+from app.auth import require_login, validate_auth_config
 from app.config import settings
 from app.database import init_db, get_db_connection
 from fastapi.responses import JSONResponse
@@ -41,7 +41,7 @@ app.add_middleware(
     allow_origins=cors_origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Idempotency-Key", "X-API-Key"],
+    allow_headers=["Content-Type", "Idempotency-Key"],
 )
 
 # Idempotency Middleware for exactly-once mutation semantics
@@ -54,9 +54,10 @@ def solver_infeasible_handler(request, exc: SolverInfeasibleError):
     return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
-# Startup event to ensure SQLite database schema is initialized
+# Startup: refuse to boot with login on but no usable session secret, then ensure the SQLite schema exists
 @app.on_event("startup")
 def on_startup():
+    validate_auth_config()
     init_db()
 
 

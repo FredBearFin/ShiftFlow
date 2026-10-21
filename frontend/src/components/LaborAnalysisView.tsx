@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SolveResponse } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 import { Button } from './ui/Button';
+import { Term } from './ui/Term';
 import { POSIntegrationView } from './POSIntegrationView';
 
 interface LaborAnalysisViewProps {
@@ -358,7 +359,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4">Pattern</th>
                 <th className="py-3 px-4">Assigned Personnel</th>
-                <th className="py-3 px-3">Role / Tier</th>
+                <th className="py-3 px-3">
+                  <Term explanation="The pay and skill band this shift pattern is costed at. It is also what appears as the Role in the payroll file you export, so &quot;Union Line Standard&quot; means the ordinary rate for the job, with nothing added for extra skills or seniority.">
+                    Role / Tier
+                  </Term>
+                </th>
                 <th className="py-3 px-3 text-right">Wage Rate</th>
                 <th className="py-3 px-3 text-right">Scheduled</th>
                 <th className="py-3 px-3 text-right">Regular</th>
