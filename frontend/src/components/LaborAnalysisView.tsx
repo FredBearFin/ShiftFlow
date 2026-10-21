@@ -141,10 +141,10 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
             Payroll & Cost Analytics
           </span>
-          <h2 className="text-base font-bold text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-slate-900 mt-0.5">
             Store Labor Spend & 1-Click Payroll Integration
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="type-prose text-slate-500 mt-0.5">
             Real-time calculation distinguishing regular base wages from 1.5× overtime exposure with 1-click Gusto/ADP export.
           </p>
         </div>
@@ -277,10 +277,10 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <h3 className="type-subsection-title text-slate-700">
               Daily Payroll Spend & Scheduled Hours (Monday – Sunday)
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="type-prose text-slate-500 mt-0.5">
               Tracks daily labor expenditure matching store demand and customer rush patterns.
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -345,10 +345,10 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       {/* Shift Pattern Payroll Table */}
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <h3 className="type-subsection-title text-slate-700">
             Payroll & Overtime Breakdown
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="type-prose text-slate-500 mt-0.5">
             Hours, wage rates, and estimated weekly earnings for each shift pattern.
           </p>
         </div>

@@ -83,10 +83,10 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
 
       {/* Visual breakdown of the 8 checks */}
       <div className="card p-5">
-        <h2 className="text-base font-bold text-slate-900">
+        <h2 className="type-section-title text-slate-900">
           What's pulling the score down
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5 mb-3">
+        <p className="type-prose text-slate-500 mt-0.5 mb-3">
           Each bar is one thing this tool watches for. A longer bar doesn't always mean a bigger
           problem on its own — some checks (like weekend coverage) are weighted more heavily per
           occurrence and come up on almost every schedule, so they often show the longest bar even
@@ -134,7 +134,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       {/* Plain-language breakdown table */}
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
-          <h2 className="text-base font-bold text-slate-900">
+          <h2 className="type-section-title text-slate-900">
             The 8 things this tool checks to avoid burning people out
           </h2>
         </div>
@@ -193,10 +193,10 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       {/* Weekly rotation hand-off balance */}
       <div className="card p-5">
         <div className="mb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <h3 className="type-subsection-title text-slate-700">
             Weekly rotation hand-offs
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="type-prose text-slate-500 mt-0.5">
             For each day, how many people are starting a work stretch versus starting a rest
             stretch — these should match up so the 6-week rotation keeps repeating cleanly.
           </p>

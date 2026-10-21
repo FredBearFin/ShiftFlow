@@ -83,6 +83,40 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------------------------------------------------------------------
+   Type scale: 12 / 14 / 16 / 20. Four steps, one job each. Before this,
+   93.6% of the app's text was 12px and section titles sat only 4px above
+   body text, so every page read as one field of uniform grey texture.
+
+     12px  text-xs                 data, table cells, pills, badges and
+                                   the uppercase eyebrow label above a KPI
+     14px  .type-prose             prose: the explanatory line under a title
+     16px  .type-subsection-title  a titled block inside a card
+     20px  .type-section-title     the title at the top of a view or card
+
+   These sit after @tailwind utilities, so they win over a leftover
+   text-xs on the same element. Numeric columns keep .font-mono-tabular;
+   the scale does not touch tabular figures.
+   --------------------------------------------------------------------- */
+.type-section-title {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.type-subsection-title {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+
+.type-prose {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+}
+
 /* Accessible Keyboard Hotkey Token (no shadow) */
 kbd {
   font-family: var(--font-mono);

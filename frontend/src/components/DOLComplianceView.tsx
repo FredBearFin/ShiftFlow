@@ -50,10 +50,10 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
         <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
           Compliance
         </span>
-        <h2 className="text-base font-bold text-slate-900 mt-0.5">
+        <h2 className="type-section-title text-slate-900 mt-0.5">
           What this schedule actually does, checked against common labor rules
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="type-prose text-slate-500 mt-0.5">
           These checks use the same schedule shown in Weekly Schedule and Ergonomics — nothing new is
           calculated here, it's the same numbers viewed as compliance checks instead of comfort scores.
         </p>

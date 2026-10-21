@@ -34,10 +34,10 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
           <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
             24-Hour Coverage
           </span>
-          <h2 className="text-base font-bold text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-slate-900 mt-0.5">
             Scheduled vs. <Term explanation="How many people you need in each hour.">required</Term> staff, hour by hour across the week
           </h2>
-          <p className="text-xs text-slate-600 mt-0.5">
+          <p className="type-prose text-slate-600 mt-0.5">
             Check scheduled staff each hour against the need: short or extra.
           </p>
           <p className="text-xs text-slate-500 mt-1.5 max-w-2xl">
@@ -91,7 +91,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
 
       {/* 7 x 24 Interval Heatmap Matrix */}
       <div className="card p-5 overflow-x-auto">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
+        <h3 className="type-subsection-title text-slate-700 mb-3">
           24-Hour × 7-Day Interval Staffing Heatmap
         </h3>
         <table className="w-full border-collapse text-center text-xs font-mono-tabular">
@@ -160,7 +160,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
 
       {/* Shift Design Utilization Table (xi_{gt} & phi_t) */}
       <div className="card p-5">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
+        <h3 className="type-subsection-title text-slate-700 mb-3">
           Shift Types: Active and Staff per Day
         </h3>
         <div className="overflow-x-auto">

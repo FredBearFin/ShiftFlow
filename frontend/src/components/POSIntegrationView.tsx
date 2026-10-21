@@ -40,10 +40,10 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
         <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
           Point-of-Sale Integration
         </span>
-        <h2 className="text-base font-bold text-slate-900 mt-0.5">
+        <h2 className="type-section-title text-slate-900 mt-0.5">
           Recalculate Register Demand from a POS Export
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="type-prose text-slate-500 mt-0.5">
           Upload a transaction CSV to recalculate the hourly <Term explanation="How many people you need in each hour.">staff-needed</Term> table.
         </p>
       </div>
@@ -57,10 +57,10 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
       </div>
 
       <div className="enterprise-card p-5 space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+        <h3 className="type-subsection-title text-slate-700">
           Upload POS Export CSV
         </h3>
-        <p className="text-xs text-slate-500">
+        <p className="type-prose text-slate-500">
           The file needs columns for the amount, day of week and hour of day. The server reads the rows and rebuilds the demand table for this facility.
         </p>
 

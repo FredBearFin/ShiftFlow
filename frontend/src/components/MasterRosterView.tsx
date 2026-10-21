@@ -245,8 +245,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
       <div className="card overflow-hidden">
         {/* Print-only header: visible on paper, hidden on screen */}
         <div className="hidden print:block px-6 pt-4 pb-3 border-b border-slate-300">
-          <h2 className="text-lg font-bold text-slate-900">{solution.instance_name}</h2>
-          <p className="text-sm text-slate-700 font-mono-tabular">
+          <h2 className="type-section-title text-slate-900">{solution.instance_name}</h2>
+          <p className="type-prose text-slate-700 font-mono-tabular">
             Week {activeCycleWeek} of {solution.employee_count}
           </p>
         </div>
@@ -255,14 +255,14 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
         <div className="p-4 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-white">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="text-base font-bold text-slate-900">
+              <h2 className="type-section-title text-slate-900">
                 Weekly Schedule (Patterns 1 to {solution.employee_count})
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono-tabular font-semibold bg-slate-100 text-slate-800 border border-slate-300">
                 Showing Week {activeCycleWeek} of {solution.employee_count}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="type-prose text-slate-500 mt-0.5">
               {solution.employee_count} shift patterns are repeating schedule slots built from your
               hours — they exist before you assign any real staff. Every Monday morning, each one
               advances down one row. Manage employee availability, hourly wages, and active/fired
@@ -343,10 +343,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <div className="p-4 sm:px-6 bg-slate-50 border-b border-slate-200 space-y-4 no-print">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                <h3 className="type-subsection-title text-slate-800">
                   Staff Directory & Availability Controls (Add / Fire / Adjust Wages)
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="type-prose text-slate-500">
                   Manage active staff, fire or deactivate employees, adjust individual hourly wages,
                   and set allowed working days. Inactive/fired staff are instantly unmapped from lines.
                 </p>

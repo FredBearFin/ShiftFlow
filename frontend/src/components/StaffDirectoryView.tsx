@@ -119,10 +119,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               Workforce Management
             </span>
           </div>
-          <h2 className="text-base font-bold text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-slate-900 mt-0.5">
             Staff Directory, Availability Matrix & Statutory Protections
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="type-prose text-slate-500 mt-0.5">
             Manage associate availability with hard religious/medical statutory constraints and legally documented separation workflows.
           </p>
         </div>

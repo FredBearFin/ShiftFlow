@@ -30,7 +30,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
           SF
         </div>
         <div>
-          <h1 className="text-lg font-bold tracking-tight">ShiftFlow Studio</h1>
+          <h1 className="type-section-title">ShiftFlow Studio</h1>
           <p className="text-xs text-slate-500 font-medium">Internal workforce scheduling tool</p>
         </div>
       </div>

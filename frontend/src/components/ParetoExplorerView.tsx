@@ -50,10 +50,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
               Pay a little more, get a better-rested schedule
             </span>
-            <h2 className="text-base font-bold text-slate-900 mt-0.5">
+            <h2 className="type-section-title text-slate-900 mt-0.5">
               Every point below is a real, complete schedule — not a theory
             </h2>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+            <p className="type-prose text-slate-600 mt-1 leading-relaxed">
               Use this when you want to see what it'd cost to give your team an easier schedule.
               Moving right costs more in payroll. Moving down means less of the stuff that burns
               people out — long stretches without a day off, back-to-back closing-then-opening
@@ -76,7 +76,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-8 card p-5">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+            <h3 className="type-subsection-title text-slate-700">
               Cost vs. rest — click any point to apply it
             </h3>
             <div className="flex items-center gap-3 text-xs">
@@ -208,10 +208,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
               Where the money buys the most rest
             </span>
-            <h3 className="text-sm font-bold text-slate-900 mt-1">
+            <h3 className="type-subsection-title text-slate-900 mt-1">
               {knee ? `Why ${knee.leeway_pct}% extra cost is the sweet spot` : 'Cost vs. rest, point by point'}
             </h3>
-            <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+            <p className="type-prose text-slate-600 mt-1.5 leading-relaxed">
               The first bit of extra spending buys a lot of improvement; after a point, paying more
               barely helps. Pick any row — its real weekly payroll is shown next to it:
             </p>
@@ -256,7 +256,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
       {/* Pareto Frontier Enumeration Table */}
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-slate-50">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <h3 className="type-subsection-title text-slate-700">
             Every option, side by side
           </h3>
         </div>
