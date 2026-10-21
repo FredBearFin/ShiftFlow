@@ -64,6 +64,14 @@ class FacilityOwnerInviteTests(unittest.TestCase):
     def _unique_owner_email(label: str) -> str:
         return f"{label}-{uuid.uuid4().hex[:8]}@example.com"
 
+    def _invite_id(self, invite: dict) -> str:
+        """POST /invite doesn't echo back the row's id (only the token/link) - look it up
+        from the manager's own invite list, keyed by the unique owner_email just invited."""
+        listed = self.manager.get(f"/api/owners/facility/{FACILITY}/invites").json()
+        matches = [inv for inv in listed if inv["owner_email"] == invite["owner_email"]]
+        self.assertEqual(len(matches), 1)
+        return matches[0]["id"]
+
     def test_invite_requires_login(self):
         anon = TestClient(app, base_url="https://testserver")
         resp = anon.post(
@@ -351,6 +359,78 @@ class FacilityOwnerInviteTests(unittest.TestCase):
 
         # The manager's own (deleted) session cookie no longer authenticates anything.
         self.assertEqual(self.manager.get("/api/employees").status_code, 401)
+
+    def test_revoke_requires_login(self):
+        invite = self._invite(self._unique_owner_email("owner"))
+        invite_id = self._invite_id(invite)
+        anon = TestClient(app, base_url="https://testserver")
+        resp = anon.delete(f"/api/owners/facility/{FACILITY}/invites/{invite_id}")
+        self.assertEqual(resp.status_code, 401)
+
+    def test_revoked_owner_loses_access_on_the_next_request(self):
+        invite = self._invite(self._unique_owner_email("owner"))
+        invite_id = self._invite_id(invite)
+        owner_client = TestClient(app, base_url="https://testserver")
+        accept = owner_client.post(invite["accept_path"], json={"password": "ownerpassword1"})
+        self.assertEqual(accept.status_code, 200, accept.text)
+
+        # Access works before revocation.
+        self.assertEqual(owner_client.get("/api/employees").status_code, 200)
+        self.assertEqual(owner_client.get(f"/api/owners/facility/{FACILITY}/summary").status_code, 200)
+
+        revoked = self.manager.delete(f"/api/owners/facility/{FACILITY}/invites/{invite_id}")
+        self.assertEqual(revoked.status_code, 200, revoked.text)
+        self.assertEqual(revoked.json()["invite_id"], invite_id)
+
+        # The owner's session is still a valid login - just no longer linked to this
+        # facility, the same way a stranger's own (different) account sees nothing of it.
+        self.assertEqual(owner_client.get("/api/employees").json(), [])
+        self.assertEqual(
+            owner_client.get(f"/api/owners/facility/{FACILITY}/summary").status_code, 404
+        )
+        self.assertEqual(owner_client.get("/api/owners/my-links").json(), [])
+
+        # The manager's invite list reflects the revocation.
+        invites = self.manager.get(f"/api/owners/facility/{FACILITY}/invites").json()
+        self.assertEqual(len(invites), 1)
+        self.assertIsNotNone(invites[0]["revoked_at"])
+
+    def test_revoking_an_unaccepted_invite_also_works(self):
+        invite = self._invite(self._unique_owner_email("owner"))
+        invite_id = self._invite_id(invite)
+        revoked = self.manager.delete(f"/api/owners/facility/{FACILITY}/invites/{invite_id}")
+        self.assertEqual(revoked.status_code, 200, revoked.text)
+
+        # It can no longer be accepted.
+        anon = TestClient(app, base_url="https://testserver")
+        accept = anon.post(invite["accept_path"], json={"password": "ownerpassword1"})
+        self.assertEqual(accept.status_code, 404, accept.text)
+
+    def test_a_manager_cannot_revoke_another_managers_invite_by_guessing_its_id(self):
+        invite = self._invite(self._unique_owner_email("owner"))
+        invite_id = self._invite_id(invite)
+        other_manager, _ = new_account("other-manager")
+        # other_manager owns no facility named FACILITY, so the facility-ownership check
+        # itself should refuse this before the invite id is even looked at.
+        resp = other_manager.delete(f"/api/owners/facility/{FACILITY}/invites/{invite_id}")
+        self.assertEqual(resp.status_code, 404)
+
+        # The invite is untouched - the real manager can still revoke it themselves.
+        still_there = self.manager.delete(f"/api/owners/facility/{FACILITY}/invites/{invite_id}")
+        self.assertEqual(still_there.status_code, 200, still_there.text)
+
+    def test_revoking_an_already_revoked_invite_is_refused(self):
+        invite = self._invite(self._unique_owner_email("owner"))
+        invite_id = self._invite_id(invite)
+        first = self.manager.delete(f"/api/owners/facility/{FACILITY}/invites/{invite_id}")
+        self.assertEqual(first.status_code, 200, first.text)
+
+        second = self.manager.delete(f"/api/owners/facility/{FACILITY}/invites/{invite_id}")
+        self.assertEqual(second.status_code, 404, second.text)
+
+    def test_revoking_an_unknown_invite_id_is_404(self):
+        resp = self.manager.delete(f"/api/owners/facility/{FACILITY}/invites/NO-SUCH-INVITE")
+        self.assertEqual(resp.status_code, 404)
 
 
 if __name__ == "__main__":

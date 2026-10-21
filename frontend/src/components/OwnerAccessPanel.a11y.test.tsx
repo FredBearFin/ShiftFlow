@@ -74,8 +74,8 @@ describe('OwnerAccessPanel accessibility', () => {
 
   it('marks accepted vs. not-yet-accepted invites with text, not color alone', async () => {
     vi.mocked(api.listOwnerInvitesApi).mockResolvedValue([
-      { id: '1', owner_email: 'a@example.com', accept_path: '/x', invited_at: '2026-01-01', accepted_at: '2026-01-02' },
-      { id: '2', owner_email: 'b@example.com', accept_path: '/y', invited_at: '2026-01-01', accepted_at: null },
+      { id: '1', owner_email: 'a@example.com', accept_path: '/x', invited_at: '2026-01-01', accepted_at: '2026-01-02', revoked_at: null },
+      { id: '2', owner_email: 'b@example.com', accept_path: '/y', invited_at: '2026-01-01', accepted_at: null, revoked_at: null },
     ]);
     render(<OwnerAccessPanel facilityId="f1" />);
     fireEvent.click(screen.getByRole('button', { name: 'Invite an owner' }));

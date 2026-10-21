@@ -214,6 +214,34 @@ class BillingSignupTests(unittest.TestCase):
             )
             self.assertEqual(response.status_code, 503)
 
+    def test_shares_the_same_per_ip_signup_throttle_as_plain_signup(self):
+        """This is a second account-creation path - without sharing auth_routes.py's
+        signup_attempts bucket, it would be an unthrottled way around that limit entirely
+        (sign up through the pricing page instead of the plain form)."""
+        from app.api.auth_routes import SIGNUP_MAX_ATTEMPTS_PER_IP
+
+        client = TestClient(app, base_url="https://testserver")
+        for _ in range(SIGNUP_MAX_ATTEMPTS_PER_IP):
+            resp = client.post(
+                "/api/billing/signup",
+                json={"email": unique_email("billflood"), "password": "correcthorse", "plan": "personal"},
+            )
+            self.assertEqual(resp.status_code, 200, resp.text)
+            client.post("/api/auth/logout")
+
+        locked = client.post(
+            "/api/billing/signup",
+            json={"email": unique_email("billflood"), "password": "correcthorse", "plan": "personal"},
+        )
+        self.assertEqual(locked.status_code, 429, locked.text)
+
+        # And it's genuinely shared, not two separate buckets that happen to have the same
+        # size: plain /api/auth/signup is locked out too, from the same "IP".
+        also_locked = client.post(
+            "/api/auth/signup", json={"email": unique_email("billflood2"), "password": "correcthorse"}
+        )
+        self.assertEqual(also_locked.status_code, 429, also_locked.text)
+
 
 if __name__ == "__main__":
     unittest.main()

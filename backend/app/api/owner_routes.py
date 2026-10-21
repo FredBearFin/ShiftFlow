@@ -125,9 +125,36 @@ def list_invites(
             "accept_path": f"/api/owners/accept/{inv['invite_token']}",
             "invited_at": inv["invited_at"],
             "accepted_at": inv["accepted_at"],
+            "revoked_at": inv["revoked_at"],
         }
         for inv in invites
     ]
+
+
+@router.delete("/facility/{facility_id}/invites/{invite_id}", summary="Revoke an owner's access")
+def revoke_invite(
+    facility_id: str,
+    invite_id: str,
+    request: Request,
+    db=Depends(get_db),
+):
+    """Undoes an owner invite - accepted or not. Until this endpoint existed, there was no
+    way for a manager to take back owner access once granted, short of deleting their own
+    whole account (not even exposed as a route). The owner loses access on their very
+    next request (see ShiftFlowRepository.revoke_owner_invite/find_owner_link in
+    app/database.py), the same way a password change invalidates a session on its next
+    use (see app/auth.py).
+    """
+    manager_user_id = _require_manager_id(request)
+    manager_repo = ShiftFlowRepository(db, owner_id=manager_user_id)
+    if manager_repo.get_facility(facility_id) is None:
+        raise HTTPException(status_code=404, detail=f"Facility '{facility_id}' not found.")
+
+    repo = ShiftFlowRepository(db)
+    revoked = repo.revoke_owner_invite(invite_id, manager_user_id)
+    if not revoked:
+        raise HTTPException(status_code=404, detail="Invite not found, not yours, or already revoked.")
+    return {"status": "ok", "invite_id": invite_id}
 
 
 @router.get("/my-links", summary="Facilities the signed-in user has accepted owner access to")

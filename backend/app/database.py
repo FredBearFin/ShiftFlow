@@ -157,6 +157,15 @@ def init_db() -> None:
     CREATE INDEX IF NOT EXISTS idx_facility_owners_owner_user ON facility_owners (owner_user_id, facility_id);
     CREATE INDEX IF NOT EXISTS idx_facility_owners_token ON facility_owners (invite_token);
 
+    -- Rate limiting for account-creation-adjacent endpoints that have no email/account
+    -- yet to key a throttle on the way login_failures keys on one (signup is keyed by
+    -- client IP instead - see app/api/auth_routes.py).
+    CREATE TABLE IF NOT EXISTS signup_attempts (
+        throttle_key TEXT NOT NULL,
+        attempted_at REAL NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_signup_attempts_key ON signup_attempts (throttle_key, attempted_at);
+
     -- The onboarding wizard's solve configuration (demand matrix, shift templates,
     -- ergonomic guardrails) for a facility, additive alongside the `facilities` row
     -- itself. Kept as its own table, rather than folded into `facilities`, because a
@@ -218,6 +227,15 @@ def init_db() -> None:
     for column, definition in employee_column_additions.items():
         if column not in existing_employee_columns:
             cursor.execute(f"ALTER TABLE employees ADD COLUMN {column} {definition}")
+
+    # Same additive-migration pattern for facility_owners: a manager needs a way to undo
+    # an owner invite later (see revoke_owner_invite below) without losing the invite's
+    # history, so this is a soft revoke (a timestamp), not a delete.
+    existing_facility_owners_columns = {
+        row[1] for row in cursor.execute("PRAGMA table_info(facility_owners)").fetchall()
+    }
+    if "revoked_at" not in existing_facility_owners_columns:
+        cursor.execute("ALTER TABLE facility_owners ADD COLUMN revoked_at TIMESTAMP")
 
     conn.commit()
     conn.close()
@@ -681,6 +699,30 @@ class ShiftFlowRepository:
         self.conn.commit()
 
     # -------------------------------------------------------------
+    # Signup throttling (same shape as login_failures above, but signup has no email/
+    # account yet to key on before it exists, so this is keyed by client IP instead -
+    # see app/api/auth_routes.py).
+    # -------------------------------------------------------------
+    def count_signup_attempts(self, throttle_key: str, since: float) -> int:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM signup_attempts WHERE throttle_key = ? AND attempted_at > ?",
+            (throttle_key, since),
+        )
+        return int(cursor.fetchone()[0])
+
+    def record_signup_attempt(self, throttle_key: str, now: float, prune_before: float) -> None:
+        """Records one signup attempt (successful or not - the limit is on attempts, not
+        failures) and drops attempts older than prune_before, so the table stays small."""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM signup_attempts WHERE attempted_at <= ?", (prune_before,))
+        cursor.execute(
+            "INSERT INTO signup_attempts (throttle_key, attempted_at) VALUES (?, ?);",
+            (throttle_key, now),
+        )
+        self.conn.commit()
+
+    # -------------------------------------------------------------
     # Password reset tokens (self-serve account recovery - see app/api/auth_routes.py)
     # -------------------------------------------------------------
     def create_password_reset_token(self, user_id: str, ttl_seconds: int) -> Dict[str, Any]:
@@ -804,8 +846,15 @@ class ShiftFlowRepository:
         return self.get_owner_invite_by_token(token)  # type: ignore
 
     def get_owner_invite_by_token(self, token: str) -> Optional[Dict[str, Any]]:
+        """Looks up an invite by its link/token - used to preview and accept it, so a
+        revoked invite (revoked_at set) must never be returned here: without this filter,
+        revoking an invite only blocked an *already-accepted* owner's next request, while
+        the token in an invite link that was never accepted yet could still be used to
+        accept it after the fact."""
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM facility_owners WHERE invite_token = ?", (token,))
+        cursor.execute(
+            "SELECT * FROM facility_owners WHERE invite_token = ? AND revoked_at IS NULL", (token,)
+        )
         row = cursor.fetchone()
         return dict(row) if row else None
 
@@ -829,8 +878,32 @@ class ShiftFlowRepository:
             return None
         return self.get_owner_invite_by_token(token)
 
+    def revoke_owner_invite(self, invite_id: str, manager_user_id: str) -> bool:
+        """Soft-revokes an invite (accepted or not) - a manager's way to undo granting an
+        owner access, which this feature had no way to do until now. Only ever revokes a
+        row that actually belongs to the calling manager (the WHERE clause is the
+        authorization check: a manager can't revoke another manager's invite by id-
+        guessing). Returns False if the invite doesn't exist, isn't this manager's, or is
+        already revoked.
+
+        A soft revoke (timestamp, not delete) keeps the invite's history in
+        list_owner_invites for the manager to see, while find_owner_link/
+        list_linked_facility_ids below both exclude it immediately - so a revoked owner
+        loses facility access on their very next request, the same way a password change
+        invalidates a session on its very next request (see app/auth.py).
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "UPDATE facility_owners SET revoked_at = CURRENT_TIMESTAMP "
+            "WHERE id = ? AND manager_user_id = ? AND revoked_at IS NULL",
+            (invite_id, manager_user_id),
+        )
+        self.conn.commit()
+        return cursor.rowcount > 0
+
     def find_owner_link(self, owner_user_id: str, facility_id: str) -> Optional[Dict[str, Any]]:
-        """The accepted invite making owner_user_id a read-only owner of facility_id, or None.
+        """The accepted, not-revoked invite making owner_user_id a read/act owner of
+        facility_id, or None.
 
         Looked up directly by owner_user_id/facility_id, never through manager_user_id's
         row in `users`, so this still resolves after the manager's login is deleted.
@@ -840,6 +913,7 @@ class ShiftFlowRepository:
             """
             SELECT * FROM facility_owners
             WHERE owner_user_id = ? AND facility_id = ? AND accepted_at IS NOT NULL
+                AND revoked_at IS NULL
             ORDER BY accepted_at DESC LIMIT 1
             """,
             (owner_user_id, facility_id),
@@ -848,28 +922,30 @@ class ShiftFlowRepository:
         return dict(row) if row else None
 
     def list_owner_links_for_user(self, owner_user_id: str) -> List[Dict[str, Any]]:
-        """Every facility owner_user_id has accepted an invite for, across any manager."""
+        """Every facility owner_user_id has an active (accepted, not revoked) link to,
+        across any manager."""
         cursor = self.conn.cursor()
         cursor.execute(
-            "SELECT * FROM facility_owners WHERE owner_user_id = ? AND accepted_at IS NOT NULL ORDER BY accepted_at DESC",
+            "SELECT * FROM facility_owners WHERE owner_user_id = ? AND accepted_at IS NOT NULL "
+            "AND revoked_at IS NULL ORDER BY accepted_at DESC",
             (owner_user_id,),
         )
         return [dict(r) for r in cursor.fetchall()]
 
     def list_linked_facility_ids(self, owner_user_id: str) -> Dict[str, List[str]]:
-        """manager_user_id -> the specific facility ids this user has an *accepted* owner
-        link to under that manager.
+        """manager_user_id -> the specific facility ids this user has an *accepted, not
+        revoked* owner link to under that manager.
 
         Feeds ShiftFlowRepository's linked_facility_ids (see get_repo in app/deps.py), which
         is how an accepted owner's requests reach the manager's own facility rows alongside
         their own, without ever needing to be the manager's own login - and only for the
-        facilities actually named by an accepted invite, never every facility that manager
-        owns.
+        facilities actually named by an accepted, still-active invite, never every facility
+        that manager owns and never one the manager has since revoked.
         """
         cursor = self.conn.cursor()
         cursor.execute(
             "SELECT DISTINCT manager_user_id, facility_id FROM facility_owners "
-            "WHERE owner_user_id = ? AND accepted_at IS NOT NULL",
+            "WHERE owner_user_id = ? AND accepted_at IS NOT NULL AND revoked_at IS NULL",
             (owner_user_id,),
         )
         linked: Dict[str, List[str]] = {}

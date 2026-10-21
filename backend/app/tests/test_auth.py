@@ -279,5 +279,41 @@ class LoginHardeningTests(unittest.TestCase):
         self.assertEqual(response.status_code, 401)
 
 
+class SignupThrottleTests(unittest.TestCase):
+    """Plain /api/auth/signup had no limit at all until this session's pentest created 15
+    real accounts from one source in ~4 seconds - see SIGNUP_MAX_ATTEMPTS_PER_IP in
+    app/api/auth_routes.py. conftest.py's autouse fixture clears signup_attempts before
+    every test, so each test here starts from a clean per-"IP" bucket."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._previous_secret = os.environ.get("SHIFTFLOW_SESSION_SECRET")
+        os.environ["SHIFTFLOW_SESSION_SECRET"] = "s" * 48
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls._previous_secret is not None:
+            os.environ["SHIFTFLOW_SESSION_SECRET"] = cls._previous_secret
+        else:
+            os.environ.pop("SHIFTFLOW_SESSION_SECRET", None)
+
+    def test_repeated_signups_from_one_ip_are_throttled(self):
+        from app.api.auth_routes import SIGNUP_MAX_ATTEMPTS_PER_IP, SIGNUP_WINDOW_SECONDS
+
+        client = TestClient(app, base_url="https://testserver")
+        for _ in range(SIGNUP_MAX_ATTEMPTS_PER_IP):
+            resp = client.post(
+                "/api/auth/signup", json={"email": unique_email("flood"), "password": "correcthorse"}
+            )
+            self.assertEqual(resp.status_code, 200, resp.text)
+            client.post("/api/auth/logout")
+
+        locked = client.post(
+            "/api/auth/signup", json={"email": unique_email("flood"), "password": "correcthorse"}
+        )
+        self.assertEqual(locked.status_code, 429, locked.text)
+        self.assertEqual(locked.headers.get("retry-after"), str(SIGNUP_WINDOW_SECONDS))
+
+
 if __name__ == "__main__":
     unittest.main()

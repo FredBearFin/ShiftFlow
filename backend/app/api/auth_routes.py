@@ -4,8 +4,11 @@ password accounts.
 Password reset (see /password-reset/request and /password-reset/confirm below) follows
 the same pattern app/api/owner_routes.py already established for delivering a secure,
 one-time link with no email service configured in this environment: generate a
-cryptographically secure token with secrets.token_urlsafe, store it with an expiry, and
-return the link directly in the response instead of emailing it.
+cryptographically secure token with secrets.token_urlsafe and store it with an expiry.
+Unlike the owner-invite link, this one is never returned in the response or shown to the
+caller - only logged server-side - since /password-reset/request is unauthenticated and
+callable against any email, not sent by someone already signed in and choosing their own
+invitee (see request_password_reset's docstring below for why that distinction matters).
 """
 
 import re
@@ -41,6 +44,26 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # is not a standing way into the account, long enough that someone does not have to
 # finish the whole flow in one sitting.
 PASSWORD_RESET_TTL_SECONDS = 60 * 60
+
+# How many account-creation attempts one client IP may make before further attempts get
+# 429 - signup has no email/account yet to key a throttle on the way login does, and
+# demonstrated during this session's pentest that it had no limit at all (15 real
+# accounts created in ~4 seconds from one source). Generous enough that a shared office
+# connection signing up several real managers in a day is never affected.
+SIGNUP_MAX_ATTEMPTS_PER_IP = 10
+SIGNUP_WINDOW_SECONDS = 60 * 60
+
+# Same idea for /password-reset/request, keyed by email instead of IP (reusing the
+# login_failures table/methods under a distinct "pwreset:" key prefix, rather than a
+# second near-identical table) - also had no limit at all (15 reset requests in 0.23s for
+# the same email during the same pentest).
+PASSWORD_RESET_MAX_ATTEMPTS = 5
+PASSWORD_RESET_WINDOW_SECONDS = 15 * 60
+
+
+def _client_ip(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
 
 # A placeholder user id for the decoy reset token request_password_reset below stores when
 # the requested email has no account - see that function for why. Real ids are always
@@ -115,11 +138,22 @@ def _set_session(response: Response, user_id: str, password_hash: str) -> None:
 
 
 @router.post("/signup")
-def signup(payload: SignupRequest, response: Response, db: sqlite3.Connection = Depends(get_db)) -> dict:
+def signup(payload: SignupRequest, request: Request, response: Response, db: sqlite3.Connection = Depends(get_db)) -> dict:
     ensure_auth_configured()
     if not signup_allowed():
         raise HTTPException(status_code=403, detail="Sign-ups are closed. Ask an administrator for an account.")
     repo = ShiftFlowRepository(db)
+
+    client_ip = _client_ip(request)
+    now = time.time()
+    if repo.count_signup_attempts(client_ip, since=now - SIGNUP_WINDOW_SECONDS) >= SIGNUP_MAX_ATTEMPTS_PER_IP:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many accounts created from this network recently. Try again later.",
+            headers={"Retry-After": str(SIGNUP_WINDOW_SECONDS)},
+        )
+    repo.record_signup_attempt(client_ip, now=now, prune_before=now - SIGNUP_WINDOW_SECONDS)
+
     if repo.get_user_by_email(payload.email):
         raise HTTPException(status_code=409, detail="An account with this email already exists.")
     user = repo.create_user(payload.email, hash_password(payload.password))
@@ -201,10 +235,28 @@ def request_password_reset(payload: PasswordResetRequestInput, db: sqlite3.Conne
     an email enumeration attack doesn't need the response body to say "no such account" if
     that branch is measurably faster, and it was, before this decoy write (same idea as
     dummy_password_hash in app/auth.py for login).
+
+    Throttled per email (reusing login()'s login_failures table/methods under a distinct
+    "pwreset:" key prefix, not a second near-identical table) - this had no limit at all
+    before, demonstrated during this session's pentest as a real spam vector (15 requests
+    for one email in 0.23s). The check runs before the email lookup and costs the same
+    regardless of whether the email has an account, so it doesn't reopen the timing leak
+    this function already closes elsewhere.
     """
     ensure_auth_configured()
     repo = ShiftFlowRepository(db)
     email = payload.email[:254]  # bounds the lookup key the same way login() bounds its throttle key
+
+    throttle_key = f"pwreset:{email}"
+    now = time.time()
+    if repo.count_login_failures(throttle_key, since=now - PASSWORD_RESET_WINDOW_SECONDS) >= PASSWORD_RESET_MAX_ATTEMPTS:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many reset requests for this email. Try again later.",
+            headers={"Retry-After": str(PASSWORD_RESET_WINDOW_SECONDS)},
+        )
+    repo.record_login_failure(throttle_key, now=now, prune_before=now - PASSWORD_RESET_WINDOW_SECONDS)
+
     user = repo.get_user_by_email(email)
     target_user_id = user["id"] if user is not None else _DECOY_RESET_USER_ID
     token = repo.create_password_reset_token(target_user_id, ttl_seconds=PASSWORD_RESET_TTL_SECONDS)["token"]

@@ -15,13 +15,20 @@ account creation, session cookie) is meant to survive that swap unchanged.
 """
 
 import sqlite3
+import time
 import uuid
 from typing import Literal, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import Field, field_validator
 
-from app.api.auth_routes import SignupRequest, _set_session
+from app.api.auth_routes import (
+    SIGNUP_MAX_ATTEMPTS_PER_IP,
+    SIGNUP_WINDOW_SECONDS,
+    SignupRequest,
+    _client_ip,
+    _set_session,
+)
 from app.auth import ensure_auth_configured, hash_password, signup_allowed
 from app.database import ShiftFlowRepository, get_db
 
@@ -128,19 +135,34 @@ def get_billing_signup_for_user(conn: sqlite3.Connection, user_id: str) -> Optio
 
 @router.post("/signup")
 def signup_and_start_plan(
-    payload: BillingSignupRequest, response: Response, db: sqlite3.Connection = Depends(get_db)
+    payload: BillingSignupRequest, request: Request, response: Response, db: sqlite3.Connection = Depends(get_db)
 ) -> dict:
     """Pricing-page checkout: create the account, then start the chosen plan as a stub trial.
 
     This is the endpoint PricingView's "Start my plan" button calls. It is listed in
     app.auth._EXEMPT_PATH_PREFIXES (alongside /api/auth/signup) so a brand-new visitor who
-    is not signed in yet can reach it.
+    is not signed in yet can reach it. Throttled per client IP with the exact same
+    limit/window as plain signup (SIGNUP_MAX_ATTEMPTS_PER_IP/SIGNUP_WINDOW_SECONDS, reusing
+    auth_routes.py's constants and signup_attempts table rather than a second one) - this
+    is a second account-creation path and would otherwise have been an unthrottled way
+    around that limit.
     """
     ensure_auth_configured()
     if not signup_allowed():
         raise HTTPException(status_code=403, detail="Sign-ups are closed. Ask an administrator for an account.")
 
     repo = ShiftFlowRepository(db)
+
+    client_ip = _client_ip(request)
+    now = time.time()
+    if repo.count_signup_attempts(client_ip, since=now - SIGNUP_WINDOW_SECONDS) >= SIGNUP_MAX_ATTEMPTS_PER_IP:
+        raise HTTPException(
+            status_code=429,
+            detail="Too many accounts created from this network recently. Try again later.",
+            headers={"Retry-After": str(SIGNUP_WINDOW_SECONDS)},
+        )
+    repo.record_signup_attempt(client_ip, now=now, prune_before=now - SIGNUP_WINDOW_SECONDS)
+
     if repo.get_user_by_email(payload.email):
         raise HTTPException(status_code=409, detail="An account with this email already exists.")
 

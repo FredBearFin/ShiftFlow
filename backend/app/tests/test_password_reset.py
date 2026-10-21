@@ -274,5 +274,63 @@ class PasswordResetTests(unittest.TestCase):
         self.assertEqual(ok.status_code, 200, ok.text)
 
 
+class PasswordResetThrottleTests(unittest.TestCase):
+    """/password-reset/request had no limit at all until this session's pentest found it
+    could be spammed 15x in 0.23s for one email - see PASSWORD_RESET_MAX_ATTEMPTS in
+    app/api/auth_routes.py."""
+
+    @classmethod
+    def setUpClass(cls):
+        init_db()
+        cls._previous_secret = os.environ.get("SHIFTFLOW_SESSION_SECRET")
+        os.environ["SHIFTFLOW_SESSION_SECRET"] = "p" * 48
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls._previous_secret is not None:
+            os.environ["SHIFTFLOW_SESSION_SECRET"] = cls._previous_secret
+        else:
+            os.environ.pop("SHIFTFLOW_SESSION_SECRET", None)
+
+    def test_repeated_requests_for_one_email_are_throttled(self):
+        from app.api.auth_routes import PASSWORD_RESET_MAX_ATTEMPTS, PASSWORD_RESET_WINDOW_SECONDS
+
+        email = unique_email("spammed")
+        anon = TestClient(app, base_url="https://testserver")
+        for _ in range(PASSWORD_RESET_MAX_ATTEMPTS):
+            resp = anon.post("/api/auth/password-reset/request", json={"email": email})
+            self.assertEqual(resp.status_code, 200, resp.text)
+
+        locked = anon.post("/api/auth/password-reset/request", json={"email": email})
+        self.assertEqual(locked.status_code, 429, locked.text)
+        self.assertEqual(locked.headers.get("retry-after"), str(PASSWORD_RESET_WINDOW_SECONDS))
+
+    def test_throttle_is_per_email_not_global(self):
+        from app.api.auth_routes import PASSWORD_RESET_MAX_ATTEMPTS
+
+        locked_email = unique_email("locked")
+        other_email = unique_email("other")
+        anon = TestClient(app, base_url="https://testserver")
+        for _ in range(PASSWORD_RESET_MAX_ATTEMPTS):
+            anon.post("/api/auth/password-reset/request", json={"email": locked_email})
+
+        other = anon.post("/api/auth/password-reset/request", json={"email": other_email})
+        self.assertEqual(other.status_code, 200, other.text)
+
+    def test_throttle_applies_the_same_way_to_an_email_with_no_account(self):
+        """The throttle itself must not become a new way to tell real accounts apart from
+        made-up ones - see request_password_reset's decoy-token docstring."""
+        from app.api.auth_routes import PASSWORD_RESET_MAX_ATTEMPTS
+
+        ghost_email = unique_email("ghost")
+        anon = TestClient(app, base_url="https://testserver")
+        for _ in range(PASSWORD_RESET_MAX_ATTEMPTS):
+            resp = anon.post("/api/auth/password-reset/request", json={"email": ghost_email})
+            self.assertEqual(resp.status_code, 200, resp.text)
+
+        locked = anon.post("/api/auth/password-reset/request", json={"email": ghost_email})
+        self.assertEqual(locked.status_code, 429, locked.text)
+
+
 if __name__ == "__main__":
     unittest.main()

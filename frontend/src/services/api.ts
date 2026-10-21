@@ -785,12 +785,28 @@ export interface OwnerInviteRecord {
   accept_path: string;
   invited_at: string;
   accepted_at: string | null;
+  revoked_at: string | null;
 }
 
 export async function listOwnerInvitesApi(facilityId: string): Promise<OwnerInviteRecord[]> {
   const res = await fetch(`/api/owners/facility/${encodeURIComponent(facilityId)}/invites`);
   if (!res.ok) throw new Error('Owner invites could not be loaded.');
   return await res.json();
+}
+
+/** Undoes an owner invite (accepted or not) - the owner loses access on their very next
+ *  request. Returns an error message on failure, or null on success. */
+export async function revokeOwnerInviteApi(facilityId: string, inviteId: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `/api/owners/facility/${encodeURIComponent(facilityId)}/invites/${encodeURIComponent(inviteId)}`,
+      { method: 'DELETE' }
+    );
+    if (res.ok) return null;
+    return await ownerErrorDetail(res, 'The invite could not be revoked.');
+  } catch {
+    return 'Could not reach the server.';
+  }
 }
 
 export interface OwnerLink {

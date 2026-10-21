@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createOwnerInviteApi, listOwnerInvitesApi, OwnerInviteRecord } from '../services/api';
+import { createOwnerInviteApi, listOwnerInvitesApi, revokeOwnerInviteApi, OwnerInviteRecord } from '../services/api';
 
 interface OwnerAccessPanelProps {
   facilityId: string;
@@ -19,6 +19,8 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
   const [lastLink, setLastLink] = useState<string | null>(null);
   const [invites, setInvites] = useState<OwnerInviteRecord[]>([]);
   const [expanded, setExpanded] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [revokeError, setRevokeError] = useState<string | null>(null);
 
   // Expanding/collapsing swaps in a whole different subtree, removing whichever button
   // was just clicked ("Invite an owner" or "Collapse") from the DOM. Left alone, that
@@ -64,6 +66,18 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
     }
     setLastLink(`${window.location.origin}/?owner_invite=${result.invite_token}`);
     setEmail('');
+    loadInvites();
+  };
+
+  const handleRevoke = async (inviteId: string) => {
+    setRevokingId(inviteId);
+    setRevokeError(null);
+    const err = await revokeOwnerInviteApi(facilityId, inviteId);
+    setRevokingId(null);
+    if (err) {
+      setRevokeError(err);
+      return;
+    }
     loadInvites();
   };
 
@@ -168,18 +182,37 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
       {invites.length > 0 && (
         <div className="pt-2 border-t border-slate-100">
           <span className="text-xs font-semibold text-slate-700 block mb-1.5">Invited owners</span>
+          {revokeError && (
+            <div role="alert" className="rounded-md border border-[#9F3A32] bg-white px-3 py-2 text-xs text-[#9F3A32] mb-1.5">
+              {revokeError}
+            </div>
+          )}
           <ul className="space-y-1">
             {invites.map((inv) => (
-              <li key={inv.id} className="flex items-center justify-between text-xs">
+              <li key={inv.id} className="flex items-center justify-between gap-2 text-xs">
                 <span className="text-slate-700">{inv.owner_email}</span>
-                <span
-                  className={`font-semibold px-1.5 py-0.5 rounded ${
-                    inv.accepted_at
-                      ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-slate-100 text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  {inv.accepted_at ? 'Accepted' : 'Invited — not yet accepted'}
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={`font-semibold px-1.5 py-0.5 rounded ${
+                      inv.revoked_at
+                        ? 'bg-slate-100 text-slate-500 border border-slate-200'
+                        : inv.accepted_at
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
+                    }`}
+                  >
+                    {inv.revoked_at ? 'Revoked' : inv.accepted_at ? 'Accepted' : 'Invited — not yet accepted'}
+                  </span>
+                  {!inv.revoked_at && (
+                    <button
+                      type="button"
+                      onClick={() => handleRevoke(inv.id)}
+                      disabled={revokingId === inv.id}
+                      className="font-semibold text-[#9F3A32] hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {revokingId === inv.id ? 'Revoking…' : 'Revoke'}
+                    </button>
+                  )}
                 </span>
               </li>
             ))}
