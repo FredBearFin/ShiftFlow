@@ -19,12 +19,19 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
   const balancedHandoffs = solution.multigraph_nodes.filter((n) => n.is_balanced).length;
   const rotationWeeks = solution.employee_count;
 
-  // Simple horizontal bar chart: one row per criterion, length proportional to its penalty.
-  const chartW = 640;
-  const rowH = 32;
-  const chartH = criteria.length * rowH;
-  const labelW = 190;
-  const barAreaW = chartW - labelW - 60;
+  // Simple horizontal bar chart: one row per criterion, length proportional to
+  // its penalty.
+  //
+  // The whole chart used to be one <svg viewBox="0 0 640 256" class="w-full
+  // h-auto">, which scales its entire coordinate system to the container —
+  // 2.08x at a 1440 viewport and 2.83x at 2560. That multiplied the hardcoded
+  // 11px labels to 22.9px and 31.2px and made the criterion names the largest
+  // type in the application, bigger than every page title; at 375 the same
+  // mechanism shrank them below 6px. Nothing with text in it goes through a
+  // scaled viewBox any more: the names and the point values are ordinary HTML
+  // on the type scale, and the SVG holds only the bar, which is the one thing
+  // that should stretch.
+  const BAR_SPAN = 100; // user units; preserveAspectRatio="none" stretches them
 
   // Ordered 3-step status ramp, ok -> watch -> risk (see index.css).
   // Applied as a class, not a fill="…" attribute: CSS custom properties do
@@ -118,45 +125,47 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           when there's nothing to fix. Check the "How often" and weight columns in the table below
           to see what's actually driving each bar.
         </p>
-        {/* Decorative: the bar labels and point values read as loose
-            unstructured text. The breakdown table below carries the same
-            figures with real row and column headers. */}
-        <svg aria-hidden="true" viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto">
-          {criteria.map((c, idx) => {
-            const barW = (c.weighted_penalty / maxPenalty) * barAreaW;
-            const y = idx * rowH;
+        {/* Each bar is its own decorative SVG with nothing but a <rect> in it.
+            The name and the figure beside it are HTML, so they stay on the
+            12px type scale at every viewport. The breakdown table below
+            carries the same figures with real row and column headers. */}
+        {/* Capped so the bar track does not stretch the full width of a wide
+            card and leave a short bar a thousand pixels from its own figure. */}
+        <ul className="max-w-3xl space-y-1.5">
+          {criteria.map((c) => {
+            const share = Math.max(1, (c.weighted_penalty / maxPenalty) * BAR_SPAN);
             return (
-              <g key={c.criterion_id}>
-                <text
-                  x={labelW - 10}
-                  y={y + rowH / 2 + 4}
-                  textAnchor="end"
-                  className="fill-ink-soft"
-                  style={{ fontSize: 11, fontWeight: 600 }}
-                >
+              <li
+                key={c.criterion_id}
+                className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs"
+              >
+                {/* Below sm the name takes its own line: sharing one with the
+                    bar squeezed the track to about ten pixels at 375. */}
+                <span className="w-full shrink-0 font-semibold text-ink-soft sm:w-52 sm:text-right">
                   {criterionLabelFor(c.criterion_id, c.name)}
-                </text>
-                <rect
-                  x={labelW}
-                  y={y + 6}
-                  width={Math.max(2, barW)}
-                  height={rowH - 14}
-                  rx={3}
-                  className={statusFillClass(c.status)}
-                  opacity={0.85}
-                />
-                <text
-                  x={labelW + Math.max(2, barW) + 8}
-                  y={y + rowH / 2 + 4}
-                  className="fill-muted"
-                  style={{ fontSize: 10, fontFamily: 'monospace' }}
+                </span>
+                <svg
+                  aria-hidden="true"
+                  viewBox={`0 0 ${BAR_SPAN} 10`}
+                  preserveAspectRatio="none"
+                  className="h-4 min-w-0 flex-1"
                 >
-                  {c.weighted_penalty.toFixed(1)} pts{c.raw_violations_count > 0 ? ` · ${c.raw_violations_count}×` : ''}
-                </text>
-              </g>
+                  <rect
+                    x={0}
+                    y={0}
+                    width={share}
+                    height={10}
+                    className={statusFillClass(c.status)}
+                  />
+                </svg>
+                <span className="w-28 shrink-0 text-right font-mono-tabular text-muted">
+                  {c.weighted_penalty.toFixed(1)} pts
+                  {c.raw_violations_count > 0 ? ` · ${c.raw_violations_count}×` : ''}
+                </span>
+              </li>
             );
           })}
-        </svg>
+        </ul>
       </div>
 
       {/* Plain-language breakdown table */}
