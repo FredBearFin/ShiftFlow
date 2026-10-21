@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { acceptOwnerInviteApi, OwnerInvitePreview, previewOwnerInviteApi } from '../services/api';
+import { acceptOwnerInviteApi, logoutApi, OwnerInvitePreview, previewOwnerInviteApi } from '../services/api';
 
 interface OwnerAcceptViewProps {
   token: string;
@@ -19,6 +19,7 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     previewOwnerInviteApi(token).then(({ result, error }) => {
@@ -40,6 +41,17 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
     if (status) onAccepted();
   };
 
+  // The backend's own error message, below, tells the person to "log out and try again" -
+  // but this page takes over the whole screen with no header or nav, so without this
+  // there was no way to actually do that. The invite link itself still works fine; the
+  // wrong account just needs to step aside first.
+  const signedInAsWrongAccount = !!submitError && /signed in with a different email/i.test(submitError);
+  const handleLogoutAndRetry = async () => {
+    setLoggingOut(true);
+    await logoutApi();
+    window.location.reload();
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F1EA] text-[#2B3A42] px-4">
       <div className="w-full max-w-sm enterprise-card p-6 space-y-4">
@@ -52,9 +64,22 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
         </div>
 
         {previewError && (
-          <div role="alert" className="rounded-md border border-[#9F3A32] bg-white px-3 py-2 text-xs text-[#9F3A32]">
-            {previewError}
-          </div>
+          <>
+            <div role="alert" className="rounded-md border border-[#9F3A32] bg-white px-3 py-2 text-xs text-[#9F3A32]">
+              {previewError}
+            </div>
+            {/* A bad or expired link otherwise leaves the visitor with nowhere to go - this
+                page takes over the whole screen and there is no nav to escape it from. */}
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = '/';
+              }}
+              className="w-full rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold py-2 transition-colors"
+            >
+              Back to ShiftFlow Studio
+            </button>
+          </>
         )}
 
         {preview && !previewError && (
@@ -66,10 +91,21 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
             </div>
 
             {preview.already_accepted ? (
-              <p className="text-xs text-slate-500">
-                This invite has already been accepted. Sign in with {preview.owner_email} from
-                the normal sign-in screen.
-              </p>
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500">
+                  This invite has already been accepted. Sign in with {preview.owner_email} from
+                  the normal sign-in screen.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = '/';
+                  }}
+                  className="w-full rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2 transition-colors"
+                >
+                  Back to ShiftFlow Studio
+                </button>
+              </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div>
@@ -91,8 +127,18 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
                 </div>
 
                 {submitError && (
-                  <div role="alert" className="rounded-md border border-[#9F3A32] bg-white px-3 py-2 text-xs text-[#9F3A32]">
-                    {submitError}
+                  <div role="alert" className="rounded-md border border-[#9F3A32] bg-white px-3 py-2 text-xs text-[#9F3A32] space-y-2">
+                    <p>{submitError}</p>
+                    {signedInAsWrongAccount && (
+                      <button
+                        type="button"
+                        onClick={handleLogoutAndRetry}
+                        disabled={loggingOut}
+                        className="w-full rounded-md border border-[#9F3A32] bg-white disabled:opacity-50 text-xs font-semibold text-[#9F3A32] py-1.5 hover:bg-[#F4F1EA]"
+                      >
+                        {loggingOut ? 'Logging out…' : 'Log out and try again'}
+                      </button>
+                    )}
                   </div>
                 )}
 

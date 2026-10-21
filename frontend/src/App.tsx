@@ -139,7 +139,7 @@ export function App() {
   // An invite link for a second, independent "owner" login (see OwnerAccessPanel.tsx /
   // owner_routes.py) carries its token in the URL rather than through a router, since this
   // app has none. It works regardless of whether anyone is currently signed in.
-  const [ownerInviteToken] = useState<string | null>(() => {
+  const [ownerInviteToken, setOwnerInviteToken] = useState<string | null>(() => {
     try {
       return new URLSearchParams(window.location.search).get('owner_invite');
     } catch {
@@ -154,6 +154,12 @@ export function App() {
     } catch {
       // Not essential - the invite still worked even if the URL could not be cleaned up.
     }
+    // Without this, ownerInviteToken (read via useState's initializer, only ever set once
+    // from the URL at first mount) would stay set forever - the app would keep rendering
+    // OwnerAcceptView below no matter what authState became, even though the invite was
+    // accepted and the session cookie is already set. Clearing it here is what actually
+    // lets the app move on to OwnerSummaryView.
+    setOwnerInviteToken(null);
     setAuthState('ready');
   };
 
@@ -225,7 +231,15 @@ export function App() {
     setErrorBannerDismissed(false);
   }, [solveError]);
 
+  // Gated on authState: a brand-new signup (pricing -> billing signup, or the plain
+  // sign-up form) flips authState from 'checking'/'needs-login' to 'ready' without this
+  // component ever unmounting, so a mount-only effect here would have already fired - and
+  // failed with 401 "Not logged in" - before the session cookie existed. That left every
+  // fresh signup stuck behind a permanent "Staff records could not be loaded" banner even
+  // though the account was perfectly fine. Waiting for authState === 'ready' fetches once
+  // there is actually a session to fetch with, instead of once at first paint.
   useEffect(() => {
+    if (authState !== 'ready') return;
     let isMounted = true;
     fetchEmployeesApi(STAFF_FACILITY_ID)
       .then((records) => {
@@ -240,13 +254,14 @@ export function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [authState]);
 
   useEffect(() => {
+    if (authState !== 'ready') return;
     fetchArchetypes().then((list) => {
       if (list && list.length > 0) setArchetypes(list);
     });
-  }, []);
+  }, [authState]);
 
   // Save the manager's setup on every change, so the next load re-solves the same
   // schedule instead of a default one. A refused write is surfaced below, not swallowed.
@@ -273,6 +288,7 @@ export function App() {
   ]);
 
   useEffect(() => {
+    if (authState !== 'ready') return;
     let isMounted = true;
     setSolveStatus('loading');
     const timer = window.setTimeout(() => {
@@ -304,7 +320,8 @@ export function App() {
       isMounted = false;
       window.clearTimeout(timer);
     };
-  }, [solveAttempt, 
+  }, [authState,
+    solveAttempt,
     selectedArchetypeId,
     facilityName,
     demandMatrix,
