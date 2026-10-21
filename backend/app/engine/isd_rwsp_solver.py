@@ -315,7 +315,16 @@ class ISDRWSPSolver:
         )
         max_r = max(min_r, self.guardrails.max_consecutive_rest_days)
 
-        target_ratio = 4.65 / 7.0
+        # Paying for more staff buys shorter work stretches and more rest: a higher leeway
+        # setting lowers the target work-ratio, which raises headcount for the same total
+        # shifts. This is the real cost/rest trade-off the leeway slider is supposed to offer.
+        base_work_ratio = 4.65 / 7.0
+        min_work_ratio = 3.50 / 7.0
+        leeway_fraction = max(0.0, min(1.0, self.leeway_pct / 100.0))
+        target_ratio = max(
+            min_work_ratio,
+            min(base_work_ratio, base_work_ratio - leeway_fraction * (base_work_ratio - min_work_ratio)),
+        )
         e = max(3, int(round(total_work_shifts / (7.0 * target_ratio))))
         while e * 7 - total_work_shifts < max(2, (e * min_r) // 2):
             e += 1
@@ -916,6 +925,8 @@ class ISDRWSPSolver:
             labor_efficiency_pct=labor_eff,
         )
 
+        # Real total cost: staff count + shift variety + over/understaffing, computed directly
+        # from the schedule actually built - not scaled by a formula unrelated to what was built.
         sw = settings.shift_weights
         obj_shift_min_bound = round(
             sw.w_employees * employee_count
@@ -924,7 +935,7 @@ class ISDRWSPSolver:
             + sw.w_overstaffing * total_over,
             2,
         )
-        obj_shift = round(obj_shift_min_bound * (1.0 + self.leeway_pct / 100.0), 2)
+        obj_shift = obj_shift_min_bound
 
         becker_gain_pct = interpolate_becker_table7(self.leeway_pct)
         ergonomics_audit = evaluate_ergonomics_audit(

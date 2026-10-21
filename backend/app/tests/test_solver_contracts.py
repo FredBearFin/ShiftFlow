@@ -150,5 +150,38 @@ class SolverContractTests(unittest.TestCase):
                         self.assertEqual(cell.shift_code, "OFF")
 
 
+    def test_leeway_genuinely_changes_the_schedule_and_cost(self):
+        """Raising leeway must actually change the built schedule (more staff, different
+        roster), not just a displayed percentage - and obj_shift must equal the real
+        staff-count + shift-variety + over/understaffing cost of the schedule produced."""
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
+
+        def solve_at(leeway):
+            req = SolveRequestSchema(
+                archetype_id=preset.id, facility_name=preset.name,
+                demand_matrix=preset.demand_matrix, templates=preset.templates,
+                guardrails=preset.guardrails, pareto_leeway_pct=leeway,
+            )
+            return ISDRWSPSolver(req).solve()
+
+        sol0 = solve_at(0.0)
+        sol50 = solve_at(50.0)
+        self.assertNotEqual(sol0.employee_count, sol50.employee_count)
+        roster0 = [[d.shift_code for d in l.days] for l in sol0.roster_lines]
+        roster50 = [[d.shift_code for d in l.days] for l in sol50.roster_lines]
+        self.assertNotEqual(roster0, roster50)
+
+        from app.config import settings
+        sw = settings.shift_weights
+        manual_obj_shift = round(
+            sw.w_employees * sol50.employee_count
+            + sw.w_shift_types * sol50.active_shift_types_count
+            + sw.w_understaffing * sum(c.understaffing for c in sol50.interval_coverage)
+            + sw.w_overstaffing * sum(c.overstaffing for c in sol50.interval_coverage),
+            2,
+        )
+        self.assertEqual(manual_obj_shift, sol50.obj_shift)
+
+
 if __name__ == "__main__":
     unittest.main()

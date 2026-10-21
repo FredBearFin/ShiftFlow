@@ -105,7 +105,7 @@ class TestChaosResilience(unittest.TestCase):
         sol, used_fallback = safe_solve_with_fallback(crashing_solver, eulerian_fallback)
         self.assertTrue(used_fallback)
         self.assertIsNotNone(sol)
-        self.assertEqual(len(sol.roster_lines), 11)
+        self.assertEqual(len(sol.roster_lines), sol.employee_count)
         self.assertTrue(sol.eulerian_valid)
 
     def test_04_orphan_lock_cleanup_after_interrupted_mutation(self):
