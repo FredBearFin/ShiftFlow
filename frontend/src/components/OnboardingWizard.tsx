@@ -8,6 +8,7 @@ import {
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 import { Button } from './ui/Button';
+import { useDialogFocus } from './ui/useDialogFocus';
 import { BardPanel } from './onboarding/BardPanel';
 import { ExplainThis } from './onboarding/ExplainThis';
 import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
@@ -94,6 +95,18 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   const [selectedDayTab, setSelectedDayTab] = useState<number>(0);
   const [tourOpen, setTourOpen] = useState<boolean>(() => !readTourDone());
   const showTourAgainRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Same focus handling as every other dialog in the app: focus moves in on open,
+  // Tab stays inside, and focus returns to the trigger on close. Two departures,
+  // both deliberate:
+  //  - Escape only closes while setup is skippable, matching App's own Escape guard,
+  //    because setup with no staff yet cannot be dismissed.
+  //  - The trap is suspended while the first-run tour is open, so the tour's own trap
+  //    is the only one running and only one aria-modal element exists at a time.
+  useDialogFocus(dialogRef, isOpen && !tourOpen, () => {
+    if (canSkip) onClose();
+  });
 
   const [showExamples, setShowExamples] = useState(false);
   const [answers, setAnswers] = useState<BusinessAnswers>({
@@ -211,8 +224,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
-      aria-modal="true"
+      aria-modal={tourOpen ? undefined : true}
       aria-labelledby="onboarding-wizard-title"
       className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
     >
@@ -1156,6 +1170,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           </div>
         </div>
       </div>
+      {/* While this is up it is the one aria-modal dialog on the page: the wizard
+          drops its own aria-modal above, so assistive tech is never told that two
+          nested dialogs are both the only thing on screen. */}
       {tourOpen && (
         <FirstRunTour onDone={handleTourDone} returnFocusTo={showTourAgainRef} />
       )}
