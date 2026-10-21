@@ -482,6 +482,24 @@ export function App() {
             </div>
           </div>
         )}
+        {/* Solve progress is announced on every re-solve, not just the first one. */}
+        <div role="status" aria-live="polite" className={solveStatus === 'loading' && solution ? 'mb-4' : undefined}>
+          {solveStatus === 'loading' ? (
+            solution ? (
+              <span className="inline-flex items-center gap-2 rounded-md border border-[#7F8A92] bg-white px-3 py-1.5 text-xs font-semibold text-[#2B3A42]">
+                <span
+                  aria-hidden="true"
+                  className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
+                />
+                Working out the updated schedule…
+              </span>
+            ) : (
+              <span className="sr-only">Working out your schedule…</span>
+            )
+          ) : solveStatus === 'ready' ? (
+            <span className="sr-only">Your schedule is ready.</span>
+          ) : null}
+        </div>
         {solution ? (
           <>
             {activeTab === 'roster' && solution !== null && <CompletionNote solution={solution} />}

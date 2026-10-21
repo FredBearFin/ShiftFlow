@@ -53,6 +53,8 @@ export function CompletionNote({ solution }: CompletionNoteProps) {
 
   return (
     <section
+      role="status"
+      aria-live="polite"
       aria-labelledby={headingId}
       className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-slate-800"
     >
