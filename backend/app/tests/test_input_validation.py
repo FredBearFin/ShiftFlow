@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 
 from app.database import get_db_connection, ShiftFlowRepository, init_db
 from app.main import app
-from app.tests import TEST_HEADERS
 
 
 FACILITY_ID = "FAC-VALIDATION-01"
@@ -25,7 +24,7 @@ def _template(**overrides):
 class InputValidationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app, headers=TEST_HEADERS)
+        cls.client = TestClient(app)
         init_db()
         conn = get_db_connection()
         ShiftFlowRepository(conn).upsert_facility(

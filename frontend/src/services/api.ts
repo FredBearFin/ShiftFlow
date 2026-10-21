@@ -240,7 +240,7 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
   try {
     res = await fetch('/api/v1/schedules/solve', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),
     });
   } catch (err) {
@@ -313,7 +313,6 @@ export async function uploadPosCsvApi(
   });
   const res = await fetch(`/api/pos/upload-csv?${params.toString()}`, {
     method: 'POST',
-    headers: { 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
     body,
   });
   if (!res.ok) {
@@ -335,7 +334,7 @@ export async function createEmployeeApi(
 ): Promise<EmployeeApiRecord> {
   const res = await fetch('/api/employees', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ facility_id: facilityId, ...payload }),
   });
   if (!res.ok) throw new Error('The staff member could not be saved.');
@@ -348,7 +347,7 @@ export async function updateEmployeeApi(
 ): Promise<EmployeeApiRecord> {
   const res = await fetch(`/api/employees/${encodeURIComponent(employeeId)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   if (!res.ok) throw new Error('The staff change could not be saved.');
@@ -372,7 +371,7 @@ export async function deactivateEmployee(
 }> {
   const res = await fetch(`/api/employees/${encodeURIComponent(empId)}/deactivate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-API-Key': import.meta.env.VITE_API_KEY ?? '' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       separation_category: payload.category,
       separation_reason: payload.reason,
@@ -393,13 +392,23 @@ export async function deactivateEmployee(
 }
 
 /** Whether account login is configured on the backend, and who (if anyone) is signed in. */
-export async function authStatusApi(): Promise<{ login_required: boolean; logged_in: boolean; email: string | null }> {
+export interface AuthStatus {
+  login_required: boolean;
+  logged_in: boolean;
+  email: string | null;
+  /** Whether the server lets visitors create their own account. */
+  signup_allowed: boolean;
+}
+
+export async function authStatusApi(): Promise<AuthStatus> {
+  const noLogin: AuthStatus = { login_required: false, logged_in: true, email: null, signup_allowed: false };
   try {
     const res = await fetch('/api/auth/status');
-    if (!res.ok) return { login_required: false, logged_in: true, email: null };
-    return await res.json();
+    if (!res.ok) return noLogin;
+    const body = await res.json();
+    return { ...body, signup_allowed: body.signup_allowed !== false };
   } catch {
-    return { login_required: false, logged_in: true, email: null };
+    return noLogin;
   }
 }
 

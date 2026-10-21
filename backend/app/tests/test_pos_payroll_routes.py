@@ -5,7 +5,6 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from app.tests import TEST_HEADERS
 
 from app.database import init_db, get_db_connection, ShiftFlowRepository
 from app.main import app
@@ -46,7 +45,7 @@ class TestPayrollNullWageExclusion(unittest.TestCase):
             )
         finally:
             conn.close()
-        cls.client = TestClient(app, headers=TEST_HEADERS)
+        cls.client = TestClient(app)
 
     def test_01_null_wage_staff_is_excluded_and_named_in_header(self):
         """The null-wage employee is left out of the Gusto export and named in X-Excluded-Staff."""

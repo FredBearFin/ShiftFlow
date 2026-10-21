@@ -12,14 +12,13 @@ from app.main import app
 from app.middleware import IdempotencyStore
 from app.schemas import SolveRequestSchema
 from app.engine.isd_rwsp_solver import ISDRWSPSolver, SolverInfeasibleError
-from app.tests import TEST_HEADERS
 
 
 class SolverContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
-        cls.client = TestClient(app, headers=TEST_HEADERS)
+        cls.client = TestClient(app)
         preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
         req = SolveRequestSchema(
             archetype_id=preset.id,

@@ -2,14 +2,14 @@
 
 import csv
 import io
-import sqlite3
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
 from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.config import DAYS_OF_WEEK
-from app.database import get_db, ShiftFlowRepository
+from app.database import ShiftFlowRepository
+from app.deps import get_repo
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
 from app.schemas import (
     ParetoPointSchema,
@@ -39,7 +39,7 @@ def solve_default_archetype(
     archetype_id: str = "healthcare_24_7",
     leeway_pct: float = 5.0,
     facility_id: str = Query(default="FAC-OMAHA-01", max_length=64),
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ) -> SolveResponseSchema:
     """Solve and return the full schedule for a named industry archetype.
 
@@ -50,7 +50,7 @@ def solve_default_archetype(
         raise HTTPException(
             status_code=404, detail=f"Archetype '{archetype_id}' not found."
         )
-    fac = ShiftFlowRepository(db).get_facility(facility_id)
+    fac = repo.get_facility(facility_id)
     if not fac:
         raise HTTPException(
             status_code=404, detail=f"Facility '{facility_id}' not found."

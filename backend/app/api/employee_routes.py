@@ -3,9 +3,9 @@
 from typing import List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
-import sqlite3
 
-from app.database import get_db, ShiftFlowRepository, SeparationAuditExistsError
+from app.database import ShiftFlowRepository, SeparationAuditExistsError
+from app.deps import get_repo
 
 router = APIRouter(prefix="/api/employees", tags=["Workforce & Employees"])
 
@@ -62,18 +62,16 @@ class EmployeeDeactivateSchema(BaseModel):
 def list_employees(
     facility_id: str = Query("FAC-OMAHA-01"),
     active_only: bool = Query(False),
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
     return repo.list_employees(facility_id=facility_id, active_only=active_only)
 
 
 @router.post("", summary="Add new workforce associate with Title VII/ADA protections")
 def create_employee(
     payload: EmployeeCreateSchema,
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
     if repo.get_facility(payload.facility_id) is None:
         # Nothing in the app exposes an explicit "create a facility" step - a facility row
         # today only exists as a side effect of uploading POS data. Adding staff shouldn't
@@ -102,18 +100,16 @@ def create_employee(
 @router.get("/audits/separations", summary="List historical separation audits for retaliation defense")
 def list_separation_audits(
     facility_id: str = Query("FAC-OMAHA-01"),
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
     return repo.list_separation_audits(facility_id=facility_id)
 
 
 @router.get("/{employee_id}", summary="Get employee by ID")
 def get_employee(
     employee_id: str,
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
     emp = repo.get_employee(employee_id)
     if not emp:
         raise HTTPException(status_code=404, detail=f"Employee {employee_id} not found")
@@ -124,11 +120,10 @@ def get_employee(
 def update_employee(
     employee_id: str,
     payload: EmployeeUpdateSchema,
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
     if payload.active is False:
         raise HTTPException(status_code=422, detail="Use the separation route to deactivate staff")
-    repo = ShiftFlowRepository(db)
     # Pass only the fields the client sent, so an omitted field is left unchanged and an explicit null is seen as null.
     sent = {field: getattr(payload, field) for field in payload.model_fields_set}
     updated = repo.update_employee(employee_id=employee_id, **sent)
@@ -141,10 +136,8 @@ def update_employee(
 def deactivate_employee(
     employee_id: str,
     payload: EmployeeDeactivateSchema,
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
-
     deactivated = repo.deactivate_employee(
         employee_id=employee_id,
         separation_category=payload.separation_category,
@@ -159,9 +152,8 @@ def deactivate_employee(
 @router.delete("/{employee_id}", summary="Permanently delete employee")
 def delete_employee(
     employee_id: str,
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
     try:
         success = repo.delete_employee(employee_id)
     except SeparationAuditExistsError as exc:
