@@ -57,13 +57,13 @@ export const LESSONS: Lesson[] = [
   },
   {
     stepId: 5,
-    title: 'Balance extra cost and staff comfort',
+    title: 'Balance staffing flexibility and staff comfort',
     explanation:
-      'Hear now the slider named Extra cost allowed, which sets how much extra cost you accept for this schedule\'s shifts. And a higher setting gives the schedule more room, within your scheduling rules, to avoid long work stretches and lost weekends. Then the real effect on staff comfort for your own schedule shows once setup is done, not before.',
+      'Hear now the slider named Staffing flexibility, which sets how far above the leanest possible shift count this schedule may go. And a higher setting gives the schedule more shifts to work with, within your scheduling rules, so it can avoid long work stretches and lost weekends. Then the real effect on staff comfort for your own schedule shows once setup is done, not before.',
     example:
-      'And suppose you set Extra cost allowed to 10%. Then once setup finishes, the Rest and Fatigue Balance tab shows the real payroll cost and real staff comfort score for that choice, next to every other option you could have picked. And if you want no extra cost at all, choose the setting marked No extra cost.',
+      'And suppose you set Staffing flexibility to 10%. Then once setup finishes, the Cost vs. Rest Trade-off tab shows that choice\'s own weekly payroll, its uncovered hours and its staff comfort score, next to every other option you could have picked. And if you want the leanest shift count, choose the setting marked No extra flexibility.',
     whyItMatters:
-      'Hear that a higher extra cost allowed lets the schedule trade cost for rest, and you choose how far to go, with real numbers for your own schedule once setup finishes.',
+      'Hear that the extra cost of more flexibility is paid in shifts, not automatically in money: the payroll figure and the uncovered hours each move on their own, so check both on that tab rather than assuming a higher setting costs more.',
   },
   {
     stepId: 6,

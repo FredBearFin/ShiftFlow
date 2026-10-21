@@ -1101,16 +1101,19 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
             <div className="space-y-4 flex-1 min-w-0">
               <div className="pb-3 border-b border-slate-200">
                 <h3 className="text-base font-bold text-slate-900">
-                  How much extra would you spend for a better-rested schedule?
+                  How much staffing flexibility will you allow?
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  The cheapest possible schedule often means more back-to-back closing-then-opening
-                  shifts, longer stretches without a day off, and fewer full weekends off. Allowing a
-                  bit more payroll gives the solver room to avoid those.
+                  The leanest possible schedule packs the work into as few shifts as it can, which
+                  means more back-to-back closing-then-opening shifts, longer stretches without a day
+                  off, and fewer full weekends off. Allowing more flexibility lets the schedule
+                  spread the same work over more shifts and avoid those.
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Pick a starting point below — you'll see the real payroll cost and real workload
-                  scores for each option on the Rest &amp; Fatigue Balance tab once setup is done.
+                  More flexibility is not the same as more money, and not the same as better
+                  coverage. Pick a starting point below — once setup is done, the Cost vs. Rest
+                  Trade-off tab shows each option's own weekly payroll, uncovered hours and workload
+                  score, and those can move either way.
                 </p>
               </div>
 
