@@ -77,6 +77,7 @@ Accounts and data: every signed-in user only sees their own facilities, staff, a
 | `SHIFTFLOW_ALLOW_SIGNUP` | `true` | Set to `false` to close public sign-up; create accounts with `python -m app.create_user EMAIL` from `backend/` (or `docker compose exec backend python -m app.create_user EMAIL`). |
 | `SHIFTFLOW_COOKIE_SECURE` | `true` | The session cookie is https-only. Set to `false` only for a plain-http address you control. |
 | `SHIFTFLOW_AUTH_DISABLED` | unset | Local development only: `1` runs the backend with no login and unscoped data. Never set it on a reachable server. |
+| `SHIFTFLOW_ENABLE_API_DOCS` | `false` | The interactive API docs (`/docs`, `/redoc`) and raw schema (`/openapi.json`) are off by default - set to `true` to turn them back on, e.g. for local development. |
 | `SHIFTFLOW_CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Comma-separated origins allowed to call the API from a browser |
 | `SHIFTFLOW_DB_PATH` | `data/shiftflow.db` | SQLite file. In Docker it sits on the `shiftflow-data` volume. |
 | `BACKEND_PORT` | `8000` | Host port for the backend container |

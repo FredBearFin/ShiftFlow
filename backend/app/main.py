@@ -32,11 +32,28 @@ APP_START_TIME = time.time()
 
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:3000"
 
+
+def _docs_urls() -> tuple:
+    """(docs_url, redoc_url, openapi_url) for the FastAPI constructor below.
+
+    All three are None - disabled, 404 - unless settings.enable_api_docs is explicitly
+    turned on. See its definition in app/config.py for why disabled is the default.
+    """
+    if settings.enable_api_docs:
+        return "/docs", "/redoc", "/openapi.json"
+    return None, None, None
+
+
+_docs_url, _redoc_url, _openapi_url = _docs_urls()
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
     description="Build and compare weekly staff rotations, balancing payroll cost against workload strain.",
     dependencies=[Depends(require_login)],
+    docs_url=_docs_url,
+    redoc_url=_redoc_url,
+    openapi_url=_openapi_url,
 )
 
 cors_origins = [
