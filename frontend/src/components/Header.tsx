@@ -19,6 +19,11 @@ interface HeaderProps {
   solution: SolveResponse | null;
   leewayPct: number;
   onLogout?: () => void;
+  /** Set only when an invited business owner (not the manager) is viewing this facility's
+   *  full app - see OwnerSummaryView.tsx / App.tsx. Shows which facility and a way back to
+   *  the owner's quick-glance summary, since this account may have more than one. */
+  ownerViewFacilityName?: string;
+  onBackToOwnerSummary?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,6 +34,8 @@ export const Header: React.FC<HeaderProps> = ({
   solution,
   leewayPct,
   onLogout,
+  ownerViewFacilityName,
+  onBackToOwnerSummary,
 }) => {
   const navTabs: { id: ActiveTabId; label: string; badge?: string }[] = [
     {
@@ -95,6 +102,18 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-2.5">
+            {onBackToOwnerSummary && (
+              <button
+                type="button"
+                onClick={onBackToOwnerSummary}
+                className="px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold transition-colors flex items-center gap-1.5"
+                title="Back to the owner quick-glance summary"
+              >
+                <span aria-hidden="true">←</span>
+                <span>Owner view{ownerViewFacilityName ? `: ${ownerViewFacilityName}` : ''} — Back to summary</span>
+              </button>
+            )}
+
             {solution && (
               <div className="hidden lg:flex items-center gap-4 px-3.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
                 <div>

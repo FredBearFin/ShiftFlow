@@ -4,17 +4,23 @@ import { fetchOwnerFacilitySummaryApi, OwnerFacilitySummary, OwnerLink } from '.
 interface OwnerSummaryViewProps {
   links: OwnerLink[];
   onLogout: () => void;
+  /** Opens the full scheduling app (roster, coverage, labor analysis, ergonomics, new
+   *  solves, ...) for this facility, scoped exactly as the manager sees it - see
+   *  App.tsx's ownerActiveFacility and backend/app/deps.py's get_repo. */
+  onViewFullSchedule: (facilityId: string, facilityName: string) => void;
 }
 
 const money = (n: number) =>
   `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 /**
- * What an invited business owner sees: a read-only labor-cost summary per facility they've
- * been given access to - not the full scheduling tool, which stays the manager's working
- * surface. See backend/app/api/owner_routes.py for the endpoint this reads.
+ * What an invited business owner lands on: a quick-glance labor-cost summary per facility
+ * they've accepted access to, with a way into the same full scheduling tool the manager
+ * uses for that facility (roster, staff, labor analysis, coverage, ergonomics, new solves -
+ * see App.tsx's ownerActiveFacility). This view itself stays read-only and fast to load;
+ * "View full schedule" is how the owner gets real, not just read-only, access.
  */
-export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLogout }) => {
+export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLogout, onViewFullSchedule }) => {
   const [selectedId, setSelectedId] = useState(links[0]?.facility_id ?? '');
   const [summary, setSummary] = useState<OwnerFacilitySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +55,7 @@ export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLog
           </div>
           <div>
             <h1 className="text-sm font-bold">ShiftFlow Studio — Owner view</h1>
-            <p className="text-xs text-slate-500">Read-only labor-cost summary</p>
+            <p className="text-xs text-slate-500">Quick-glance summary, with full access available below</p>
           </div>
         </div>
         <button
@@ -123,6 +129,18 @@ export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLog
             </dl>
 
             <p className="text-xs text-slate-400 italic pt-2 border-t border-slate-100">{summary.note}</p>
+
+            <button
+              type="button"
+              onClick={() => onViewFullSchedule(summary.facility_id, summary.facility_name)}
+              className="w-full px-4 py-2.5 bg-[#2B3A42] hover:bg-[#1E2A31] text-white rounded-md text-sm font-bold"
+            >
+              View full schedule →
+            </button>
+            <p className="text-xs text-slate-400 text-center">
+              Opens the same roster, staff, labor analysis, coverage and ergonomics views the
+              manager uses for this facility - you can see and change the real data, not a copy.
+            </p>
           </div>
         )}
       </main>

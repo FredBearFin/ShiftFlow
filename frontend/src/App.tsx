@@ -163,9 +163,20 @@ export function App() {
     setAuthState('ready');
   };
 
-  // Facilities the signed-in account has been given read-only owner access to. null means
-  // "not checked yet"; an ordinary manager's own account resolves to an empty array.
+  // Facilities the signed-in account has accepted owner access to. null means "not checked
+  // yet"; an ordinary manager's own account resolves to an empty array.
   const [ownerLinks, setOwnerLinks] = useState<OwnerLink[] | null>(null);
+
+  // Set only once an accepted owner clicks "View full schedule" on a facility from
+  // OwnerSummaryView - null means they're on the quick-glance summary (or this is an
+  // ordinary manager account, which never sets this). See backend/app/deps.py's get_repo:
+  // the same facility id now resolves to the manager's real data for this session too.
+  const [ownerActiveFacility, setOwnerActiveFacility] = useState<{ id: string; name: string } | null>(null);
+
+  // The facility this whole app instance is driving: the owner's chosen facility once
+  // they've opened full access to it, otherwise the manager's own (fixed, single-facility)
+  // id. Every employee read/write below goes through this instead of the bare constant.
+  const facilityId = ownerActiveFacility ? ownerActiveFacility.id : STAFF_FACILITY_ID;
 
   useEffect(() => {
     authStatusApi().then(({ login_required, logged_in, signup_allowed }) => {
@@ -213,6 +224,7 @@ export function App() {
     // for whoever signs in next on this machine.
     clearSolveConfig();
     setOwnerLinks(null);
+    setOwnerActiveFacility(null);
     setAuthState('needs-login');
   };
 
@@ -240,8 +252,14 @@ export function App() {
   // there is actually a session to fetch with, instead of once at first paint.
   useEffect(() => {
     if (authState !== 'ready') return;
+    // Owner accounts with no facility of their own render OwnerSummaryView instead of this
+    // effect's result until they open one (see ownerActiveFacility below), but the fetch
+    // below still runs on every render regardless - skip it until there is somewhere to
+    // open to, so it isn't spent on the default STAFF_FACILITY_ID no owner account owns.
+    if (ownerLinks && ownerLinks.length > 0 && !ownerActiveFacility) return;
     let isMounted = true;
-    fetchEmployeesApi(STAFF_FACILITY_ID)
+    setEmployeesLoaded(false);
+    fetchEmployeesApi(facilityId)
       .then((records) => {
         if (isMounted) setEmployees(records.map(mapApiEmployee));
       })
@@ -254,7 +272,7 @@ export function App() {
     return () => {
       isMounted = false;
     };
-  }, [authState]);
+  }, [authState, facilityId, ownerLinks, ownerActiveFacility]);
 
   useEffect(() => {
     if (authState !== 'ready') return;
@@ -433,7 +451,7 @@ export function App() {
   const handleAddEmployee = async (newEmpData: NewEmployeeInput) => {
     setStaffError(null);
     try {
-      const created = await createEmployeeApi(STAFF_FACILITY_ID, {
+      const created = await createEmployeeApi(facilityId, {
         name: newEmpData.name,
         role: newEmpData.role,
         wage: newEmpData.wage,
@@ -542,10 +560,17 @@ export function App() {
       />
     );
   }
-  // An account that is only an invited owner (no facility of its own) gets the read-only
-  // summary instead of the full scheduling tool - see OwnerSummaryView.tsx.
-  if (ownerLinks && ownerLinks.length > 0) {
-    return <OwnerSummaryView links={ownerLinks} onLogout={handleLogout} />;
+  // An account that is only an invited owner (no facility of its own) lands on the
+  // quick-glance summary first - see OwnerSummaryView.tsx. Picking "View full schedule"
+  // there sets ownerActiveFacility and falls through to the same app the manager uses.
+  if (ownerLinks && ownerLinks.length > 0 && !ownerActiveFacility) {
+    return (
+      <OwnerSummaryView
+        links={ownerLinks}
+        onLogout={handleLogout}
+        onViewFullSchedule={(id, name) => setOwnerActiveFacility({ id, name })}
+      />
+    );
   }
 
   return (
@@ -558,6 +583,8 @@ export function App() {
         solution={solution}
         leewayPct={leewayPct}
         onLogout={handleLogout}
+        ownerViewFacilityName={ownerActiveFacility?.name}
+        onBackToOwnerSummary={ownerActiveFacility ? () => setOwnerActiveFacility(null) : undefined}
       />
 
       <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -678,7 +705,7 @@ export function App() {
               <StaffDirectoryView
                 employees={employees}
                 rosterLines={solution.roster_lines}
-                facilityId={STAFF_FACILITY_ID}
+                facilityId={facilityId}
                 onAddEmployee={handleAddEmployee}
                 onToggleActive={(empId, sep) =>
                   sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)
@@ -689,7 +716,7 @@ export function App() {
             {activeTab === 'labor' && (
               <LaborAnalysisView
                 solution={solution}
-                facilityId={STAFF_FACILITY_ID}
+                facilityId={facilityId}
                 onDemandUpdated={(newDemand) => setDemandMatrix(newDemand)}
               />
             )}

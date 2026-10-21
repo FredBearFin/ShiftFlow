@@ -58,8 +58,9 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
         <div>
           <h1 className="text-lg font-bold tracking-tight">You've been invited as an owner</h1>
           <p className="text-xs text-slate-500 mt-1">
-            A manager invited you to a read-only labor-cost view of their ShiftFlow Studio
-            facility.
+            A manager invited you to their ShiftFlow Studio facility. You'll get a
+            quick-glance labor-cost summary, and can open the same full scheduling tool
+            they use for it whenever you want.
           </p>
         </div>
 

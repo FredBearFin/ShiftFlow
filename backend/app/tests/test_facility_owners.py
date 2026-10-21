@@ -1,7 +1,11 @@
 """A manager can invite a second, independent "owner" login onto their facility/account.
 
-Covers the two things the feature exists for:
-  - an invited owner can sign in separately and see a read-only labor-cost summary
+Covers what the feature exists for:
+  - an invited owner can sign in separately and see a quick-glance labor-cost summary
+  - once accepted, that owner also gets full read/act access to the *same* facility data
+    the manager sees - the real roster, labor analysis, coverage, schedule solves, etc. -
+    through the same endpoints the manager uses, not a separate read-only API surface
+  - a non-linked account never reaches any of it, only ever its own (empty) data
   - the facility's data (and the owner's access to it) survives the manager's login
     being deleted - because facility/employee rows and facility_owners links are keyed
     by a plain string id, never by a foreign key to the `users` table.
@@ -108,10 +112,13 @@ class FacilityOwnerInviteTests(unittest.TestCase):
         self.assertEqual(body["active_employee_count"], 1)
         self.assertGreater(body["estimated_weekly_payroll"], 0)
 
-        # Read-only: the owner cannot reach the manager's normal, non-owner-scoped data,
-        # because their own session is scoped to their own (empty) account as usual.
-        self.assertEqual(owner_client.get("/api/employees").status_code, 200)
-        self.assertEqual(owner_client.get("/api/employees").json(), [])
+        # Beyond the summary: the owner's session now also reaches the manager's normal,
+        # previously manager-only employee endpoint for this facility, and sees the real
+        # roster - not a separate, empty account of their own.
+        full_access = owner_client.get("/api/employees")
+        self.assertEqual(full_access.status_code, 200)
+        self.assertEqual(len(full_access.json()), 1)
+        self.assertEqual(full_access.json()[0]["name"], "Alex Associate")
 
         # The owner shows up in the manager's invite list as accepted.
         invites = self.manager.get(f"/api/owners/facility/{FACILITY}/invites").json()
@@ -121,6 +128,81 @@ class FacilityOwnerInviteTests(unittest.TestCase):
         # my-links reports the facility back to the owner.
         links = owner_client.get("/api/owners/my-links").json()
         self.assertEqual([l["facility_id"] for l in links], [FACILITY])
+
+    def test_accepted_owner_can_act_on_the_real_facility_not_just_read_it(self):
+        """The owner doesn't just see the manager's data - they can change it, and the
+        manager sees those changes too, because it is the same shared facility, not a
+        separate copy under the owner's own account."""
+        invite = self._invite(self._unique_owner_email("owner"))
+        owner_client = TestClient(app, base_url="https://testserver")
+        accept = owner_client.post(invite["accept_path"], json={"password": "ownerpassword1"})
+        self.assertEqual(accept.status_code, 200, accept.text)
+
+        existing_id = owner_client.get("/api/employees").json()[0]["id"]
+
+        # Act 1: add a new hire through the previously manager-only create-employee route.
+        created = owner_client.post(
+            "/api/employees",
+            json={"facility_id": FACILITY, "name": "Owner-Added Hire", "wage": 18.0, "available_days": [0, 1, 2]},
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+        manager_view = self.manager.get("/api/employees").json()
+        self.assertEqual(len(manager_view), 2)
+        self.assertIn("Owner-Added Hire", [e["name"] for e in manager_view])
+
+        # Act 2: edit an existing employee's real record.
+        updated = owner_client.put(f"/api/employees/{existing_id}", json={"wage": 22.5})
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertEqual(self.manager.get(f"/api/employees/{existing_id}").json()["wage"], 22.5)
+
+        # Act 3: the owner can also trigger a fresh solve for this facility, not just read
+        # a pre-computed number - the schedule-solving endpoint, not the summary endpoint.
+        solved = owner_client.get(
+            "/api/v1/schedules/default-solution/healthcare_24_7", params={"facility_id": FACILITY}
+        )
+        self.assertEqual(solved.status_code, 200, solved.text)
+        self.assertGreater(len(solved.json()["roster_lines"]), 0)
+
+    def test_a_stranger_cannot_act_on_the_facility_either(self):
+        """A non-linked account stays fully isolated: it can create/act on data only under
+        its own (different) account, and the manager's real facility never sees it."""
+        self._invite(self._unique_owner_email("owner"))
+        stranger, _ = new_account("stranger")
+
+        self.assertEqual(stranger.get("/api/employees").json(), [])
+
+        created = stranger.post(
+            "/api/employees",
+            json={"facility_id": FACILITY, "name": "Should Not Land Here", "wage": 10.0, "available_days": [0]},
+        )
+        self.assertEqual(created.status_code, 200, created.text)
+
+        # The stranger's write landed in their own account's facility, not the manager's.
+        self.assertEqual(len(stranger.get("/api/employees").json()), 1)
+        manager_view = self.manager.get("/api/employees").json()
+        self.assertEqual(len(manager_view), 1)
+        self.assertNotIn("Should Not Land Here", [e["name"] for e in manager_view])
+
+    def test_owner_link_to_one_manager_does_not_grant_access_to_another_managers_facility(self):
+        """An accepted link is scoped to the facility/manager it was issued for - it must
+        not widen into blanket access to every facility using that same plain id string."""
+        other_manager, _ = new_account("other-manager")
+        other_created = other_manager.post(
+            "/api/employees",
+            json={"name": "Other Manager's Hire", "wage": 15.0, "available_days": [0, 1]},
+        )
+        self.assertEqual(other_created.status_code, 200, other_created.text)
+
+        invite = self._invite(self._unique_owner_email("owner"))
+        owner_client = TestClient(app, base_url="https://testserver")
+        accept = owner_client.post(invite["accept_path"], json={"password": "ownerpassword1"})
+        self.assertEqual(accept.status_code, 200, accept.text)
+
+        # The owner is linked only to self.manager's facility, so they still see exactly
+        # that one employee - never other_manager's, despite the identical facility id.
+        visible = owner_client.get("/api/employees").json()
+        self.assertEqual(len(visible), 1)
+        self.assertEqual(visible[0]["name"], "Alex Associate")
 
     def test_accept_refused_when_an_account_with_that_email_already_exists(self):
         existing_owner, existing_email = new_account("existing-owner")

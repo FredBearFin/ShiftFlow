@@ -81,9 +81,11 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
           </span>
           <h3 className="text-sm font-bold text-slate-900 mt-0.5">Invite a business owner</h3>
           <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
-            An owner signs in with their own email and password, separate from yours, and sees a
-            read-only labor-cost summary for this facility. The account and its data stay in
-            place even if your own login is later deleted.
+            An owner signs in with their own email and password, separate from yours. They get a
+            quick-glance labor-cost summary, and can open the same full scheduling tool you use
+            for this facility - the real roster, staff, labor analysis, coverage and ergonomics,
+            alongside you, not a copy. The account and its data stay in place even if your own
+            login is later deleted.
           </p>
         </div>
         <button
