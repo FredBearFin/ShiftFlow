@@ -329,34 +329,15 @@ export function clearSolveConfig(): void {
 }
 
 /**
- * Reads the saved configuration back. Every field is validated on the way in; a field
- * that is missing or unusable is left out of `config` (so the caller applies its own
- * default) and named in `missing`, never silently replaced.
+ * Validates one parsed record against every PersistedSolveConfig field, field by field.
+ * A field that is missing or unusable is left out of `config` and named in `missing` -
+ * shared by loadSolveConfig (localStorage) below and fetchFacilityConfigApi (the server
+ * mirror of the same blob - see backend/app/api/facility_config_routes.py), so a bad
+ * value is never silently substituted regardless of which side it came from.
  */
-export function loadSolveConfig(): SolveConfigRestore {
-  let raw: string | null;
-  try {
-    raw = window.localStorage.getItem(SOLVE_CONFIG_KEY);
-  } catch {
-    return { status: 'failed', reason: 'this browser is blocking saved data' };
-  }
-  if (raw === null) return { status: 'none' };
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return { status: 'failed', reason: 'the saved copy could not be read' };
-  }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    return { status: 'failed', reason: 'the saved copy could not be read' };
-  }
-
-  const rec = parsed as Record<string, unknown>;
-  if (rec.version !== SOLVE_CONFIG_VERSION) {
-    return { status: 'failed', reason: 'it was saved by a different version of this app' };
-  }
-
+function validateSolveConfigRecord(
+  rec: Record<string, unknown>
+): { config: Partial<PersistedSolveConfig>; missing: (keyof PersistedSolveConfig)[] } {
   const config: Partial<PersistedSolveConfig> = {};
   const missing: (keyof PersistedSolveConfig)[] = [];
 
@@ -387,12 +368,99 @@ export function loadSolveConfig(): SolveConfigRestore {
     missing.push('rotation_week_offset');
   }
 
+  return { config, missing };
+}
+
+/**
+ * Reads the saved configuration back. Every field is validated on the way in; a field
+ * that is missing or unusable is left out of `config` (so the caller applies its own
+ * default) and named in `missing`, never silently replaced.
+ */
+export function loadSolveConfig(): SolveConfigRestore {
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(SOLVE_CONFIG_KEY);
+  } catch {
+    return { status: 'failed', reason: 'this browser is blocking saved data' };
+  }
+  if (raw === null) return { status: 'none' };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { status: 'failed', reason: 'the saved copy could not be read' };
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { status: 'failed', reason: 'the saved copy could not be read' };
+  }
+
+  const rec = parsed as Record<string, unknown>;
+  if (rec.version !== SOLVE_CONFIG_VERSION) {
+    return { status: 'failed', reason: 'it was saved by a different version of this app' };
+  }
+
+  const { config, missing } = validateSolveConfigRecord(rec);
+
   if (missing.length === 0) return { status: 'ok', config: config as PersistedSolveConfig };
   return {
     status: 'partial',
     config,
     missing: missing.map((field) => SOLVE_CONFIG_FIELD_LABELS[field]),
   };
+}
+
+/* -------------------------------------------------------------------------
+ * The same solve configuration, mirrored server-side and keyed to the facility (see
+ * backend/app/api/facility_config_routes.py), so a manager and any *accepted* linked
+ * owner (app/api/owner_routes.py) see the same saved setup regardless of whose browser
+ * last configured it - localStorage above is per-browser, not shared between them.
+ *
+ * App.tsx tries this first on load and falls back to the localStorage copy above when
+ * the server has nothing yet (a facility no one has saved a configuration for, or an
+ * older deployment) or the request fails outright (offline, server error); it writes to
+ * both on every save, so localStorage keeps working as the fast local cache / offline
+ * fallback it already was.
+ * ------------------------------------------------------------------------- */
+
+/** Fetches the facility's saved configuration from the server. `status: 'none'` covers
+ *  every case where there is nothing usable to apply - no saved row yet (404), a request
+ *  that could not be made at all, or a row whose contents fail the same field-by-field
+ *  validation loadSolveConfig applies to the localStorage copy - so the caller's existing
+ *  localStorage-or-defaults fallback is always what runs next. */
+export async function fetchFacilityConfigApi(facilityId: string): Promise<
+  { status: 'ok'; config: PersistedSolveConfig } | { status: 'none' }
+> {
+  try {
+    const res = await fetch(`/api/facility-config?facility_id=${encodeURIComponent(facilityId)}`);
+    if (!res.ok) return { status: 'none' };
+    const body = (await res.json()) as { config?: unknown };
+    if (!body || typeof body !== 'object' || !body.config || typeof body.config !== 'object') {
+      return { status: 'none' };
+    }
+    const { config, missing } = validateSolveConfigRecord(body.config as Record<string, unknown>);
+    if (missing.length > 0) return { status: 'none' };
+    return { status: 'ok', config: config as PersistedSolveConfig };
+  } catch {
+    return { status: 'none' };
+  }
+}
+
+/** Saves the facility's configuration to the server (the source of truth other sessions
+ *  read). Returns false on any failure; the caller keeps relying on the localStorage
+ *  save, which happens independently, so a server hiccup never loses the setup on this
+ *  browser - it only delays other sessions seeing it. */
+export async function saveFacilityConfigApi(facilityId: string, config: PersistedSolveConfig): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/facility-config?facility_id=${encodeURIComponent(facilityId)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ config }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 /** Serialises the roster grid (one row per rotation line, one column per day). */

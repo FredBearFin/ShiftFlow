@@ -265,6 +265,19 @@ export interface PersistedSolveConfig {
   rotation_week_offset: number;
 }
 
+/**
+ * The server-side mirror of PersistedSolveConfig (see backend/app/api/
+ * facility_config_routes.py), keyed to the facility so a manager and any linked owner
+ * (app/api/owner_routes.py) see the same saved setup regardless of whose browser last
+ * configured it. The browser's own localStorage copy (see PersistedSolveConfig above)
+ * stays as the fast local cache / offline fallback; this is the shared source of truth.
+ */
+export interface FacilitySolveConfigRecord {
+  facility_id: string;
+  config: PersistedSolveConfig;
+  updated_at: string;
+}
+
 export interface SolveResponse {
   instance_name: string;
   archetype_id: string;

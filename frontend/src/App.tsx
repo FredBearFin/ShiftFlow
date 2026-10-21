@@ -7,6 +7,7 @@ import {
   EmployeeRecord,
   ErgonomicGuardrails,
   NewEmployeeInput,
+  PersistedSolveConfig,
   SeparationCategory,
   ShiftTemplate,
   SolveResponse,
@@ -35,6 +36,8 @@ import {
   saveSolveConfig,
   clearSolveConfig,
   SolveConfigRestore,
+  fetchFacilityConfigApi,
+  saveFacilityConfigApi,
 } from './services/api';
 
 import { Header } from './components/Header';
@@ -93,6 +96,14 @@ export function App() {
       ? configRestore.config
       : undefined;
   const [configSaveFailed, setConfigSaveFailed] = useState<boolean>(false);
+
+  // Whether this facility's server-side configuration (see backend/app/api/
+  // facility_config_routes.py) has been checked at least once since the last time
+  // facilityId changed. Saving to the server is held back until this is true, so a
+  // browser with nothing in localStorage (e.g. a linked owner's own device - see
+  // OwnerSummaryView.tsx) can never race its own blank/default state to the server
+  // ahead of the real, already-saved configuration it is about to fetch.
+  const [serverConfigChecked, setServerConfigChecked] = useState<boolean>(false);
 
   const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>(restored?.archetype_id ?? 'custom');
   const [facilityName, setFacilityName] = useState<string>(restored?.facility_name ?? '');
@@ -281,21 +292,61 @@ export function App() {
     });
   }, [authState]);
 
-  // Save the manager's setup on every change, so the next load re-solves the same
-  // schedule instead of a default one. A refused write is surfaced below, not swallowed.
+  // The facility's saved setup now lives on the server (see backend/app/api/
+  // facility_config_routes.py), keyed the same owner-aware way the real employee/
+  // schedule data already is - so a manager and any linked owner (OwnerSummaryView.tsx)
+  // see the same demand matrix, shift templates and guardrails regardless of whose
+  // browser configured them. Try the server first; fall back to this browser's own
+  // localStorage copy (which survived from before this existed) when the server has
+  // nothing yet for this facility or the request fails outright.
   useEffect(() => {
-    setConfigSaveFailed(
-      !saveSolveConfig({
-        archetype_id: selectedArchetypeId,
-        facility_name: facilityName,
-        demand_matrix: demandMatrix,
-        templates,
-        guardrails,
-        pareto_leeway_pct: leewayPct,
-        rotation_week_offset: rotationWeekOffset,
-      })
-    );
+    if (authState !== 'ready') return;
+    let isMounted = true;
+    setServerConfigChecked(false);
+    fetchFacilityConfigApi(facilityId).then((result) => {
+      if (!isMounted) return;
+      if (result.status === 'ok') {
+        const cfg = result.config;
+        setSelectedArchetypeId(cfg.archetype_id);
+        setFacilityName(cfg.facility_name);
+        setDemandMatrix(cfg.demand_matrix);
+        setTemplates(cfg.templates);
+        setGuardrails(cfg.guardrails);
+        setLeewayPct(cfg.pareto_leeway_pct);
+        setRotationWeekOffset(cfg.rotation_week_offset);
+      }
+      setServerConfigChecked(true);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [authState, facilityId]);
+
+  // Save the manager's setup on every change, so the next load re-solves the same
+  // schedule instead of a default one. A refused localStorage write is surfaced below,
+  // not swallowed. The server write happens the same way other API writes in this file
+  // do (fire and forget, e.g. the archetype fetch above) - it is the fast localStorage
+  // write that this browser depends on right away, so a server hiccup only delays other
+  // sessions seeing the change rather than losing it here. It's held back until
+  // serverConfigChecked so it never overwrites a real saved configuration with this
+  // browser's blank/default starting state before that configuration has been fetched.
+  useEffect(() => {
+    const config: PersistedSolveConfig = {
+      archetype_id: selectedArchetypeId,
+      facility_name: facilityName,
+      demand_matrix: demandMatrix,
+      templates,
+      guardrails,
+      pareto_leeway_pct: leewayPct,
+      rotation_week_offset: rotationWeekOffset,
+    };
+    setConfigSaveFailed(!saveSolveConfig(config));
+    if (serverConfigChecked) {
+      void saveFacilityConfigApi(facilityId, config);
+    }
   }, [
+    facilityId,
+    serverConfigChecked,
     selectedArchetypeId,
     facilityName,
     demandMatrix,
