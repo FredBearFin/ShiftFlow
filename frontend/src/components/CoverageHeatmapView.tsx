@@ -119,7 +119,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                     const diff = c.scheduled_staff - c.required_staff;
                     let cellStyle = 'bg-emerald-50 text-emerald-900 border-emerald-200';
                     if (c.required_staff === 0 && c.scheduled_staff === 0) {
-                      cellStyle = 'bg-slate-50 text-slate-400 border-slate-100';
+                      cellStyle = 'bg-slate-50 text-muted border-slate-100';
                     } else if (diff < 0) {
                       cellStyle = 'bg-amber-50 text-amber-900 border-amber-300 font-bold';
                     } else if (diff > 0) {

@@ -200,7 +200,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                         {assignedLine.cohort_id}
                       </span>
                     ) : (
-                      <span className="text-slate-400 italic">Unassigned Pool</span>
+                      <span className="text-muted italic">Unassigned Pool</span>
                     )}
                   </span>
                 </div>
@@ -255,7 +255,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
               {/* Action Buttons */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-mono-tabular text-slate-400">{emp.employee_id}</span>
+                <span className="text-xs font-mono-tabular text-muted">{emp.employee_id}</span>
                 {emp.is_active ? (
                   <button
                     type="button"
@@ -290,7 +290,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 id="add-staff-title" className="text-base font-bold text-slate-900">Add Staff Member</h3>
-              <button type="button" aria-label="Close" onClick={() => setShowAddModal(false)} className="text-slate-400 font-bold">
+              <button type="button" aria-label="Close" onClick={() => setShowAddModal(false)} className="text-muted font-bold">
                 Cancel
               </button>
             </div>
@@ -427,7 +427,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   Deactivate / Separate: {separatingEmp.name}
                 </h3>
               </div>
-              <button type="button" aria-label="Close" onClick={() => setSeparatingEmp(null)} className="text-slate-400 font-bold">
+              <button type="button" aria-label="Close" onClick={() => setSeparatingEmp(null)} className="text-muted font-bold">
                 ✕
               </button>
             </div>

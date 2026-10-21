@@ -116,7 +116,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                     <div className="flex items-center gap-1.5 shrink-0 ml-4">
                       {item.keys.map((k, kIdx) =>
                         k === 'or' ? (
-                          <span key={kIdx} className="text-xs text-slate-400 font-medium">
+                          <span key={kIdx} className="text-xs text-muted font-medium">
                             or
                           </span>
                         ) : (

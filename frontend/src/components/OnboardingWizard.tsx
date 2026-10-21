@@ -376,7 +376,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           onChange={(e) => setAnswers((p) => ({ ...p, openHour: Math.max(0, Math.min(23, parseInt(e.target.value || '0', 10))) }))}
                           className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
                         />
-                        <span className="text-xs text-slate-400 ml-1">:00</span>
+                        <span className="text-xs text-muted ml-1">:00</span>
                       </div>
                       <div>
                         <label className="block text-xs text-slate-500 mb-1">Closes at</label>
@@ -388,7 +388,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           onChange={(e) => setAnswers((p) => ({ ...p, closeHour: Math.max(1, Math.min(24, parseInt(e.target.value || '0', 10))) }))}
                           className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
                         />
-                        <span className="text-xs text-slate-400 ml-1">:00 (24 = midnight)</span>
+                        <span className="text-xs text-muted ml-1">:00 (24 = midnight)</span>
                       </div>
                     </div>
                   )}
@@ -609,7 +609,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                         className="w-full sm:w-12 text-center font-mono-tabular font-bold text-xs text-slate-900 border border-slate-200 rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
                       />
-                      <span className="text-[9px] text-slate-400">
+                      <span className="text-xs text-muted">
                         {hr < 6 ? 'Night' : hr < 14 ? 'Morn' : hr < 22 ? 'Eve' : 'Night'}
                       </span>
                     </div>

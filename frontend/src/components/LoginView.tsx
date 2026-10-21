@@ -99,7 +99,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B3A42]/30"
           />
           {mode === 'signup' && (
-            <p id="password-rule" className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+            <p id="password-rule" className="mt-1 text-xs text-muted">At least 8 characters.</p>
           )}
         </div>
 

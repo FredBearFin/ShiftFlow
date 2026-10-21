@@ -185,7 +185,8 @@ export const Header: React.FC<HeaderProps> = ({
                     className={`px-1 py-0.5 rounded text-xs font-mono-tabular font-bold ${
                       isActive
                         ? 'bg-white text-[#2B3A42]'
-                        : 'bg-slate-100 text-slate-500'
+                        // slate-500 on slate-100 measured 4.34:1 at 12px.
+                        : 'bg-slate-100 text-slate-600'
                     }`}
                   >
                     {TAB_KEY_NUMBERS[tab.id]}

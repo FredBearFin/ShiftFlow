@@ -490,7 +490,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   </div>
 
                   <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs text-slate-400 font-mono-tabular">
+                    <span className="text-xs text-muted font-mono-tabular">
                       ID: {emp.employee_id}
                     </span>
                     {!(emp.is_active && sepEmpId === emp.employee_id) && (
@@ -735,7 +735,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               <button aria-label="Close"
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold"
+                className="text-muted hover:text-slate-800 font-bold"
               >
                 ✕
               </button>
@@ -816,7 +816,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     );
                   })}
                 </div>
-                <span className="text-xs text-slate-400 mt-1 block">
+                <span className="text-xs text-muted mt-1 block">
                   Tap to toggle available working days.
                 </span>
               </div>
