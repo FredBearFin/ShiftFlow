@@ -57,6 +57,83 @@ describe('exportRosterToCsvString', () => {
   });
 });
 
+describe('exported roster is readable off the page', () => {
+  const workWeek = (code: string, window: string) =>
+    Array.from({ length: 7 }, (_, i) =>
+      i < 5 ? { shift_code: code, time_window: window } : { shift_code: 'OFF', time_window: 'Rest / Off' }
+    );
+
+  const buildSolution = (overrides: Record<string, unknown> = {}) =>
+    ({
+      roster_lines: [
+        {
+          line_number: 1,
+          cohort_id: 'C1',
+          assigned_person: 'Dana Reyes',
+          qualification_tier: 'Lead',
+          hourly_wage: 21,
+          weekly_hours: 40,
+          overtime_hours: 0,
+          estimated_weekly_payroll: 840,
+          days: workWeek('D', '11:00 – 19:00'),
+          ...overrides,
+        },
+      ],
+    }) as unknown as SolveResponse;
+
+  const dataRows = (csv: string) => csv.split('\n').slice(2);
+
+  it('writes every worked day cell as a code and its time window', () => {
+    const csv = exportRosterToCsvString(buildSolution());
+    expect(csv).toContain('D (11:00 – 19:00)');
+    // The bare code, with no window beside it, is what made the printout undecodable.
+    expect(csv).not.toMatch(/,D,/);
+  });
+
+  it('leaves rest days as OFF rather than repeating a rest window', () => {
+    const csv = exportRosterToCsvString(buildSolution());
+    expect(csv).toContain(',OFF,OFF');
+    expect(csv).not.toContain('Rest / Off');
+  });
+
+  it('opens with a dated range that states what the date is based on', () => {
+    const csv = exportRosterToCsvString(buildSolution(), new Date(2026, 9, 21));
+    const [first] = csv.split('\n');
+    expect(first).toContain('Mon 2026-10-19 to Sun 2026-10-25');
+    expect(first).toContain('not from a stored schedule date');
+  });
+
+  it('never prints hours beside a blank employee name', () => {
+    const csv = exportRosterToCsvString(
+      buildSolution({ assigned_person: null, hourly_wage: null, estimated_weekly_payroll: null })
+    );
+    for (const row of dataRows(csv)) {
+      const [, , person, , , hours] = row.split(',');
+      if (Number(hours) > 0) expect(person.trim()).not.toBe('');
+    }
+  });
+
+  it('marks an unstaffed line and strips its wage and payroll money', () => {
+    const csv = exportRosterToCsvString(
+      buildSolution({ assigned_person: null, hourly_wage: null, estimated_weekly_payroll: null })
+    );
+    const [row] = dataRows(csv);
+    expect(row).toContain('UNASSIGNED');
+    // Hours stay (it is a real coverage gap) but no money is attributed to nobody.
+    expect(row).not.toContain('840.00');
+    expect(row).not.toContain('21.00');
+  });
+
+  it('strips payroll money from a line whose wage survived but whose person did not', () => {
+    const csv = exportRosterToCsvString(
+      buildSolution({ assigned_person: '', hourly_wage: 21, estimated_weekly_payroll: 840 })
+    );
+    const [row] = dataRows(csv);
+    expect(row).toContain('UNASSIGNED');
+    expect(row).not.toContain('840.00');
+  });
+});
+
 describe('requests no longer carry the retired X-API-Key header', () => {
   it('sends only a JSON content type when saving a staff member', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'EMP-1' }) });

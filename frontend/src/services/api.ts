@@ -396,25 +396,78 @@ export function loadSolveConfig(): SolveConfigRestore {
 /** Serialises the roster grid (one row per rotation line, one column per day). */
 
 /** Serialises the weekly schedule grid (one row per shift pattern, one column per day). */
-export function exportRosterToCsvString(solution: SolveResponse): string {
+/** Marks a roster line nobody is working, so the row can never read as a real person's hours. */
+export const UNASSIGNED_LINE_LABEL = 'UNASSIGNED — no staff member on this line';
+
+/** Monday of the week containing `from`, so the printed range starts where the roster does. */
+function mondayOf(from: Date): Date {
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  // getDay(): 0 = Sunday. Shift back to the Monday that opens this week.
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d;
+}
+
+function isoDate(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/**
+ * Renders one day cell as e.g. `D (11:00 – 19:00)`.
+ *
+ * The shift code alone is undecodable on paper: its legend lives on a wizard
+ * screen the person holding the printout does not have. The on-screen grid
+ * already shows the time window, so the export carries it too. Matches the
+ * backend's /export-csv formatting exactly.
+ */
+function formatDayCell(cell: { shift_code: string; time_window: string }): string {
+  if (cell.shift_code === 'OFF') return 'OFF';
+  const window = (cell.time_window ?? '').trim();
+  return window === '' ? cell.shift_code : `${cell.shift_code} (${window})`;
+}
+
+/**
+ * Exports the roster as CSV.
+ *
+ * `weekStartDate` dates the printed range. The solver returns a repeating
+ * weekly pattern with no stored start date, so this defaults to the Monday of
+ * the week the export is taken and the header row says so rather than
+ * implying the backend supplied a date.
+ */
+export function exportRosterToCsvString(solution: SolveResponse, weekStartDate?: Date): string {
   const dayHeaders = DAYS_OF_WEEK.map((d) => `${d} Shift`);
   const header = ['Pattern', 'Pattern ID', 'Assigned Person', 'Qualification', 'Hourly Wage', 'Weekly Hours', 'Overtime Hours', 'Weekly Payroll', ...dayHeaders];
   const escape = (v: string | number | null) => {
     const s = v === null ? '' : String(v);
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const rows = solution.roster_lines.map((line) => [
-    line.line_number,
-    line.cohort_id,
-    line.assigned_person ?? '',
-    line.qualification_tier,
-    line.hourly_wage === null ? '' : line.hourly_wage.toFixed(2),
-    line.weekly_hours,
-    line.overtime_hours,
-    line.estimated_weekly_payroll === null ? '' : line.estimated_weekly_payroll.toFixed(2),
-    ...line.days.map((cell) => cell.shift_code),
-  ]);
-  return [header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
+
+  const start = mondayOf(weekStartDate ?? new Date());
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  const dateRangeRow = [
+    `Schedule week: Mon ${isoDate(start)} to Sun ${isoDate(end)}`,
+    'Repeating weekly pattern; dated from the week this export was taken, not from a stored schedule date.',
+  ];
+
+  const rows = solution.roster_lines.map((line) => {
+    const staffed = line.assigned_person !== null && line.assigned_person !== undefined && line.assigned_person !== '';
+    return [
+      line.line_number,
+      line.cohort_id,
+      // Never leave this blank: a blank name beside 40 hours reads as a real
+      // person's payroll row. Unstaffed lines stay in the file because they are
+      // coverage gaps the supervisor has to see, but carry no wage or money.
+      staffed ? (line.assigned_person as string) : UNASSIGNED_LINE_LABEL,
+      line.qualification_tier,
+      staffed && line.hourly_wage !== null ? line.hourly_wage.toFixed(2) : '',
+      line.weekly_hours,
+      line.overtime_hours,
+      staffed && line.estimated_weekly_payroll !== null ? line.estimated_weekly_payroll.toFixed(2) : '',
+      ...line.days.map(formatDayCell),
+    ];
+  });
+  return [dateRangeRow, header, ...rows].map((row) => row.map(escape).join(',')).join('\n');
 }
 
 export async function fetchArchetypes(): Promise<ArchetypePreset[]> {
