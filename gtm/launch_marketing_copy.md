@@ -54,19 +54,19 @@ ShiftFlow is sold the way the person who actually uses it buys software: self-se
 
 ## 4. The Owner Upsell Nudge (Secondary Funnel — Use Only After Savings Are Proven)
 
-This is not the first message a prospect sees. It's an in-app prompt and short email sent to a manager **only after they've used ShiftFlow long enough to have a real number in the Labor Analysis view** — e.g., a measurable drop in overtime or a concrete reduction in extra hours worked. It gives the manager something to hand to the owner.
+This is not the first message a prospect sees. It's a manual action the manager takes once they have a real number on screen in the Labor Analysis view, plus a short email to forward. **Note on what's actually built today**: there is no automatic in-app prompt that watches usage and pops this up after "a few weeks" — that doesn't exist yet. What does exist is a **"Copy summary for owner" button** right in the Labor Analysis view, available any time the manager has published a schedule, which copies a plain-text labor-cost summary (including, when available, a vs.-baseline overtime/payroll savings figure for that week) that the manager can paste into a text or email themselves.
 
-**In-app prompt** (shown once a manager has at least a few weeks of Labor Analysis data):
-> You've saved an estimated **{{labor_savings_amount}}** this month on overtime and extra hours. Want help showing this to the owner? We'll generate a one-page summary you can share — and if they want to put ShiftFlow on the business account, it covers every manager at this location.
+**What the manager actually sees and can copy** (via the "Copy summary for owner" button, not an automated prompt):
+> A plain-text summary with this week's payroll cost, overtime cost, scheduled hours, and — when the solver has the data — an estimated **{{labor_savings_amount}} per week** in overtime/payroll avoided versus the tightest, least-rest-optimized schedule ShiftFlow could have built for the same crew and demand. (This is not a comparison to the manager's actual pre-ShiftFlow schedule — ShiftFlow doesn't keep a record of that — so don't frame it to the owner as "before ShiftFlow.")
 
 **Short email the manager can forward to the owner**:
 
-**Subject**: I've been using a $12/mo scheduling tool — it's already saved us {{labor_savings_amount}}
+**Subject**: I've been using a $12/mo scheduling tool — this week it's showing an estimated {{labor_savings_amount}} saved
 
 Hi {{owner_name}},
 
-I started using a tool called ShiftFlow to build our schedule — it rotates shifts fairly and flags overtime risk before I publish. I've been paying for it myself, and over the last month it's shown a real {{labor_savings_amount}} drop in {{overtime_or_extra_hours}} compared to before.
+I started using a tool called ShiftFlow to build our schedule — it rotates shifts fairly and flags overtime risk before I publish. I've been paying for it myself, and this week's Labor Analysis view shows a real estimated {{labor_savings_amount}} in {{overtime_or_extra_hours}} saved versus the tightest schedule it could have built otherwise.
 
-Would you be open to putting it on the business account instead? It's {{business_tier_price}}/month for the location and covers every manager here, not just me.
+Would you be open to putting it on the business account instead? It's {{business_tier_price}}/month for the location. (Heads up for whoever sends this: today that means signing up for the Business plan as a separate account on the pricing page — it doesn't yet carry over my existing schedule or crew list automatically, and it doesn't yet add extra manager seats.)
 
 {{manager_name}}

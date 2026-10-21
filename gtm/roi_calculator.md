@@ -3,7 +3,7 @@
 This document does two different jobs, matching the two funnels in the GTM model, and it's important not to blend them:
 
 1. **The Personal pitch** (Sections 1–2): why an individual shift manager at a convenience store, liquor store, smoke shop, bar, or restaurant would pay $9–15/month out of their own pocket. This is a personal-productivity case — time saved and fewer mistakes — not a business ROI case.
-2. **The Business upgrade justification** (Sections 3–4): the labor-cost number, pulled from the app's own Labor Analysis view, that a manager uses to ask the owner to move billing to the $20–50/month business tier. This case only exists *after* a manager has real usage data — it is never the opening pitch.
+2. **The Business upgrade justification** (Sections 3–4): the labor-cost number, pulled from the app's own Labor Analysis view, that a manager uses to ask the owner to start paying for the $20–50/month business tier (today that means the owner signing up for it themselves, as a new account — see Section 3 and `sales_pitch_deck.md` Slide 8 for what that currently does and doesn't carry over). This case only exists *after* a manager has real usage data — it is never the opening pitch.
 
 Numbers below marked "estimate" or "industry-reported" are exactly that — reasonable planning assumptions, not verified facts, and should not be presented to a prospect as precise.
 
@@ -35,12 +35,12 @@ Numbers below marked "estimate" or "industry-reported" are exactly that — reas
 
 ## 3. The Business Case: What Feeds the Owner Upgrade
 
-This section is not a pitch to run cold. It is the calculation a manager's own Labor Analysis data performs *after* weeks of real usage, which then becomes the one number used in the owner-upgrade conversation (`sales_pitch_deck.md`).
+This section is not a pitch to run cold. It is the calculation a manager's own Labor Analysis data performs for whichever week they pull it (after they've used ShiftFlow long enough to trust the number), which then becomes the one figure used in the owner-upgrade conversation (`sales_pitch_deck.md`).
 
 ### Unintended Overtime
 * Hand-built schedules at extended-hours, short-staffed locations commonly produce some amount of unplanned overtime when a manager has to patch a last-minute gap with whoever's available, regardless of hours already worked that week.
 * ShiftFlow's Labor Analysis view surfaces overtime risk before a schedule is published, which lets a manager fix it before it becomes a paycheck, rather than after.
-* **The number that matters for the upgrade pitch is whatever Labor Analysis actually shows for that specific location over the weeks it's been in use** — not a generic industry assumption. A manager should pull this directly from their own account, not from a benchmark in this document.
+* **The number that matters for the upgrade pitch is whatever Labor Analysis actually shows for that specific location's current published week** — not a generic industry assumption, and not an accumulated multi-week total (ShiftFlow doesn't track a running tally; each solve reports its own week). Concretely, it's the "Copy summary for owner" figure: the current week's payroll/overtime cost versus the tightest, least-rest-optimized schedule ShiftFlow could have built for that same week's crew and demand — not a comparison to the manager's actual schedules from before ShiftFlow, which the app has no record of. A manager should pull this directly from their own account, not from a benchmark in this document, and should repeat it week to week rather than treating one week's number as a permanent baseline.
 
 ### Manager Time, Converted to a Business Argument (Only for This Section)
 * Unlike Section 1, the business-upgrade case can fairly convert manager time into a dollar figure, because here we're asking the *owner* to value their manager's time, not asking the manager to value their own.
@@ -49,7 +49,7 @@ This section is not a pitch to run cold. It is the calculation a manager's own L
 ### Why This Matters More Than the Dollar Figure: Manager Turnover
 * Industry-reported estimates put shift-manager turnover in retail and food service at roughly **28–47% per year**, varying by segment — again, an estimate, not a figure we've verified firsthand.
 * The business implication isn't really about dollars: a **Personal**-tier account is tied to one manager's card and login. When that manager leaves — which, at this turnover rate, is a "when," not an "if," for most locations within a couple of years — the subscription, the schedule history, and the setup leave with them.
-* A **Business**-tier account, paid by and belonging to the location, survives the manager's departure. That continuity — not a bigger feature set — is the core argument for the owner to take over billing, and it should be stated to the owner in those terms rather than oversold as a compliance or ROI multiple.
+* A **Business**-tier account, paid by and belonging to the location, is *meant* to survive the manager's departure that way automatically — but that automatic hand-off isn't built yet (a Business-tier signup today creates a separate, empty account, not a transfer of the existing one). The piece of this that is real today is the owner-invite read-only login: it gives the owner their own account and a labor-cost summary that keeps working even if the manager's login is deleted, independent of which pricing tier anyone is on. That continuity — not a bigger feature set, and not yet a billing takeover — is the honest core of the argument, and it should be stated to the owner in those terms rather than oversold as a compliance, ROI multiple, or seamless account hand-off.
 
 ---
 
