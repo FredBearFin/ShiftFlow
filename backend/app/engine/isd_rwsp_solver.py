@@ -34,7 +34,7 @@ from app.engine.ergonomics import (
     evaluate_work_sequence_penalty,
     is_backward_rotation,
 )
-from app.engine.pareto import generate_pareto_frontier, interpolate_becker_table7
+from app.engine.pareto import generate_pareto_frontier
 from app.schemas import (
     EmployeeRecord,
     IntervalCoverageCell,
@@ -191,7 +191,7 @@ class SolverInfeasibleError(Exception):
 class ISDRWSPSolver:
     """Integrated Shift Design and Rotating Workforce Scheduling Solver (Becker, EJOR 2026)."""
 
-    def __init__(self, request: SolveRequestSchema):
+    def __init__(self, request: SolveRequestSchema, include_baseline: bool = True):
         self.req = request
         self.demand = request.demand_matrix
         self.templates = [t for t in request.templates if t.enabled]
@@ -201,6 +201,10 @@ class ISDRWSPSolver:
         self.leeway_pct = request.pareto_leeway_pct
         self.employees = request.employees or []
         self.rotation_week_offset = request.rotation_week_offset
+        # Guards against infinite recursion: the real ergonomics comparison needs one extra
+        # solve at 0% leeway as its baseline, but that baseline solve must never request its
+        # own baseline (it already IS the cheapest/tightest version of the schedule).
+        self.include_baseline = include_baseline and self.leeway_pct > 0.0
 
     def _build_shift_types(self) -> List[Dict]:
         shift_types: List[Dict] = []
@@ -937,14 +941,21 @@ class ISDRWSPSolver:
         )
         obj_shift = obj_shift_min_bound
 
-        becker_gain_pct = interpolate_becker_table7(self.leeway_pct)
+        # Real comparison: solve the same request at 0% leeway (the cheapest, tightest
+        # version of this schedule) and use its actual score as the baseline - not an
+        # estimate. include_baseline guards against this baseline solve recursing further.
+        baseline_audit = None
+        if self.include_baseline:
+            baseline_request = self.req.model_copy(update={"pareto_leeway_pct": 0.0})
+            baseline_solution = ISDRWSPSolver(baseline_request, include_baseline=False).solve()
+            baseline_audit = baseline_solution.ergonomics_audit
+
         ergonomics_audit = evaluate_ergonomics_audit(
             shift_types=shift_type_results,
             multigraph_arcs=multigraph_arcs,
             roster_lines=roster_lines,
             guardrails=self.guardrails,
-            leeway_pct=self.leeway_pct,
-            becker_gain_pct=becker_gain_pct,
+            baseline_audit=baseline_audit,
         )
 
         pareto_frontier = generate_pareto_frontier(

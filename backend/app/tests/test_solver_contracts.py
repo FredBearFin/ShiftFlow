@@ -183,5 +183,33 @@ class SolverContractTests(unittest.TestCase):
         self.assertEqual(manual_obj_shift, sol50.obj_shift)
 
 
+    def test_ergonomics_baseline_is_a_real_zero_leeway_solve(self):
+        """The ergonomics 'improvement' must be the real relative delta between an actual
+        0%-leeway solve and the active solve - not an estimate from a lookup table."""
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
+
+        def solve_at(leeway):
+            req = SolveRequestSchema(
+                archetype_id=preset.id, facility_name=preset.name,
+                demand_matrix=preset.demand_matrix, templates=preset.templates,
+                guardrails=preset.guardrails, pareto_leeway_pct=leeway,
+            )
+            return ISDRWSPSolver(req).solve()
+
+        sol0 = solve_at(0.0)
+        sol50 = solve_at(50.0)
+
+        self.assertEqual(sol0.ergonomics_audit.sequential_baseline_ergo, sol0.ergonomics_audit.total_ergo_objective)
+        self.assertEqual(sol0.ergonomics_audit.ergo_improvement_pct, 0.0)
+
+        self.assertEqual(sol50.ergonomics_audit.sequential_baseline_ergo, sol0.ergonomics_audit.total_ergo_objective)
+        expected_pct = round(
+            max(0.0, (sol0.ergonomics_audit.total_ergo_objective - sol50.ergonomics_audit.total_ergo_objective)
+                / sol0.ergonomics_audit.total_ergo_objective * 100.0),
+            2,
+        )
+        self.assertEqual(expected_pct, sol50.ergonomics_audit.ergo_improvement_pct)
+
+
 if __name__ == "__main__":
     unittest.main()

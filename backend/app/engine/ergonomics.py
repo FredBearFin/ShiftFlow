@@ -7,7 +7,7 @@ Implements Equation (2) and Table 4 of Tristan Becker (2026):
 along with Zero-Clopening (>= 16h rest) and Forward Circadian Rotation verification.
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 from app.config import TEMPLATE_ORDER, settings
 from app.schemas import (
     ErgonomicCriterionBreakdown,
@@ -208,10 +208,15 @@ def evaluate_ergonomics_audit(
     multigraph_arcs: List[MultigraphArcSchema],
     roster_lines: List[RosterLineSchema],
     guardrails: ErgonomicGuardrailsSchema,
-    leeway_pct: float,
-    becker_gain_pct: float,
+    baseline_audit: Optional[ErgonomicsAuditSchema] = None,
 ) -> ErgonomicsAuditSchema:
-    """Perform a complete 8-criteria Nurmi et al. (2024) / Becker (2026) audit on the solved schedule."""
+    """Score a schedule against 8 workload/fatigue checks.
+
+    When baseline_audit is given (the real result of solving the same request at 0%
+    leeway), the comparison is against that actual cheaper schedule's real score - not an
+    estimate. When omitted, this call IS the zero-leeway baseline, so it is compared to
+    itself (no improvement to report).
+    """
     w = settings.ergo_weights
 
     # 1 & 2: Shift Duration (W^SL_t) and Early Morning (W^MS_t) from shift design variables xi_{gt}
@@ -264,14 +269,17 @@ def evaluate_ergonomics_audit(
         pen_sl + pen_ms + pen_cd + pen_cn + pen_ce + pen_sn + pen_ww + pen_sr, 2
     )
 
-    # Calculate sequential fixed-SD baseline penalty using Becker (2026) Table 5 & Table 7 scaling
-    effective_gain_ratio = max(0.018, min(0.8971, becker_gain_pct / 100.0))
-    sequential_baseline = round(
-        max(total_ergo + 4.0, total_ergo / max(0.10, 1.0 - effective_gain_ratio)), 2
-    )
-    actual_improvement_pct = round(
-        ((sequential_baseline - total_ergo) / max(1.0, sequential_baseline)) * 100.0, 2
-    )
+    # Compare against the real cheapest-version-of-this-schedule baseline, not an estimate.
+    if baseline_audit is None:
+        sequential_baseline = total_ergo
+        actual_improvement_pct = 0.0
+    else:
+        sequential_baseline = baseline_audit.total_ergo_objective
+        actual_improvement_pct = (
+            round(max(0.0, ((sequential_baseline - total_ergo) / sequential_baseline) * 100.0), 2)
+            if sequential_baseline > 0
+            else 0.0
+        )
 
     # Inspect cells for Clopening (< 16h rest) and Backward Rotation
     clopening_violations = 0
@@ -296,7 +304,9 @@ def evaluate_ergonomics_audit(
         (consolidated_rest_arcs / max(1, rest_arcs_total)) * 100.0, 1
     )
 
-    scale_factor = sequential_baseline / max(1.0, total_ergo) if total_ergo > 0 else 1.35
+    baseline_by_id = {
+        c.criterion_id: c for c in baseline_audit.criteria_breakdown
+    } if baseline_audit is not None else {}
 
     def _make_criterion(
         cid: str,
@@ -307,14 +317,14 @@ def evaluate_ergonomics_audit(
         c_range: str,
         raw_cnt: int,
         w_pen: float,
-        extra_base: float,
         expl: str,
     ) -> ErgonomicCriterionBreakdown:
-        seq_pen = round(w_pen * scale_factor + extra_base, 2)
+        baseline_c = baseline_by_id.get(cid)
+        seq_pen = baseline_c.weighted_penalty if baseline_c is not None else w_pen
         imp = (
-            round(((seq_pen - w_pen) / seq_pen) * 100.0, 1)
+            round(max(0.0, ((seq_pen - w_pen) / seq_pen) * 100.0), 1)
             if seq_pen > 0
-            else 100.0
+            else 0.0
         )
         status = "optimal" if w_pen == 0 else ("acceptable" if raw_cnt <= 2 else "warning")
         return ErgonomicCriterionBreakdown(
@@ -342,7 +352,6 @@ def evaluate_ergonomics_audit(
             "0 to 3",
             raw_sl,
             pen_sl,
-            1.0 if leeway_pct >= 5.0 else 0.0,
             "Penalizes extended shifts exceeding 9 hours that elevate acute occupational fatigue.",
         ),
         _make_criterion(
@@ -354,7 +363,6 @@ def evaluate_ergonomics_audit(
             "0 to 1",
             raw_ms,
             pen_ms,
-            2.0 if pen_ms == 0 else 1.0,
             "Penalizes morning shifts starting before 06:00 AM that truncate REM sleep cycles.",
         ),
         _make_criterion(
@@ -366,7 +374,6 @@ def evaluate_ergonomics_audit(
             "0 to 3",
             raw_cd,
             pen_cd,
-            4.0 if leeway_pct >= 1.0 else 2.0,
             "Enforces 3 to 5 consecutive work days per arc e_b; avoids fragmented (<3) or exhausting (>5) stretches.",
         ),
         _make_criterion(
@@ -378,7 +385,6 @@ def evaluate_ergonomics_audit(
             "0 to 3",
             raw_cn,
             pen_cn,
-            3.0,
             "Limits consecutive night shifts to at most 2 to prevent cumulative circadian phase-shift debt.",
         ),
         _make_criterion(
@@ -390,7 +396,6 @@ def evaluate_ergonomics_audit(
             "0 to 4",
             raw_ce,
             pen_ce,
-            1.5,
             "Caps consecutive evening duties at 3 to preserve social recovery windows.",
         ),
         _make_criterion(
@@ -402,7 +407,6 @@ def evaluate_ergonomics_audit(
             "0 to 1",
             raw_sn,
             pen_sn,
-            4.0,
             "Strictly penalizes isolated 1-night assignments that disrupt circadian rhythm without adaptation.",
         ),
         _make_criterion(
@@ -414,7 +418,6 @@ def evaluate_ergonomics_audit(
             "0 to 1",
             raw_ww,
             pen_ww,
-            4.0 if leeway_pct >= 5.0 else 2.0,
             "Penalizes work arcs touching Saturday/Sunday or rest arcs ending on Saturday to maximize full weekends off.",
         ),
         _make_criterion(
@@ -426,7 +429,6 @@ def evaluate_ergonomics_audit(
             "0 to 1",
             raw_sr,
             pen_sr,
-            3.0,
             "Eliminates solitary 1-day rest periods; groups recovery arcs e_h into 2–3 consecutive days off.",
         ),
     ]
