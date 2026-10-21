@@ -1,4 +1,4 @@
-"""FastAPI Application Entrypoint for ShiftFlow Studio Enterprise (I-SD-RWSP Workforce OS)."""
+"""FastAPI application entrypoint for ShiftFlow Studio."""
 
 import os
 import time
@@ -27,10 +27,7 @@ DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:3000"
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
-    description=(
-        "Enterprise SaaS Workforce Optimization Engine implementing Tristan Becker (EJOR 2026), "
-        "'A unifying approach to shift design and rotating workforce scheduling' (I-SD-RWSP)."
-    ),
+    description="Build and compare weekly staff rotations, balancing payroll cost against workload strain.",
     dependencies=[Depends(require_login)],
 )
 
@@ -74,13 +71,12 @@ app.include_router(auth_router)
 
 @app.get("/health", tags=["System"])
 def health_check() -> dict:
-    """Basic health check endpoint verifying solver readiness and mathematical model parameters."""
+    """Basic health check endpoint verifying solver readiness and scheduling parameters."""
     return {
         "status": "healthy",
         "app_name": settings.app_name,
         "version": settings.version,
         "environment": "production",
-        "ejor_paper_anchor": "Becker (2026), European Journal of Operational Research, Vol. 320",
         "supported_archetypes": [
             "24_7_continuous_retail",
             "18_6_extended_retail",
@@ -105,7 +101,7 @@ def kubernetes_liveness() -> dict:
 
 def _check_solver_engine() -> dict:
     """Healthy only if ISDRWSPSolver imports and can be constructed from a valid request."""
-    engine = "Becker Hierholzer Eulerian Cycle Extraction O(|E|)"
+    engine = "ShiftFlow rotation builder"
     try:
         from app.api.archetype_routes import ARCHETYPE_PRESETS
         from app.engine.isd_rwsp_solver import ISDRWSPSolver

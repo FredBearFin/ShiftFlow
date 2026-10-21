@@ -1,8 +1,6 @@
 /**
- * API Client & Isomorphic TypeScript Becker (2026) I-SD-RWSP Solver Engine.
- * Connects to the FastAPI backend (/api/v1/...) when running via Docker Compose,
- * and includes the exact deterministic TypeScript implementation of the Becker (2026)
- * Eulerian multigraph & Hierholzer solver with Labor Analysis & Staff Availability.
+ * API client for the ShiftFlow Studio backend.
+ * Connects to the FastAPI backend (/api/v1/...) when running via Docker Compose.
  */
 
 import {

@@ -1,6 +1,5 @@
 /**
- * TypeScript Interfaces for ShiftFlow Studio Enterprise (I-SD-RWSP Workforce OS)
- * Mirrors the Pydantic mathematical schemas from Tristan Becker (EJOR 2026)
+ * TypeScript interfaces for ShiftFlow Studio, mirroring the backend's Pydantic schemas,
  * with Title VII / ADA accommodation and Fair Workweek statutory compliance.
  */
 

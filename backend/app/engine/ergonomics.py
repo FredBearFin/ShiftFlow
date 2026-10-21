@@ -1,10 +1,9 @@
-"""Full 8-Criteria Ergonomics Evaluation Engine (Nurmi et al., 2024; Becker, EJOR 2026).
+"""Scores a schedule on 8 workload/fatigue criteria and checks rest-between-shifts rules.
 
-Implements Equation (2) and Table 4 of Tristan Becker (2026):
-    obj^ergo = sum_{g,t} (W^SL_t + W^MS_t) xi_{gt}
-             + sum_{g,b} (W^CD_b + W^CE_b + W^CN_b + W^SN_b + W^WW_{gb}) x^work_{gb}
-             + sum_{g,h} (W^WR_{gh} + W^SR_h) x^rest_{gh}
-along with Zero-Clopening (>= 16h rest) and Forward Circadian Rotation verification.
+Each criterion adds a weighted penalty for a specific pattern known to increase worker
+fatigue (long shifts, early starts, long work stretches, back-to-back nights, isolated
+shifts, weekend load, single days off). Also verifies every shift change leaves at
+least the required rest hours and that rotations only ever advance forward in time.
 """
 
 from typing import Dict, List, Optional, Tuple
@@ -22,10 +21,10 @@ from app.schemas import (
 def evaluate_shift_type_penalties(
     template_code: str, start_hour: int, duration_hours: int
 ) -> Tuple[float, float]:
-    """Compute (W^SL_t, W^MS_t) for a shift type t in T per Becker (2026) Table 4.
+    """Scores a single shift type on duration and start time.
 
-    1. W^SL_t (Shift Duration): Ideal <= 9h. Total weight = 1, Component weight 0..3.
-    2. W^MS_t (Early Morning Shift): Ideal >= 06:00. Total weight = 1, Component weight 0..1.
+    1. Shift duration: ideal <= 9h.
+    2. Early morning start: ideal >= 06:00.
     """
     w = settings.ergo_weights
     # Criterion 1: Shift duration > 9h
@@ -49,8 +48,8 @@ def evaluate_shift_type_penalties(
 def evaluate_work_sequence_penalty(
     start_day: int, shifts: List[str]
 ) -> Dict[str, float]:
-    """Compute work-sequence ergonomic penalties (W^CD_b, W^CN_b, W^CE_b, W^SN_b, W^WW_{gb})
-    for a work sequence b starting on day g (0=Mon .. 6=Sun).
+    """Scores one continuous work stretch starting on the given day (0=Mon .. 6=Sun)
+    for stretch length, consecutive nights/evenings, isolated night shifts, and weekend work.
     """
     w = settings.ergo_weights
 
@@ -157,8 +156,8 @@ def evaluate_work_sequence_penalty(
 
 
 def evaluate_rest_sequence_penalty(start_day: int, duration_days: int) -> Dict[str, float]:
-    """Compute rest-sequence ergonomic penalties (W^WR_{gh}, W^SR_h)
-    for a rest sequence h of length duration_days starting on day g (0=Mon .. 6=Sun).
+    """Scores one rest stretch of the given length starting on the given day (0=Mon .. 6=Sun)
+    for whether it covers a full weekend and whether it's just a single isolated day off.
     """
     w = settings.ergo_weights
     # Criterion 7 (Rest part): W^WR_{gh} (Penalty if rest sequence (g,h) ends on the first day

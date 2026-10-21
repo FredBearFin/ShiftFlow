@@ -98,7 +98,7 @@ def safe_solve_with_fallback(solve_func: Callable, fallback_func: Callable) -> T
     """Executes a solver run with a safety watchdog.
 
     If a worker node crashes or raises an exception during calculation, falls back
-    to the pre-computed Eulerian master cycle to guarantee zero frontline floor downtime.
+    to the pre-computed master schedule to guarantee zero frontline floor downtime.
     Returns (result, used_fallback).
     """
     try:
@@ -106,7 +106,7 @@ def safe_solve_with_fallback(solve_func: Callable, fallback_func: Callable) -> T
         return res, False
     except Exception as err:
         logger.warning(
-            "SRE ALERT: Solver process error (%s). Falling back gracefully to Eulerian master cycle.",
+            "SRE ALERT: Solver process error (%s). Falling back gracefully to the master schedule.",
             str(err),
         )
         return fallback_func(), True

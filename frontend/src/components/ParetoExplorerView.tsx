@@ -200,7 +200,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
           </div>
         </div>
 
-        {/* Becker (2026) Table 7 Empirical Benchmark Reference */}
+        {/* Cost-vs-rest frontier, point by point */}
         <div className="lg:col-span-4 card p-5 flex flex-col justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">

@@ -1,7 +1,6 @@
-"""Pydantic schemas for ShiftFlow Studio Enterprise (I-SD-RWSP Workforce OS).
+"""Pydantic schemas for ShiftFlow Studio.
 
-Mirrors Tristan Becker (EJOR 2026), 'A unifying approach to shift design and
-rotating workforce scheduling'. Cross-version compatible with Pydantic v1 & v2.
+Cross-version compatible with Pydantic v1 & v2.
 """
 
 from typing import Any, Dict, List, Literal, Optional
@@ -127,7 +126,7 @@ class ShiftTypeResultSchema(BaseModel):
 
 
 class MultigraphArcSchema(BaseModel):
-    """Directed arc in multigraph G = (V, E) representing a work or rest sequence block."""
+    """A work or rest block connecting two points in the weekly rotation."""
     arc_id: str
     arc_type: Literal["work", "rest"]
     start_day: int
@@ -141,7 +140,7 @@ class MultigraphArcSchema(BaseModel):
 
 
 class MultigraphNodeSchema(BaseModel):
-    """Node in multigraph G = (V, E) representing day-of-week sequence transition points."""
+    """A day-of-week transition point in the weekly rotation."""
     node_id: str
     day_index: int
     day_name: str
@@ -193,7 +192,7 @@ class RosterLineSchema(BaseModel):
 
 
 class ErgonomicCriterionBreakdown(BaseModel):
-    """Individual breakdown for each of the 8 Nurmi et al. (2024) / Becker (2026) criteria."""
+    """Individual breakdown for each of the 8 workload/fatigue criteria."""
     criterion_id: str
     symbol: str
     name: str
@@ -255,7 +254,7 @@ class LaborAnalysisSchema(BaseModel):
 
 
 class ParetoPointSchema(BaseModel):
-    """Individual point on the Becker (2026) Table 7 Pareto frontier."""
+    """Individual point on the cost-vs-rest frontier."""
     point_index: int
     leeway_pct: float
     obj_shift: float
@@ -274,12 +273,12 @@ class ParetoPointSchema(BaseModel):
 
 
 class SolveRequestSchema(BaseModel):
-    """Full input specification for solving an I-SD-RWSP instance."""
+    """Full input specification for solving a weekly schedule."""
     archetype_id: str = Field(default="downtown_foodmart_omaha")
     facility_name: str = Field(default="Downtown Foodmart — 16th & Farnam (Omaha, NE)")
     demand_matrix: List[List[int]] = Field(
         ...,
-        description="7x24 matrix R_{gi} where row g in 0..6 (Mon..Sun) and col i in 0..23 (hour)",
+        description="7x24 matrix of staff needed per hour: row = day (0=Mon..6=Sun), column = hour (0..23)",
     )
     templates: List[ShiftTemplateSchema]
     guardrails: ErgonomicGuardrailsSchema = Field(default_factory=ErgonomicGuardrailsSchema)
@@ -287,7 +286,7 @@ class SolveRequestSchema(BaseModel):
         default=10.0,
         ge=0.0,
         le=75.0,
-        description="Allowed % increase in obj^shift along the Becker Pareto frontier (5% = Knee Point, 10% = Zero Payroll Sweet Spot)",
+        description="How much extra payroll cost you're willing to accept in exchange for a less demanding schedule",
     )
     rotation_week_offset: int = Field(default=0, ge=0, description="Weekly cyclic offset for advancing lines")
     staff_assignments: Optional[List[StaffMemberAssignment]] = None
@@ -308,7 +307,7 @@ class SolveRequestSchema(BaseModel):
 
 
 class SolveResponseSchema(BaseModel):
-    """Complete solution response containing shift design, multigraph, cyclic roster, and audits."""
+    """Complete solution response containing shift design, rotation structure, roster, and audits."""
     instance_name: str
     archetype_id: str
     instance_size_category: Literal["Small", "Medium", "Large"]

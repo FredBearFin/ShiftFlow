@@ -1,4 +1,4 @@
-"""Schedule Optimization, Pareto Frontier, and CSV Export API Routes."""
+"""Schedule solving, cost/rest comparison, and CSV export API routes."""
 
 import csv
 import io
@@ -22,9 +22,7 @@ router = APIRouter(prefix="/schedules", tags=["Schedules & Optimization"])
 
 @router.post("/solve", response_model=SolveResponseSchema)
 def solve_schedule(request: SolveRequestSchema) -> SolveResponseSchema:
-    """Solve an Integrated Shift Design & Rotating Workforce Scheduling (I-SD-RWSP) instance
-    using the Becker (2026) Eulerian multigraph network flow formulation and Hierholzer's algorithm.
-    """
+    """Build a rotating weekly schedule that covers demand with the fewest staff and shift types."""
     if len(request.demand_matrix) != 7 or any(
         len(row) != 24 for row in request.demand_matrix
     ):
@@ -43,7 +41,7 @@ def solve_default_archetype(
     facility_id: str = Query(default="FAC-OMAHA-01", max_length=64),
     db: sqlite3.Connection = Depends(get_db),
 ) -> SolveResponseSchema:
-    """Solve and return the full I-SD-RWSP schedule for a named industry archetype.
+    """Solve and return the full schedule for a named industry archetype.
 
     The facility name comes from the facility record, not from the archetype preset.
     """
@@ -70,7 +68,7 @@ def solve_default_archetype(
 
 @router.post("/pareto-frontier", response_model=List[ParetoPointSchema])
 def compute_pareto_frontier(request: SolveRequestSchema) -> List[ParetoPointSchema]:
-    """Generate the epsilon-constraint bi-objective Pareto-efficient frontier (Becker 2026, Eq. 23)."""
+    """Compare cost and rest trade-offs by re-solving the schedule at several staffing leeway levels."""
     solution = ISDRWSPSolver(request).solve()
     return solution.pareto_frontier
 

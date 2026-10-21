@@ -1,23 +1,16 @@
-"""Becker (2026) Integrated Shift Design & Rotating Workforce Scheduling (I-SD-RWSP) Solver.
+"""Builds a rotating weekly staff schedule.
 
-Implements:
-1. Shift Design Optimization (Constraints 3-4, Eq. 1):
-   Maps 24-hour interval staffing requirements R_{gi} onto concrete shift types t in T
-   derived from shift templates s in S (M, D, E, N), computing overstaffing omega_{gi}
-   and understaffing tau_{gi}.
-2. Directed Multigraph Representation G = (V, E) (Section 3.1, Theorem 1):
-   Nodes V = {(g, n) | g in {0..6}, n in {'work', 'rest'}}.
-   Work sequences b in B map to arcs ((g_1, 'work'), (g_2, 'rest')).
-   Rest sequences h in H map to arcs ((g_2, 'rest'), (g_3, 'work')).
-   Enforces flow conservation (Constraints 7-8) and single strongly connected component
-   (Constraints 13-19) so that an Eulerian cycle exists by Theorem 1.
-3. Hierholzer's Algorithm (1873) (Section 3.3):
-   Constructs the complete Eulerian cycle C = (e_1, e_2, ..., e_m) in O(|E|) linear time,
-   splicing subtours into the main alternating work/rest cycle and expanding the compact
-   solution into an operational e x 7 rotating workforce schedule.
-4. Comprehensive Labor Economics & Employee Availability Engine:
-   Computes standard vs overtime hours (1.5x multiplier over 40h), estimated payroll costs,
-   daily labor spend, and checks employee day-of-week availability constraints.
+Covers:
+1. Shift design: maps each hour's staffing requirement onto a mix of shift
+   templates (Morning/Day/Evening/Night), tracking where the schedule ends up
+   over- or under-staffed.
+2. Rotation structure: alternates work blocks and rest blocks across the week
+   so the whole crew's schedules link into one continuous, repeating cycle
+   with no dead ends.
+3. Rotation assembly: walks that structure day by day to produce a concrete
+   e x 7 schedule (e = number of rotation lines, one per shift-pattern group).
+4. Labor economics: computes standard vs. overtime hours (1.5x pay over 40h),
+   estimated payroll cost, daily labor spend, and employee availability checks.
 """
 
 from collections import defaultdict
@@ -189,7 +182,7 @@ class SolverInfeasibleError(Exception):
 
 
 class ISDRWSPSolver:
-    """Integrated Shift Design and Rotating Workforce Scheduling Solver (Becker, EJOR 2026)."""
+    """Builds a rotating weekly staff schedule from shift templates and hourly demand."""
 
     def __init__(
         self,

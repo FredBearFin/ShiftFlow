@@ -2,7 +2,7 @@
   "name": "shiftflow-studio-enterprise",
   "private": true,
   "version": "2.6.0",
-  "description": "ShiftFlow Studio Enterprise SaaS — Integrated Shift Design & Rotating Workforce Scheduling (Becker, EJOR 2026)",
+  "description": "ShiftFlow Studio — rotating weekly staff scheduling",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
