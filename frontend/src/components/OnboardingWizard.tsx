@@ -11,7 +11,7 @@ import { Button } from './ui/Button';
 import { useDialogFocus } from './ui/useDialogFocus';
 import { BardPanel } from './onboarding/BardPanel';
 import { ExplainThis } from './onboarding/ExplainThis';
-import { PRESET_LABELS, presetLabelFor } from './onboarding/presetLabels';
+import { PRESET_LABELS, presetLabelFor, presetSolveBlocker } from './onboarding/presetLabels';
 import { BusinessAnswers, BusyPeriod, WeekendPattern, buildDemandMatrix, buildShiftTemplates } from './onboarding/deriveSchedule';
 import {
   FirstRunTour,
@@ -109,6 +109,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
   });
 
   const [showExamples, setShowExamples] = useState(false);
+  // Set when the example just loaded is one the engine cannot schedule. Shown inside
+  // the wizard, on the click, instead of surfacing six steps later as a page banner
+  // the wizard's own overlay covers up.
+  const [blockedPreset, setBlockedPreset] = useState<{
+    id: string;
+    label: string;
+    message: string;
+  } | null>(null);
   const [answers, setAnswers] = useState<BusinessAnswers>({
     openDays: [0, 1, 2, 3, 4, 5, 6],
     runs24Hours: false,
@@ -484,16 +492,81 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 >
                   {showExamples ? 'Hide examples' : "Not sure where to start? Load an example you can edit"}
                 </button>
+                {blockedPreset && (
+                  <div
+                    id="onboarding-preset-solve-warning"
+                    role="alert"
+                    className="mt-3 rounded-xl border border-[#9F3A32] bg-white p-3 text-xs text-[#9F3A32]"
+                  >
+                    <p className="font-bold">
+                      {blockedPreset.label} does not build a schedule on its own yet.
+                    </p>
+                    <p className="mt-1 text-slate-700">{blockedPreset.message}</p>
+                    <p className="mt-1 text-slate-700">
+                      Its hours and staffing numbers are loaded, so you can keep going — but add a
+                      shift or ease a rest rule before you finish, or the schedule will come back
+                      empty.
+                    </p>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setBlockedPreset(null);
+                          setCurrentStep(3);
+                        }}
+                      >
+                        Add a shift (step 3)
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setBlockedPreset(null);
+                          setCurrentStep(4);
+                        }}
+                      >
+                        Ease a rest rule (step 4)
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() => setBlockedPreset(null)}
+                        className="rounded-md px-2 py-1 text-xs font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                )}
                 {showExamples && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     {archetypes.map((arch) => {
                       const isSelected = arch.id === selectedArchetypeId;
+                      const blocker = presetSolveBlocker(arch.id);
                       return (
                         <button
                           key={arch.id}
                           type="button"
                           aria-pressed={isSelected}
-                          onClick={() => onSelectArchetype(arch)}
+                          aria-describedby={
+                            blockedPreset?.id === arch.id
+                              ? 'onboarding-preset-solve-warning'
+                              : undefined
+                          }
+                          onClick={() => {
+                            onSelectArchetype(arch);
+                            setBlockedPreset(
+                              blocker
+                                ? {
+                                    id: arch.id,
+                                    label: presetLabelFor(arch.id, arch.sector),
+                                    message: blocker.message,
+                                  }
+                                : null
+                            );
+                          }}
                           className={`w-full text-left p-3 rounded-xl border cursor-pointer transition-all ${
                             isSelected
                               ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
@@ -504,6 +577,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           <span className="block text-xs text-slate-500 mt-0.5">
                             {presetLabelFor(arch.id, arch.sector)}
                           </span>
+                          {blocker && (
+                            <span className="mt-1 inline-block rounded border border-[#9F3A32] px-1.5 py-0.5 text-xs font-bold text-[#9F3A32]">
+                              {blocker.badge}
+                            </span>
+                          )}
                           <span className="block text-xs text-slate-600 mt-2 leading-relaxed">
                             {PRESET_LABELS[arch.id]?.description ?? ''}
                           </span>
