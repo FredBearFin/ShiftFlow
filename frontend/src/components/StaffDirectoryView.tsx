@@ -341,7 +341,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs bg-white"
                 >
                   <option value="none">Standard Associate (No Statutory Exclusions)</option>
-                  <option value="religious">Religious Observance (Title VII Sabbath — Hard Invariant)</option>
+                  <option value="religious">Religious Observance (Sabbath — Hard Invariant)</option>
                   <option value="medical">Medical Restriction (ADA Certified — Hard Invariant)</option>
                   <option value="academic">Academic Schedule (Student Class Exclusions)</option>
                 </select>
