@@ -419,28 +419,108 @@ class ISDRWSPSolver:
         max_n = self.guardrails.max_consecutive_nights
         max_e = self.guardrails.max_consecutive_evenings
 
-        arc_counter = 1
-        for w_len, r_len in pairs:
-            w_start = current_day
-            w_end_next = (w_start + w_len) % 7
+        def _legal_candidates(
+            day_g: int, step: int, w_len: int, seq_shifts: List[str], min_order_idx: int
+        ) -> List[str]:
+            """Codes allowed on this day, best first, under every hard and capped rule.
 
-            seq_shifts: List[str] = []
-            min_order_idx = 0
+            Ordering is the same demand-and-stage score the assigner has always used, so
+            the first choice here is the choice the old greedy made. Backtracking only
+            changes what happens when that choice leads nowhere.
+            """
+            steps_remaining = w_len - step
+            prev_code = seq_shifts[-1] if seq_shifts else "OFF"
 
-            for step in range(w_len):
+            candidates = [
+                c for c in ordered_codes if TEMPLATE_ORDER.get(c, 0) >= min_order_idx
+            ]
+            if not candidates:
+                candidates = [ordered_codes[-1]]
+
+            valid_candidates: List[str] = []
+            for cand in candidates:
+                if prev_code != "OFF":
+                    p_st = st_by_code[prev_code]
+                    c_st = st_by_code[cand]
+                    rest_hrs = compute_rest_hours_between(
+                        prev_code,
+                        p_st["start_hour"],
+                        p_st["duration_hours"],
+                        cand,
+                        c_st["start_hour"],
+                    )
+                    if rest_hrs < settings.min_rest_hours_between_shifts:
+                        continue
+
+                if cand == "N":
+                    if steps_remaining > max_n:
+                        continue
+                    if self.guardrails.avoid_single_night_shifts and steps_remaining == 1:
+                        continue
+
+                if cand == "E" and len(candidates) > 1:
+                    consec_e = 0
+                    for prev_s in reversed(seq_shifts):
+                        if prev_s == "E":
+                            consec_e += 1
+                        else:
+                            break
+                    if consec_e >= max_e:
+                        continue
+
+                valid_candidates.append(cand)
+
+            def _score(cand: str) -> float:
+                rem = rem_pool.get((day_g, cand), 0)
+                stage_target = (step / max(1, w_len - 1)) * (len(ordered_codes) - 1)
+                proximity_bonus = -abs(ordered_codes.index(cand) - stage_target) * 0.35
+                return rem * 2.0 + proximity_bonus
+
+            # Stable sort on the negated score reproduces the old "first strict improvement
+            # wins" tie-breaking, so an instance that solved before gets the same sequence.
+            return sorted(valid_candidates, key=lambda c: -_score(c))
+
+        def _build_work_sequence(w_start: int, w_len: int) -> Optional[List[str]]:
+            """Fills one work block, backtracking out of dead ends.
+
+            The old assigner committed to the best-scoring code at every step with no way
+            back. Forward rotation then meant a block that had used up its evenings could
+            reach its last day with no legal code at all - M and D barred by rotation, E by
+            max_consecutive_evenings, N by max_consecutive_nights or the single-night rule -
+            and the solve was reported infeasible even though another ordering of the same
+            codes was perfectly legal. That is what made the 24/7 presets unsolvable at every
+            leeway level, and emergency_services and custom unsolvable above 20% leeway.
+
+            Forward rotation makes a legal block non-decreasing over M < D < E < N, so the
+            whole space is at most a few hundred sequences for a block of seven days. An
+            exhaustive depth-first walk in the old scoring order is therefore cheap, returns
+            the old greedy answer whenever that answer worked, and finds an answer in cases
+            where the greedy only appeared to prove there was none.
+
+            Returns the sequence, or None when no legal sequence exists - which now means
+            the block really is infeasible, not that the search guessed badly. rem_pool is
+            left exactly as the returned sequence implies, or untouched when None.
+            """
+
+            def walk(step: int, seq_shifts: List[str], min_order_idx: int) -> bool:
+                if step == w_len:
+                    return True
                 day_g = (w_start + step) % 7
-                steps_remaining = w_len - step
-                prev_code = seq_shifts[-1] if seq_shifts else "OFF"
 
                 if day_g in closed_days:
                     # The business is closed this day - free rest, overriding the rotation
                     # pattern entirely. Reset forward-rotation tracking so the next real work
                     # day after the closure can start from any template, same as after a rest arc.
                     seq_shifts.append("OFF")
-                    min_order_idx = 0
-                    continue
+                    if walk(step + 1, seq_shifts, 0):
+                        return True
+                    seq_shifts.pop()
+                    return False
 
-                if prev_code == "N":
+                if seq_shifts and seq_shifts[-1] == "N":
+                    # Once a block is on nights it stays on nights: there is no forward step
+                    # past N. This is a forced continuation, not a choice, so there is nothing
+                    # to backtrack over here - only the earlier decision that reached it.
                     n_st = st_by_code["N"]
                     forced_rest_hrs = compute_rest_hours_between(
                         "N",
@@ -457,74 +537,40 @@ class ISDRWSPSolver:
                         )
                     seq_shifts.append("N")
                     rem_pool[(day_g, "N")] = rem_pool.get((day_g, "N"), 0) - 1
-                    continue
+                    if walk(step + 1, seq_shifts, min_order_idx):
+                        return True
+                    rem_pool[(day_g, "N")] = rem_pool.get((day_g, "N"), 0) + 1
+                    seq_shifts.pop()
+                    return False
 
-                candidates = [
-                    c
-                    for c in ordered_codes
-                    if TEMPLATE_ORDER.get(c, 0) >= min_order_idx
-                ]
-                if not candidates:
-                    candidates = [ordered_codes[-1]]
-
-                valid_candidates: List[str] = []
-                for cand in candidates:
-                    if prev_code != "OFF":
-                        p_st = st_by_code[prev_code]
-                        c_st = st_by_code[cand]
-                        rest_hrs = compute_rest_hours_between(
-                            prev_code,
-                            p_st["start_hour"],
-                            p_st["duration_hours"],
-                            cand,
-                            c_st["start_hour"],
-                        )
-                        if rest_hrs < settings.min_rest_hours_between_shifts:
-                            continue
-
-                    if cand == "N":
-                        if steps_remaining > max_n:
-                            continue
-                        if (
-                            self.guardrails.avoid_single_night_shifts
-                            and steps_remaining == 1
-                        ):
-                            continue
-
-                    if cand == "E" and len(candidates) > 1:
-                        consec_e = 0
-                        for prev_s in reversed(seq_shifts):
-                            if prev_s == "E":
-                                consec_e += 1
-                            else:
-                                break
-                        if consec_e >= max_e:
-                            continue
-
-                    valid_candidates.append(cand)
-
-                if not valid_candidates:
-                    raise SolverInfeasibleError(
-                        "No template satisfies the rest and rotation rules for this demand. "
-                        "Add templates or relax the guardrails."
+                for cand in _legal_candidates(day_g, step, w_len, seq_shifts, min_order_idx):
+                    seq_shifts.append(cand)
+                    rem_pool[(day_g, cand)] = rem_pool.get((day_g, cand), 0) - 1
+                    next_min = (
+                        TEMPLATE_ORDER.get(cand, 0)
+                        if self.guardrails.enforce_forward_rotation
+                        else min_order_idx
                     )
+                    if walk(step + 1, seq_shifts, next_min):
+                        return True
+                    rem_pool[(day_g, cand)] = rem_pool.get((day_g, cand), 0) + 1
+                    seq_shifts.pop()
+                return False
 
-                best_code = valid_candidates[0]
-                best_demand_score = -1e9
-                for cand in valid_candidates:
-                    rem = rem_pool.get((day_g, cand), 0)
-                    stage_target = (step / max(1, w_len - 1)) * (len(ordered_codes) - 1)
-                    cand_pos = ordered_codes.index(cand)
-                    proximity_bonus = -abs(cand_pos - stage_target) * 0.35
-                    score = rem * 2.0 + proximity_bonus
-                    if score > best_demand_score:
-                        best_demand_score = score
-                        best_code = cand
+            built: List[str] = []
+            return built if walk(0, built, 0) else None
 
-                seq_shifts.append(best_code)
-                rem_pool[(day_g, best_code)] = rem_pool.get((day_g, best_code), 0) - 1
-                if self.guardrails.enforce_forward_rotation:
-                    min_order_idx = TEMPLATE_ORDER.get(best_code, 0)
+        arc_counter = 1
+        for w_len, r_len in pairs:
+            w_start = current_day
+            w_end_next = (w_start + w_len) % 7
+
+            seq_shifts = _build_work_sequence(w_start, w_len)
+            if seq_shifts is None:
+                raise SolverInfeasibleError(
+                    "No template satisfies the rest and rotation rules for this demand. "
+                    "Add templates or relax the guardrails."
+                )
 
             w_pen_info = evaluate_work_sequence_penalty(w_start, seq_shifts)
             raw_arcs.append(
@@ -625,15 +671,27 @@ class ISDRWSPSolver:
             aligned_shifts[aligned_pos] = s_code
 
         if self.guardrails.enforce_zero_clopening:
-            for line_idx in range(employee_count):
-                for d in range(7):
-                    today = aligned_shifts[line_idx * 7 + d]
-                    tomorrow = aligned_shifts[line_idx * 7 + (d + 1) % 7]
-                    if today == "E" and tomorrow == "M":
-                        raise SolverInfeasibleError(
-                            "The rotation has a closing shift followed by an opening shift, "
-                            "which zero-clopening forbids."
-                        )
+            # aligned_shifts is ONE continuous cycle of employee_count * 7 day slots, so the
+            # day after slot i is slot i+1, wrapping at the end of the cycle. Line i's Sunday
+            # is followed by line i+1's Monday, not by line i's own Monday.
+            #
+            # This check used to compare aligned_shifts[line*7 + 6] with
+            # aligned_shifts[line*7 + 0], which are six days apart with the rest block in
+            # between, and rejected schedules that have no closing-then-opening pair anywhere
+            # in them. That is what made downtown_foodmart_omaha and retail_grocery infeasible
+            # at 75% leeway - a slider position a user can reach on a preset that otherwise
+            # works. The rest of this file already uses the correct adjacency: the roster-line
+            # loop below reads prev_sunday_code from the PREVIOUS line's Sunday for each
+            # Monday, and the per-cell clopening_violation flags and the ergonomics audit
+            # built from them have always been computed that way.
+            for slot in range(total_slots):
+                today = aligned_shifts[slot]
+                tomorrow = aligned_shifts[(slot + 1) % total_slots]
+                if today == "E" and tomorrow == "M":
+                    raise SolverInfeasibleError(
+                        "The rotation has a closing shift followed by an opening shift, "
+                        "which zero-clopening forbids."
+                    )
 
         actual_daily_counts: Dict[Tuple[int, str], int] = defaultdict(int)
         for line_idx in range(employee_count):

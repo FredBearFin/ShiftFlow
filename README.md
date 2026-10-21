@@ -90,6 +90,15 @@ score off each resulting schedule. No point on that frontier is extrapolated, an
 leeway level that turns out to be infeasible is dropped from the frontier rather than
 guessed at.
 
+**Neither cost nor strain moves monotonically with leeway**, and the frontier does not
+pretend they do. Adding a person changes the shape of the work/rest partition, which can
+fit the week's demand curve more evenly (lowering cost outright) or chop up more weekends
+(raising strain). On the retail preset the real strain scores run 43 at 0% leeway, 36 at
+5%, 5 at 50% and back up to 19 at 75% - where the schedule is also cheaper than at 50%
+and gives fewer full weekends off despite one more person on the books. The trend is
+downward; individual steps are not. Read the frontier, do not assume the rightmost point
+is the kindest.
+
 The workload-strain score is the sum of eight weighted checks: long shifts, pre-06:00
 starts, work stretches outside 3–5 days, three or more consecutive nights, four or more
 consecutive evenings, isolated single nights, weekend duty, and isolated single days off.

@@ -197,31 +197,98 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
                 rhs = cell.required_staff + cell.overstaffing - cell.understaffing
                 self.assertEqual(lhs, rhs)
 
-    def test_05b_every_shipped_preset_solves_at_zero_leeway(self) -> None:
-        """The tightest setting must work too.
+    def test_05b_every_preset_solves_at_every_reachable_leeway(self) -> None:
+        """Every preset must solve at every leeway the slider can reach, not just its default.
 
-        Leeway 0% is the cheapest, most constrained version of a schedule and is also the
-        baseline the ergonomics comparison solves internally, so a preset that only works
-        at its default leeway is still broken for the user who drags the slider down.
+        A leeway value is reachable: the wizard's slider spans 0 to 75 and the cost-vs-rest
+        frontier re-solves at each of these anchors, so any of them is one drag away for a
+        shift supervisor. Three separate dead ends have been found by someone dragging that
+        slider - the two 24/7 presets at every level, emergency_services and custom above
+        20%, and downtown_foodmart_omaha (the default retail preset) at 75% - so this sweeps
+        the whole grid rather than sampling it.
+
+        0% matters doubly: it is the tightest, cheapest schedule and it is also the baseline
+        the ergonomics comparison solves internally, so a preset that fails there fails for
+        every leeway above it too.
+        """
+        reachable_leeways = [0.0, 1.0, 5.0, 10.0, 20.0, 50.0, 75.0]
+        self.assertTrue(ARCHETYPE_PRESETS, "No presets are registered at all.")
+        for arch_id, preset in ARCHETYPE_PRESETS.items():
+            for leeway in reachable_leeways:
+                req = SolveRequestSchema(
+                    archetype_id=arch_id,
+                    facility_name=preset.name,
+                    demand_matrix=preset.demand_matrix,
+                    templates=preset.templates,
+                    guardrails=preset.guardrails,
+                    pareto_leeway_pct=leeway,
+                )
+                try:
+                    sol = ISDRWSPSolver(
+                        req, include_baseline=True, include_pareto_frontier=False
+                    ).solve()
+                except SolverInfeasibleError as exc:
+                    self.fail(
+                        f"Preset '{arch_id}' is offered in the UI but the solver reports it "
+                        f"infeasible at {leeway}% leeway, which the slider can reach: {exc} "
+                        "Fix the solver or the preset, or remove the preset from "
+                        "ARCHETYPE_PRESETS."
+                    )
+                where = f"{arch_id} @ {leeway}%"
+                self.assertTrue(sol.eulerian_valid, where)
+                self.assertEqual(sol.ergonomics_audit.clopening_violations, 0, where)
+                self.assertEqual(sol.ergonomics_audit.backward_rotation_violations, 0, where)
+                self.assertGreaterEqual(
+                    sol.ergonomics_audit.min_rest_hours_observed, 16.0, where
+                )
+                self.assertEqual(len(sol.roster_lines), sol.employee_count, where)
+
+    def test_05c_the_rest_rule_is_checked_between_days_that_are_really_adjacent(self) -> None:
+        """The zero-clopening check must compare each day with the next day in the cycle.
+
+        The roster is one continuous cycle of employee_count x 7 day slots: line i's Sunday
+        is followed by line i+1's Monday. The hard check used to compare line i's Sunday
+        with line i's OWN Monday, six days and a whole rest block apart, and rejected
+        schedules containing no closing-then-opening pair at all. That is what made the
+        default retail preset infeasible at 75% leeway.
+
+        This asserts the property directly on the built schedule, walking the cycle the way
+        the engine's own per-cell rest figures already did.
         """
         for arch_id, preset in ARCHETYPE_PRESETS.items():
+            if not preset.guardrails.enforce_zero_clopening:
+                continue
             req = SolveRequestSchema(
                 archetype_id=arch_id,
                 facility_name=preset.name,
                 demand_matrix=preset.demand_matrix,
                 templates=preset.templates,
                 guardrails=preset.guardrails,
-                pareto_leeway_pct=0.0,
+                pareto_leeway_pct=75.0,
             )
-            try:
-                sol = ISDRWSPSolver(req).solve()
-            except SolverInfeasibleError as exc:
-                self.fail(
-                    f"Preset '{arch_id}' is infeasible at 0% leeway: {exc}. "
-                    "Fix the preset or remove it from ARCHETYPE_PRESETS."
+            sol = ISDRWSPSolver(
+                req, include_baseline=False, include_pareto_frontier=False
+            ).solve()
+
+            cycle = [cell.shift_code for line in sol.roster_lines for cell in line.days]
+            self.assertEqual(len(cycle), sol.employee_count * 7, arch_id)
+            for slot, code in enumerate(cycle):
+                nxt = cycle[(slot + 1) % len(cycle)]
+                self.assertFalse(
+                    code == "E" and nxt == "M",
+                    f"{arch_id}: closing shift followed by an opening shift at cycle slot "
+                    f"{slot} (line {slot // 7 + 1}, day {slot % 7})",
                 )
-            self.assertTrue(sol.eulerian_valid, arch_id)
-            self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 16.0, arch_id)
+
+            # And the per-cell rest figures, which the ergonomics audit is built from, must
+            # agree: no cell may record less than the required rest before it.
+            for line in sol.roster_lines:
+                for cell in line.days:
+                    self.assertFalse(
+                        cell.clopening_violation,
+                        f"{arch_id}: line {line.line_number} {cell.day_name} records only "
+                        f"{cell.rest_hours_before}h rest",
+                    )
 
     def test_06_pareto_frontier_is_built_from_real_re_solves(self) -> None:
         """Every frontier point must be the real output of an independent solve at that
@@ -246,13 +313,32 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         self.assertEqual(selected[0].obj_shift, sol.obj_shift)
         self.assertEqual(selected[0].employee_count, sol.employee_count)
 
-        # Workload strain never increases as leeway increases. (Cost is not asserted to be
-        # monotonic: this is a real heuristic, not a true optimizer, and an extra employee
-        # can occasionally let the shift-count split fit the week's demand curve more evenly,
-        # reducing both over- and under-staffing enough to lower total cost outright - a real
-        # property of integer scheduling, not a bug to hide by forcing a fake guarantee.)
-        for idx in range(len(frontier) - 1):
-            self.assertGreaterEqual(frontier[idx].obj_ergo, frontier[idx + 1].obj_ergo)
+        # The frontier trends toward less workload strain as leeway rises, but NOT
+        # monotonically, and this test deliberately does not pretend otherwise.
+        #
+        # Neither objective is monotonic in leeway, because this is a heuristic and not an
+        # optimizer. An extra employee changes the work/rest partition shape, which can fit
+        # the week's demand curve more evenly (lowering cost outright) or break up more
+        # weekends (raising strain). On this preset the real frontier runs
+        # 0% -> 43.0, 5% -> 36.0, 50% -> 5.0, 75% -> 19.0 strain, with 75% also cheaper
+        # than 50% and giving fewer full weekends off despite one more person.
+        #
+        # A pointwise non-increasing assertion used to pass only because the 75% point was
+        # infeasible and silently dropped from the frontier. It is feasible now, so the
+        # assertion is what it should always have been: the trend, plus the claim the
+        # product actually makes - that spending more buys less strain than spending
+        # nothing.
+        self.assertLess(
+            frontier[-1].obj_ergo,
+            frontier[0].obj_ergo,
+            "the frontier must trend toward less workload strain as leeway rises",
+        )
+        best_paid = min(p.obj_ergo for p in frontier if p.leeway_pct > 0)
+        self.assertLess(
+            best_paid,
+            frontier[0].obj_ergo,
+            "paying more must buy a genuinely lower-strain schedule than paying nothing",
+        )
 
         self.assertLessEqual(len([p for p in frontier if p.is_knee_point]), 1)
 
