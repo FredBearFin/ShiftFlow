@@ -132,6 +132,18 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
     setTimeout(() => setDownloadMsg(null), 3000);
   };
 
+  // The solver echoes back the staffing table it was given as interval_coverage's
+  // required_staff, so the POS view can show what an import would replace.
+  const currentDemandMatrix = React.useMemo(() => {
+    const matrix: number[][] = Array.from({ length: 7 }, () => Array(24).fill(0));
+    for (const cell of solution.interval_coverage) {
+      if (cell.day_index >= 0 && cell.day_index < 7 && cell.hour >= 0 && cell.hour < 24) {
+        matrix[cell.day_index][cell.hour] = cell.required_staff;
+      }
+    }
+    return matrix;
+  }, [solution.interval_coverage]);
+
   return (
     <div className="space-y-5">
       {/* Action Header with Export Buttons */}
@@ -183,7 +195,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       </div>
 
       {facilityId && showPosUpload && (
-        <POSIntegrationView facilityId={facilityId} onDemandUpdated={onDemandUpdated} />
+        <POSIntegrationView
+          facilityId={facilityId}
+          currentDemandMatrix={currentDemandMatrix}
+          onDemandUpdated={onDemandUpdated}
+        />
       )}
 
       {/* Top Payroll & Hours Economics KPI Banner */}
