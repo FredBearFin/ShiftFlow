@@ -24,3 +24,14 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run build
       - run: npm test
+      # Fails if a new raw hex or slate-* utility appears where a token exists.
+      # Without it the codemod's work drifts back within a few features, which is
+      # how the design system came to be declared and then unused in the first place.
+      - run: npm run lint:tokens
+      # A var()-backed utility with an opacity modifier (bg-canvas/80) emits no CSS
+      # rule at all, so the element silently renders with no background and neither
+      # the build nor the tests notice. Empty rule bodies are how that shows up.
+      - run: |
+          count=$(grep -cE '\{\s*\}' dist/assets/*.css || true)
+          echo "empty CSS rule bodies: $count"
+          test "$count" -eq 0

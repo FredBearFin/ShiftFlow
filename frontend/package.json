@@ -2,13 +2,14 @@
   "name": "shiftflow-studio-enterprise",
   "private": true,
   "version": "2.6.0",
-  "description": "ShiftFlow Studio — rotating weekly staff scheduling",
+  "description": "ShiftFlow Studio \u2014 rotating weekly staff scheduling",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "tsc && vite build",
     "test": "vitest run",
-    "preview": "vite preview --host 0.0.0.0 --port 4173"
+    "preview": "vite preview --host 0.0.0.0 --port 4173",
+    "lint:tokens": "node ../scripts/codemod-tokens.mjs --check"
   },
   "dependencies": {
     "react": "^18.2.0",
