@@ -93,9 +93,10 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             type="button"
             onClick={onClose}
             className="text-xs px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-colors"
-            aria-label="Close shortcuts modal"
+            // "Esc" is visible on this button, so 2.5.3 requires it in the name.
+            aria-label="Close shortcuts list (Esc)"
           >
-            ✕ Esc
+            <span aria-hidden="true">✕ </span>Esc
           </button>
         </div>
 

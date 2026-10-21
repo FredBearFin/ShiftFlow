@@ -40,6 +40,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
           <div className="flex rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-xs font-semibold">
             <button
               type="button"
+              aria-pressed={mode === 'login'}
               onClick={() => {
                 setMode('login');
                 setError(null);
@@ -52,6 +53,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
             </button>
             <button
               type="button"
+              aria-pressed={mode === 'signup'}
               onClick={() => {
                 setMode('signup');
                 setError(null);

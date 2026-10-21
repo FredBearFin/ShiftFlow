@@ -262,6 +262,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <button
                 key={item.step}
                 type="button"
+                aria-current={isCurrent ? 'step' : undefined}
                 onClick={() => setCurrentStep(item.step)}
                 className={`text-left p-2 rounded-lg border transition-all ${
                   isCurrent

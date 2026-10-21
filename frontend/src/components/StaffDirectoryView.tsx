@@ -290,7 +290,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 id="add-staff-title" className="text-base font-bold text-slate-900">Add Staff Member</h3>
-              <button type="button" aria-label="Close" onClick={() => setShowAddModal(false)} className="text-muted font-bold">
+              <button type="button" onClick={() => setShowAddModal(false)} className="text-muted font-bold">
                 Cancel
               </button>
             </div>

@@ -65,6 +65,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
           <div className="inline-flex rounded-md border border-[#7F8A92] p-0.5 bg-slate-100">
             <button
               type="button"
+              aria-pressed={displayMode === 'scheduled'}
               onClick={() => setDisplayMode('scheduled')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'scheduled'
@@ -76,6 +77,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
             </button>
             <button
               type="button"
+              aria-pressed={displayMode === 'deviation'}
               onClick={() => setDisplayMode('deviation')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'deviation'
