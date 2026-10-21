@@ -52,6 +52,14 @@ export default {
           risk: 'var(--status-risk)',
           'risk-soft': 'var(--status-risk-soft)',
           'risk-ink': 'var(--status-risk-ink)',
+          // Deeper steps of the diverging coverage ramp. Each *-mid/*-strong
+          // fill has a text token measured against it in index.css.
+          'risk-mid': 'var(--status-risk-mid)',
+          'risk-mid-ink': 'var(--status-risk-mid-ink)',
+          'risk-strong': 'var(--status-risk-strong)',
+          'watch-mid': 'var(--status-watch-mid)',
+          'watch-mid-ink': 'var(--status-watch-mid-ink)',
+          'watch-strong': 'var(--status-watch-strong)',
         },
       },
       fontFamily: {
