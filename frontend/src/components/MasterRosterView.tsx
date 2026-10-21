@@ -8,14 +8,16 @@ import {
   RosterLine,
   SeparationCategory,
   ShiftOrOffCode,
+  ShiftSwapValidationResponse,
   SolveResponse,
   StaffMemberAssignment,
 } from '../types';
-import { DAYS_OF_WEEK } from '../services/api';
+import { DAYS_OF_WEEK, validateShiftSwapApi } from '../services/api';
 import {
   OVERTIME_THRESHOLD_HOURS,
   SHIFT_CODE_LABELS,
   availableShiftCodes,
+  buildSwapLines,
   findingsByLine,
   indexOverrides,
   overrideKey,
@@ -23,6 +25,7 @@ import {
   resolveCell,
   resolvedLineHours,
   shiftClocksFromSolution,
+  swapAsOverrides,
 } from '../services/rosterOverrides';
 import { formatCurrency, formatHourlyRate } from '../utils/format';
 import { Button } from './ui/Button';
@@ -158,6 +161,102 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
     const key = overrideKey(cycleWeek, dayIndex);
     setOverrides(overrides.filter((o) => overrideKey(o.cycle_week, o.day_index) !== key));
     setEditingCell(null);
+  };
+
+  /* ------------------------------------------------------------------
+   * Trading two assigned shifts between two people
+   *
+   * The manager picks two shifts and the backend validates both resulting weeks
+   * against the 16-hour rest rule, the zero-clopening guardrail and the 40-hour
+   * overtime boundary. A trade that breaks one of those is refused with the reason,
+   * and nothing is applied.
+   * ------------------------------------------------------------------ */
+  type SwapPick = { line_number: number; day_index: number; shift_code: ShiftOrOffCode };
+
+  const [swapMode, setSwapMode] = useState(false);
+  const [swapPicks, setSwapPicks] = useState<SwapPick[]>([]);
+  const [swapVerdict, setSwapVerdict] = useState<ShiftSwapValidationResponse | null>(null);
+  const [swapError, setSwapError] = useState<string | null>(null);
+  const [swapChecking, setSwapChecking] = useState(false);
+
+  const resetSwap = () => {
+    setSwapPicks([]);
+    setSwapVerdict(null);
+    setSwapError(null);
+    setSwapChecking(false);
+  };
+
+  const isPicked = (lineNumber: number, dayIndex: number) =>
+    swapPicks.some((p) => p.line_number === lineNumber && p.day_index === dayIndex);
+
+  const toggleSwapPick = (pick: SwapPick) => {
+    setSwapVerdict(null);
+    setSwapError(null);
+    setSwapPicks((prev) => {
+      const without = prev.filter(
+        (p) => !(p.line_number === pick.line_number && p.day_index === pick.day_index)
+      );
+      if (without.length !== prev.length) return without;
+      // Two shifts make a trade; a third replaces the older of the two.
+      return [...without, pick].slice(-2);
+    });
+  };
+
+  const employeeIdForLine = (lineNumber: number): string | null =>
+    solution.roster_lines.find((l) => l.line_number === lineNumber)?.assigned_employee_id ?? null;
+
+  const swapBlockedReason = (): string | null => {
+    if (swapPicks.length !== 2) return 'Pick two assigned shifts to trade.';
+    const [a, b] = swapPicks;
+    if (a.shift_code === 'OFF' || b.shift_code === 'OFF') {
+      return 'Both shifts have to be ones somebody is actually working. To put somebody on a day they are off, change that one cell instead.';
+    }
+    if (a.line_number === b.line_number) {
+      return 'A trade is between two people. Both of these shifts are on the same line.';
+    }
+    if (!employeeIdForLine(a.line_number) || !employeeIdForLine(b.line_number)) {
+      return 'A trade needs a named person on both lines. One of these lines has nobody assigned to it.';
+    }
+    return null;
+  };
+
+  const checkSwap = async () => {
+    if (swapPicks.length !== 2) return;
+    const [a, b] = swapPicks;
+    const idA = employeeIdForLine(a.line_number);
+    const idB = employeeIdForLine(b.line_number);
+    if (!idA || !idB) return;
+
+    setSwapChecking(true);
+    setSwapError(null);
+    setSwapVerdict(null);
+    try {
+      const verdict = await validateShiftSwapApi({
+        associate_a_id: idA,
+        associate_b_id: idB,
+        day_a_index: a.day_index,
+        day_b_index: b.day_index,
+        roster_lines: buildSwapLines(solution, overrides),
+      });
+      setSwapVerdict(verdict);
+    } catch (err) {
+      setSwapError(err instanceof Error ? err.message : 'The swap could not be checked.');
+    } finally {
+      setSwapChecking(false);
+    }
+  };
+
+  const applySwap = () => {
+    if (swapPicks.length !== 2 || !swapVerdict?.is_approved) return;
+    const [a, b] = swapPicks;
+    const next = swapAsOverrides(solution, overrides, a, b);
+    if (next === null) {
+      setSwapError('Those shifts are no longer on this roster, so nothing was changed.');
+      return;
+    }
+    setOverrides(next);
+    setSwapMode(false);
+    resetSwap();
   };
 
 
@@ -424,6 +523,19 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-ink-strong text-card text-xs font-mono-tabular font-bold">A</kbd>
             </Button>
 
+            <Button
+              variant={swapMode ? 'primary' : 'secondary'}
+              size="sm"
+              aria-pressed={swapMode}
+              onClick={() => {
+                setSwapMode(!swapMode);
+                setEditingCell(null);
+                resetSwap();
+              }}
+            >
+              {swapMode ? 'Done swapping' : 'Swap two shifts'}
+            </Button>
+
             <Button variant="secondary" size="sm" onClick={() => window.print()}>
               Print Roster <kbd className="px-1.5 py-0.5 rounded bg-surface-sunken text-ink-soft text-xs font-mono-tabular font-bold">P</kbd>
             </Button>
@@ -668,6 +780,102 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </div>
         )}
 
+        {/* Trading two assigned shifts between two people. */}
+        {swapMode && (
+          <div className="p-4 sm:px-6 border-b border-border-subtle bg-surface-subtle no-print">
+            <h3 className="type-subsection-title text-ink">Swap two shifts</h3>
+            <p className="type-prose text-muted">
+              Choose one shift from each person's week. Both resulting weeks are checked
+              against the 16-hour rest rule, the zero-clopening guardrail and the{' '}
+              {OVERTIME_THRESHOLD_HOURS}-hour overtime boundary before anything changes. A
+              trade that would break one of those is refused and nothing is applied.
+            </p>
+
+            <p className="mt-2 type-prose text-ink font-semibold" aria-live="polite">
+              {swapPicks.length === 0
+                ? 'No shifts chosen yet.'
+                : swapPicks
+                    .map(
+                      (p) =>
+                        `Line ${p.line_number}, ${DAY_FULL_NAMES[p.day_index]} (${p.shift_code})`
+                    )
+                    .join(' ↔ ')}
+            </p>
+
+            {swapPicks.length === 2 && swapBlockedReason() !== null && (
+              <p id="roster-swap-blocked" className="mt-1 text-xs font-semibold text-status-risk-ink">
+                {swapBlockedReason()}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              <Button
+                variant="primary"
+                size="sm"
+                loading={swapChecking}
+                disabled={swapBlockedReason() !== null}
+                aria-describedby={
+                  swapPicks.length === 2 && swapBlockedReason() !== null
+                    ? 'roster-swap-blocked'
+                    : undefined
+                }
+                onClick={checkSwap}
+              >
+                Check this swap
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={!swapVerdict?.is_approved}
+                onClick={applySwap}
+              >
+                Apply swap
+              </Button>
+              <Button variant="secondary" size="sm" onClick={resetSwap}>
+                Clear choices
+              </Button>
+            </div>
+
+            {swapError !== null && (
+              <p className="mt-2.5 text-xs font-semibold text-status-risk-ink" role="alert">
+                {swapError}
+              </p>
+            )}
+
+            {swapVerdict !== null && (
+              <div
+                className={`mt-2.5 rounded-md border px-3 py-2.5 ${
+                  swapVerdict.is_approved
+                    ? 'border-status-ok bg-status-ok-soft'
+                    : 'border-status-risk bg-status-risk-soft'
+                }`}
+                role="status"
+              >
+                <p className="text-xs font-bold text-ink">
+                  {swapVerdict.is_approved ? 'Swap allowed' : 'Swap refused'} —{' '}
+                  {swapVerdict.swap_summary}
+                </p>
+                <ul className="mt-1 space-y-1">
+                  {swapVerdict.validation_messages.map((message, idx) => (
+                    <li key={`${idx}-${message.slice(0, 24)}`} className="text-xs text-ink">
+                      {message}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-xs text-muted font-mono-tabular">
+                  {swapVerdict.associate_a_name}: {swapVerdict.overtime_hours_a}h OT •{' '}
+                  {swapVerdict.associate_b_name}: {swapVerdict.overtime_hours_b}h OT • payroll{' '}
+                  {swapVerdict.payroll_cost_delta >= 0 ? '+' : ''}
+                  {formatCurrency(swapVerdict.payroll_cost_delta)}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {swapVerdict.next_monday_rotation_impact}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Edits to the generated roster, and what on this page they do and do not move. */}
         {overrides.length > 0 && (
           <div className="p-4 sm:px-6 border-b border-border-subtle bg-surface-subtle">
@@ -809,9 +1017,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       shiftClocks
                     );
                     const isEditing =
+                      !swapMode &&
                       editingCell !== null &&
                       editingCell.cycleWeek === line.current_cycle_week &&
                       editingCell.dayIndex === cell.day_index;
+                    const picked = isPicked(line.line_number, cell.day_index);
                     const cellDomId = `roster-cell-${line.current_cycle_week}-${cell.day_index}`;
                     const rowName = line.assigned_person ?? `Shift Pattern ${line.line_number}`;
                     const dayName = DAY_FULL_NAMES[cell.day_index];
@@ -908,15 +1118,25 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         ) : (
                           <button
                             type="button"
+                            aria-pressed={swapMode ? picked : undefined}
                             onClick={() =>
-                              startEditingCell(
-                                line.current_cycle_week,
-                                cell.day_index,
-                                resolved.shift_code
-                              )
+                              swapMode
+                                ? toggleSwapPick({
+                                    line_number: line.line_number,
+                                    day_index: cell.day_index,
+                                    shift_code: resolved.shift_code,
+                                  })
+                                : startEditingCell(
+                                    line.current_cycle_week,
+                                    cell.day_index,
+                                    resolved.shift_code
+                                  )
                             }
                             aria-label={
-                              `Change ${rowName}'s ${dayName} shift. Currently ` +
+                              (swapMode
+                                ? `${picked ? 'Remove from the swap' : 'Choose for the swap'}: ` +
+                                  `${rowName}'s ${dayName} shift. Currently `
+                                : `Change ${rowName}'s ${dayName} shift. Currently `) +
                               `${resolved.shift_code}, ${resolved.time_window}` +
                               (resolved.is_modified
                                 ? `, modified from the generated ${resolved.original_shift_code}.`
@@ -927,8 +1147,15 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                             <div
                               className={`shift-pill-${resolved.shift_code} rounded-lg py-1.5 px-2 flex flex-col items-center justify-center relative ${
                                 cell.availability_conflict ? 'ring-2 ring-status-watch' : ''
-                              } ${resolved.is_modified ? 'border-2 border-accent-strong' : ''}`}
+                              } ${resolved.is_modified ? 'border-2 border-accent-strong' : ''} ${
+                                picked ? 'ring-2 ring-accent-strong' : ''
+                              }`}
                             >
+                              {picked && (
+                                <span className="text-[9px] font-bold uppercase tracking-wide text-accent-strong">
+                                  Chosen for swap
+                                </span>
+                              )}
                               <span className="font-mono-tabular font-bold text-xs">
                                 {resolved.shift_code}
                               </span>

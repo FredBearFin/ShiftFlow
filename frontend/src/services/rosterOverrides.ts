@@ -23,6 +23,7 @@ import type {
   RosterRuleFinding,
   ShiftClock,
   ShiftOrOffCode,
+  ShiftSwapLineInput,
   SolveResponse,
 } from '../types';
 
@@ -360,6 +361,83 @@ export function resolvedLineHours(
     regular_hours: Math.min(OVERTIME_THRESHOLD_HOURS, weekly),
     overtime_hours: Math.max(0, weekly - OVERTIME_THRESHOLD_HOURS),
   };
+}
+
+/**
+ * The roster as the swap validator needs it: every line in line order, each cell
+ * carrying the shift code and the clock times behind it.
+ *
+ * Overrides are applied first, so a swap is validated against the roster the manager is
+ * actually looking at rather than the one the solver produced before their edits.
+ */
+export function buildSwapLines(
+  solution: SolveResponse,
+  overrides: RosterCellOverride[]
+): ShiftSwapLineInput[] {
+  const clocks = shiftClocksFromSolution(solution);
+  const byKey = indexOverrides(overrides);
+  return solution.roster_lines.map((line) => ({
+    line_number: line.line_number,
+    assigned_employee_id: line.assigned_employee_id,
+    assigned_person: line.assigned_person,
+    hourly_wage: line.hourly_wage,
+    days: line.days.map((cell) => {
+      const resolved = resolveCell(cell, line.current_cycle_week, byKey, clocks);
+      const clock = clocks[resolved.shift_code];
+      return {
+        day_index: cell.day_index,
+        shift_code: resolved.shift_code,
+        start_hour: resolved.shift_code === 'OFF' || !clock ? 0 : clock.start_hour,
+        duration_hours: resolved.duration_hours,
+      };
+    }),
+  }));
+}
+
+/**
+ * The two overrides a trade comes down to, once it has been approved: each line's day
+ * takes the other's shift code. Expressed as ordinary cell overrides so an applied swap
+ * is the same kind of edit as a single-cell change, and is undone the same way.
+ */
+export function swapAsOverrides(
+  solution: SolveResponse,
+  overrides: RosterCellOverride[],
+  a: { line_number: number; day_index: number },
+  b: { line_number: number; day_index: number }
+): RosterCellOverride[] | null {
+  const lineA = solution.roster_lines.find((l) => l.line_number === a.line_number);
+  const lineB = solution.roster_lines.find((l) => l.line_number === b.line_number);
+  if (!lineA || !lineB) return null;
+
+  const clocks = shiftClocksFromSolution(solution);
+  const byKey = indexOverrides(overrides);
+  const cellA = lineA.days.find((c) => c.day_index === a.day_index);
+  const cellB = lineB.days.find((c) => c.day_index === b.day_index);
+  if (!cellA || !cellB) return null;
+
+  const currentA = resolveCell(cellA, lineA.current_cycle_week, byKey, clocks).shift_code;
+  const currentB = resolveCell(cellB, lineB.current_cycle_week, byKey, clocks).shift_code;
+
+  const next = overrides.filter(
+    (o) =>
+      overrideKey(o.cycle_week, o.day_index) !== overrideKey(lineA.current_cycle_week, a.day_index) &&
+      overrideKey(o.cycle_week, o.day_index) !== overrideKey(lineB.current_cycle_week, b.day_index)
+  );
+
+  for (const [line, dayIndex, cell, incoming] of [
+    [lineA, a.day_index, cellA, currentB] as const,
+    [lineB, b.day_index, cellB, currentA] as const,
+  ]) {
+    // Landing back on the generated value is not an edit, so no override is kept.
+    if (incoming === cell.shift_code) continue;
+    next.push({
+      cycle_week: line.current_cycle_week,
+      day_index: dayIndex,
+      shift_code: incoming,
+      original_shift_code: cell.shift_code,
+    });
+  }
+  return next;
 }
 
 /** Drops overrides that no longer name a pattern in the current solve, or that changed nothing. */

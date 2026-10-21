@@ -1,7 +1,13 @@
-"""Tests for Store Manager Emergency Callout & Shift Swap operations.
+"""Tests for Store Manager Emergency Callout operations.
 
-Both endpoints need stored shift and rest data, which the schema does not hold,
-so each must answer 501 rather than return a fixed roster or verdict.
+Callout replacement needs each associate's STORED shift times and rest intervals,
+which nothing persists, so it must answer 501 rather than return a ranked queue
+nothing backs.
+
+Swap validation no longer belongs here: it is computed from the per-line data a solved
+roster already carries, which the caller sends with the request. Its tests are in
+test_shift_swap.py. The cases below hold the line that a swap sent WITHOUT that roster
+is still refused rather than answered from nothing.
 """
 
 import unittest
@@ -34,28 +40,25 @@ class TestEmergencyWorkflows(unittest.TestCase):
         self.assertNotIn("Devon Taylor", response.text)
         self.assertNotIn("Elena Rodriguez", response.text)
 
-    def test_02_swap_returns_501_for_adjacent_and_non_adjacent_days(self):
-        """Shift swap validation returns 501 for both adjacent and non-adjacent days."""
-        dangerous_swap = {
-            "associate_a_id": "EMP-04",
-            "associate_b_id": "EMP-03",
-            "day_a_index": 2,  # Wednesday
-            "day_b_index": 3,  # Thursday
-        }
-        res_danger = self.client.post("/api/emergency/validate-swap", json=dangerous_swap)
-        self.assertEqual(res_danger.status_code, 501)
-        self.assertEqual(res_danger.json(), NO_SOURCE)
-        self.assertNotIn("11.0 hours", res_danger.text)
+    def test_02_swap_without_a_roster_is_refused_not_answered(self):
+        """A swap carrying no roster has no source for a verdict, so it is rejected.
 
-        safe_swap = {
-            "associate_a_id": "EMP-04",
-            "associate_b_id": "EMP-03",
-            "day_a_index": 1,  # Tuesday
-            "day_b_index": 4,  # Friday
-        }
-        res_safe = self.client.post("/api/emergency/validate-swap", json=safe_swap)
-        self.assertEqual(res_safe.status_code, 501)
-        self.assertEqual(res_safe.json(), NO_SOURCE)
+        Both an adjacent-day and a non-adjacent-day request are checked, and neither
+        comes back with the hard-coded rest figure the old fixed verdict used to quote.
+        """
+        for day_a, day_b in ((2, 3), (1, 4)):
+            res = self.client.post(
+                "/api/emergency/validate-swap",
+                json={
+                    "associate_a_id": "EMP-04",
+                    "associate_b_id": "EMP-03",
+                    "day_a_index": day_a,
+                    "day_b_index": day_b,
+                },
+            )
+            self.assertEqual(res.status_code, 422)
+            self.assertIn("roster_lines", res.text)
+            self.assertNotIn("11.0 hours", res.text)
 
     def test_03_callout_without_employee_id_returns_501(self):
         """A callout with no missing employee also returns 501, not a default name."""

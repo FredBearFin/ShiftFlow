@@ -10,6 +10,8 @@ import {
   RosterCellOverride,
   SeparationCategory,
   ShiftOrOffCode,
+  ShiftSwapRequest,
+  ShiftSwapValidationResponse,
   ShiftTemplate,
   SolveRequest,
   SolveResponse,
@@ -513,6 +515,41 @@ export async function solveScheduleApi(request: SolveRequest): Promise<SolveResp
       // Body is not JSON; fall back to the plain message below.
     }
     throw new Error(detail ?? `The scheduling service returned an error (HTTP ${res.status}).`);
+  }
+  return await res.json();
+}
+
+/**
+ * Asks the backend whether two assigned shifts may be traded.
+ *
+ * The solved roster goes with the request: there is no stored per-employee punch data,
+ * so the verdict has no other honest source. A request the backend cannot validate at
+ * all comes back 400 with the reason, which is surfaced rather than swallowed.
+ */
+export async function validateShiftSwapApi(
+  request: ShiftSwapRequest
+): Promise<ShiftSwapValidationResponse> {
+  let res: Response;
+  try {
+    res = await fetch('/api/emergency/validate-swap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+  } catch (err) {
+    throw new Error(
+      `The swap could not be checked: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+  if (!res.ok) {
+    let detail: string | undefined;
+    try {
+      const body = await res.json();
+      if (typeof body?.detail === 'string' && body.detail.trim()) detail = body.detail;
+    } catch {
+      // Body is not JSON; fall back to the plain message below.
+    }
+    throw new Error(detail ?? `The swap could not be checked (HTTP ${res.status}).`);
   }
   return await res.json();
 }

@@ -326,6 +326,36 @@ export interface EmergencyCalloutResponse {
   operational_guidance: string;
 }
 
+/**
+ * A swap proposal, carrying the per-line data the verdict is computed from.
+ *
+ * The WHOLE cycle goes with it, in line order, because a roster is one continuous cycle
+ * of day slots: line i's Sunday is followed by line i+1's Monday, so a swap cannot be
+ * checked for rest or clopening without the lines either side of it.
+ */
+export interface ShiftSwapRequest {
+  associate_a_id: string;
+  associate_b_id: string;
+  day_a_index: number;
+  day_b_index: number;
+  roster_lines: ShiftSwapLineInput[];
+}
+
+export interface ShiftSwapLineInput {
+  line_number: number;
+  assigned_employee_id: string | null;
+  assigned_person: string | null;
+  hourly_wage: number | null;
+  days: ShiftSwapCellInput[];
+}
+
+export interface ShiftSwapCellInput {
+  day_index: number;
+  shift_code: ShiftOrOffCode;
+  start_hour: number;
+  duration_hours: number;
+}
+
 export interface ShiftSwapValidationResponse {
   is_approved: boolean;
   associate_a_name: string;
