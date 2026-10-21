@@ -22,7 +22,11 @@ from app.config import settings
 from app.database import init_db, get_db_connection
 from fastapi.responses import JSONResponse
 from app.engine.isd_rwsp_solver import SolverInfeasibleError
-from app.middleware import IdempotencyMiddleware
+from app.middleware import (
+    IdempotencyMiddleware,
+    SecurityHeadersMiddleware,
+    SolveConcurrencyLimitMiddleware,
+)
 
 APP_START_TIME = time.time()
 
@@ -50,6 +54,16 @@ app.add_middleware(
 
 # Idempotency Middleware for exactly-once mutation semantics
 app.add_middleware(IdempotencyMiddleware)
+
+# Caps how many solver requests (/solve, /pareto-frontier, /export-csv,
+# /default-solution/*) one account can have in flight at once, so a single
+# (even free-tier) account cannot starve the shared solver threadpool and
+# degrade every other tenant on this backend process. See app/middleware.py.
+app.add_middleware(SolveConcurrencyLimitMiddleware)
+
+# Baseline security headers (clickjacking, MIME-sniffing, referrer, HSTS) on
+# every response. See app/middleware.py:SecurityHeadersMiddleware.
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.exception_handler(SolverInfeasibleError)

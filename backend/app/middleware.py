@@ -10,15 +10,17 @@ Implemented as a pure ASGI middleware to guarantee zero-deadlock streaming compa
 
 import hashlib
 import json
+import os
 import sqlite3
 import threading
 import time
-from typing import Optional
+from typing import Dict, Optional
 from fastapi import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, JSONResponse
 
-from app.auth import require_login
+from app.auth import cookie_secure, current_user_id, require_login
+from app.config import settings
 from app.database import get_db_connection
 
 
@@ -300,3 +302,161 @@ class IdempotencyMiddleware:
         except Exception:
             IdempotencyStore.clear_failed_request(store_key)
             raise
+
+
+class SecurityHeadersMiddleware:
+    """Pure ASGI middleware adding baseline security headers to every response.
+
+    Scoped to headers that are safe to apply uniformly across the JSON API and
+    the docs pages, without needing to know any one route's content:
+
+    - X-Content-Type-Options: nosniff - stops a browser from sniffing a
+      response's type away from its declared Content-Type.
+    - X-Frame-Options / Content-Security-Policy (frame-ancestors) - stops this
+      origin's pages (sign-in, sign-up, and the pricing-page checkout in
+      app/api/billing_routes.py) from being embedded in another site's iframe
+      for a clickjacking attack.
+    - Referrer-Policy - keeps the full request path out of the Referer header
+      sent to third-party links.
+    - Strict-Transport-Security - only sent when SHIFTFLOW_COOKIE_SECURE is on
+      (the operator's own signal that this deployment is reached over https);
+      skipped otherwise so a plain-http deployment is never told to upgrade.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def add_security_headers(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.append((b"x-content-type-options", b"nosniff"))
+                headers.append((b"x-frame-options", b"DENY"))
+                headers.append((b"content-security-policy", b"frame-ancestors 'none'"))
+                headers.append((b"referrer-policy", b"strict-origin-when-cross-origin"))
+                if cookie_secure():
+                    headers.append(
+                        (b"strict-transport-security", b"max-age=63072000; includeSubDomains")
+                    )
+                message["headers"] = headers
+            await send(message)
+
+        await self.app(scope, receive, add_security_headers)
+
+
+def _max_concurrent_solves_per_caller() -> int:
+    """How many solver requests one account may have in flight at once.
+
+    Overridable via SHIFTFLOW_MAX_CONCURRENT_SOLVES_PER_CALLER for ops tuning;
+    defaults to 2, which is generous for normal interactive use (a user
+    comparing two archetypes side by side) while still bounding how much of
+    the shared solver threadpool any single account can occupy.
+    """
+    raw = os.environ.get("SHIFTFLOW_MAX_CONCURRENT_SOLVES_PER_CALLER", "")
+    try:
+        value = int(raw)
+        if value > 0:
+            return value
+    except ValueError:
+        pass
+    return 2
+
+
+class SolveConcurrencyLimitMiddleware:
+    """Caps concurrent in-flight requests to the solver endpoints, per caller.
+
+    /api/.../schedules/solve, /pareto-frontier, /export-csv and
+    /default-solution/* all run the real ISD-RWSP optimization engine
+    synchronously, so FastAPI executes each one on a worker thread from
+    Starlette's shared threadpool. A security audit measured a single
+    authenticated account firing ~30 concurrent /solve requests driving a
+    normally ~0.1s solve up to ~3.6s each, and an unrelated /health check
+    issued during that storm up to ~3.7s (vs. ~3ms idle) - i.e. one account,
+    even a free tier one, can starve the threadpool and degrade every other
+    tenant on the same backend process, with no rate limiting previously in
+    place (see app/resilience.py, which covers DB retries/circuit-breaking
+    only, not request throughput).
+
+    This bounds concurrency per caller instead of queueing or throttling
+    globally, so one noisy account gets fast 429s instead of slowing down
+    everyone else. The caller is identified by their signed-in user id
+    (never a client-supplied header, so one account cannot dodge or frame
+    another's limit); when login is disabled (local dev only) it falls back
+    to the client's host.
+    """
+
+    _lock = threading.Lock()
+    _in_flight: Dict[str, int] = {}
+
+    _EXACT_PATHS = {
+        f"{settings.api_prefix}/schedules/solve",
+        f"{settings.api_prefix}/schedules/pareto-frontier",
+        f"{settings.api_prefix}/schedules/export-csv",
+    }
+    _PREFIX_PATH = f"{settings.api_prefix}/schedules/default-solution/"
+
+    def __init__(self, app):
+        self.app = app
+
+    @classmethod
+    def _is_solve_path(cls, path: str) -> bool:
+        return path in cls._EXACT_PATHS or path.startswith(cls._PREFIX_PATH)
+
+    @classmethod
+    def _caller_key(cls, request: Request) -> str:
+        user_id = current_user_id(request)
+        if user_id:
+            return f"user:{user_id}"
+        client = request.client
+        return f"ip:{client.host if client else 'unknown'}"
+
+    @classmethod
+    def _release(cls, key: str) -> None:
+        with cls._lock:
+            remaining = cls._in_flight.get(key, 1) - 1
+            if remaining <= 0:
+                cls._in_flight.pop(key, None)
+            else:
+                cls._in_flight[key] = remaining
+
+    @classmethod
+    def clear_all(cls) -> None:
+        """Test-suite isolation helper, mirroring IdempotencyStore.clear_all."""
+        with cls._lock:
+            cls._in_flight.clear()
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not self._is_solve_path(scope.get("path", "")):
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope)
+        key = self._caller_key(request)
+        limit = _max_concurrent_solves_per_caller()
+
+        with self._lock:
+            count = self._in_flight.get(key, 0)
+            if count >= limit:
+                resp = JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": "TooManyConcurrentSolveRequests",
+                        "detail": (
+                            f"Too many schedule-solve requests in flight for this account "
+                            f"(max {limit} concurrent). Wait for one to finish, then retry."
+                        ),
+                    },
+                    headers={"Retry-After": "1"},
+                )
+                await resp(scope, receive, send)
+                return
+            self._in_flight[key] = count + 1
+
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            self._release(key)
