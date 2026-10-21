@@ -82,12 +82,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             <div className="flex items-center gap-3 text-xs">
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-warning" />
                   {knee.leeway_pct}% is the sweet spot ({formatCurrency(knee.estimated_weekly_payroll)}/wk)
                 </span>
               )}
-              <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
+              <span className="inline-flex items-center gap-1.5 text-accent font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent" />
                 Currently applied
               </span>
             </div>
@@ -146,7 +146,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               {/* Pareto Curve Polyline */}
               <polyline
                 fill="none"
-                stroke="#4f46e5"
+                className="stroke-accent"
                 strokeWidth="2.5"
                 points={polylinePoints}
               />
@@ -167,8 +167,8 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         cx={cx}
                         cy={cy}
                         r={11}
-                        fill="rgba(79, 70, 229, 0.15)"
-                        stroke="#4f46e5"
+                        className="stroke-accent"
+                        style={{ fill: 'var(--accent)', fillOpacity: 0.15 }}
                         strokeWidth="1.5"
                       />
                     )}
@@ -176,14 +176,13 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       cx={cx}
                       cy={cy}
                       r={pt.is_knee_point || isSel ? 6.5 : 5}
-                      fill={
+                      className={
                         isSel
-                          ? '#4f46e5'
+                          ? 'fill-accent stroke-accent'
                           : pt.is_knee_point
-                          ? '#f59e0b'
-                          : '#ffffff'
+                          ? 'fill-warning stroke-warning-ink'
+                          : 'fill-card stroke-accent'
                       }
-                      stroke={pt.is_knee_point ? '#b45309' : '#4f46e5'}
                       strokeWidth="2"
                     />
                     {(pt.is_knee_point || isSel || pt.leeway_pct === 0 || pt.leeway_pct === 10 || pt.leeway_pct === 50) && (
@@ -285,7 +284,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 return (
                   <tr
                     key={pt.point_index}
-                    className={isSel ? 'bg-indigo-50/60' : 'hover:bg-slate-50'}
+                    className={isSel ? 'bg-accent-soft' : 'hover:bg-slate-50'}
                   >
                     <td className="py-2.5 px-4 font-sans font-semibold text-slate-900">
                       {pt.label}

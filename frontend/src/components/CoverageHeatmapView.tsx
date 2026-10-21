@@ -117,13 +117,17 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                   </th>
                   {cells.map((c) => {
                     const diff = c.scheduled_staff - c.required_staff;
-                    let cellStyle = 'bg-emerald-50 text-emerald-900 border-emerald-200';
+                    // Ordered 3-step ramp: on target -> overstaffed -> understaffed.
+                    // Understaffed is the real problem, so it takes the risk step.
+                    // Every cell also carries stateLabel, so colour is never the
+                    // only encoding.
+                    let cellStyle = 'bg-status-ok-soft text-status-ok-ink border-status-ok';
                     if (c.required_staff === 0 && c.scheduled_staff === 0) {
-                      cellStyle = 'bg-slate-50 text-slate-400 border-slate-100';
+                      cellStyle = 'bg-surface-subtle text-muted border-border-subtle';
                     } else if (diff < 0) {
-                      cellStyle = 'bg-amber-50 text-amber-900 border-amber-300 font-bold';
+                      cellStyle = 'bg-status-risk-soft text-status-risk-ink border-status-risk font-bold';
                     } else if (diff > 0) {
-                      cellStyle = 'bg-indigo-50 text-indigo-900 border-indigo-200';
+                      cellStyle = 'bg-status-watch-soft text-status-watch-ink border-status-watch';
                     }
                     const stateLabel =
                       c.required_staff === 0 && c.scheduled_staff === 0

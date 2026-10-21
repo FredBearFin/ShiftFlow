@@ -226,10 +226,10 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             Overtime Exposure
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className={`text-2xl font-bold font-mono-tabular ${labor.total_overtime_hours > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {formatCurrency(labor.overtime_payroll_cost)}
             </span>
-            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${labor.overtime_lines_count > 0 ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
+            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${labor.overtime_lines_count > 0 ? 'bg-status-watch-soft text-status-watch-ink border border-status-watch' : 'bg-status-ok-soft text-status-ok-ink border border-status-ok'}`}>
               {labor.overtime_lines_count > 0 ? `${labor.overtime_lines_count} OT Lines` : '0 OT Risk'}
             </span>
           </div>
@@ -262,7 +262,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             Required ÷ scheduled hours
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-indigo-700">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {labor.labor_efficiency_pct}%
             </span>
             <span className="text-xs text-slate-500">Coverage</span>
@@ -327,7 +327,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                   <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-2 rounded-full ${
-                        isWeekend ? 'bg-indigo-600' : 'bg-slate-700'
+                        isWeekend ? 'bg-ink' : 'bg-ink-soft'
                       }`}
                       style={{ width: `${barPct}%` }}
                     />

@@ -424,7 +424,7 @@ export function App() {
 
       <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {planningOnly && employees.length === 0 && !planningBannerDismissed && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent bg-accent-soft px-4 py-3 text-sm text-ink">
             <span>
               Planning mode: this schedule has no real staff on it yet, so lines show as
               unassigned. Add your team when you're ready to run it for real.
