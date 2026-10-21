@@ -7,7 +7,7 @@ import { getTerm } from './glossary';
 const ON_SCREEN_JARGON = [
   'shift pattern',
   'qualification tier',
-  'Union Line Standard',
+  'Standard Rate',
   'rotation balance',
   'hand-off',
   'workload score',

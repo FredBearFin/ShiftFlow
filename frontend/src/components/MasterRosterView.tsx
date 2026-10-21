@@ -644,7 +644,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       )}
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
-                      <Term explanation="The pay and skill band this shift pattern is costed at, and what appears as the Role in the payroll file you export. &quot;Union Line Standard&quot; is the ordinary rate for the job, with nothing added for extra skills or seniority.">
+                      <Term explanation="The pay and skill band this shift pattern is costed at, and what appears as the Role in the payroll file you export. &quot;Standard Rate&quot; is the ordinary rate for the job, with nothing added for extra skills or seniority.">
                         {line.qualification_tier}
                       </Term>
                       <span>•</span>

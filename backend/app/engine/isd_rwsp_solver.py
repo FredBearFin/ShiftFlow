@@ -782,7 +782,7 @@ class ISDRWSPSolver:
             else:
                 assigned_person = None
                 assigned_emp_id = None
-                qual_tier = "Union Line Standard"
+                qual_tier = "Standard Rate"
                 wage = None
                 avail_days = {0, 1, 2, 3, 4, 5, 6}
 

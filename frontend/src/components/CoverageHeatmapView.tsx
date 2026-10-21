@@ -48,7 +48,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="px-3.5 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono-tabular">
             <span className="text-slate-500 block text-xs">Scheduled Hrs</span>
             <strong className="text-slate-900 text-sm">{totalScheduled}h</strong>

@@ -467,7 +467,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                 <th className="py-3 px-4">Pattern</th>
                 <th className="py-3 px-4">Assigned Personnel</th>
                 <th className="py-3 px-3">
-                  <Term explanation="The pay and skill band this shift pattern is costed at. It is also what appears as the Role in the payroll file you export, so &quot;Union Line Standard&quot; means the ordinary rate for the job, with nothing added for extra skills or seniority.">
+                  <Term explanation="The pay and skill band this shift pattern is costed at. It is also what appears as the Role in the payroll file you export, so &quot;Standard Rate&quot; means the ordinary rate for the job, with nothing added for extra skills or seniority.">
                     Role / Tier
                   </Term>
                 </th>

@@ -88,9 +88,9 @@ export const GLOSSARY: GlossaryEntry[] = [
     example: 'A pattern on the standard band is costed at the ordinary hourly rate for the job.',
   },
   {
-    term: 'Union Line Standard',
+    term: 'Standard Rate',
     plain: 'The pay and skill band every shift pattern starts on: the ordinary rate, with nothing added for extra skills or seniority.',
-    example: 'Until you set a band of your own, every pattern is priced as Union Line Standard.',
+    example: 'Until you set a band of your own, every pattern is priced as Standard Rate.',
   },
   {
     term: 'rotation balance',

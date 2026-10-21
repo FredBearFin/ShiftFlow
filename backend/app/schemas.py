@@ -173,7 +173,7 @@ class RosterLineSchema(BaseModel):
     display_label: str
     assigned_person: Optional[str] = None
     assigned_employee_id: Optional[str] = None
-    qualification_tier: str = "Union Line Standard"
+    qualification_tier: str = "Standard Rate"
     hourly_wage: Optional[float] = None
     current_cycle_week: int
     next_week_line_number: int
