@@ -153,14 +153,15 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
             self.assertEqual(curr_arc["to_node"], next_arc["from_node"])
             self.assertNotEqual(curr_arc["arc_type"], next_arc["arc_type"])
 
-    def test_05_all_five_archetypes_solve_and_satisfy_constraints(self) -> None:
-        """Verify each archetype either solves to a valid schedule or is reported infeasible.
+    def test_05_every_shipped_preset_solves_and_satisfies_constraints(self) -> None:
+        """Every preset offered in the UI must solve at its own default leeway.
 
-        Healthcare and manufacturing templates cannot meet the rest and rotation rules for
-        their demand. The solver now reports that instead of relaxing the rules, so those two
-        must raise SolverInfeasibleError.
+        A preset that users can pick but that the solver cannot schedule is a broken
+        product, not a known limitation, so this test fails the build rather than
+        recording the breakage. If a preset genuinely cannot be made solvable it must be
+        removed from ARCHETYPE_PRESETS, which also removes it from this loop.
         """
-        infeasible_archetypes = {"healthcare_24_7", "manufacturing_24_7"}
+        self.assertTrue(ARCHETYPE_PRESETS, "No presets are registered at all.")
         for arch_id, preset in ARCHETYPE_PRESETS.items():
             req = SolveRequestSchema(
                 archetype_id=arch_id,
@@ -170,15 +171,18 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
                 guardrails=preset.guardrails,
                 pareto_leeway_pct=preset.default_leeway_pct,
             )
-            if arch_id in infeasible_archetypes:
-                with self.assertRaises(SolverInfeasibleError):
-                    ISDRWSPSolver(req).solve()
-                continue
-            sol = ISDRWSPSolver(req).solve()
+            try:
+                sol = ISDRWSPSolver(req).solve()
+            except SolverInfeasibleError as exc:
+                self.fail(
+                    f"Preset '{arch_id}' is offered in the UI but the solver reports it "
+                    f"infeasible at its default leeway of {preset.default_leeway_pct}%: "
+                    f"{exc}. Fix the preset or remove it from ARCHETYPE_PRESETS."
+                )
             self.assertTrue(sol.eulerian_valid, f"Archetype {arch_id} failed Eulerian check")
-            self.assertEqual(sol.ergonomics_audit.clopening_violations, 0)
-            self.assertEqual(sol.ergonomics_audit.backward_rotation_violations, 0)
-            self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 16.0)
+            self.assertEqual(sol.ergonomics_audit.clopening_violations, 0, arch_id)
+            self.assertEqual(sol.ergonomics_audit.backward_rotation_violations, 0, arch_id)
+            self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 16.0, arch_id)
             self.assertEqual(len(sol.ergonomics_audit.criteria_breakdown), 8)
             self.assertEqual(len(sol.interval_coverage), 168)
             self.assertEqual(sol.labor_analysis.total_payroll_cost, 0.0)
@@ -187,6 +191,32 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
                 lhs = cell.scheduled_staff
                 rhs = cell.required_staff + cell.overstaffing - cell.understaffing
                 self.assertEqual(lhs, rhs)
+
+    def test_05b_every_shipped_preset_solves_at_zero_leeway(self) -> None:
+        """The tightest setting must work too.
+
+        Leeway 0% is the cheapest, most constrained version of a schedule and is also the
+        baseline the ergonomics comparison solves internally, so a preset that only works
+        at its default leeway is still broken for the user who drags the slider down.
+        """
+        for arch_id, preset in ARCHETYPE_PRESETS.items():
+            req = SolveRequestSchema(
+                archetype_id=arch_id,
+                facility_name=preset.name,
+                demand_matrix=preset.demand_matrix,
+                templates=preset.templates,
+                guardrails=preset.guardrails,
+                pareto_leeway_pct=0.0,
+            )
+            try:
+                sol = ISDRWSPSolver(req).solve()
+            except SolverInfeasibleError as exc:
+                self.fail(
+                    f"Preset '{arch_id}' is infeasible at 0% leeway: {exc}. "
+                    "Fix the preset or remove it from ARCHETYPE_PRESETS."
+                )
+            self.assertTrue(sol.eulerian_valid, arch_id)
+            self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 16.0, arch_id)
 
     def test_06_pareto_frontier_is_built_from_real_re_solves(self) -> None:
         """Every frontier point must be the real output of an independent solve at that

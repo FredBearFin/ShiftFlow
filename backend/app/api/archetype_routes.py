@@ -127,7 +127,15 @@ ARCHETYPE_PRESETS: Dict[str, ArchetypePresetSchema] = {
             ShiftTemplateSchema(code="E", name="Evening Charge (E)", earliest_start=13, latest_end=23, min_duration=8, max_duration=9, preferred_start=14, preferred_duration=8, enabled=True),
             ShiftTemplateSchema(code="N", name="Night Telemetry (N)", earliest_start=21, latest_end=31, min_duration=8, max_duration=9, preferred_start=22, preferred_duration=8, enabled=True),
         ],
-        guardrails=ErgonomicGuardrailsSchema(),
+        # avoid_single_night_shifts is off for this preset. With four templates in forward
+        # rotation (M -> D -> E -> N), the night shift can only be the last day of a work
+        # block, so a 4- or 5-day block regularly lands on exactly one night. Requiring at
+        # least two nights per block, while also capping nights at two and forcing forward
+        # rotation, leaves the last day of some blocks with no legal shift code at all and
+        # the preset never solved. A lone night is still scored against the schedule by the
+        # ergonomics audit (w_single_night); the 16-hour rest rule, the zero-clopening rule
+        # and forward rotation are all still enforced.
+        guardrails=ErgonomicGuardrailsSchema(avoid_single_night_shifts=False),
     ),
     "manufacturing_24_7": ArchetypePresetSchema(
         id="manufacturing_24_7",
@@ -145,7 +153,12 @@ ARCHETYPE_PRESETS: Dict[str, ArchetypePresetSchema] = {
             ShiftTemplateSchema(code="E", name="Shift 2 — Swing Line (E)", earliest_start=13, latest_end=23, min_duration=8, max_duration=9, preferred_start=14, preferred_duration=8, enabled=True),
             ShiftTemplateSchema(code="N", name="Shift 3 — Graveyard Line (N)", earliest_start=21, latest_end=31, min_duration=8, max_duration=9, preferred_start=22, preferred_duration=8, enabled=True),
         ],
-        guardrails=ErgonomicGuardrailsSchema(),
+        # avoid_single_night_shifts is off for the same reason as the healthcare preset: a
+        # three-shift plant line in forward rotation (M -> E -> N) can only put the night
+        # shift at the end of a work block, so some blocks contain exactly one night. With
+        # the default on, the last day of those blocks had no legal shift code and the
+        # preset never solved. Rest, zero-clopening and forward rotation stay enforced.
+        guardrails=ErgonomicGuardrailsSchema(avoid_single_night_shifts=False),
     ),
     "emergency_services": ArchetypePresetSchema(
         id="emergency_services",
