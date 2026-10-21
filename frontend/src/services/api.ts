@@ -6,6 +6,8 @@
 import {
   ArchetypePreset,
   ErgonomicGuardrails,
+  EmergencyCalloutRequest,
+  EmergencyCalloutResponse,
   PersistedSolveConfig,
   RosterCellOverride,
   SeparationCategory,
@@ -15,6 +17,8 @@ import {
   ShiftTemplate,
   SolveRequest,
   SolveResponse,
+  StoredAssignmentShift,
+  StoredRosterResponse,
 } from '../types';
 
 export const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -550,6 +554,68 @@ export async function validateShiftSwapApi(
       // Body is not JSON; fall back to the plain message below.
     }
     throw new Error(detail ?? `The swap could not be checked (HTTP ${res.status}).`);
+  }
+  return await res.json();
+}
+
+/** Reads a JSON error body's `detail`, so a backend reason reaches the user verbatim. */
+async function detailOrStatus(res: Response, fallback: string): Promise<string> {
+  try {
+    const body = await res.json();
+    if (typeof body?.detail === 'string' && body.detail.trim()) return body.detail;
+  } catch {
+    // Body is not JSON; the caller's own message is used.
+  }
+  return `${fallback} (HTTP ${res.status}).`;
+}
+
+/**
+ * Stores the roster's concrete shift times and rest intervals for this facility.
+ *
+ * The callout queue ranks replacements against this; without it there is nothing to
+ * check a replacement's rest or hours against, which is why callout cover had no source.
+ * It is replaced whole on every write.
+ */
+export async function storeRosterAssignmentsApi(
+  facilityId: string,
+  shifts: StoredAssignmentShift[]
+): Promise<StoredRosterResponse> {
+  let res: Response;
+  try {
+    res = await fetch('/api/emergency/stored-roster', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facility_id: facilityId, shifts }),
+    });
+  } catch (err) {
+    throw new Error(
+      `The roster could not be saved for cover: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+  if (!res.ok) {
+    throw new Error(await detailOrStatus(res, 'The roster could not be saved for cover'));
+  }
+  return await res.json();
+}
+
+/** Asks who could cover a shift somebody has called out of, ranked by rest then overtime headroom. */
+export async function findCalloutCoverApi(
+  request: EmergencyCalloutRequest
+): Promise<EmergencyCalloutResponse> {
+  let res: Response;
+  try {
+    res = await fetch('/api/emergency/callout-replacement', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+  } catch (err) {
+    throw new Error(
+      `Cover could not be worked out: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
+  if (!res.ok) {
+    throw new Error(await detailOrStatus(res, 'Cover could not be worked out'));
   }
   return await res.json();
 }

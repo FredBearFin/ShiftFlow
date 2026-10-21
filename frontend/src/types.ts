@@ -297,6 +297,36 @@ export interface ArchetypePreset {
 export type ActiveTabId = 'roster' | 'staff' | 'labor' | 'coverage' | 'pareto' | 'ergonomics' | 'compliance';
 
 
+/**
+ * One stored day slot of a facility's roster: the shift, its clock times and the rest
+ * interval before it. This is the data the callout queue ranks replacements against,
+ * and the reason callout-replacement used to have no source.
+ */
+export interface StoredAssignmentShift {
+  line_number: number;
+  cycle_week: number;
+  day_index: number;
+  shift_code: ShiftOrOffCode;
+  employee_id: string | null;
+  start_hour: number;
+  duration_hours: number;
+  rest_hours_before: number;
+}
+
+export interface StoredRosterResponse {
+  facility_id: string;
+  slots_stored: number;
+  shifts: StoredAssignmentShift[];
+}
+
+export interface EmergencyCalloutRequest {
+  facility_id: string;
+  target_day_index: number;
+  target_shift_code: ShiftOrOffCode;
+  missing_employee_id?: string | null;
+  line_number: number;
+}
+
 export interface CalloutCandidate {
   employee_id: string;
   employee_name: string;

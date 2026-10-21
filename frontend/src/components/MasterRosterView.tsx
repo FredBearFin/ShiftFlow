@@ -2,22 +2,31 @@ import React, { useRef, useState } from 'react';
 import { useDialogFocus } from './ui/useDialogFocus';
 import { Term } from './ui/Term';
 import {
+  CalloutCandidate,
   EmployeeRecord,
   NewEmployeeInput,
   RosterCellOverride,
   RosterLine,
   SeparationCategory,
+  EmergencyCalloutResponse,
   ShiftOrOffCode,
   ShiftSwapValidationResponse,
   SolveResponse,
   StaffMemberAssignment,
 } from '../types';
-import { DAYS_OF_WEEK, validateShiftSwapApi } from '../services/api';
+import {
+  DAYS_OF_WEEK,
+  findCalloutCoverApi,
+  storeRosterAssignmentsApi,
+  validateShiftSwapApi,
+} from '../services/api';
 import {
   OVERTIME_THRESHOLD_HOURS,
   SHIFT_CODE_LABELS,
   availableShiftCodes,
+  buildStoredRosterShifts,
   buildSwapLines,
+  coverAsOverrides,
   findingsByLine,
   indexOverrides,
   overrideKey,
@@ -66,6 +75,8 @@ interface MasterRosterViewProps {
    */
   rosterOverrides?: RosterCellOverride[];
   onUpdateRosterOverrides?: (overrides: RosterCellOverride[]) => void;
+  /** The facility whose stored roster the callout queue is ranked against. */
+  facilityId?: string;
   onAddEmployee: (emp: NewEmployeeInput) => void;
   onToggleEmployeeStatus: (
     empId: string,
@@ -89,6 +100,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   onUpdateStaffAssignments,
   rosterOverrides: extOverrides,
   onUpdateRosterOverrides: extSetOverrides,
+  facilityId = 'FAC-OMAHA-01',
   onAddEmployee,
   onToggleEmployeeStatus,
   onUpdateEmployee,
@@ -244,6 +256,74 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
     } finally {
       setSwapChecking(false);
     }
+  };
+
+  /* ------------------------------------------------------------------
+   * Covering a shift somebody has called out of
+   *
+   * The ranking comes from the backend, which reads the facility's stored shift times
+   * and rest intervals. The roster on screen is stored first, so the queue is ranked
+   * against what the manager is actually looking at - including their edits - rather
+   * than whatever was stored last.
+   * ------------------------------------------------------------------ */
+  const [coverTarget, setCoverTarget] = useState<{
+    line_number: number;
+    day_index: number;
+    shift_code: ShiftOrOffCode;
+  } | null>(null);
+  const [coverResult, setCoverResult] = useState<EmergencyCalloutResponse | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [coverLoading, setCoverLoading] = useState(false);
+
+  const coverDialogRef = useRef<HTMLDivElement>(null);
+
+  const closeCover = () => {
+    setCoverTarget(null);
+    setCoverResult(null);
+    setCoverError(null);
+    setCoverLoading(false);
+  };
+
+  const openCoverFor = async (line: RosterLine, dayIndex: number, code: ShiftOrOffCode) => {
+    setCoverTarget({ line_number: line.line_number, day_index: dayIndex, shift_code: code });
+    setCoverResult(null);
+    setCoverError(null);
+    setCoverLoading(true);
+    try {
+      await storeRosterAssignmentsApi(facilityId, buildStoredRosterShifts(solution, overrides));
+      setCoverResult(
+        await findCalloutCoverApi({
+          facility_id: facilityId,
+          target_day_index: dayIndex,
+          target_shift_code: code,
+          missing_employee_id: line.assigned_employee_id,
+          line_number: line.line_number,
+        })
+      );
+    } catch (err) {
+      setCoverError(err instanceof Error ? err.message : 'Cover could not be worked out.');
+    } finally {
+      setCoverLoading(false);
+    }
+  };
+
+  useDialogFocus(coverDialogRef, coverTarget !== null, closeCover);
+
+  const applyCover = (employeeId: string) => {
+    if (coverTarget === null) return;
+    const next = coverAsOverrides(
+      solution,
+      overrides,
+      coverTarget.line_number,
+      employeeId,
+      coverTarget.day_index
+    );
+    if (next === null) {
+      setCoverError('That cover can no longer be applied to this roster, so nothing was changed.');
+      return;
+    }
+    setOverrides(next);
+    closeCover();
   };
 
   const applySwap = () => {
@@ -1113,6 +1193,17 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                                   Undo edit
                                 </Button>
                               )}
+                              {resolved.shift_code !== 'OFF' && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() =>
+                                    openCoverFor(line, cell.day_index, resolved.shift_code)
+                                  }
+                                >
+                                  Cover this shift
+                                </Button>
+                              )}
                             </div>
                           </div>
                         ) : (
@@ -1230,6 +1321,134 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Cover this shift: who can pick it up, ranked by rest then overtime headroom.
+          The overlay below is the same as the Add Staff dialog's, and deliberately NOT a
+          token utility with an opacity modifier (bg-ink-strong/40): Tailwind v3 emits no
+          rule for those, so the backdrop would silently render with no background. */}
+      {coverTarget !== null && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+          <div
+            ref={coverDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="roster-cover-title"
+            className="bg-card border border-border-control rounded-lg max-w-2xl w-full p-6 space-y-3 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-border-subtle">
+              <div className="min-w-0">
+                <h3 id="roster-cover-title" className="text-base font-bold text-ink">
+                  Cover the {DAY_FULL_NAMES[coverTarget.day_index]} {coverTarget.shift_code} shift
+                  on line {coverTarget.line_number}
+                </h3>
+                <p className="type-prose text-muted">
+                  Ranked on rest compliance first and overtime headroom second, from the
+                  roster on screen. Everyone with a line is listed with the figures behind
+                  them: nobody already working that day, and nobody whose cover would break
+                  the 16-hour rest rule, create a clopening or cross the{' '}
+                  {OVERTIME_THRESHOLD_HOURS}-hour boundary, is recommended.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={closeCover}
+                className="text-muted hover:text-ink font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {coverLoading && (
+              <p className="type-prose text-muted" aria-live="polite">
+                Working out who can cover…
+              </p>
+            )}
+
+            {coverError !== null && (
+              <p className="text-xs font-semibold text-status-risk-ink" role="alert">
+                {coverError}
+              </p>
+            )}
+
+            {coverResult !== null && (
+              <div className="space-y-2.5">
+                <p className="type-prose text-ink">
+                  <strong className="font-bold">
+                    {coverResult.missing_employee_name}
+                  </strong>{' '}
+                  — {coverResult.target_day_name} {coverResult.target_shift_code},{' '}
+                  {coverResult.target_shift_window}. {coverResult.candidates_count} staff checked.
+                </p>
+                <p className="type-prose text-muted">{coverResult.operational_guidance}</p>
+
+                {coverResult.candidates.length === 0 ? (
+                  <p className="type-prose text-ink font-semibold">
+                    Nobody else holds a line on this roster, so there is nobody to rank.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {coverResult.candidates.map((candidate: CalloutCandidate) => (
+                      <li
+                        key={candidate.employee_id}
+                        className={`rounded-md border px-3 py-2.5 ${
+                          candidate.is_recommended
+                            ? 'border-status-ok bg-status-ok-soft'
+                            : 'border-border-control bg-surface-subtle'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-ink">
+                              {candidate.employee_name}
+                              {candidate.is_recommended && (
+                                <span className="ml-2 px-1.5 py-0.5 rounded text-xs font-bold bg-status-ok text-card">
+                                  Recommended
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted">
+                              {candidate.role} • {candidate.status_label}
+                            </p>
+                          </div>
+                          <Button
+                            variant={candidate.is_recommended ? 'primary' : 'secondary'}
+                            size="sm"
+                            onClick={() => applyCover(candidate.employee_id)}
+                          >
+                            Give them this shift
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-xs font-mono-tabular text-ink-soft">
+                          rest {candidate.prior_rest_hours}h before /{' '}
+                          {candidate.next_rest_hours}h after •{' '}
+                          {candidate.current_scheduled_hours}h →{' '}
+                          {candidate.hours_with_shift}h • adds{' '}
+                          {formatCurrency(candidate.estimated_added_payroll)}
+                        </p>
+                        {candidate.audit_notes.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {candidate.audit_notes.map((note, idx) => (
+                              <li
+                                key={`${candidate.employee_id}-${idx}`}
+                                className={`text-xs ${
+                                  candidate.is_recommended ? 'text-ink' : 'text-status-risk-ink'
+                                }`}
+                              >
+                                {note}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Add New Employee Modal */}
       {showAddModal && (

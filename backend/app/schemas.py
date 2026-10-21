@@ -369,8 +369,38 @@ class CalloutCandidateSchema(BaseModel):
     audit_notes: List[str] = Field(default_factory=list)
 
 
+class AssignmentShiftSchema(BaseModel):
+    """One stored day slot of a facility's roster: its shift, clock times and rest before it."""
+    line_number: int = Field(..., ge=1)
+    cycle_week: int = Field(..., ge=1)
+    day_index: int = Field(..., ge=0, le=6)
+    shift_code: Literal["M", "D", "E", "N", "OFF"]
+    employee_id: Optional[str] = None
+    start_hour: float = Field(default=0.0, ge=0, le=24)
+    duration_hours: float = Field(default=0.0, ge=0, le=24)
+    rest_hours_before: float = Field(default=24.0, ge=0, le=24)
+
+
+class StoredRosterWriteSchema(BaseModel):
+    """The roster to store for a facility, replacing whatever was stored before."""
+    facility_id: str = Field(default="FAC-OMAHA-01")
+    shifts: List[AssignmentShiftSchema] = Field(..., min_length=1)
+
+
+class StoredRosterSchema(BaseModel):
+    """What a facility currently has stored."""
+    facility_id: str
+    slots_stored: int
+    shifts: List[AssignmentShiftSchema]
+
+
 class EmergencyCalloutRequestSchema(BaseModel):
-    """Request to find compliant replacements for sudden frontline absence."""
+    """Request to find compliant replacements for sudden frontline absence.
+
+    Answered from the facility's STORED per-assignment shift times and rest intervals.
+    Without a stored roster there is nothing to rank against, and the request is refused
+    rather than answered.
+    """
     facility_id: Optional[str] = None
     target_day_index: int = Field(default=5, ge=0, le=6, description="Day index: 5=Saturday")
     target_shift_code: str = Field(default="E", description="M=Morning, D=Mid, E=Evening, N=Night")

@@ -26,6 +26,7 @@ _FACILITY_COLUMNS = (
     ("employees", "facility_id"),
     ("separation_audits", "facility_id"),
     ("roster_snapshots", "facility_id"),
+    ("assignment_shifts", "facility_id"),
     ("labor_analyses", "facility_id"),
     ("pos_transactions", "facility_id"),
 )

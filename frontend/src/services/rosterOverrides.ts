@@ -25,6 +25,7 @@ import type {
   ShiftOrOffCode,
   ShiftSwapLineInput,
   SolveResponse,
+  StoredAssignmentShift,
 } from '../types';
 
 /** Matches backend/app/config.py: min_rest_hours_between_shifts. */
@@ -435,6 +436,105 @@ export function swapAsOverrides(
       day_index: dayIndex,
       shift_code: incoming,
       original_shift_code: cell.shift_code,
+    });
+  }
+  return next;
+}
+
+/**
+ * The roster as the stored-assignment table holds it: one row per line/day slot, with
+ * the shift's clock times and the rest interval before it.
+ *
+ * `rest_hours_before` is computed on the real cycle - a line's Monday takes its rest
+ * from the PREVIOUS line's Sunday, wrapping at the ends - so a stored roster carries the
+ * same adjacency the solver and the swap validator use. Overrides are applied first, so
+ * what is stored is the roster the manager is looking at.
+ */
+export function buildStoredRosterShifts(
+  solution: SolveResponse,
+  overrides: RosterCellOverride[]
+): StoredAssignmentShift[] {
+  const clocks = shiftClocksFromSolution(solution);
+  const slots = buildCycleSlots(solution.roster_lines, overrides, clocks);
+  const total = slots.length;
+
+  return solution.roster_lines.flatMap((line, lineIndex) =>
+    line.days.map((cell) => {
+      const slotIndex = lineIndex * 7 + cell.day_index;
+      const slot = slots[slotIndex];
+      const prev = slots[(slotIndex - 1 + total) % total];
+      return {
+        line_number: line.line_number,
+        cycle_week: line.current_cycle_week,
+        day_index: cell.day_index,
+        shift_code: slot.shift_code,
+        employee_id: line.assigned_employee_id,
+        start_hour: slot.start_hour,
+        duration_hours: slot.duration_hours,
+        rest_hours_before: restHoursBetween(prev, slot),
+      };
+    })
+  );
+}
+
+/**
+ * The two edits that put a cover in place: the person who called out goes OFF for that
+ * day, and the person covering takes the shift on their own line's same day.
+ *
+ * Expressed as ordinary cell overrides, so a cover persists, is marked "modified from
+ * generated" and is undone exactly like any other edit.
+ */
+export function coverAsOverrides(
+  solution: SolveResponse,
+  overrides: RosterCellOverride[],
+  missingLineNumber: number,
+  coveringEmployeeId: string,
+  dayIndex: number
+): RosterCellOverride[] | null {
+  const missingLine = solution.roster_lines.find((l) => l.line_number === missingLineNumber);
+  const coveringLine = solution.roster_lines.find(
+    (l) => l.assigned_employee_id === coveringEmployeeId
+  );
+  if (!missingLine || !coveringLine || missingLine.line_number === coveringLine.line_number) {
+    return null;
+  }
+
+  const clocks = shiftClocksFromSolution(solution);
+  const byKey = indexOverrides(overrides);
+  const missingCell = missingLine.days.find((c) => c.day_index === dayIndex);
+  const coveringCell = coveringLine.days.find((c) => c.day_index === dayIndex);
+  if (!missingCell || !coveringCell) return null;
+
+  const uncoveredCode = resolveCell(
+    missingCell,
+    missingLine.current_cycle_week,
+    byKey,
+    clocks
+  ).shift_code;
+  if (uncoveredCode === 'OFF') return null;
+
+  const next = overrides.filter(
+    (o) =>
+      overrideKey(o.cycle_week, o.day_index) !==
+        overrideKey(missingLine.current_cycle_week, dayIndex) &&
+      overrideKey(o.cycle_week, o.day_index) !==
+        overrideKey(coveringLine.current_cycle_week, dayIndex)
+  );
+
+  if (missingCell.shift_code !== 'OFF') {
+    next.push({
+      cycle_week: missingLine.current_cycle_week,
+      day_index: dayIndex,
+      shift_code: 'OFF',
+      original_shift_code: missingCell.shift_code,
+    });
+  }
+  if (coveringCell.shift_code !== uncoveredCode) {
+    next.push({
+      cycle_week: coveringLine.current_cycle_week,
+      day_index: dayIndex,
+      shift_code: uncoveredCode,
+      original_shift_code: coveringCell.shift_code,
     });
   }
   return next;

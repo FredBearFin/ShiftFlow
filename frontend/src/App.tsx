@@ -624,6 +624,7 @@ export function App() {
                 onUpdateStaffAssignments={setStaffAssignments}
                 rosterOverrides={rosterOverrides}
                 onUpdateRosterOverrides={setRosterOverrides}
+                facilityId={STAFF_FACILITY_ID}
                 onAddEmployee={handleAddEmployee}
                 onToggleEmployeeStatus={(empId, sep) =>
                   sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)

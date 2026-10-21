@@ -469,6 +469,314 @@ def validate_shift_swap(
     }
 
 
+# -----------------------------------------------------------------------------
+# Callout cover
+#
+# Ranks who could pick up a shift somebody has called out of, from the STORED per-
+# assignment shift times and rest intervals. Same flat-cycle adjacency as the swap
+# validator: a candidate covering their own line's day d takes its rest from day d-1 of
+# their line, or from the PREVIOUS line's Sunday when d is Monday, and hands off to day
+# d+1, or to the NEXT line's Monday when d is Sunday.
+# -----------------------------------------------------------------------------
+
+
+class CalloutUnanswerable(ValueError):
+    """The callout cannot be assessed at all, as distinct from having no eligible cover."""
+
+
+def rank_callout_candidates(
+    stored_shifts: List[Dict],
+    employees: List[Dict],
+    target_day_index: int,
+    target_shift_code: str,
+    missing_line_number: Optional[int] = None,
+    missing_employee_id: Optional[str] = None,
+) -> Dict:
+    """Rank who can cover a called-out shift, by rest compliance then overtime headroom.
+
+    `stored_shifts` is the facility's stored roster: one mapping per line/day slot with
+    `line_number`, `cycle_week`, `day_index`, `shift_code`, `start_hour`,
+    `duration_hours` and `employee_id`. `employees` are the facility's staff records
+    (`id`, `name`, `role`, `wage`, `active`, `available_days`, `assigned_line`).
+
+    Every candidate is reported with the figures behind it. Nobody already working that
+    day is recommended, and nobody whose cover would break the rest rule, create a
+    closing-then-opening pair or cross the overtime boundary is recommended either - each
+    is listed with the reason instead, so the manager can see what the trade-off is
+    rather than being handed a shortlist with the reasoning hidden.
+
+    Raises CalloutUnanswerable when there is no stored roster, or when the target shift
+    code has no clock times anywhere in it.
+    """
+    min_rest = float(settings.min_rest_hours_between_shifts)
+    if not stored_shifts:
+        raise CalloutUnanswerable(
+            "No roster is stored for this facility, so there are no shift times or rest "
+            "intervals to assess a replacement against. Store the current roster first."
+        )
+    if not 0 <= target_day_index <= 6:
+        raise CalloutUnanswerable(f"{target_day_index} is not a day of the week.")
+
+    by_slot: Dict[Tuple[int, int], Dict] = {}
+    line_numbers = set()
+    for shift in stored_shifts:
+        line_number = int(shift["line_number"])
+        day_index = int(shift["day_index"])
+        line_numbers.add(line_number)
+        by_slot[(line_number, day_index)] = shift
+
+    ordered_lines = sorted(line_numbers)
+    line_count = len(ordered_lines)
+    position = {line_number: idx for idx, line_number in enumerate(ordered_lines)}
+
+    for line_number in ordered_lines:
+        for day_index in range(7):
+            if (line_number, day_index) not in by_slot:
+                raise CalloutUnanswerable(
+                    f"The stored roster is missing line {line_number} day {day_index}, "
+                    "so no week on it can be checked."
+                )
+
+    # The target shift's clock times, read from the stored roster rather than assumed.
+    target_clock: Optional[Dict] = None
+    if target_shift_code != "OFF":
+        for shift in stored_shifts:
+            if shift["shift_code"] == target_shift_code:
+                target_clock = shift
+                break
+    if target_clock is None:
+        raise CalloutUnanswerable(
+            f"The stored roster has no {target_shift_code} shift in it, so that shift's "
+            "times and the rest around it are unknown."
+        )
+
+    target_start = float(target_clock["start_hour"])
+    target_duration = float(target_clock["duration_hours"])
+    target_window = _format_window(target_start, target_duration)
+
+    employees_by_id = {str(emp["id"]): emp for emp in employees}
+    missing_name = "Unnamed"
+    if missing_employee_id and missing_employee_id in employees_by_id:
+        missing_name = employees_by_id[missing_employee_id]["name"]
+    elif missing_line_number is not None:
+        slot_holder = by_slot.get((missing_line_number, target_day_index), {}).get("employee_id")
+        if slot_holder and str(slot_holder) in employees_by_id:
+            missing_name = employees_by_id[str(slot_holder)]["name"]
+        else:
+            missing_name = f"Line {missing_line_number}"
+
+    def neighbour(line_number: int, day_index: int, step: int) -> Dict:
+        """The slot `step` days away in the real cycle, crossing line boundaries."""
+        idx = position[line_number]
+        raw = idx * 7 + day_index + step
+        total = line_count * 7
+        raw %= total
+        return by_slot[(ordered_lines[raw // 7], raw % 7)]
+
+    candidates: List[Dict] = []
+    for emp in employees:
+        emp_id = str(emp["id"])
+        if not emp.get("active", True):
+            continue
+        if missing_employee_id and emp_id == missing_employee_id:
+            continue
+        line_number = emp.get("assigned_line")
+        if line_number is None or int(line_number) not in position:
+            continue
+        line_number = int(line_number)
+        if missing_line_number is not None and line_number == missing_line_number:
+            continue
+
+        own_slot = by_slot[(line_number, target_day_index)]
+        is_off_duty = own_slot["shift_code"] == "OFF"
+
+        week = [by_slot[(line_number, d)] for d in range(7)]
+        current_hours = sum(
+            0.0 if s["shift_code"] == "OFF" else float(s["duration_hours"]) for s in week
+        )
+        # Covering replaces whatever they had that day, so their own shift's hours come
+        # off before the cover's go on.
+        own_hours = 0.0 if is_off_duty else float(own_slot["duration_hours"])
+        hours_with_shift = current_hours - own_hours + target_duration
+
+        prev_slot = neighbour(line_number, target_day_index, -1)
+        next_slot = neighbour(line_number, target_day_index, 1)
+
+        prior_rest = compute_rest_hours_between(
+            prev_slot["shift_code"],
+            float(prev_slot["start_hour"]),
+            float(prev_slot["duration_hours"]),
+            target_shift_code,
+            target_start,
+        )
+        next_rest = compute_rest_hours_between(
+            target_shift_code,
+            target_start,
+            target_duration,
+            next_slot["shift_code"],
+            float(next_slot["start_hour"]),
+        )
+
+        clopening = (prev_slot["shift_code"] == "E" and target_shift_code == "M") or (
+            target_shift_code == "E" and next_slot["shift_code"] == "M"
+        )
+        rest_short = prior_rest < min_rest or next_rest < min_rest
+        overtime_hours = max(0.0, hours_with_shift - OVERTIME_THRESHOLD_HOURS)
+        overtime_risk = overtime_hours > 0
+
+        available_days = emp.get("available_days") or list(range(7))
+        day_available = target_day_index in available_days
+
+        wage = emp.get("wage")
+        if wage is None:
+            added_payroll = 0.0
+        else:
+            before = _weekly_cost(current_hours, float(wage))
+            after = _weekly_cost(hours_with_shift, float(wage))
+            added_payroll = after - before
+
+        notes: List[str] = []
+        if not is_off_duty:
+            notes.append(
+                f"Already working a {own_slot['shift_code']} shift on "
+                f"{DAY_FULL_NAMES[target_day_index]}; covering would mean dropping it."
+            )
+        if not day_available:
+            notes.append(f"Has {DAY_FULL_NAMES[target_day_index]} marked unavailable.")
+        if clopening:
+            notes.append(
+                "Would be a closing shift straight into an opening shift, which "
+                "zero-clopening forbids."
+            )
+        if rest_short:
+            notes.append(
+                f"Leaves {_format_hours(min(prior_rest, next_rest))}h rest, under the "
+                f"{_format_hours(min_rest)}h rule."
+            )
+        if overtime_risk:
+            notes.append(
+                f"Takes the week to {_format_hours(hours_with_shift)}h, "
+                f"{_format_hours(overtime_hours)}h past the "
+                f"{_format_hours(OVERTIME_THRESHOLD_HOURS)}h boundary."
+            )
+
+        is_recommended = (
+            is_off_duty and day_available and not clopening and not rest_short and not overtime_risk
+        )
+        if is_recommended:
+            headroom = OVERTIME_THRESHOLD_HOURS - hours_with_shift
+            status_label = (
+                f"Clear - {_format_hours(min(prior_rest, next_rest))}h rest either side, "
+                f"{_format_hours(headroom)}h before overtime"
+            )
+            notes.append(status_label)
+        elif not is_off_duty:
+            status_label = "Already working that day"
+        elif clopening:
+            status_label = "Clopening"
+        elif rest_short:
+            status_label = "Under the rest rule"
+        elif overtime_risk:
+            status_label = "Into overtime"
+        else:
+            status_label = "Marked unavailable"
+
+        candidates.append(
+            {
+                "employee_id": emp_id,
+                "employee_name": emp["name"],
+                "role": emp.get("role") or "",
+                "hourly_wage": float(wage) if wage is not None else 0.0,
+                "is_off_duty_target_day": is_off_duty,
+                "prior_rest_hours": round(prior_rest, 2),
+                "next_rest_hours": round(next_rest, 2),
+                "current_scheduled_hours": int(round(current_hours)),
+                "hours_with_shift": int(round(hours_with_shift)),
+                "overtime_risk": overtime_risk,
+                "clopening_risk": clopening or rest_short,
+                "estimated_added_payroll": round(added_payroll, 2),
+                "is_recommended": is_recommended,
+                "status_label": status_label,
+                "audit_notes": notes,
+                # Sort keys only; not part of the response schema.
+                "_min_rest": min(prior_rest, next_rest),
+                "_headroom": OVERTIME_THRESHOLD_HOURS - hours_with_shift,
+            }
+        )
+
+    # Rest compliance first, then overtime headroom - the order the ranking is specified
+    # in. Within that, the cheaper cover comes first.
+    candidates.sort(
+        key=lambda c: (
+            not c["is_recommended"],
+            not c["is_off_duty_target_day"],
+            c["clopening_risk"],
+            c["overtime_risk"],
+            -c["_min_rest"],
+            -c["_headroom"],
+            c["estimated_added_payroll"],
+            c["employee_name"],
+        )
+    )
+    for candidate in candidates:
+        candidate.pop("_min_rest", None)
+        candidate.pop("_headroom", None)
+
+    recommended = next((c for c in candidates if c["is_recommended"]), None)
+    if recommended is not None:
+        guidance = (
+            f"{recommended['employee_name']} is the clear cover: off duty on "
+            f"{DAY_FULL_NAMES[target_day_index]}, {_format_hours(recommended['prior_rest_hours'])}h "
+            f"rest before the shift and {_format_hours(recommended['next_rest_hours'])}h after, and "
+            f"{_format_hours(OVERTIME_THRESHOLD_HOURS - recommended['hours_with_shift'])}h still "
+            f"before overtime. Adds {recommended['estimated_added_payroll']:.2f} to the week."
+        )
+    elif candidates:
+        guidance = (
+            f"Nobody can cover this shift without breaking a rule. All {len(candidates)} "
+            "staff checked are listed with what each one would cost in rest, clopening or "
+            "overtime, so the choice is a judgement call rather than a compliant one."
+        )
+    else:
+        guidance = (
+            "No other staff member holds a line on this roster, so there is nobody to "
+            "rank. Assign staff to the remaining lines first."
+        )
+
+    return {
+        "target_day_name": DAY_FULL_NAMES[target_day_index],
+        "target_shift_window": target_window,
+        "target_shift_code": target_shift_code,
+        "missing_employee_name": missing_name,
+        "candidates_count": len(candidates),
+        "recommended_candidate_id": recommended["employee_id"] if recommended else None,
+        "candidates": candidates,
+        "operational_guidance": guidance,
+    }
+
+
+def _weekly_cost(hours: float, wage: float) -> float:
+    regular = min(OVERTIME_THRESHOLD_HOURS, hours)
+    overtime_hours = max(0.0, hours - OVERTIME_THRESHOLD_HOURS)
+    return regular * wage + overtime_hours * wage * 1.5
+
+
+def _format_window(start_hour: float, duration_hours: float) -> str:
+    """The same shape the solver's formatted_window uses, so the UI reads one convention.
+
+    End times wrap at midnight exactly as the solver's `(start + duration) % 24` does, so
+    a closing shift reads 16:00-00:00 here and on the roster grid.
+    """
+
+    def clock(value: float) -> str:
+        total_minutes = int(round(value * 60)) % (24 * 60)
+        return f"{total_minutes // 60:02d}:{total_minutes % 60:02d}"
+
+    if duration_hours <= 0:
+        return "Rest / Off"
+    return f"{clock(start_hour)}–{clock(start_hour + duration_hours)}"
+
+
 def evaluate_ergonomics_audit(
     shift_types: List[ShiftTypeResultSchema],
     multigraph_arcs: List[MultigraphArcSchema],
