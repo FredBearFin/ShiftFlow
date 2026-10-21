@@ -53,10 +53,24 @@ def evaluate_work_sequence_penalty(
     for a work sequence b starting on day g (0=Mon .. 6=Sun).
     """
     w = settings.ergo_weights
-    length = len(shifts)
+
+    # A business-closed day forces "OFF" inside what would otherwise be a work sequence -
+    # that's free rest the employee didn't choose, not a break in their own work stretch, so
+    # it must not inflate the consecutive-work-days count. Use the longest actually-worked run.
+    longest_work_run = 0
+    current_run = 0
+    for s in shifts:
+        if s != "OFF":
+            current_run += 1
+            longest_work_run = max(longest_work_run, current_run)
+        else:
+            current_run = 0
+    length = longest_work_run
 
     # Criterion 3: W^CD_b (Consecutive working days; ideal 3..5, base weight = 4, comp 0..3)
-    if 3 <= length <= 5:
+    if length == 0:
+        comp_cd = 0.0
+    elif 3 <= length <= 5:
         comp_cd = 0.0
     elif length == 2 or length == 6:
         comp_cd = 1.0
@@ -117,8 +131,13 @@ def evaluate_work_sequence_penalty(
 
     # Criterion 7 (Work part): W^WW_{gb} (Weekend work duties; base weight = 4, comp 0..1)
     # Becker Table 1: Ergonomics penalty if work sequence (g, b) contains the first day of the weekend (Sat=5)
-    days_covered = [(start_day + offset) % 7 for offset in range(length)]
-    contains_saturday = 5 in days_covered
+    # Only days actually worked count - a closed-day OFF on a Saturday is not weekend work.
+    worked_days_covered = [
+        (start_day + offset) % 7
+        for offset in range(len(shifts))
+        if shifts[offset] != "OFF"
+    ]
+    contains_saturday = 5 in worked_days_covered
     w_ww = w.w_weekend_work * (1.0 if contains_saturday else 0.0)
 
     total = w_cd + w_cn + w_ce + w_sn + w_ww

@@ -110,6 +110,45 @@ class SolverContractTests(unittest.TestCase):
         with self.assertRaises(ValidationError):
             EmployeeRecord(employee_id="E-NOWAGE", name="No Wage")
 
+    def test_closed_days_are_never_staffed(self):
+        """A day with zero demand across every hour is a day the business is closed -
+        nobody should ever be scheduled on it, regardless of rotation position."""
+        matrix = []
+        for day in range(7):
+            if day in (0, 1, 2):
+                matrix.append([0] * 6 + [5, 7, 8, 7, 5, 4, 2, 2, 0] + [0] * 9)
+            else:
+                matrix.append([0] * 24)
+
+        templates = [
+            {"code": "M", "name": "Morning", "earliest_start": 6, "latest_end": 16,
+             "min_duration": 6, "max_duration": 9, "preferred_start": 6,
+             "preferred_duration": 8, "enabled": True},
+            {"code": "D", "name": "Midday", "earliest_start": 8, "latest_end": 16,
+             "min_duration": 6, "max_duration": 9, "preferred_start": 10,
+             "preferred_duration": 6, "enabled": True},
+        ]
+        guardrails = {
+            "min_consecutive_work_days": 3, "max_consecutive_work_days": 5,
+            "min_consecutive_rest_days": 2, "max_consecutive_rest_days": 3,
+            "max_consecutive_nights": 2, "max_consecutive_evenings": 3,
+            "enforce_forward_rotation": True, "enforce_zero_clopening": True,
+            "avoid_single_rest_days": True, "avoid_single_night_shifts": True,
+            "prioritize_free_weekends": True,
+        }
+        req = SolveRequestSchema(
+            archetype_id="custom", facility_name="Closed Thu-Sun Test",
+            demand_matrix=matrix, templates=templates, guardrails=guardrails,
+            pareto_leeway_pct=10.0,
+        )
+        solution = ISDRWSPSolver(req).solve()
+        self.assertGreater(len(solution.roster_lines), 0)
+        for line in solution.roster_lines:
+            for day_idx, cell in enumerate(line.days):
+                if day_idx in (3, 4, 5, 6):  # Thu, Fri, Sat, Sun
+                    with self.subTest(line=line.line_number, day=day_idx):
+                        self.assertEqual(cell.shift_code, "OFF")
+
 
 if __name__ == "__main__":
     unittest.main()

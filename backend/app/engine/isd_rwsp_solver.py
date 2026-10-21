@@ -387,6 +387,14 @@ class ISDRWSPSolver:
             k: v for k, v in daily_template_pool.items()
         }
 
+        # A day with zero required shifts across every template is a day the business is
+        # closed. Nobody is ever scheduled on it, regardless of where it falls in a work block.
+        closed_days = {
+            day
+            for day in range(7)
+            if sum(daily_template_pool.get((day, c), 0) for c in available_codes) == 0
+        }
+
         raw_arcs: List[Dict] = []
         current_day = 0
 
@@ -409,6 +417,14 @@ class ISDRWSPSolver:
                 day_g = (w_start + step) % 7
                 steps_remaining = w_len - step
                 prev_code = seq_shifts[-1] if seq_shifts else "OFF"
+
+                if day_g in closed_days:
+                    # The business is closed this day - free rest, overriding the rotation
+                    # pattern entirely. Reset forward-rotation tracking so the next real work
+                    # day after the closure can start from any template, same as after a rest arc.
+                    seq_shifts.append("OFF")
+                    min_order_idx = 0
+                    continue
 
                 if prev_code == "N":
                     n_st = st_by_code["N"]
