@@ -245,7 +245,16 @@ export function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeEl = document.activeElement as HTMLElement | null;
       const activeTag = activeEl ? activeEl.tagName : '';
-      if (['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(activeTag) || activeEl?.isContentEditable) {
+      // Anything focusable that handles its own keys - including the frontier
+      // rows, which are div[role=button][tabindex=0] rather than <button> -
+      // gets the keypress to itself, so one press can't fire two actions.
+      const isFocusableWidget =
+        !!activeEl && (activeEl.getAttribute('role') === 'button' || activeEl.hasAttribute('tabindex'));
+      if (
+        ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(activeTag) ||
+        activeEl?.isContentEditable ||
+        isFocusableWidget
+      ) {
         if (e.key === 'Escape') {
           setIsShortcutsOpen(false);
           setIsAddEmpOpen(false);
