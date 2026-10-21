@@ -7,6 +7,7 @@ const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 const WAGE_MIN = 7.25;
 const WAGE_MAX = 100;
+const WAGE_ERROR = `Enter an hourly wage between $${WAGE_MIN.toFixed(2)} and $${WAGE_MAX.toFixed(2)}. Until it is in range nothing is saved.`;
 
 // A blank or out-of-bounds wage is not a number: no substitute value is ever used.
 const parseWage = (raw: string): number | null => {
@@ -323,10 +324,16 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     min={WAGE_MIN}
                     max={WAGE_MAX}
                     aria-invalid={newWage.trim() !== '' && newWageValue === null}
+                    aria-describedby={newWage.trim() !== '' && newWageValue === null ? 'staff-new-wage-error' : undefined}
                     value={newWage}
                     onChange={(e) => setNewWage(e.target.value)}
                     className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs font-mono-tabular"
                   />
+                  {newWage.trim() !== '' && newWageValue === null && (
+                    <p id="staff-new-wage-error" className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                      {WAGE_ERROR}
+                    </p>
+                  )}
                 </div>
               </div>
 

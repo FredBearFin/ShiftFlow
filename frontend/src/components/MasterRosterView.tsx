@@ -20,6 +20,8 @@ const parseWage = (raw: string): number | null => {
   return Number.isFinite(n) && n >= WAGE_MIN && n <= WAGE_MAX ? n : null;
 };
 
+const WAGE_ERROR = `Enter an hourly wage between $${WAGE_MIN.toFixed(2)} and $${WAGE_MAX.toFixed(2)}. Until it is in range nothing is saved.`;
+
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const SEPARATION_OPTIONS: { value: SeparationCategory; label: string }[] = [
@@ -400,6 +402,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           max={WAGE_MAX}
                           disabled={!emp.is_active}
                           aria-invalid={wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null}
+                          aria-describedby={
+                            wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null
+                              ? `roster-wage-${emp.employee_id}-error`
+                              : undefined
+                          }
                           value={wageDrafts[emp.employee_id] ?? String(emp.hourly_wage)}
                           onChange={(e) => {
                             const raw = e.target.value;
@@ -418,6 +425,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           }}
                           className="w-full px-2 py-1 border border-[#7F8A92] rounded-md font-mono-tabular text-xs"
                         />
+                        {wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null && (
+                          <p id={`roster-wage-${emp.employee_id}-error`} className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                            {WAGE_ERROR}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label htmlFor={`roster-line-${emp.employee_id}`} className="text-xs text-slate-500 block">Assigned Line</label>
@@ -766,10 +778,16 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     min={WAGE_MIN}
                     max={WAGE_MAX}
                     aria-invalid={newWage.trim() !== '' && newWageValue === null}
+                    aria-describedby={newWage.trim() !== '' && newWageValue === null ? 'roster-new-wage-error' : undefined}
                     value={newWage}
                     onChange={(e) => setNewWage(e.target.value)}
                     className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs font-mono-tabular"
                   />
+                  {newWage.trim() !== '' && newWageValue === null && (
+                    <p id="roster-new-wage-error" className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                      {WAGE_ERROR}
+                    </p>
+                  )}
                 </div>
               </div>
 

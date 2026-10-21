@@ -1130,6 +1130,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               </Button>
             ) : (
               <>
+                {/* The only explanation for the disabled button used to be a title
+                    on the disabled button itself: unreachable by keyboard and
+                    absent on touch. It is visible text now. */}
+                {employees.length === 0 && (
+                  <p id="finish-setup-blocked" className="max-w-xs text-xs font-semibold text-[#9F3A32]">
+                    Add at least one staff member, or choose "I'm just planning", before you can finish setup.
+                  </p>
+                )}
                 {employees.length === 0 && onPlanWithoutStaff && (
                   <Button variant="secondary" onClick={onPlanWithoutStaff}>
                     I'm just planning — no real staff yet
@@ -1138,7 +1146,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <Button
                   variant="accent"
                   disabled={employees.length === 0}
-                  title={employees.length === 0 ? 'Add at least one staff member, or choose "just planning"' : undefined}
+                  aria-describedby={employees.length === 0 ? 'finish-setup-blocked' : undefined}
                   onClick={onCompleteWizard}
                 >
                   <span>Finish setup</span>
