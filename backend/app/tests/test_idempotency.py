@@ -16,6 +16,12 @@ from app.database import get_db_connection, init_db
 from app.main import app
 from app.middleware import IN_FLIGHT_LEASE_SECONDS, IdempotencyStore
 
+# The subject of every test below. POST /api/employees is a real mutation that persists an
+# owner-scoped row, so a replay that failed to replay would show up as a duplicate
+# employee. These tests previously posted to the handover routes, which stored nothing at
+# all and so proved very little about exactly-once semantics.
+MUTATION_PATH = "/api/employees"
+
 
 class TestIdempotency(unittest.TestCase):
     """Replay and mismatch behaviour of the idempotency middleware."""
@@ -28,25 +34,20 @@ class TestIdempotency(unittest.TestCase):
     def setUp(self):
         IdempotencyStore.clear_all()
 
-    def _payload(self, task: str) -> dict:
-        return {
-            "checklist_type": "morning_to_midday",
-            "category": "Safety",
-            "task": task,
-            "responsible_shift": "Morning Shift",
-        }
+    def _payload(self, name: str) -> dict:
+        return {"facility_id": "FAC-IDEM-01", "name": name, "role": "Frontline Clerk", "wage": 16.50}
 
     def test_01_same_key_same_body_replays_response(self):
         """A retry with the same key and body returns the stored response."""
         key = "IDEM-PR1-REPLAY-001"
         headers = {"Idempotency-Key": key}
-        payload = self._payload("Check ice merchandiser")
+        payload = self._payload("Marcus Vance")
 
-        resp1 = self.client.post("/api/handover/task", json=payload, headers=headers)
+        resp1 = self.client.post(MUTATION_PATH, json=payload, headers=headers)
         self.assertEqual(resp1.status_code, 200)
         self.assertEqual(resp1.headers.get("X-Cache-Lookup"), "MISS-STORED")
 
-        resp2 = self.client.post("/api/handover/task", json=payload, headers=headers)
+        resp2 = self.client.post(MUTATION_PATH, json=payload, headers=headers)
         self.assertEqual(resp2.status_code, 200)
         self.assertEqual(resp2.headers.get("X-Cache-Lookup"), "HIT-IDEMPOTENT")
         self.assertEqual(resp2.json(), resp1.json())
@@ -56,10 +57,10 @@ class TestIdempotency(unittest.TestCase):
         key = "IDEM-PR1-MISMATCH-001"
         headers = {"Idempotency-Key": key}
 
-        resp1 = self.client.post("/api/handover/task", json=self._payload("Check ice merchandiser"), headers=headers)
+        resp1 = self.client.post(MUTATION_PATH, json=self._payload("Marcus Vance"), headers=headers)
         self.assertEqual(resp1.status_code, 200)
 
-        resp2 = self.client.post("/api/handover/task", json=self._payload("Clean coffee carafes"), headers=headers)
+        resp2 = self.client.post(MUTATION_PATH, json=self._payload("Devon Taylor"), headers=headers)
         self.assertEqual(resp2.status_code, 422)
         self.assertEqual(resp2.json()["error"], "IdempotencyKeyReuseMismatch")
         self.assertIn(key, resp2.json()["detail"])
@@ -96,7 +97,7 @@ class TestOrphanedInFlightLockRecovery(unittest.TestCase):
 
     def _start(self, key: str) -> bool:
         return IdempotencyStore.start_request(
-            key=key, method="POST", path="/api/handover/task", request_hash="hash-abc"
+            key=key, method="POST", path=MUTATION_PATH, request_hash="hash-abc"
         )
 
     def test_01_a_live_in_flight_lock_is_still_respected(self):
@@ -167,24 +168,19 @@ class TestOrphanedInFlightLockRecovery(unittest.TestCase):
         """End to end: 409 while held, then the retry succeeds once the lease lapses."""
         key = "IDEM-LEASE-HTTP-006"
         headers = {"Idempotency-Key": key}
-        payload = {
-            "checklist_type": "morning_to_midday",
-            "category": "Safety",
-            "task": "Check ice merchandiser",
-            "responsible_shift": "Morning Shift",
-        }
+        payload = {"facility_id": "FAC-IDEM-01", "name": "Marcus Vance", "role": "Frontline Clerk", "wage": 16.50}
 
         # Stand in for a request that got as far as taking the lock and then died.
         self.assertTrue(
             IdempotencyStore.start_request(
-                key=key, method="POST", path="/api/handover/task", request_hash="does-not-match"
+                key=key, method="POST", path=MUTATION_PATH, request_hash="does-not-match"
             )
         )
-        held = self.client.post("/api/handover/task", json=payload, headers=headers)
+        held = self.client.post(MUTATION_PATH, json=payload, headers=headers)
         self.assertEqual(held.status_code, 422, "a live lock with a different body is a mismatch")
 
         self._age_the_lock(key, 1.0)
-        recovered = self.client.post("/api/handover/task", json=payload, headers=headers)
+        recovered = self.client.post(MUTATION_PATH, json=payload, headers=headers)
         self.assertEqual(
             recovered.status_code,
             200,
@@ -192,7 +188,7 @@ class TestOrphanedInFlightLockRecovery(unittest.TestCase):
         )
         self.assertEqual(recovered.headers.get("X-Cache-Lookup"), "MISS-STORED")
 
-        replay = self.client.post("/api/handover/task", json=payload, headers=headers)
+        replay = self.client.post(MUTATION_PATH, json=payload, headers=headers)
         self.assertEqual(replay.status_code, 200)
         self.assertEqual(replay.headers.get("X-Cache-Lookup"), "HIT-IDEMPOTENT")
 

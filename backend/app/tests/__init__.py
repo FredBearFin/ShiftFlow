@@ -20,7 +20,6 @@ _modules = [
     "test_distributed_architecture",
     "test_idempotency",
     "test_timecard_audit",
-    "test_shift_handover",
     "test_auth",
     "test_tenant_isolation",
     "test_input_validation",

@@ -159,17 +159,15 @@ shiftflow/
 │       │   ├── pareto.py            # cost-vs-rest frontier, by re-solving
 │       │   ├── pos_sync.py          # POS sales history -> demand forecast
 │       │   ├── payroll_export.py    # payroll provider CSV export
-│       │   ├── timecard_audit.py    # timecard vs schedule audit
-│       │   └── shift_handover.py    # shift handover records
+│       │   └── timecard_audit.py    # timecard vs schedule audit
 │       ├── api/
 │       │   ├── schedule_routes.py   # /solve, /default-solution, /export-csv
 │       │   ├── archetype_routes.py  # the industry presets
 │       │   ├── employee_routes.py
 │       │   ├── auth_routes.py
 │       │   ├── pos_payroll_routes.py
-│       │   ├── handover_routes.py
 │       │   └── emergency_routes.py
-│       └── tests/              # 13 modules, all run by run_all_tests.py
+│       └── tests/              # 11 modules, all run by run_all_tests.py
 └── frontend/
     ├── Dockerfile
     ├── nginx.conf
