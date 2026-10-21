@@ -47,20 +47,7 @@ export interface PresetSolveBlocker {
  * Delete an entry here as soon as its example builds a schedule again - the
  * marker in the picker and the warning both disappear with it.
  */
-const NO_SHIFT_FITS =
-  'No shift start time and length fits these hours while the rest rules hold. ' +
-  'Add a shift, or ease a rest rule.';
-
-export const PRESET_SOLVE_BLOCKERS: Record<string, PresetSolveBlocker> = {
-  healthcare_24_7: {
-    badge: 'Needs extra setup',
-    message: NO_SHIFT_FITS,
-  },
-  manufacturing_24_7: {
-    badge: 'Needs extra setup',
-    message: NO_SHIFT_FITS,
-  },
-};
+export const PRESET_SOLVE_BLOCKERS: Record<string, PresetSolveBlocker> = {};
 
 /** Returns the known solve blocker for a preset id, or undefined when it solves. */
 export function presetSolveBlocker(id: string): PresetSolveBlocker | undefined {

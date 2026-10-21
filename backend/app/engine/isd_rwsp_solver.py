@@ -418,26 +418,42 @@ class ISDRWSPSolver:
 
         max_n = self.guardrails.max_consecutive_nights
         max_e = self.guardrails.max_consecutive_evenings
+        # Safety valve: at most this many dead-end retries per work block before
+        # concluding no ordering of the enabled templates can satisfy the guardrails.
+        max_backtracks_per_block = 2000
 
         arc_counter = 1
         for w_len, r_len in pairs:
             w_start = current_day
             w_end_next = (w_start + w_len) % 7
 
-            seq_shifts: List[str] = []
-            min_order_idx = 0
+            # Each entry is {"code": str, "choice": bool}. "choice" marks a step where a
+            # template was picked among real alternatives, as opposed to a forced closed-day
+            # "OFF" or a forced second night - only "choice" steps are worth backtracking into
+            # when a later step turns out to have no legal template.
+            history: List[Dict] = []
+            exhausted_at_step: Dict[int, set] = {}
+            backtracks = 0
 
-            for step in range(w_len):
+            step = 0
+            while step < w_len:
+                seq_shifts = [h["code"] for h in history]
                 day_g = (w_start + step) % 7
                 steps_remaining = w_len - step
                 prev_code = seq_shifts[-1] if seq_shifts else "OFF"
+                min_order_idx = (
+                    TEMPLATE_ORDER.get(prev_code, 0)
+                    if self.guardrails.enforce_forward_rotation and prev_code != "OFF"
+                    else 0
+                )
 
                 if day_g in closed_days:
                     # The business is closed this day - free rest, overriding the rotation
-                    # pattern entirely. Reset forward-rotation tracking so the next real work
-                    # day after the closure can start from any template, same as after a rest arc.
-                    seq_shifts.append("OFF")
-                    min_order_idx = 0
+                    # pattern entirely. The next real work day after the closure can start
+                    # from any template, same as after a rest arc (min_order_idx above
+                    # already resets to 0 once prev_code is "OFF").
+                    history.append({"code": "OFF", "choice": False})
+                    step += 1
                     continue
 
                 if prev_code == "N":
@@ -455,17 +471,19 @@ class ISDRWSPSolver:
                             "with the required rest between them. "
                             "Shorten the night template or relax the rest rule."
                         )
-                    seq_shifts.append("N")
+                    history.append({"code": "N", "choice": False})
                     rem_pool[(day_g, "N")] = rem_pool.get((day_g, "N"), 0) - 1
+                    step += 1
                     continue
 
+                tried = exhausted_at_step.get(step, set())
                 candidates = [
                     c
                     for c in ordered_codes
-                    if TEMPLATE_ORDER.get(c, 0) >= min_order_idx
+                    if TEMPLATE_ORDER.get(c, 0) >= min_order_idx and c not in tried
                 ]
                 if not candidates:
-                    candidates = [ordered_codes[-1]]
+                    candidates = [c for c in (ordered_codes[-1],) if c not in tried]
 
                 valid_candidates: List[str] = []
                 for cand in candidates:
@@ -504,10 +522,43 @@ class ISDRWSPSolver:
                     valid_candidates.append(cand)
 
                 if not valid_candidates:
-                    raise SolverInfeasibleError(
-                        "No template satisfies the rest and rotation rules for this demand. "
-                        "Add templates or relax the guardrails."
-                    )
+                    # Dead end: whatever was picked at an earlier free-choice step left this
+                    # step with no legal template. Backtrack to that step, rule out the
+                    # choice that led here, and replay forward from there instead of failing
+                    # outright - the greedy pass otherwise paints itself into corners (e.g.
+                    # picking three evenings in a row for demand reasons, then having nothing
+                    # left for the block's last day).
+                    backtracks += 1
+                    if backtracks > max_backtracks_per_block:
+                        raise SolverInfeasibleError(
+                            "No combination of templates satisfies the rest and rotation "
+                            "rules for this demand. Add templates or relax the guardrails."
+                        )
+                    retried_step: Optional[int] = None
+                    while history:
+                        popped_idx = len(history) - 1
+                        popped = history.pop()
+                        popped_day_g = (w_start + popped_idx) % 7
+                        if popped["code"] != "OFF":
+                            rem_pool[(popped_day_g, popped["code"])] = (
+                                rem_pool.get((popped_day_g, popped["code"]), 0) + 1
+                            )
+                        if popped["choice"]:
+                            exhausted_at_step.setdefault(popped_idx, set()).add(
+                                popped["code"]
+                            )
+                            retried_step = popped_idx
+                            break
+                    if retried_step is None:
+                        raise SolverInfeasibleError(
+                            "No combination of templates satisfies the rest and rotation "
+                            "rules for this demand. Add templates or relax the guardrails."
+                        )
+                    for k in list(exhausted_at_step.keys()):
+                        if k > retried_step:
+                            del exhausted_at_step[k]
+                    step = retried_step
+                    continue
 
                 best_code = valid_candidates[0]
                 best_demand_score = -1e9
@@ -521,10 +572,11 @@ class ISDRWSPSolver:
                         best_demand_score = score
                         best_code = cand
 
-                seq_shifts.append(best_code)
+                history.append({"code": best_code, "choice": True})
                 rem_pool[(day_g, best_code)] = rem_pool.get((day_g, best_code), 0) - 1
-                if self.guardrails.enforce_forward_rotation:
-                    min_order_idx = TEMPLATE_ORDER.get(best_code, 0)
+                step += 1
+
+            seq_shifts = [h["code"] for h in history]
 
             w_pen_info = evaluate_work_sequence_penalty(w_start, seq_shifts)
             raw_arcs.append(

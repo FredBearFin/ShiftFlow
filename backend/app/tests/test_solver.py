@@ -154,13 +154,14 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
             self.assertNotEqual(curr_arc["arc_type"], next_arc["arc_type"])
 
     def test_05_all_five_archetypes_solve_and_satisfy_constraints(self) -> None:
-        """Verify each archetype either solves to a valid schedule or is reported infeasible.
+        """Verify every archetype solves to a valid, constraint-satisfying schedule.
 
-        Healthcare and manufacturing templates cannot meet the rest and rotation rules for
-        their demand. The solver now reports that instead of relaxing the rules, so those two
-        must raise SolverInfeasibleError.
+        Healthcare and manufacturing used to be reported infeasible: the greedy shift
+        assignment had no backtracking, so it could pick itself into a corner (e.g. three
+        evenings in a row to match demand, leaving no legal template for the block's last
+        day) and give up instead of trying a different earlier choice. The solver now
+        backtracks past dead ends, so all archetypes solve.
         """
-        infeasible_archetypes = {"healthcare_24_7", "manufacturing_24_7"}
         for arch_id, preset in ARCHETYPE_PRESETS.items():
             req = SolveRequestSchema(
                 archetype_id=arch_id,
@@ -170,10 +171,6 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
                 guardrails=preset.guardrails,
                 pareto_leeway_pct=preset.default_leeway_pct,
             )
-            if arch_id in infeasible_archetypes:
-                with self.assertRaises(SolverInfeasibleError):
-                    ISDRWSPSolver(req).solve()
-                continue
             sol = ISDRWSPSolver(req).solve()
             self.assertTrue(sol.eulerian_valid, f"Archetype {arch_id} failed Eulerian check")
             self.assertEqual(sol.ergonomics_audit.clopening_violations, 0)

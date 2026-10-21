@@ -92,11 +92,18 @@ function presetButton(sector: string): HTMLElement {
 describe('OnboardingWizard preset solve failures', () => {
   beforeEach(() => {
     window.localStorage.setItem(TOUR_DONE_KEY, '1');
+    // No archetype ships broken today - inject a synthetic blocker so this suite can still
+    // exercise the warning mechanism itself.
+    PRESET_SOLVE_BLOCKERS[BLOCKED_ID] = {
+      badge: 'Needs extra setup',
+      message: 'No shift start time and length fits these hours while the rest rules hold.',
+    };
   });
 
   afterEach(() => {
     cleanup();
     window.localStorage.clear();
+    delete PRESET_SOLVE_BLOCKERS[BLOCKED_ID];
   });
 
   it('marks a preset the engine cannot schedule in the picker itself', () => {
