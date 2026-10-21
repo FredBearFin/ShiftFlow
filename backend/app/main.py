@@ -6,6 +6,7 @@ from datetime import datetime
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.api.archetype_routes import router as archetype_router
 from app.api.schedule_routes import router as schedule_router
 from app.api.employee_routes import router as employee_router
@@ -113,13 +114,7 @@ def health_check() -> dict:
         "app_name": settings.app_name,
         "version": settings.version,
         "environment": "production",
-        "supported_archetypes": [
-            "24_7_continuous_retail",
-            "18_6_extended_retail",
-            "16_7_two_shift_retail",
-            "14_5_weekday_commercial",
-            "12_7_split_crew_retail",
-        ],
+        "supported_archetypes": list(ARCHETYPE_PRESETS.keys()),
         "default_safe_rest_hours": 16.0,
         "clopening_forbidden": True,
     }
