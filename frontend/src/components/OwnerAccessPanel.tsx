@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createOwnerInviteApi, listOwnerInvitesApi, OwnerInviteRecord } from '../services/api';
 
 interface OwnerAccessPanelProps {
@@ -19,6 +19,23 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
   const [lastLink, setLastLink] = useState<string | null>(null);
   const [invites, setInvites] = useState<OwnerInviteRecord[]>([]);
   const [expanded, setExpanded] = useState(false);
+
+  // Expanding/collapsing swaps in a whole different subtree, removing whichever button
+  // was just clicked ("Invite an owner" or "Collapse") from the DOM. Left alone, that
+  // drops focus to the document body. Move it to the newly-revealed heading on expand,
+  // and back to the trigger button on collapse - skipped on the very first render so
+  // mounting the panel doesn't itself steal focus.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const hasMountedRef = useRef(false);
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (expanded) headingRef.current?.focus();
+    else triggerRef.current?.focus();
+  }, [expanded]);
 
   const loadInvites = () => {
     listOwnerInvitesApi(facilityId)
@@ -62,6 +79,7 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
           </p>
         </div>
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setExpanded(true)}
           className="px-3 py-1.5 rounded-md border border-[#7F8A92] bg-white text-xs font-semibold text-[#2B3A42] hover:bg-[#F4F1EA]"
@@ -79,7 +97,11 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
           <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
             Business continuity
           </span>
-          <h3 className="text-sm font-bold text-slate-900 mt-0.5">Invite a business owner</h3>
+          {/* h2, not h3: this panel renders before StaffDirectoryView's own "Your team,
+              their days off..." h2, so h3 here would skip a heading level in the outline. */}
+          <h2 ref={headingRef} tabIndex={-1} className="text-sm font-bold text-slate-900 mt-0.5 focus:outline-none">
+            Invite a business owner
+          </h2>
           <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
             An owner signs in with their own email and password, separate from yours. They get a
             quick-glance labor-cost summary, and can open the same full scheduling tool you use
@@ -135,6 +157,7 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
           </p>
           <input
             readOnly
+            aria-label="Invite link to copy and send to the owner"
             value={lastLink}
             onFocus={(e) => e.currentTarget.select()}
             className="w-full px-2 py-1.5 border border-amber-300 rounded bg-white text-xs font-mono"
@@ -153,7 +176,7 @@ export const OwnerAccessPanel: React.FC<OwnerAccessPanelProps> = ({ facilityId }
                   className={`font-semibold px-1.5 py-0.5 rounded ${
                     inv.accepted_at
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                      : 'bg-slate-100 text-slate-500 border border-slate-200'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200'
                   }`}
                 >
                   {inv.accepted_at ? 'Accepted' : 'Invited — not yet accepted'}

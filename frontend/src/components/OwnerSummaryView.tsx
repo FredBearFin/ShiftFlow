@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { fetchOwnerFacilitySummaryApi, OwnerFacilitySummary, OwnerLink } from '../services/api';
 
 interface OwnerSummaryViewProps {
@@ -25,6 +25,15 @@ export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLog
   const [summary, setSummary] = useState<OwnerFacilitySummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // The owner arrives here either straight from login or right after accepting their
+  // invite (OwnerAcceptView's onAccepted swaps the whole screen to this one) - either way
+  // it is a full view change with no browser navigation to re-orient a screen reader user.
+  // Move focus to this view's own heading on mount, the same way OnboardingWizard moves
+  // focus into a dialog when it opens.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -54,7 +63,9 @@ export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLog
             SF
           </div>
           <div>
-            <h1 className="text-sm font-bold">ShiftFlow Studio — Owner view</h1>
+            <h1 ref={headingRef} tabIndex={-1} className="text-sm font-bold focus:outline-none">
+              ShiftFlow Studio — Owner view
+            </h1>
             <p className="text-xs text-slate-500">Quick-glance summary, with full access available below</p>
           </div>
         </div>
@@ -88,6 +99,10 @@ export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLog
           </div>
         )}
 
+        {/* Polite live region: switching the facility select above re-fetches and swaps
+            this whole block without moving focus off the select, so without this a screen
+            reader user would hear nothing when the numbers for the new facility arrive. */}
+        <div aria-live="polite">
         {error && (
           <div role="alert" className="rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             {error}
@@ -95,7 +110,9 @@ export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLog
         )}
 
         {loading && !summary && (
-          <div className="enterprise-card p-10 text-center text-sm text-slate-500">Loading summary…</div>
+          <div role="status" className="enterprise-card p-10 text-center text-sm text-slate-500">
+            Loading summary…
+          </div>
         )}
 
         {summary && (
@@ -143,6 +160,7 @@ export const OwnerSummaryView: React.FC<OwnerSummaryViewProps> = ({ links, onLog
             </p>
           </div>
         )}
+        </div>
       </main>
     </div>
   );

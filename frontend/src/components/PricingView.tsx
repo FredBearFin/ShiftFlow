@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { BillingPlanId, BillingSignupInput, BillingSignupResult } from '../types';
 
 interface PlanDef {
@@ -68,6 +68,23 @@ export const PricingView: React.FC<PricingViewProps> = ({ onStartPlan, onSignInI
 
   const plan = PLANS.find((p) => p.id === selectedPlan)!;
 
+  // Both "Start my <plan> plan" and "Back to plans" remove the clicked button from the
+  // DOM when the step switches, which otherwise drops focus to the document body. Move
+  // it to the new step's heading instead, the same way OnboardingWizard's step changes
+  // and FirstRunTour do. Skipped on the very first render so initial mount doesn't steal
+  // focus from wherever the page load naturally put it.
+  const plansHeadingRef = useRef<HTMLHeadingElement>(null);
+  const checkoutHeadingRef = useRef<HTMLHeadingElement>(null);
+  const hasMountedRef = useRef(false);
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (step === 'plans') plansHeadingRef.current?.focus();
+    else checkoutHeadingRef.current?.focus();
+  }, [step]);
+
   const choosePlan = (id: BillingPlanId) => {
     setSelectedPlan(id);
     setError(null);
@@ -104,7 +121,9 @@ export const PricingView: React.FC<PricingViewProps> = ({ onStartPlan, onSignInI
         {step === 'plans' && (
           <>
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold">Simple pricing, no sales calls</h2>
+              <h2 ref={plansHeadingRef} tabIndex={-1} className="text-2xl font-bold focus:outline-none">
+                Simple pricing, no sales calls
+              </h2>
               <p className="mt-2 text-sm text-slate-600">
                 Credit-card-free preview: pick a plan below and you're straight into the app.
               </p>
@@ -167,9 +186,13 @@ export const PricingView: React.FC<PricingViewProps> = ({ onStartPlan, onSignInI
 
             <form onSubmit={handleSubmit} className="enterprise-card p-6 space-y-4">
               <div>
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                <h2
+                  ref={checkoutHeadingRef}
+                  tabIndex={-1}
+                  className="text-xs font-semibold text-slate-500 uppercase tracking-wide focus:outline-none"
+                >
                   {plan.name} plan
-                </p>
+                </h2>
                 <p className="text-sm text-slate-600">
                   {plan.price}/mo {plan.priceDetail}
                 </p>
@@ -198,7 +221,6 @@ export const PricingView: React.FC<PricingViewProps> = ({ onStartPlan, onSignInI
                 <input
                   id="checkoutEmail"
                   type="email"
-                  autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B3A42]/30"

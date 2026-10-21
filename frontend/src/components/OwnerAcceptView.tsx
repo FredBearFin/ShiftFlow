@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { acceptOwnerInviteApi, logoutApi, OwnerInvitePreview, previewOwnerInviteApi } from '../services/api';
 
 interface OwnerAcceptViewProps {
@@ -20,6 +20,14 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loggingOut, setLoggingOut] = useState(false);
+  // This page replaces the whole screen (no header/nav), so it is effectively its own
+  // view the person has just arrived at via their invite link. Move focus to its heading
+  // on mount, the same way OwnerSummaryView does for the view this flow ends on, instead
+  // of leaving focus wherever the browser happened to put it after navigation.
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   useEffect(() => {
     previewOwnerInviteApi(token).then(({ result, error }) => {
@@ -56,13 +64,21 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#F4F1EA] text-[#2B3A42] px-4">
       <div className="w-full max-w-sm enterprise-card p-6 space-y-4">
         <div>
-          <h1 className="text-lg font-bold tracking-tight">You've been invited as an owner</h1>
+          <h1 ref={headingRef} tabIndex={-1} className="text-lg font-bold tracking-tight focus:outline-none">
+            You've been invited as an owner
+          </h1>
           <p className="text-xs text-slate-500 mt-1">
             A manager invited you to their ShiftFlow Studio facility. You'll get a
             quick-glance labor-cost summary, and can open the same full scheduling tool
             they use for it whenever you want.
           </p>
         </div>
+
+        {!preview && !previewError && (
+          <p role="status" className="text-xs text-slate-500">
+            Loading your invite…
+          </p>
+        )}
 
         {previewError && (
           <>
@@ -93,7 +109,7 @@ export const OwnerAcceptView: React.FC<OwnerAcceptViewProps> = ({ token, onAccep
 
             {preview.already_accepted ? (
               <div className="space-y-3">
-                <p className="text-xs text-slate-500">
+                <p role="status" className="text-xs text-slate-500">
                   This invite has already been accepted. Sign in with {preview.owner_email} from
                   the normal sign-in screen.
                 </p>
