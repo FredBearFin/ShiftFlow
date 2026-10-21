@@ -661,11 +661,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       {/* No "Title VII / ADA Sabbath Alert" badge: the engine never read the
                           accommodation record, so the badge was a relabelled availability
                           conflict and the Avail Alert above already reports that honestly. */}
-                      {line.fair_workweek_predictability_warning && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-white text-[#9F3A32] border border-[#9F3A32]">
-                          Predictability Pay Risk
-                        </span>
-                      )}
+                      {/* No "Predictability Pay Risk" badge: nothing here measures the
+                          advance notice that predictability pay turns on, and the flag
+                          behind it appeared and disappeared purely from stepping the
+                          viewed week. The Compliance tab says it is not assessed. */}
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
                       <span>{line.qualification_tier}</span>

@@ -71,7 +71,12 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
             Shortest gap between the end of one shift and the start of the next, anywhere in the
-            schedule. This tool never schedules less than 16 hours of rest between shifts.
+            schedule.{' '}
+            {audit.clopening_violations > 0
+              ? `This tool aims for 16 hours between shifts but does not guarantee it: ${audit.clopening_violations} gap${
+                  audit.clopening_violations === 1 ? '' : 's'
+                } in this schedule fall short.`
+              : 'This tool aims for 16 hours between shifts; no gap in this schedule falls short of it.'}
           </p>
         </div>
 

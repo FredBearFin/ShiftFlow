@@ -864,7 +864,12 @@ class ISDRWSPSolver:
                     full_weekend_off=full_wknd_off,
                     availability_conflicts_count=avail_conflicts,
                     statutory_accommodation_violation=has_statutory_violation,
-                    fair_workweek_predictability_warning=(self.rotation_week_offset > 0 and avail_conflicts > 0),
+                    # Predictability pay turns on how much notice a schedule change gave,
+                    # which nothing here measures. The old condition
+                    # (rotation_week_offset > 0 and avail_conflicts > 0) made a red legal
+                    # warning appear and disappear purely from stepping the viewed week
+                    # forward and back. It is left unset until something real backs it.
+                    fair_workweek_predictability_warning=False,
                     line_ergo_penalty=round(
                         0.0 if full_wknd_off else settings.ergo_weights.w_weekend_work,
                         2,

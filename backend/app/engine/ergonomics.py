@@ -452,6 +452,10 @@ def evaluate_ergonomics_audit(
         consolidated_rest_blocks_pct=consolidated_rest_pct,
         criteria_breakdown=criteria_breakdown,
         statutory_accommodation_violations_count=sum(1 for line in roster_lines if line.statutory_accommodation_violation),
-        fair_workweek_compliant=None,  # Fair Workweek: not assessed
+        # Fair Workweek is NOT assessed. Nothing in this engine measures advance notice,
+        # good-faith estimates, predictability pay or right-to-rest declines, so None is the
+        # only honest value. Do not set this True because the other checks pass: the
+        # compliance view renders None as "not assessed" and a boolean as a verdict.
+        fair_workweek_compliant=None,
         mandatory_rest_violations=clopening_violations,
     )
