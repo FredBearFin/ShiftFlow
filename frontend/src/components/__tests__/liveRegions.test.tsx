@@ -26,7 +26,7 @@ describe('async results announce themselves', () => {
 
     const status = screen.getByRole('status');
     expect(status.getAttribute('aria-live')).toBe('polite');
-    expect(status.textContent).toContain('Gusto Payroll CSV downloaded successfully!');
+    expect(status.textContent).toContain('Gusto CSV');
 
     vi.restoreAllMocks();
   });
@@ -38,7 +38,7 @@ describe('async results announce themselves', () => {
     render(<LaborAnalysisView solution={solutionFixture} />);
     fireEvent.click(screen.getByRole('button', { name: /ADP CSV/ }));
     vi.advanceTimersByTime(10_000);
-    expect(screen.getByRole('status').textContent).toContain('ADP Workforce Now CSV');
+    expect(screen.getByRole('status').textContent).toContain('ADP CSV');
 
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss download confirmation' }));
     expect(screen.getByRole('status').textContent).toBe('');

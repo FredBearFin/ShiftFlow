@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { SolveResponse } from '../types';
+import { SolveResponse, RosterLine } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 import { formatCurrency, formatHourlyRate } from '../utils/format';
 import { Button } from './ui/Button';
@@ -14,6 +14,75 @@ interface LaborAnalysisViewProps {
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
+/** RFC-4180 cell. The old builders wrapped names in bare quotes, which corrupted any name containing one. */
+const csvCell = (v: string | null | undefined): string => {
+  const s = v ?? '';
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+/** A rotation line is staffed only when a real person is on it. */
+const isStaffed = (l: RosterLine): boolean => Boolean(l.assigned_person && l.assigned_person.trim() !== '');
+
+/** One payable person, with the hours of every line they hold folded together. */
+export interface PayrollPerson {
+  employeeId: string;
+  name: string;
+  role: string;
+  regularHours: number;
+  overtimeHours: number;
+  hourlyWage: number | null;
+  estimatedPayroll: number | null;
+  note: string;
+  lineNumbers: number[];
+}
+
+/**
+ * Collapses the roster into one row per assigned employee.
+ *
+ * Unstaffed lines are dropped rather than exported with a blank employee ID,
+ * and a person holding more than one line is summed into a single row instead
+ * of appearing twice, which a payroll system would read as two paychecks.
+ */
+export function buildPayrollPeople(lines: RosterLine[]): PayrollPerson[] {
+  const byPerson = new Map<string, PayrollPerson>();
+  for (const l of lines) {
+    if (!isStaffed(l)) continue;
+    const name = (l.assigned_person as string).trim();
+    const key = l.assigned_employee_id || `name:${name}`;
+    const existing = byPerson.get(key);
+    const regular = isNum(l.regular_hours) ? l.regular_hours : 0;
+    const overtime = isNum(l.overtime_hours) ? l.overtime_hours : 0;
+    const payroll = isNum(l.estimated_weekly_payroll) ? l.estimated_weekly_payroll : null;
+    const wage = isNum(l.hourly_wage) ? l.hourly_wage : null;
+    if (!existing) {
+      byPerson.set(key, {
+        employeeId: l.assigned_employee_id || '',
+        name,
+        role: l.qualification_tier || '',
+        regularHours: regular,
+        overtimeHours: overtime,
+        hourlyWage: wage,
+        estimatedPayroll: payroll,
+        note: '',
+        lineNumbers: [l.line_number],
+      });
+      continue;
+    }
+    existing.regularHours += regular;
+    existing.overtimeHours += overtime;
+    existing.estimatedPayroll =
+      payroll === null && existing.estimatedPayroll === null
+        ? null
+        : (existing.estimatedPayroll ?? 0) + (payroll ?? 0);
+    // Two lines at different rates have no single hourly rate. Leave it empty
+    // rather than publishing one of the two as if it covered both.
+    if (existing.hourlyWage !== wage) existing.hourlyWage = null;
+    existing.lineNumbers.push(l.line_number);
+    existing.note = `Hours combined from rotation lines ${existing.lineNumbers.join(' + ')}`;
+  }
+  return [...byPerson.values()];
+}
+
 export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   solution,
   facilityId,
@@ -26,6 +95,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   // fall, so it cannot stand in for coverage. The hour-by-hour shortfall can.
   const uncoveredHours = solution.interval_coverage.reduce((a, c) => a + c.understaffing, 0);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [showPosUpload, setShowPosUpload] = useState(false);
 
   // A line is priced when it carries a numeric estimated payroll and a numeric hours value.
@@ -62,8 +132,61 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
     </span>
   ) : null;
 
+  // One entry per real person, not per rotation line. The old export wrote a
+  // row for every line, so seven unstaffed lines became seven rows of 30 hours
+  // against a blank employee ID — hours a payroll system would happily price.
+  const payrollPeople = React.useMemo(() => buildPayrollPeople(solution.roster_lines), [solution.roster_lines]);
+  const unassignedLineNumbers = React.useMemo(
+    () => solution.roster_lines.filter((l) => !isStaffed(l)).map((l) => l.line_number),
+    [solution.roster_lines],
+  );
+
+  /**
+   * Refuses the export, with the reason, when the roster is not payroll-ready.
+   * Returns true when the caller should stop. A CSV of hours is money: a line
+   * nobody is working means the file is either short of a person or carrying
+   * hours for one, and the supervisor has to decide which before it leaves here.
+   */
+  const blockExport = (): boolean => {
+    if (unassignedLineNumbers.length > 0) {
+      const lines = unassignedLineNumbers.join(', ');
+      setDownloadMsg(null);
+      setExportError(
+        `No payroll file was created. ${unassignedLineNumbers.length} of ${solution.roster_lines.length} ` +
+          `rotation ${unassignedLineNumbers.length === 1 ? 'line has' : 'lines have'} nobody assigned ` +
+          `(${unassignedLineNumbers.length === 1 ? 'line' : 'lines'} ${lines}). ` +
+          'Assign a staff member to each line on the Staff tab, or remove the line, then export again.',
+      );
+      return true;
+    }
+    if (payrollPeople.length === 0) {
+      setDownloadMsg(null);
+      setExportError('No payroll file was created. This schedule has no assigned staff to pay.');
+      return true;
+    }
+    setExportError(null);
+    return false;
+  };
+
+  const download = (csvContent: string, filename: string, label: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setDownloadMsg(
+      `${label}: ${payrollPeople.length} ${payrollPeople.length === 1 ? 'employee' : 'employees'} written. ` +
+        'Estimated from the schedule, not from hours worked — check it before you run payroll.',
+    );
+  };
+
   const handleDownloadGusto = () => {
-    // Generate RFC-4180 Gusto CSV client-side for immediate download
+    if (blockExport()) return;
+    // Ruling 24: no invented value. A field the solution does not carry is left empty.
     const headers = [
       'Employee ID',
       'Employee Name',
@@ -74,31 +197,25 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       'Estimated payroll ($)',
       'Notes',
     ];
-    // Ruling 24: no invented value. A field the solution does not carry is left empty.
-    const rows = solution.roster_lines.map((l) => [
-      l.assigned_employee_id || '',
-      l.assigned_person ? `"${l.assigned_person}"` : '',
-      l.qualification_tier ? `"${l.qualification_tier}"` : '',
-      l.regular_hours.toFixed(2),
-      l.overtime_hours.toFixed(2),
-      l.hourly_wage === null ? '' : l.hourly_wage.toFixed(2),
-      l.estimated_weekly_payroll === null ? '' : l.estimated_weekly_payroll.toFixed(2),
-      '',
+    const rows = payrollPeople.map((p) => [
+      csvCell(p.employeeId),
+      csvCell(p.name),
+      csvCell(p.role),
+      p.regularHours.toFixed(2),
+      p.overtimeHours.toFixed(2),
+      p.hourlyWage === null ? '' : p.hourlyWage.toFixed(2),
+      p.estimatedPayroll === null ? '' : p.estimatedPayroll.toFixed(2),
+      csvCell(p.note),
     ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `gusto_payroll_${solution.archetype_id}_wk.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setDownloadMsg('Gusto Payroll CSV downloaded successfully!');
+    download(
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n'),
+      `gusto_payroll_${solution.archetype_id}_wk.csv`,
+      'Gusto CSV',
+    );
   };
 
   const handleDownloadAdp = () => {
+    if (blockExport()) return;
     // Ruling 24: the solution carries no company code, batch ID or pay code.
     // Those columns keep their place with empty cells, and no literal is written.
     const headers = [
@@ -112,28 +229,22 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       'Shift Pay Code',
       'Gross Amount',
     ];
-    const rows = solution.roster_lines.map((l) => [
+    const rows = payrollPeople.map((p) => [
       '',
       '',
-      l.assigned_employee_id || '',
-      l.assigned_person ? `"${l.assigned_person}"` : '',
-      l.regular_hours.toFixed(2),
-      l.overtime_hours.toFixed(2),
-      l.hourly_wage === null ? '' : l.hourly_wage.toFixed(2),
+      csvCell(p.employeeId),
+      csvCell(p.name),
+      p.regularHours.toFixed(2),
+      p.overtimeHours.toFixed(2),
+      p.hourlyWage === null ? '' : p.hourlyWage.toFixed(2),
       '',
-      l.estimated_weekly_payroll === null ? '' : l.estimated_weekly_payroll.toFixed(2),
+      p.estimatedPayroll === null ? '' : p.estimatedPayroll.toFixed(2),
     ]);
-
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `adp_payroll_${solution.archetype_id}_batch.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setDownloadMsg('ADP Workforce Now CSV downloaded successfully!');
+    download(
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n'),
+      `adp_payroll_${solution.archetype_id}_batch.csv`,
+      'ADP CSV',
+    );
   };
 
   // The solver echoes back the staffing table it was given as interval_coverage's
@@ -157,15 +268,31 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             Payroll & Cost Analytics
           </span>
           <h2 className="type-section-title text-ink mt-0.5">
-            Store Labor Spend & 1-Click Payroll Integration
+            Store Labor Spend & Payroll CSV Export
           </h2>
           <p className="type-prose text-muted mt-0.5">
-            Real-time calculation distinguishing regular base wages from 1.5× overtime exposure with 1-click Gusto/ADP export.
+            Separates regular base wages from 1.5× overtime exposure. Exports a CSV laid out for Gusto or
+            ADP that you upload yourself — nothing is sent to either system from here.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           {/* Stays until dismissed: a 3s auto-dismiss gave no time to read or re-read it. */}
+          <div role="alert" aria-live="assertive">
+            {exportError && (
+              <span className="inline-flex items-start gap-2 max-w-md text-xs font-semibold text-status-risk-ink bg-status-risk-soft border border-status-risk px-3 py-1.5 rounded-lg">
+                <span>{exportError}</span>
+                <button
+                  type="button"
+                  onClick={() => setExportError(null)}
+                  aria-label="Dismiss export error"
+                  className="rounded px-1 font-bold text-status-risk-ink hover:bg-status-risk-soft"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
+          </div>
           <div role="status" aria-live="polite">
             {downloadMsg && (
               <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
