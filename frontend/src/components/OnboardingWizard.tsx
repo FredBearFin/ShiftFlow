@@ -367,8 +367,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   {!answers.runs24Hours && (
                     <div className="flex items-center gap-3 mt-1">
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Opens at</label>
+                        <label htmlFor="onboarding-opens-at" className="block text-xs text-slate-500 mb-1">Opens at</label>
                         <input
+                          id="onboarding-opens-at"
                           type="number"
                           min={0}
                           max={23}
@@ -379,8 +380,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         <span className="text-xs text-slate-400 ml-1">:00</span>
                       </div>
                       <div>
-                        <label className="block text-xs text-slate-500 mb-1">Closes at</label>
+                        <label htmlFor="onboarding-closes-at" className="block text-xs text-slate-500 mb-1">Closes at</label>
                         <input
+                          id="onboarding-closes-at"
                           type="number"
                           min={1}
                           max={24}
@@ -414,10 +416,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
                 <div className="grid grid-cols-2 gap-4 max-w-md">
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label htmlFor="onboarding-peak-staff" className="block text-xs text-slate-500 mb-1">
                       People needed at your busiest
                     </label>
                     <input
+                      id="onboarding-peak-staff"
                       type="number"
                       min={1}
                       max={100}
@@ -427,10 +430,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-500 mb-1">
+                    <label htmlFor="onboarding-min-staff" className="block text-xs text-slate-500 mb-1">
                       People needed at your quietest (while open)
                     </label>
                     <input
+                      id="onboarding-min-staff"
                       type="number"
                       min={0}
                       max={100}
@@ -1028,24 +1032,27 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <form onSubmit={submitStaffMember} className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+                      <label htmlFor="onboarding-staff-name" className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
                       <input
+                        id="onboarding-staff-name"
                         value={staffName}
                         onChange={(e) => setStaffName(e.target.value)}
                         className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Role</label>
+                      <label htmlFor="onboarding-staff-role" className="block text-xs font-semibold text-slate-600 mb-1">Role</label>
                       <input
+                        id="onboarding-staff-role"
                         value={staffRole}
                         onChange={(e) => setStaffRole(e.target.value)}
                         className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-600 mb-1">Hourly wage ($)</label>
+                      <label htmlFor="onboarding-staff-wage" className="block text-xs font-semibold text-slate-600 mb-1">Hourly wage ($)</label>
                       <input
+                        id="onboarding-staff-wage"
                         value={staffWage}
                         onChange={(e) => setStaffWage(e.target.value)}
                         placeholder="e.g. 17.50"
