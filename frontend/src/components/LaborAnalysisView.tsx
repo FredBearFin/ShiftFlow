@@ -19,6 +19,10 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
 }) => {
   const labor = solution.labor_analysis;
   const maxDayCost = Math.max(...labor.cost_per_day, 100);
+
+  // labor_efficiency_pct is a ratio of hour totals and is blind to *when* the hours
+  // fall, so it cannot stand in for coverage. The hour-by-hour shortfall can.
+  const uncoveredHours = solution.interval_coverage.reduce((a, c) => a + c.understaffing, 0);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
   const [showPosUpload, setShowPosUpload] = useState(false);
 
@@ -258,16 +262,34 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
 
         <div className="card p-4 col-span-2 lg:col-span-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
-            Required ÷ scheduled hours
+            Uncovered Hours This Week
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-indigo-700">
-              {labor.labor_efficiency_pct}%
+            <span
+              className={`text-2xl font-bold font-mono-tabular ${
+                uncoveredHours > 0 ? 'text-amber-700' : 'text-emerald-700'
+              }`}
+            >
+              {uncoveredHours}h
             </span>
-            <span className="text-xs text-slate-500">Coverage</span>
+            <span
+              className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                uncoveredHours > 0
+                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              }`}
+            >
+              {uncoveredHours > 0 ? 'Short' : 'Fully covered'}
+            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Above 100% means scheduled hours fall short of required hours{" "}
-            Floor requirements vs hours paid
+          <p className="text-xs text-slate-500 mt-1">
+            Hours where fewer people are scheduled than you asked for, added up across all 168
+            hours of the week.
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            Separately, paid hours come to {labor.labor_efficiency_pct}% of required hours. That is
+            a total-against-total ratio and takes no account of which hours they are, so it can sit
+            near 100% while the shortfall above is real.
           </p>
         </div>
       </div>
