@@ -577,11 +577,12 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="py-3 px-4 min-w-[200px]">Shift Pattern / Staff Member</th>
-                <th className="py-3 px-2 text-center">Pattern Wk</th>
+                <th scope="col" className="py-3 px-4 min-w-[200px]">Shift Pattern / Staff Member</th>
+                <th scope="col" className="py-3 px-2 text-center">Pattern Wk</th>
                 {DAYS_OF_WEEK.map((day, idx) => (
                   <th
                     key={day}
+                    scope="col"
                     className={`py-3 px-2.5 text-center ${
                       idx >= 5 ? 'bg-slate-100/80 text-slate-800' : ''
                     }`}
@@ -589,25 +590,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     {day}
                   </th>
                 ))}
-                <th className="py-3 px-3 text-right">Hours</th>
-                <th className="py-3 px-4 text-right">Weekly Payroll</th>
-              </tr>
-              <tr className="bg-amber-50/70 border-b border-slate-200 text-xs font-semibold normal-case tracking-normal text-amber-900">
-                <th className="py-2 px-4 text-left">Under-staffed hours per day</th>
-                <th className="py-2 px-2" />
-                {underByDay.map((h, idx) => (
-                  <th
-                    key={DAYS_OF_WEEK[idx]}
-                    className={`py-2 px-2.5 text-center font-mono-tabular ${
-                      idx >= 5 ? 'bg-amber-100/60' : ''
-                    }`}
-                  >
-                    {h}h
-                  </th>
-                ))}
-                <th colSpan={2} className="py-2 px-4 text-right font-mono-tabular">
-                  Week total: {totalUnderHours}h
-                </th>
+                <th scope="col" className="py-3 px-3 text-right">Hours</th>
+                <th scope="col" className="py-3 px-4 text-right">Weekly Payroll</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
@@ -616,7 +600,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   key={line.cohort_id}
                   className="hover:bg-slate-50/80 transition-colors"
                 >
-                  <td className="py-3 px-4">
+                  <th scope="row" className="py-3 px-4 text-left font-normal">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono-tabular font-bold text-xs">
                         {line.cohort_id}
@@ -649,7 +633,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       <span>•</span>
                       <span>Next Mon → Line {line.next_week_line_number}</span>
                     </div>
-                  </td>
+                  </th>
 
                   <td className="py-3 px-2 text-center">
                     <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono-tabular font-semibold text-xs">
@@ -705,6 +689,27 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 </tr>
               ))}
             </tbody>
+            {/* Understaffing is a per-day total, not a header: it belongs in the
+                foot as data, so no body cell inherits it as a column header. */}
+            <tfoot className="text-xs">
+              <tr className="bg-amber-50/70 border-t border-slate-200 font-semibold text-amber-900">
+                <th scope="row" className="py-2 px-4 text-left">Under-staffed hours per day</th>
+                <td className="py-2 px-2" />
+                {underByDay.map((h, idx) => (
+                  <td
+                    key={DAYS_OF_WEEK[idx]}
+                    className={`py-2 px-2.5 text-center font-mono-tabular ${
+                      idx >= 5 ? 'bg-amber-100/60' : ''
+                    }`}
+                  >
+                    {h}h
+                  </td>
+                ))}
+                <td colSpan={2} className="py-2 px-4 text-right font-mono-tabular">
+                  Week total: {totalUnderHours}h
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
