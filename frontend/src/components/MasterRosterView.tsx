@@ -175,11 +175,14 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Estimated Weekly Payroll
           </span>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
+          {/* The blended-wage chip pushed this row 3px past the viewport at
+              375px, scrolling the whole document. It wraps instead of
+              truncating: half a wage figure is a wrong wage figure. */}
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 min-w-0 mt-1">
+            <span className="text-2xl font-bold font-mono-tabular text-slate-900 min-w-0">
               ${solution.labor_analysis.total_payroll_cost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
-            <span className="text-xs font-mono-tabular text-slate-500">
+            <span className="text-xs font-mono-tabular text-slate-500 min-w-0">
               {solution.labor_analysis.avg_hourly_wage === null ? '' : `$${solution.labor_analysis.avg_hourly_wage.toFixed(2)}/hr`}
             </span>
           </div>
