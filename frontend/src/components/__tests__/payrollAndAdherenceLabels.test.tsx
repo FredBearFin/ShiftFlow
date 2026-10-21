@@ -34,8 +34,12 @@ function renderRoster(solution = underStaffed()) {
 describe('payroll figures state the share of the roster they priced', () => {
   it('shows the priced-lines fraction beside the roster payroll total', () => {
     renderRoster();
-    expect(screen.getByText('1 of 12 lines priced')).toBeTruthy();
-    expect(screen.getByText('$720')).toBeTruthy();
+    // The point of this test is that the priced fraction sits beside the total, so assert
+    // the pairing rather than the bare amount: after Track F unified currency formatting,
+    // $720.00 legitimately appears in more than one place in this view.
+    const fraction = screen.getByText('1 of 12 lines priced');
+    expect(fraction).toBeTruthy();
+    expect(fraction.parentElement?.textContent).toContain('$720.00');
   });
 
   it('shows the priced-lines fraction on every header payroll figure', () => {
@@ -48,8 +52,8 @@ describe('payroll figures state the share of the roster they priced', () => {
         leewayPct={10}
       />
     );
-    expect(screen.getByText(/\$720 Weekly Payroll · 1 of 12 lines priced/)).toBeTruthy();
-    expect(screen.getByText('$720 · 1/12 priced')).toBeTruthy();
+    expect(screen.getByText(/\$720\.00 Weekly Payroll · 1 of 12 lines priced/)).toBeTruthy();
+    expect(screen.getByText('$720.00 · 1/12 priced')).toBeTruthy();
     expect(screen.getByText('(1/12 priced)')).toBeTruthy();
   });
 });

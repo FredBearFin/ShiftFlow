@@ -80,6 +80,6 @@ describe('uncovered hours are a column of their own', () => {
   it('drives the payroll column from each point estimated_weekly_payroll', () => {
     renderExplorer();
     // Three identical payroll figures, one per option — not scaled by leeway.
-    expect(screen.getAllByText('$720').length).toBe(3);
+    expect(screen.getAllByText('$720.00').length).toBe(3);
   });
 });
