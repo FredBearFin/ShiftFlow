@@ -18,9 +18,21 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   const points = solution.pareto_frontier;
   const minShift = Math.min(...points.map((p) => p.obj_shift));
   const maxShift = Math.max(...points.map((p) => p.obj_shift), minShift + 10);
-  const minErgo = 0;
-  const maxErgo = Math.max(...points.map((p) => p.obj_ergo), 20);
   const knee = points.find((p) => p.is_knee_point);
+
+  // The y gridlines were computed as maxErgo * (1 - frac), which forces the
+  // scale to zero. Staff strain across a frontier typically spans a narrow
+  // band well above zero, so roughly 60% of a 450px card was empty and the
+  // curve read as far flatter than the numbers are. The axis is domained to
+  // the data with a margin instead, and the chart says so underneath rather
+  // than letting a truncated axis pass for a full one.
+  const ergoValues = points.map((p) => p.obj_ergo);
+  const ergoLow = ergoValues.length > 0 ? Math.min(...ergoValues) : 0;
+  const ergoHigh = ergoValues.length > 0 ? Math.max(...ergoValues) : 1;
+  const ergoPad = Math.max((ergoHigh - ergoLow) * 0.12, 0.5);
+  const minErgo = ergoLow - ergoPad;
+  const maxErgo = ergoHigh + ergoPad;
+  const axisStartsAtZero = minErgo <= 0;
 
   // Every payroll figure on this page prices only the lines that carry a wage.
   const lineCount = solution.roster_lines.length;
@@ -48,6 +60,94 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   const polylinePoints = points
     .map((pt) => `${toX(pt.obj_shift).toFixed(1)},${toY(pt.obj_ergo).toFixed(1)}`)
     .join(' ');
+
+  // The x axis carried no ticks and no values at all, only a centred caption.
+  // Its positions come from the solver's shift total, which several options
+  // can share, so a tick is placed at each distinct position and named for the
+  // staffing flexibility that lands there — the thing the reader is choosing
+  // between. Never for a cost: flexibility is not payroll, and each option's
+  // payroll is its own column in the table below.
+  const xTicks = Array.from(
+    points
+      .reduce((acc, pt) => {
+        const key = Math.round(toX(pt.obj_shift));
+        const at = acc.get(key);
+        if (at) at.push(pt.leeway_pct);
+        else acc.set(key, [pt.leeway_pct]);
+        return acc;
+      }, new Map<number, number[]>())
+      .entries()
+  )
+    .sort((a, b) => a[0] - b[0])
+    .map(([x, leeways], idx, all) => {
+      const low = Math.min(...leeways);
+      const high = Math.max(...leeways);
+      // A centred label on the first or last tick hangs off the plot, so the
+      // outermost two are anchored inwards instead.
+      const anchor: 'start' | 'middle' | 'end' =
+        idx === 0 && x - padL < 24 ? 'start' : idx === all.length - 1 && svgW - padR - x < 24 ? 'end' : 'middle';
+      return { x, anchor, label: low === high ? `+${low}%` : `+${low}–${high}%` };
+    });
+
+  // Five y gridlines across the domained range.
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((frac) => {
+    const value = minErgo + (maxErgo - minErgo) * (1 - frac);
+    return {
+      y: padT + plotH * frac,
+      // One decimal only when the band is too narrow for whole numbers to differ.
+      label: maxErgo - minErgo < 8 ? value.toFixed(1) : String(Math.round(value)),
+    };
+  });
+
+  /**
+   * Keeps a point's label inside the plot.
+   *
+   * Labels were drawn at a fixed (cx + 8, cy - 8), so the leftmost point —
+   * which sits at the top of the curve — pushed its label over the top edge of
+   * the chart, and coincident points stacked their labels on top of each
+   * other. Only four points are worth naming, and each one is nudged back
+   * inside the plot rather than being allowed to overrun it.
+   */
+  const LABEL_CH = 7.2; // approx. advance width of the mono digits at this size
+  function labelPlacement(cx: number, cy: number, text: string) {
+    const width = text.length * LABEL_CH;
+    // 14 clears the selected point's 11px halo rather than running into it.
+    const overflowsRight = cx + 14 + width > svgW - padR;
+    return {
+      x: overflowsRight ? Math.max(padL + 2, cx - 14) : Math.min(cx + 14, svgW - padR - width),
+      // 14 clears the ascender of the text at its own baseline.
+      y: Math.min(Math.max(cy - 10, padT + 14), padT + plotH - 4),
+      anchor: overflowsRight ? ('end' as const) : ('start' as const),
+    };
+  }
+
+  // Naming every point made them collide, and options that share a shift
+  // total sit on exactly the same coordinates, so their labels used to print
+  // on top of one another. Four points carry the story, taken in priority
+  // order, and one is dropped if its box would overlap a label already
+  // placed. The frontier list beside the chart names every option in full.
+  const labelPlacements = (() => {
+    const selected = points.find((p) => Math.abs(p.leeway_pct - selectedLeewayPct) < 0.1);
+    const candidates = [selected, knee, points[0], points[points.length - 1]].filter(
+      (p): p is ParetoPoint => p !== undefined
+    );
+    const placed: { x: number; y: number; w: number }[] = [];
+    const out = new Map<number, { x: number; y: number; anchor: 'start' | 'end'; text: string }>();
+    for (const pt of candidates) {
+      if (out.has(pt.point_index)) continue;
+      const text = `+${pt.leeway_pct}% flex`;
+      const at = labelPlacement(toX(pt.obj_shift), toY(pt.obj_ergo), text);
+      const w = text.length * LABEL_CH;
+      const left = at.anchor === 'end' ? at.x - w : at.x;
+      const collides = placed.some(
+        (b) => Math.abs(b.y - at.y) < 14 && left < b.x + b.w + 6 && b.x < left + w + 6
+      );
+      if (collides) continue;
+      placed.push({ x: left, y: at.y, w });
+      out.set(pt.point_index, { ...at, text });
+    }
+    return out;
+  })();
 
   return (
     <div className="space-y-5">
@@ -118,40 +218,64 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               viewBox={`0 0 ${svgW} ${svgH}`}
               className="w-full h-auto bg-slate-50/60 rounded-lg border border-border-control"
             >
-              {/* Horizontal Grid Lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((frac, idx) => {
-                const y = padT + plotH * frac;
-                const val = Math.round(maxErgo * (1 - frac));
-                return (
-                  <g key={idx}>
-                    <line
-                      x1={padL}
-                      y1={y}
-                      x2={svgW - padR}
-                      y2={y}
-                      stroke="#e2e8f0"
-                      strokeDasharray="4 4"
-                    />
-                    <text
-                      x={padL - 8}
-                      y={y + 4}
-                      textAnchor="end"
-                      className="text-xs fill-muted font-mono-tabular"
-                    >
-                      {val}
-                    </text>
-                  </g>
-                );
-              })}
+              {/* Horizontal grid lines, over the data's own range */}
+              {yTicks.map((tick, idx) => (
+                <g key={`y${idx}`}>
+                  <line
+                    x1={padL}
+                    y1={tick.y}
+                    x2={svgW - padR}
+                    y2={tick.y}
+                    className="stroke-border-subtle"
+                    strokeDasharray="4 4"
+                  />
+                  <text
+                    x={padL - 8}
+                    y={tick.y + 4}
+                    textAnchor="end"
+                    className="text-xs fill-muted font-mono-tabular"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
+
+              {/* X axis: a rule, a tick per distinct position, and its value */}
+              <line
+                x1={padL}
+                y1={padT + plotH}
+                x2={svgW - padR}
+                y2={padT + plotH}
+                className="stroke-border-control"
+              />
+              {xTicks.map((tick) => (
+                <g key={`x${tick.x}`}>
+                  <line
+                    x1={tick.x}
+                    y1={padT + plotH}
+                    x2={tick.x}
+                    y2={padT + plotH + 5}
+                    className="stroke-border-control"
+                  />
+                  <text
+                    x={tick.x}
+                    y={padT + plotH + 18}
+                    textAnchor={tick.anchor}
+                    className="text-xs fill-muted font-mono-tabular"
+                  >
+                    {tick.label}
+                  </text>
+                </g>
+              ))}
 
               {/* Axes Labels */}
               <text
                 x={padL + plotW / 2}
-                y={svgH - 10}
+                y={svgH - 8}
                 textAnchor="middle"
                 className="text-xs font-semibold fill-ink-soft"
               >
-                More shifts scheduled →
+                Staffing flexibility allowed · more shifts scheduled →
               </text>
               <text
                 x={16}
@@ -205,19 +329,31 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       }
                       strokeWidth="2"
                     />
-                    {(pt.is_knee_point || isSel || pt.leeway_pct === 0 || pt.leeway_pct === 10 || pt.leeway_pct === 50) && (
-                      <text
-                        x={cx + 8}
-                        y={cy - 8}
-                        className="text-xs font-mono-tabular font-bold fill-ink"
-                      >
-                        +{pt.leeway_pct}% flex · {formatCurrency(pt.estimated_weekly_payroll)}/wk · {pt.total_understaffing_hours}h uncovered
-                      </text>
-                    )}
+                    {(() => {
+                      const at = labelPlacements.get(pt.point_index);
+                      if (!at) return null;
+                      return (
+                        <text
+                          x={at.x}
+                          y={at.y}
+                          textAnchor={at.anchor}
+                          className="text-xs font-mono-tabular font-bold fill-ink"
+                        >
+                          {at.text}
+                        </text>
+                      );
+                    })()}
                   </g>
                 );
               })}
             </svg>
+            {!axisStartsAtZero && (
+              <p className="mt-1.5 text-xs text-muted">
+                The strain scale covers {ergoLow.toFixed(1)}–{ergoHigh.toFixed(1)}, the range
+                these options actually span. It does not start at zero, so the slope shows how
+                much the options differ from each other, not how large they are.
+              </p>
+            )}
           </div>
         </div>
 
