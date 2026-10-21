@@ -9,7 +9,6 @@ return the link directly in the response instead of emailing it.
 """
 
 import re
-import secrets
 import sqlite3
 import time
 
@@ -23,11 +22,11 @@ from app.auth import (
     SESSION_MAX_AGE_SECONDS,
     cookie_secure,
     create_session_cookie_value,
+    current_user_id,
     dummy_password_hash,
     ensure_auth_configured,
     hash_password,
     login_enabled,
-    session_user_id,
     signup_allowed,
     verify_password,
 )
@@ -42,6 +41,13 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # is not a standing way into the account, long enough that someone does not have to
 # finish the whole flow in one sitting.
 PASSWORD_RESET_TTL_SECONDS = 60 * 60
+
+# A placeholder user id for the decoy reset token request_password_reset below stores when
+# the requested email has no account - see that function for why. Real ids are always
+# "USR-" followed by 8 uppercase hex characters (see ShiftFlowRepository.create_user), so
+# this can never collide with one, and no user ever has this id for confirm_password_reset
+# to act on.
+_DECOY_RESET_USER_ID = "DECOY-NO-SUCH-USER"
 
 
 def _validate_password(v: str) -> str:
@@ -97,10 +103,10 @@ class PasswordResetConfirmRequest(BaseModel):
         return _validate_password(v)
 
 
-def _set_session(response: Response, user_id: str) -> None:
+def _set_session(response: Response, user_id: str, password_hash: str) -> None:
     response.set_cookie(
         SESSION_COOKIE,
-        create_session_cookie_value(user_id),
+        create_session_cookie_value(user_id, password_hash),
         max_age=SESSION_MAX_AGE_SECONDS,
         httponly=True,
         secure=cookie_secure(),
@@ -117,7 +123,7 @@ def signup(payload: SignupRequest, response: Response, db: sqlite3.Connection = 
     if repo.get_user_by_email(payload.email):
         raise HTTPException(status_code=409, detail="An account with this email already exists.")
     user = repo.create_user(payload.email, hash_password(payload.password))
-    _set_session(response, user["id"])
+    _set_session(response, user["id"], user["password_hash"])
     return {"status": "ok", "email": user["email"]}
 
 
@@ -143,7 +149,7 @@ def login(payload: LoginRequest, response: Response, db: sqlite3.Connection = De
         raise HTTPException(status_code=401, detail="Incorrect email or password.")
 
     repo.clear_login_failures(email)
-    _set_session(response, user["id"])
+    _set_session(response, user["id"], user["password_hash"])
     return {"status": "ok", "email": user["email"]}
 
 
@@ -158,7 +164,7 @@ def status(request: Request, db: sqlite3.Connection = Depends(get_db)) -> dict:
     """Tells the frontend whether a login screen is needed, and who (if anyone) is signed in."""
     if not login_enabled():
         return {"login_required": False, "logged_in": True, "email": None, "signup_allowed": False}
-    user_id = session_user_id(request.cookies.get(SESSION_COOKIE, ""))
+    user_id = current_user_id(request)
     user = ShiftFlowRepository(db).get_user_by_id(user_id) if user_id else None
     return {
         "login_required": True,
@@ -179,29 +185,29 @@ _GENERIC_RESET_CONFIRM_ERROR = "This password reset link is invalid or has expir
 @router.post("/password-reset/request")
 def request_password_reset(payload: PasswordResetRequestInput, db: sqlite3.Connection = Depends(get_db)) -> dict:
     """Starts a password reset. Never reveals whether the email has an account: the
-    response always has the same shape, and always carries a reset link that *looks*
-    usable either way.
+    response always has the same shape and the same generic message either way, and
+    never carries the actual reset token/link - this endpoint is unauthenticated and
+    callable against any email in the system, so handing the live link back to whoever
+    asked (rather than only to the account's real inbox) would let anyone who knows or
+    guesses an email take over that account. No email service is configured in this
+    environment, so the link a real deployment would email to the account holder is only
+    ever written to the server log here, readable by the operator, not the requester.
 
-    No email service is configured in this environment (see app/api/owner_routes.py for
-    the same situation with owner invites), so the link that a real deployment would
-    email to the account holder is returned directly here instead - but only a link built
-    from a token this request actually stored is ever accepted by /password-reset/confirm.
-    A request for an email with no account gets a token that was never written to
-    password_reset_tokens, so trying to use it fails with the exact same "invalid or
-    expired" response as any other bad token - never a distinct "no such account" message,
-    in the response body or in how long either branch takes (both do one user lookup and
-    one write-shaped amount of work).
+    A request for an email with no account still writes a token to
+    password_reset_tokens - keyed to a decoy id no user ever has (_DECOY_RESET_USER_ID)
+    rather than skipped outright - so trying to use it fails with the exact same "invalid
+    or expired" response as any other bad token (see confirm_password_reset), and, just as
+    importantly, so this branch pays for the same database write the real branch does:
+    an email enumeration attack doesn't need the response body to say "no such account" if
+    that branch is measurably faster, and it was, before this decoy write (same idea as
+    dummy_password_hash in app/auth.py for login).
     """
     ensure_auth_configured()
     repo = ShiftFlowRepository(db)
     email = payload.email[:254]  # bounds the lookup key the same way login() bounds its throttle key
     user = repo.get_user_by_email(email)
-    if user is not None:
-        token = repo.create_password_reset_token(user["id"], ttl_seconds=PASSWORD_RESET_TTL_SECONDS)["token"]
-    else:
-        # Same token shape and size as a real one, but never persisted - nothing will
-        # ever match it in password_reset_tokens, so it can never reset anyone's password.
-        token = secrets.token_urlsafe(32)
+    target_user_id = user["id"] if user is not None else _DECOY_RESET_USER_ID
+    token = repo.create_password_reset_token(target_user_id, ttl_seconds=PASSWORD_RESET_TTL_SECONDS)["token"]
 
     reset_path = f"/?password_reset={token}"
     # Deliberately not returned in the HTTP response: this endpoint is unauthenticated and
@@ -230,17 +236,19 @@ def request_password_reset(payload: PasswordResetRequestInput, db: sqlite3.Conne
 def confirm_password_reset(payload: PasswordResetConfirmRequest, db: sqlite3.Connection = Depends(get_db)) -> dict:
     """Completes a password reset: a valid, unexpired, unused token sets a new password.
 
-    The token is checked for existence, expiry and prior use before anything is changed,
-    and is marked used in the same request that uses it, so it cannot be replayed.
+    The token is checked for existence, expiry, prior use, and a real user to apply to
+    before anything is changed, and is marked used in the same request that uses it, so
+    it cannot be replayed. The "real user" check is what keeps a decoy token (see
+    request_password_reset's _DECOY_RESET_USER_ID) from ever reporting success - it is
+    deliberately unguessable (32 random bytes), so this is defense in depth, not the
+    primary reason it's safe.
 
-    Session invalidation note: ShiftFlow's session cookies (see app/auth.py) are
-    stateless and signed, not looked up against a server-side session store, so there is
-    no existing mechanism to revoke a specific other signed-in session's cookie without
-    building a much larger session-versioning system from scratch (e.g. tracking a
-    per-user session generation/epoch and checking it on every request). That is out of
-    scope here; this endpoint changes the password (and the old password stops working
-    for any *future* login), but a device that is already signed in before the reset
-    stays signed in afterward.
+    Session invalidation: changing the password here also invalidates every session
+    cookie issued before the change, including one an attacker stole before it - see
+    app.auth._password_fingerprint for how. A device that was already signed in before
+    the reset does not stay signed in afterward; its next request gets a 401 (or, for the
+    frontend's own polling, /api/auth/status reports logged_in: false) just like a cookie
+    for a deleted user does.
     """
     ensure_auth_configured()
     repo = ShiftFlowRepository(db)
@@ -249,6 +257,7 @@ def confirm_password_reset(payload: PasswordResetConfirmRequest, db: sqlite3.Con
         record is None
         or record["used_at"] is not None
         or float(record["expires_at"]) <= time.time()
+        or repo.get_user_by_id(record["user_id"]) is None
     ):
         raise HTTPException(status_code=400, detail=_GENERIC_RESET_CONFIRM_ERROR)
 

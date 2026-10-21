@@ -223,6 +223,33 @@ class LoginHardeningTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/employees").status_code, 401)
         self.assertEqual(self.client.get("/api/auth/status").json()["logged_in"], False)
 
+    def test_tampered_cookie_signature_is_rejected(self):
+        """Flipping one character of a real, valid session cookie's signature (or of
+        anything else it signs) must not be accepted - the HMAC must not be forgeable
+        or bypassable by partial tampering."""
+        email = unique_email("tamper")
+        client = TestClient(app, base_url="https://testserver")
+        self.assertEqual(
+            client.post("/api/auth/signup", json={"email": email, "password": "correcthorse"}).status_code, 200
+        )
+        real_cookie = client.cookies.get("shiftflow_session")
+        self.assertIsNotNone(real_cookie)
+
+        # Flip the last character of the signature.
+        tampered = real_cookie[:-1] + ("0" if real_cookie[-1] != "0" else "1")
+        attacker = TestClient(app, base_url="https://testserver")
+        attacker.cookies.set("shiftflow_session", tampered)
+        self.assertEqual(attacker.get("/api/employees").status_code, 401)
+
+        # A cookie naming a user id that was never issued one, with a garbage signature.
+        forged = "USR-DOESNOTEXIST.9999999999.0000000000000000.deadbeef" * 1
+        attacker2 = TestClient(app, base_url="https://testserver")
+        attacker2.cookies.set("shiftflow_session", forged)
+        self.assertEqual(attacker2.get("/api/employees").status_code, 401)
+
+        # The real cookie, untouched, still works.
+        self.assertEqual(client.get("/api/employees").status_code, 200)
+
     def test_signup_can_be_closed(self):
         with env(SHIFTFLOW_ALLOW_SIGNUP="false"):
             closed = self.client.post(

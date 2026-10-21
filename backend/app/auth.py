@@ -11,6 +11,12 @@ validate_auth_config) and answers every protected request with 503.
 SHIFTFLOW_SESSION_SECRET is unrelated to any user's password; it only signs
 session cookies, so rotating it just logs everyone out.
 
+Each session cookie also carries a fingerprint of the password hash that was current
+when it was issued (see _password_fingerprint/create_session_cookie_value below), so
+changing a user's password - whether via self-serve reset or any other path - invalidates
+every session cookie issued before the change on its very next request, including one an
+attacker stole before the change.
+
 Each signed-in user only sees their own facilities, staff, audits and
 rosters: see ShiftFlowRepository(owner_id=...) in app/database.py and
 get_owner_id below.
@@ -140,20 +146,41 @@ def _sign(payload: str) -> str:
     return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
 
-def create_session_cookie_value(user_id: str) -> str:
+def _password_fingerprint(password_hash: str) -> str:
+    """A one-way tag of the account's *current* password hash, embedded in the signed
+    session cookie below. It reveals nothing about the password (it is a hash of an
+    already-salted hash) but lets every request cheaply confirm the cookie was minted
+    against the password that is still active.
+
+    This is what makes a password reset actually invalidate a stolen session cookie:
+    resetting the password changes this fingerprint, so a cookie signed before the
+    reset stops matching on the very next request - see current_user_id below. Without
+    it, ShiftFlow's stateless signed cookies (see module docstring) would have no way to
+    revoke a specific session, and an attacker who stole a cookie before the account
+    holder reset their password would stay logged in after the reset, defeating the
+    whole point of resetting it.
+    """
+    return hashlib.sha256(password_hash.encode()).hexdigest()[:16]
+
+
+def create_session_cookie_value(user_id: str, password_hash: str) -> str:
     expiry = str(int(time.time()) + SESSION_MAX_AGE_SECONDS)
-    payload = f"{user_id}.{expiry}"
+    fingerprint = _password_fingerprint(password_hash)
+    payload = f"{user_id}.{expiry}.{fingerprint}"
     return f"{payload}.{_sign(payload)}"
 
 
-def session_user_id(token: str) -> Optional[str]:
-    """Returns the signed-in user's id from a valid session token, or None."""
+def _decode_session_token(token: str) -> Optional[tuple]:
+    """Verifies a session token's signature and expiry and, if valid, returns
+    (user_id, password_fingerprint). The fingerprint still has to be checked against the
+    user's *current* password hash (see current_user_id) - a valid signature only proves
+    the token was minted by this server at some point, not that it is still current."""
     parts = token.split(".")
-    if len(parts) != 3:
+    if len(parts) != 4:
         return None
-    user_id, expiry, sig = parts
+    user_id, expiry, fingerprint, sig = parts
     try:
-        expected = _sign(f"{user_id}.{expiry}")
+        expected = _sign(f"{user_id}.{expiry}.{fingerprint}")
     except RuntimeError:
         return None
     if not hmac.compare_digest(sig, expected):
@@ -163,21 +190,39 @@ def session_user_id(token: str) -> Optional[str]:
             return None
     except ValueError:
         return None
-    return user_id
+    return user_id, fingerprint
 
 
-def _user_exists(user_id: str) -> bool:
+def session_user_id(token: str) -> Optional[str]:
+    """Returns the user id a validly signed, unexpired session token names, or None.
+
+    This checks the signature and expiry only, not whether the token's password
+    fingerprint still matches the user's current password - callers that gate access to
+    data must use current_user_id, which checks both.
+    """
+    decoded = _decode_session_token(token)
+    return decoded[0] if decoded else None
+
+
+def _user_password_hash(user_id: str) -> Optional[str]:
     conn = get_db_connection()
     try:
-        return conn.execute("SELECT 1 FROM users WHERE id = ?", (user_id,)).fetchone() is not None
+        row = conn.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,)).fetchone()
+        return row[0] if row else None
     finally:
         conn.close()
 
 
 def current_user_id(request: Request) -> Optional[str]:
-    """The signed-in user's id, or None when the session is missing, forged, expired or its user was deleted."""
-    user_id = session_user_id(request.cookies.get(SESSION_COOKIE, ""))
-    if user_id is None or not _user_exists(user_id):
+    """The signed-in user's id, or None when the session is missing, forged, expired, its
+    user was deleted, or its password fingerprint no longer matches the user's current
+    password (i.e. the password was reset or changed since this cookie was issued)."""
+    decoded = _decode_session_token(request.cookies.get(SESSION_COOKIE, ""))
+    if decoded is None:
+        return None
+    user_id, fingerprint = decoded
+    password_hash = _user_password_hash(user_id)
+    if password_hash is None or not hmac.compare_digest(fingerprint, _password_fingerprint(password_hash)):
         return None
     return user_id
 

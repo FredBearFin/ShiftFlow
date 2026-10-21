@@ -19,7 +19,7 @@ import uuid
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import field_validator
+from pydantic import Field, field_validator
 
 from app.api.auth_routes import SignupRequest, _set_session
 from app.auth import ensure_auth_configured, hash_password, signup_allowed
@@ -41,7 +41,7 @@ class BillingSignupRequest(SignupRequest):
     unchanged from SignupRequest, the same rules the plain sign-up form enforces."""
 
     plan: PlanId
-    business_name: Optional[str] = None
+    business_name: Optional[str] = Field(default=None, max_length=200)
 
     @field_validator("business_name")
     @classmethod
@@ -147,7 +147,7 @@ def signup_and_start_plan(
     _ensure_billing_schema(db)
     user = repo.create_user(payload.email, hash_password(payload.password))
     billing = _start_stub_plan(db, user["id"], user["email"], payload.plan, payload.business_name)
-    _set_session(response, user["id"])
+    _set_session(response, user["id"], user["password_hash"])
 
     return {
         "status": "ok",

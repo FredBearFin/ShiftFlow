@@ -124,6 +124,40 @@ class BillingSignupTests(unittest.TestCase):
             conn.close()
         self.assertIsNone(row["business_name"])
 
+    def test_sql_metacharacters_in_business_name_are_stored_literally_not_executed(self):
+        """A business_name shaped like a SQL injection payload is stored as plain text; the
+        parameterized insert in billing_routes.py never lets it alter the query."""
+        client = TestClient(app, base_url="https://testserver")
+        email = unique_email("sqli")
+        payload_name = "Omaha'); DROP TABLE billing_signups; --"
+
+        response = client.post(
+            "/api/billing/signup",
+            json={"email": email, "password": "correcthorse", "plan": "business", "business_name": payload_name},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        conn = get_db_connection()
+        try:
+            # The table must still exist and be queryable - proof nothing was executed.
+            user_id = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()["id"]
+            row = get_billing_signup_for_user(conn, user_id)
+        finally:
+            conn.close()
+        self.assertEqual(row["business_name"], payload_name)
+
+    def test_business_name_over_200_chars_is_rejected(self):
+        response = self.client.post(
+            "/api/billing/signup",
+            json={
+                "email": unique_email("longbiz"),
+                "password": "correcthorse",
+                "plan": "business",
+                "business_name": "A" * 10_000,
+            },
+        )
+        self.assertEqual(response.status_code, 422)
+
     def test_rejects_an_unknown_plan(self):
         response = self.client.post(
             "/api/billing/signup",

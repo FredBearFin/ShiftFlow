@@ -61,10 +61,10 @@ class AcceptInviteRequest(BaseModel):
     password: Optional[str] = None
 
 
-def _set_session(response: Response, user_id: str) -> None:
+def _set_session(response: Response, user_id: str, password_hash: str) -> None:
     response.set_cookie(
         SESSION_COOKIE,
-        create_session_cookie_value(user_id),
+        create_session_cookie_value(user_id, password_hash),
         max_age=SESSION_MAX_AGE_SECONDS,
         httponly=True,
         secure=cookie_secure(),
@@ -258,5 +258,5 @@ def accept_invite(
 
     user = repo.create_user(invite["owner_email"], hash_password(payload.password))
     repo.accept_owner_invite(token, user["id"])
-    _set_session(response, user["id"])
+    _set_session(response, user["id"], user["password_hash"])
     return {"status": "created", "email": user["email"], "facility_id": invite["facility_id"]}
