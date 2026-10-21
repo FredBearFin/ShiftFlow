@@ -235,6 +235,22 @@ export interface SolveRequest {
   employees?: EmployeeRecord[];
 }
 
+/**
+ * The part of a solve request a manager enters by hand, as it is saved between
+ * sessions. Staff records live on the server; everything here - above all the 7x24
+ * staffing table, which is the longest manual task in the product - used to live only
+ * in React state and was replaced with defaults on every reload.
+ */
+export interface PersistedSolveConfig {
+  archetype_id: string;
+  facility_name: string;
+  demand_matrix: number[][];
+  templates: ShiftTemplate[];
+  guardrails: ErgonomicGuardrails;
+  pareto_leeway_pct: number;
+  rotation_week_offset: number;
+}
+
 export interface SolveResponse {
   instance_name: string;
   archetype_id: string;
