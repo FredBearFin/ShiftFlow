@@ -56,9 +56,15 @@ export function BardPanel({ stepId, className }: BardPanelProps) {
 
   return (
     <section className={wrapperClass}>
-      <div aria-live="polite">
+      <div>
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-base font-bold text-indigo-900">{lesson.title}</h2>
+          {/* aria-live sat on this whole wrapper, so toggling "Hide the guide"
+              re-announced the entire lesson (779 characters, measured). It is
+              on the title alone now: changing step announces which guide you
+              are on, and collapsing says nothing, since the toggle's
+              aria-expanded already carries that. The heading is an h3 to sit
+              beside the step it belongs to, not above it. */}
+          <h3 aria-live="polite" className="text-base font-bold text-indigo-900">{lesson.title}</h3>
           <button
             type="button"
             aria-expanded={!hidden}

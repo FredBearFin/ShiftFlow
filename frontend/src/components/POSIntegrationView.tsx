@@ -63,10 +63,15 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
           The file needs columns for the amount, day of week and hour of day. The server reads the rows and rebuilds the demand table for this facility.
         </p>
 
+        {/* The aria-label was the only label: nothing on screen named this
+            field. CONSTITUTION 7 asks for a visible one. */}
+        <label htmlFor="pos-csv-file" className="block text-xs font-semibold text-slate-700">
+          POS export CSV file
+        </label>
         <input
+          id="pos-csv-file"
           type="file"
           accept=".csv,text/csv"
-          aria-label="POS export CSV file"
           onChange={(e) => {
             setFile(e.target.files?.[0] ?? null);
             setResult(null);
