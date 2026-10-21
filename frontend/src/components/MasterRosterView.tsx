@@ -674,11 +674,18 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         <span className="font-mono-tabular font-bold text-xs">
                           {cell.shift_code}
                         </span>
-                        <span className="text-xs opacity-85 font-mono-tabular mt-0.5">
+                        {/* The time window is half of what makes these pills
+                            readable without colour, so it is not dimmed:
+                            opacity-85 put it at 3.98:1 on the evening step and
+                            was already under 4.5:1 on OFF before this. */}
+                        <span className="text-xs font-mono-tabular mt-0.5">
                           {cell.shift_code === 'OFF' ? 'Rest' : cell.time_window}
                         </span>
                         {cell.availability_conflict && (
-                          <span className="text-[9px] font-bold uppercase tracking-wide text-amber-900 mt-0.5">
+                          // Carries its own background: the pill under it now
+                          // runs from 91% to 8% luminance, and no single text
+                          // colour clears 4.5:1 across that whole range.
+                          <span className="text-[9px] font-bold uppercase tracking-wide bg-status-watch-strong text-card rounded px-1 mt-0.5">
                             ! Conflict
                           </span>
                         )}

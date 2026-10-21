@@ -85,6 +85,29 @@
   --status-watch-mid: #EED7B8;
   --status-watch-mid-ink: #6B4A1C;
   --status-watch-strong: #805722;
+
+  /* Shift pills: a day-to-night sequential ramp, one step per shift code in
+     start-time order. The four fills used to be #E4E9EC / #FFFFFF / #F4F1EA /
+     #D9DFE3 — 26.9 points of relative luminance, with the ramp not even
+     monotonic — so in a 12x7 grid only the letter told a night from a
+     morning and the rotation pattern was invisible. These span 77.1 points
+     and darken monotonically with the shift's start time, so the pattern
+     reads as a texture before any letter is parsed.
+
+     Measured (fill vs. its text token, sRGB WCAG 2.1):
+       M  morning  #E8EEF2 on --ink   10.04:1   (84.7% luminance)
+       D  midday   #CBD6DE on --ink    7.96:1   (66.1%)
+       E  evening  #9DB0BE on --ink    5.25:1   (41.9%)
+       N  night    #375162 on --card   8.35:1   ( 7.6%)
+       OFF         #FFFFFF on --muted  5.79:1   (100%)
+     The dead band between 18.3% and 35.2% luminance, where neither --ink nor
+     --card reaches 4.5:1, is skipped: the ramp steps over it from E to N.
+     M stops 15.3 points short of white so it does not read as the untinted
+     OFF pill next to it. */
+  --shift-m: #E8EEF2;
+  --shift-d: #CBD6DE;
+  --shift-e: #9DB0BE;
+  --shift-n: #375162;
 }
 
 body {
@@ -156,28 +179,31 @@ kbd {
   border-radius: 0.5rem;
 }
 
-/* Neutral shift pills (dual-encoded: fill + label; OFF is dashed) */
+/* Shift pills on the day-to-night ramp above. Still triple-encoded: fill,
+   letter and time window, so the colour is never the only thing carrying the
+   shift type. OFF keeps its dashed border, which is already the most scannable
+   thing in the grid. */
 .shift-pill-M {
-  background-color: var(--surface-sunken);
+  background-color: var(--shift-m);
   color: var(--ink);
   border: 1px solid var(--border-control);
 }
 
 .shift-pill-D {
-  background-color: var(--card);
+  background-color: var(--shift-d);
   color: var(--ink);
   border: 1px solid var(--border-control);
 }
 
 .shift-pill-E {
-  background-color: var(--canvas);
+  background-color: var(--shift-e);
   color: var(--ink);
   border: 1px solid var(--border-control);
 }
 
 .shift-pill-N {
-  background-color: var(--surface-sunken-strong);
-  color: var(--ink);
+  background-color: var(--shift-n);
+  color: var(--card);
   border: 1px solid var(--border-control);
 }
 
