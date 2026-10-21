@@ -123,14 +123,14 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
-              Workforce Management
+              Staff & Availability
             </span>
           </div>
           <h2 className="text-base font-bold text-slate-900 mt-0.5">
-            Staff Directory, Availability Matrix & Statutory Protections
+            Your team, their days off, and who's left the job
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Manage associate availability with hard religious/medical statutory constraints and legally documented separation workflows.
+            Set which days each person truly can't work, and keep a record when someone leaves.
           </p>
         </div>
 
@@ -184,11 +184,17 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                           : 'bg-red-50 text-[#9F3A32] border border-red-200'
                       }`}
                     >
-                      {emp.is_active ? 'Active' : 'Separated'}
+                      {emp.is_active ? 'Active' : 'Not active'}
                     </span>
                     {emp.accommodation_type && emp.accommodation_type !== 'none' && (
                       <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#5C6770] border border-[#7F8A92] capitalize">
-                        {emp.accommodation_type === 'religious' ? 'Sabbath accom.' : `${emp.accommodation_type} Accom.`}
+                        {emp.accommodation_type === 'religious'
+                          ? 'Religious observance'
+                          : emp.accommodation_type === 'medical'
+                          ? 'Medical restriction'
+                          : emp.accommodation_type === 'academic'
+                          ? 'School schedule'
+                          : `${emp.accommodation_type}`}
                       </span>
                     )}
                   </div>
@@ -260,7 +266,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
                 {emp.statutory_notes && (
                   <div className="mt-2 text-xs text-slate-500 italic bg-slate-50 p-1.5 rounded border border-slate-200 no-print">
-                    Doc: {emp.statutory_notes}
+                    Note: {emp.statutory_notes}
                   </div>
                 )}
               </div>
@@ -279,7 +285,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     }}
                     className="px-3 py-1 rounded-md text-xs font-semibold bg-[#9F3A32] text-[#FFFFFF] hover:bg-[#862F28] border border-[#9F3A32] transition-colors"
                   >
-                    Separate / Deactivate
+                    Remove from staff
                   </button>
                 ) : (
                   <button
@@ -287,7 +293,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     onClick={() => onToggleActive(emp.employee_id)}
                     className="px-3 py-1 rounded-md text-xs font-semibold bg-[#FFFFFF] text-[#2B3A42] hover:bg-[#F4F1EA] border border-[#7F8A92] transition-colors"
                   >
-                    Rehire Associate
+                    Add back to staff
                   </button>
                 )}
               </div>
@@ -296,7 +302,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
         })}
       </div>
 
-      {/* Add Employee Modal with Title VII/ADA Selector */}
+      {/* Add Employee Modal, including the "days they can't work" selector */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
@@ -343,27 +349,27 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
               </div>
 
-              {/* Title VII & ADA Statutory Protections */}
+              {/* Days they truly can't work - the scheduler treats this as a hard rule, not a preference */}
               <div>
                 <label htmlFor="staff-new-accom" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Statutory Accommodation Protection (Title VII / ADA)
+                  Days they truly can't work
                 </label>
                 <select id="staff-new-accom"
                   value={newAccom}
                   onChange={(e) => setNewAccom(e.target.value as AccommodationType)}
                   className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs bg-white"
                 >
-                  <option value="none">Standard Associate (No Statutory Exclusions)</option>
-                  <option value="religious">Religious Observance (Sabbath — Hard Invariant)</option>
-                  <option value="medical">Medical Restriction (ADA Certified — Hard Invariant)</option>
-                  <option value="academic">Academic Schedule (Student Class Exclusions)</option>
+                  <option value="none">No special restrictions</option>
+                  <option value="religious">Religious observance (can't be scheduled)</option>
+                  <option value="medical">Medical restriction (can't be scheduled)</option>
+                  <option value="academic">School/class schedule (can't be scheduled)</option>
                 </select>
               </div>
 
               {newAccom !== 'none' && (
                 <div>
                   <label htmlFor="staff-new-notes" className="block text-xs font-semibold text-slate-700 mb-1">
-                    Documentation Notes (Confidential HR Record)
+                    Notes (kept private, for your records)
                   </label>
                   <input id="staff-new-notes"
                     type="text"
@@ -420,17 +426,17 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
         </div>
       )}
 
-      {/* Structured Legal Separation Modal (Retaliation Defense) */}
+      {/* Remove-from-staff modal, with a record of why/when kept for your protection */}
       {separatingEmp && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div ref={separationDialogRef} role="dialog" aria-modal="true" aria-labelledby="separation-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-lg w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
-                  Contemporaneous HR Separation Audit
+                  Remove from staff
                 </span>
                 <h3 id="separation-title" className="text-base font-bold text-slate-900">
-                  Deactivate / Separate: {separatingEmp.name}
+                  Remove {separatingEmp.name} from staff
                 </h3>
               </div>
               <button type="button" aria-label="Close" onClick={() => setSeparatingEmp(null)} className="text-slate-400 font-bold">
@@ -438,49 +444,49 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               </button>
             </div>
 
-            {/* Legal Warning Notice */}
+            {/* Warning: protects against claims of retaliatory firing */}
             <div className="p-3 bg-white border border-[#7F8A92] border-l-4 border-l-[#C28B47] rounded-lg text-xs text-[#2B3A42] space-y-1">
               <span className="font-bold flex items-center gap-1.5 text-[#2B3A42]">
-                ⚠ Legal Compliance Notice (FLSA § 15(a)(3) & Title VII § 704(a))
+                ⚠ Before you continue
               </span>
               <p className="text-xs leading-relaxed">
-                Separating an employee in retaliation for wage complaints, injury reports, or statutory accommodation requests is strictly unlawful. This entry will be permanently logged in the SQLite audit ledger with a timestamp to establish contemporaneous evidence.
+                Don't let someone go because they complained about pay, reported an injury, or asked for time off they're entitled to — that can get you sued. We'll save the reason and the time below, so you have a record of why this happened.
               </p>
             </div>
 
             <div className="space-y-3">
               <div>
                 <label htmlFor="staff-sep-category" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Separation Classification
+                  Why are they leaving?
                 </label>
                 <select id="staff-sep-category"
                   value={sepCategory}
                   onChange={(e) => setSepCategory(e.target.value as SeparationCategory)}
                   className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs bg-white"
                 >
-                  <option value="voluntary_resignation">Voluntary Resignation (Employee notice/departure)</option>
-                  <option value="mutual_agreement">Mutual Separation (Agreed end of contract)</option>
-                  <option value="involuntary_for_cause">Involuntary for Documented Cause (Policy violations)</option>
-                  <option value="layoff_reduction">Workforce Reduction / Staff Downsizing</option>
+                  <option value="voluntary_resignation">They quit / gave notice</option>
+                  <option value="mutual_agreement">Mutual decision to part ways</option>
+                  <option value="involuntary_for_cause">Fired for a specific reason</option>
+                  <option value="layoff_reduction">Layoff / cutting back on staff</option>
                 </select>
               </div>
 
               <div>
                 <label htmlFor="staff-sep-reason" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Contemporaneous Business Justification & Notes
+                  What happened
                 </label>
                 <textarea id="staff-sep-reason"
                   rows={3}
                   value={sepReason}
                   onChange={(e) => setSepReason(e.target.value)}
-                  placeholder="Document specific business rationale, prior warnings, or resignation details..."
+                  placeholder="e.g., prior warnings given, or details on how they resigned..."
                   className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
                 />
               </div>
 
               <div>
                 <label htmlFor="staff-sep-recorded-by" className="block text-xs font-semibold text-slate-700 mb-1">
-                  Certifying Manager / Administrator
+                  Your name
                 </label>
                 <input id="staff-sep-recorded-by"
                   type="text"
@@ -505,7 +511,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 disabled={!sepFormValid}
                 className="px-4 py-2 bg-[#9F3A32] hover:bg-[#862F28] text-[#FFFFFF] rounded-md text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
               >
-                Log Separation & Unbind Line
+                Confirm removal
               </button>
             </div>
           </div>

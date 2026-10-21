@@ -11,7 +11,8 @@ ShiftFlow has two tiers, matching the two funnels in the GTM model: a self-serve
 
 **What each tier includes:**
 - **Personal** ($9–15/mo): fair rotating schedule generation, fatigue/rest-gap checks between closing and opening shifts, labor cost and overtime visibility, crew availability tracking, print/CSV export. Single manager, single location.
-- **Business** ($20–50/mo per location): everything in Personal, plus multiple manager seats at the same location, the schedule and crew setup living on the business account instead of one person's login, and billing/ownership continuity if the manager who originally set it up leaves.
+- **Business** ($20–50/mo per location): today, this is functionally the same single-manager, single-login account as Personal — the higher price is a different checkout bucket, not a different feature set yet. Multiple manager seats sharing one business-owned account, and schedule/crew data living on that account so it automatically survives a manager's departure, are the intended design for this tier but are **not yet built** (there is no multi-user facility model in the product today, and a Business-tier signup creates a brand-new, empty account rather than taking over an existing manager's data).
+- **What is built today, on any tier**: the *Invite an owner* feature gives the business owner their own separate login and a **read-only** labor-cost summary (current active staff, estimated weekly payroll/hours, average wage) for the facility. That login persists even if the manager's own login is later deleted, which is a real continuity win — but it is visibility only. It does not move billing, and it does not give the owner write access to the schedule.
 
 There is intentionally no per-seat enterprise tier, no multi-location rollup pricing, and no custom contract tier at this stage. If a multi-location chain or enterprise account inquires, that is out of scope for the current wedge, not a product gap to fill.
 
