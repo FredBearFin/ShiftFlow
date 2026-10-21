@@ -140,8 +140,10 @@ shiftflow/
 │       ├── schemas.py          # every request and response model
 │       ├── database.py         # SQLite schema and the per-owner repository
 │       ├── auth.py             # session cookie signing and verification
-│       ├── middleware.py       # idempotency, rate limiting, request ids
-│       ├── resilience.py       # circuit breaker, DB retry, solver fallback
+│       ├── middleware.py       # idempotency keys and in-flight lock recovery
+│       ├── deps.py             # per-user scoped repository dependency
+│       ├── create_user.py      # CLI: create an account
+│       ├── claim_legacy_data.py # CLI: assign pre-accounts data to an owner
 │       ├── engine/
 │       │   ├── isd_rwsp_solver.py   # steps 1-5 above
 │       │   ├── ergonomics.py        # the 8 workload checks

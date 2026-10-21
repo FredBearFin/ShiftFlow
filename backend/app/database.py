@@ -176,7 +176,12 @@ def init_db() -> None:
         response_body TEXT,
         in_flight INTEGER NOT NULL DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at REAL
+        expires_at REAL,
+        -- When the in-flight LOCK on this key expires, as distinct from expires_at, which
+        -- is when the stored response stops being replayable. A row still marked in_flight
+        -- past this time belonged to a process that died, and the lock is reclaimed. See
+        -- IN_FLIGHT_LEASE_SECONDS in app/middleware.py.
+        in_flight_expires_at REAL
     );
     """)
 
@@ -196,6 +201,15 @@ def init_db() -> None:
     for column, definition in employee_column_additions.items():
         if column not in existing_employee_columns:
             cursor.execute(f"ALTER TABLE employees ADD COLUMN {column} {definition}")
+
+    # Same for the in-flight lock lease on an existing idempotency table. Rows already
+    # present get NULL, which app/middleware.py falls back to the record's own start time
+    # for, so an orphan written before this column existed is still recoverable.
+    existing_idempotency_columns = {
+        row[1] for row in cursor.execute("PRAGMA table_info(idempotency_records)").fetchall()
+    }
+    if "in_flight_expires_at" not in existing_idempotency_columns:
+        cursor.execute("ALTER TABLE idempotency_records ADD COLUMN in_flight_expires_at REAL")
 
     conn.commit()
     conn.close()

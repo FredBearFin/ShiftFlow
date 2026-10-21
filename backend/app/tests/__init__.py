@@ -19,7 +19,6 @@ _modules = [
     "test_emergency_workflows",
     "test_distributed_architecture",
     "test_idempotency",
-    "test_chaos_resilience",
     "test_timecard_audit",
     "test_shift_handover",
     "test_auth",
