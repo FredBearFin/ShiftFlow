@@ -43,6 +43,7 @@ import {
 import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
 import { PricingView } from './components/PricingView';
+import { PasswordResetView } from './components/PasswordResetView';
 import { OwnerAcceptView } from './components/OwnerAcceptView';
 import { OwnerSummaryView } from './components/OwnerSummaryView';
 import { OnboardingWizard } from './components/OnboardingWizard';
@@ -145,7 +146,31 @@ export function App() {
   const [signupAllowed, setSignupAllowed] = useState(true);
   // A brand-new visitor lands on the pricing page first (the self-serve funnel); 'login'
   // is reached either by clicking "Sign in instead" there, or directly if sign-up is closed.
-  const [preAuthView, setPreAuthView] = useState<'pricing' | 'login'>('pricing');
+  // 'forgot-password' is reached from the "Forgot password?" link on the sign-in form -
+  // see PasswordResetView.tsx.
+  const [preAuthView, setPreAuthView] = useState<'pricing' | 'login' | 'forgot-password'>('pricing');
+
+  // A password-reset link (?password_reset=<token>) carries its token in the URL rather
+  // than through a router, same as ?owner_invite= below - it works regardless of whether
+  // anyone is currently signed in (see backend/app/auth.py's exempt paths).
+  const [passwordResetToken, setPasswordResetToken] = useState<string | null>(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('password_reset');
+    } catch {
+      return null;
+    }
+  });
+  const handleBackToLoginFromPasswordReset = () => {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('password_reset');
+      window.history.replaceState({}, '', url.toString());
+    } catch {
+      // Not essential - clearing the token below still takes the person back to sign-in.
+    }
+    setPasswordResetToken(null);
+    setPreAuthView('login');
+  };
 
   // An invite link for a second, independent "owner" login (see OwnerAccessPanel.tsx /
   // owner_routes.py) carries its token in the URL rather than through a router, since this
@@ -595,6 +620,18 @@ export function App() {
     return <OwnerAcceptView token={ownerInviteToken} onAccepted={handleOwnerInviteAccepted} />;
   }
 
+  // Likewise a password-reset link: it must work with no session at all (that's the
+  // whole point), and takes over the page the same way the owner invite link does.
+  if (passwordResetToken) {
+    return (
+      <PasswordResetView
+        mode="confirm"
+        token={passwordResetToken}
+        onBackToLogin={handleBackToLoginFromPasswordReset}
+      />
+    );
+  }
+
   if (authState === 'checking' || (authState === 'ready' && ownerLinks === null)) {
     return <div className="min-h-screen bg-[#F4F1EA]" />;
   }
@@ -602,12 +639,16 @@ export function App() {
     if (signupAllowed && preAuthView === 'pricing') {
       return <PricingView onStartPlan={handleBillingSignup} onSignInInstead={() => setPreAuthView('login')} />;
     }
+    if (preAuthView === 'forgot-password') {
+      return <PasswordResetView mode="request" onBackToLogin={() => setPreAuthView('login')} />;
+    }
     return (
       <LoginView
         onLogin={handleLogin}
         onSignup={handleSignup}
         signupAllowed={signupAllowed}
         onViewPricing={signupAllowed ? () => setPreAuthView('pricing') : undefined}
+        onForgotPassword={() => setPreAuthView('forgot-password')}
       />
     );
   }

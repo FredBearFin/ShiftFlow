@@ -30,6 +30,24 @@ describe('LoginView', () => {
     expect(onSignup).not.toHaveBeenCalled();
   });
 
+  it('hides "Forgot password?" when no handler is given', () => {
+    render(<LoginView onLogin={noop} onSignup={noop} />);
+    expect(screen.queryByRole('button', { name: /forgot password/i })).toBeNull();
+  });
+
+  it('calls onForgotPassword from the Sign In form when given one', () => {
+    const onForgotPassword = vi.fn();
+    render(<LoginView onLogin={noop} onSignup={noop} onForgotPassword={onForgotPassword} />);
+    fireEvent.click(screen.getByRole('button', { name: /forgot password/i }));
+    expect(onForgotPassword).toHaveBeenCalled();
+  });
+
+  it('hides "Forgot password?" in Create Account mode', () => {
+    render(<LoginView onLogin={noop} onSignup={noop} onForgotPassword={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Create Account' }));
+    expect(screen.queryByRole('button', { name: /forgot password/i })).toBeNull();
+  });
+
   it('shows the server message when sign-in is throttled', async () => {
     const onLogin = vi.fn().mockResolvedValue('Too many failed sign-in attempts. Try again in 15 minutes.');
     render(<LoginView onLogin={onLogin} onSignup={noop} />);

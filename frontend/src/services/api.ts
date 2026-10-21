@@ -861,3 +861,51 @@ export async function acceptOwnerInviteApi(
     return { status: null, facilityId: null, error: 'Could not reach the server.' };
   }
 }
+
+/* -------------------------------------------------------------------------
+ * Password reset (see backend/app/api/auth_routes.py). No email service is configured
+ * here, so the request step returns the reset link directly, the same way owner
+ * invites above return their accept link instead of emailing it.
+ * ------------------------------------------------------------------------- */
+
+export interface PasswordResetRequestResult {
+  status: string;
+  message: string;
+  reset_token: string;
+  reset_path: string;
+  note: string;
+}
+
+/** Starts a password reset for an email. Always succeeds with a generic message and a
+ *  link, whether or not that email has an account - see the backend docstring for why. */
+export async function requestPasswordResetApi(
+  email: string
+): Promise<{ result: PasswordResetRequestResult | null; error: string | null }> {
+  try {
+    const res = await fetch('/api/auth/password-reset/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (res.ok) return { result: await res.json(), error: null };
+    return { result: null, error: await ownerErrorDetail(res, 'The reset link could not be created.') };
+  } catch {
+    return { result: null, error: 'Could not reach the server.' };
+  }
+}
+
+/** Completes a password reset with a token from the link above and a new password.
+ *  Returns an error message on failure, or null on success. */
+export async function confirmPasswordResetApi(token: string, password: string): Promise<string | null> {
+  try {
+    const res = await fetch('/api/auth/password-reset/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    });
+    if (res.ok) return null;
+    return await ownerErrorDetail(res, 'The password could not be reset.');
+  } catch {
+    return 'Could not reach the server.';
+  }
+}

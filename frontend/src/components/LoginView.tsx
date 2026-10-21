@@ -8,9 +8,18 @@ interface LoginViewProps {
   /** When set, shows a link back to the pricing page (see PricingView.tsx) for a new
    *  visitor who landed here first instead of picking a plan. Omit to hide the link. */
   onViewPricing?: () => void;
+  /** When set, shows a "Forgot password?" link in Sign In mode (see PasswordResetView.tsx).
+   *  Omit to hide it - e.g. when login is not actually backed by real accounts. */
+  onForgotPassword?: () => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupAllowed = true, onViewPricing }) => {
+export const LoginView: React.FC<LoginViewProps> = ({
+  onLogin,
+  onSignup,
+  signupAllowed = true,
+  onViewPricing,
+  onForgotPassword,
+}) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -95,6 +104,15 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
           />
           {mode === 'signup' && (
             <p className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+          )}
+          {mode === 'login' && onForgotPassword && (
+            <button
+              type="button"
+              onClick={onForgotPassword}
+              className="mt-1.5 text-xs font-semibold text-slate-500 underline hover:text-[#2B3A42]"
+            >
+              Forgot password?
+            </button>
           )}
         </div>
 

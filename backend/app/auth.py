@@ -48,6 +48,11 @@ _EXEMPT_PATH_PREFIXES = (
     # The pricing-page checkout stub (app.api.billing_routes) creates its own account,
     # so a visitor who is not signed in yet must be able to reach it, same as /api/auth/signup.
     "/api/billing/signup",
+    # A locked-out user has no session to reach either of these with - that is the whole
+    # point of password reset (see app/api/auth_routes.py) - so, like /api/owners/accept/
+    # above, both must work while logged out.
+    "/api/auth/password-reset/request",
+    "/api/auth/password-reset/confirm",
 )
 _PBKDF2_ITERATIONS = 390_000
 

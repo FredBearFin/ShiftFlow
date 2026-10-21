@@ -4,6 +4,7 @@ import json
 import os
 import secrets
 import sqlite3
+import time
 from typing import Any, Dict, Generator, List, Optional
 import uuid
 
@@ -170,6 +171,22 @@ def init_db() -> None:
         config_json TEXT NOT NULL,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- A single-use, time-limited token letting a locked-out user set a new password
+    -- without a support team to hand it to them - see app/api/auth_routes.py's
+    -- /password-reset/request and /password-reset/confirm, which follow the same
+    -- "no email service configured here, so return the link directly" pattern as
+    -- facility_owners' invite flow above. Additive only, like facility_owners and
+    -- facility_solve_config: a brand-new table, no change to the existing `users`
+    -- schema. user_id is a plain string, not a foreign key, consistent with how every
+    -- other per-user-keyed table in this file is written.
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        token TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        used_at TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_user ON password_reset_tokens (user_id);
 
     CREATE TABLE IF NOT EXISTS idempotency_records (
         key TEXT PRIMARY KEY,
@@ -661,6 +678,44 @@ class ShiftFlowRepository:
     def clear_login_failures(self, throttle_key: str) -> None:
         cursor = self.conn.cursor()
         cursor.execute("DELETE FROM login_failures WHERE throttle_key = ?", (throttle_key,))
+        self.conn.commit()
+
+    # -------------------------------------------------------------
+    # Password reset tokens (self-serve account recovery - see app/api/auth_routes.py)
+    # -------------------------------------------------------------
+    def create_password_reset_token(self, user_id: str, ttl_seconds: int) -> Dict[str, Any]:
+        """Issues a fresh single-use token for user_id, expiring ttl_seconds from now.
+
+        Tokens are cryptographically random (secrets.token_urlsafe) and looked up by
+        exact value only - nothing here ever tries to enumerate or guess one.
+        """
+        token = secrets.token_urlsafe(32)
+        expires_at = time.time() + ttl_seconds
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "INSERT INTO password_reset_tokens (token, user_id, expires_at) VALUES (?, ?, ?);",
+            (token, user_id, expires_at),
+        )
+        self.conn.commit()
+        return {"token": token, "user_id": user_id, "expires_at": expires_at}
+
+    def get_password_reset_token(self, token: str) -> Optional[Dict[str, Any]]:
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM password_reset_tokens WHERE token = ?", (token,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+    def mark_password_reset_token_used(self, token: str) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "UPDATE password_reset_tokens SET used_at = ? WHERE token = ?",
+            (time.time(), token),
+        )
+        self.conn.commit()
+
+    def update_user_password(self, user_id: str, password_hash: str) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
         self.conn.commit()
 
     # -------------------------------------------------------------
