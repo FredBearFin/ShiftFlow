@@ -1,3 +1,17 @@
+> **CORRECTION, 2026-10-20.** Section 2 of this document describes
+> `backend/app/resilience.py` - a database retry decorator, a circuit breaker and a solver
+> watchdog with a master-cycle fallback - as a shipped subsystem. No application code ever
+> imported that module; only its own test did. It has been removed. The solver fallback in
+> particular could not be wired in without contradicting the project's decision that the
+> solver reports infeasibility rather than substituting a schedule, and there was no
+> pre-computed master schedule for it to fall back to.
+>
+> What does exist, and is tested, is idempotency-key replay protection with recovery of
+> locks orphaned by a killed process (`backend/app/middleware.py`). Section 3's claim about
+> client-side roster caching in `localStorage` has not been re-verified here.
+>
+> Read the rest as a design proposal, not as a description of shipped behaviour.
+
 # SITE RELIABILITY ENGINEERING (SRE) & CHAOS AUDIT MEMORANDUM
 **CONFIDENTIAL INFRASTRUCTURE SPECIFICATION / FAULT INJECTION & DISASTER RECOVERY AUDIT**
 

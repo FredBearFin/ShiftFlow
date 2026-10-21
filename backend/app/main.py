@@ -2,7 +2,8 @@
 
 import os
 import time
-from datetime import datetime
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,11 +12,11 @@ from app.api.schedule_routes import router as schedule_router
 from app.api.employee_routes import router as employee_router
 from app.api.pos_payroll_routes import router as pos_payroll_router
 from app.api.emergency_routes import router as emergency_router
-from app.api.handover_routes import router as handover_router
 from app.api.auth_routes import router as auth_router
 from app.auth import require_login, validate_auth_config
 from app.config import settings
-from app.database import init_db, get_db_connection
+import app.database as shiftflow_db
+from app.database import db_is_ephemeral, init_db, get_db_connection
 from fastapi.responses import JSONResponse
 from app.engine.isd_rwsp_solver import SolverInfeasibleError
 from app.middleware import IdempotencyMiddleware
@@ -24,11 +25,35 @@ APP_START_TIME = time.time()
 
 DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:3000"
 
+
+def current_environment() -> str:
+    """The environment this process is actually running in, as the operator declared it.
+
+    SHIFTFLOW_ENV is the documented name; APP_ENV is accepted because docker-compose.yml
+    already passes it. Unset means nobody declared one, and "development" is the safe
+    thing to say then — /health previously answered "production" unconditionally, which
+    told an operator checking which deployment they had reached exactly nothing.
+    """
+    declared = os.environ.get("SHIFTFLOW_ENV") or os.environ.get("APP_ENV") or ""
+    return declared.strip() or "development"
+
+
+# Startup runs validate_auth_config() BEFORE init_db(). That order is load-bearing: a
+# deployment with login on but no usable SHIFTFLOW_SESSION_SECRET must refuse to boot
+# before it touches, creates or migrates any database. test_auth.py asserts the refusal.
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    validate_auth_config()
+    init_db()
+    yield
+
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
     description="Build and compare weekly staff rotations, balancing payroll cost against workload strain.",
     dependencies=[Depends(require_login)],
+    lifespan=lifespan,
 )
 
 cors_origins = [
@@ -54,38 +79,28 @@ def solver_infeasible_handler(request, exc: SolverInfeasibleError):
     return JSONResponse(status_code=422, content={"detail": str(exc)})
 
 
-# Startup: refuse to boot with login on but no usable session secret, then ensure the SQLite schema exists
-@app.on_event("startup")
-def on_startup():
-    validate_auth_config()
-    init_db()
-
-
 app.include_router(archetype_router, prefix=settings.api_prefix)
 app.include_router(schedule_router, prefix=settings.api_prefix)
 app.include_router(employee_router)
 app.include_router(pos_payroll_router)
 app.include_router(emergency_router)
-app.include_router(handover_router)
 app.include_router(auth_router)
 
 
 @app.get("/health", tags=["System"])
 def health_check() -> dict:
-    """Basic health check endpoint verifying solver readiness and scheduling parameters."""
+    """Reports the app name, version, declared environment and scheduling parameters."""
+    from app.api.archetype_routes import ARCHETYPE_PRESETS
+
     return {
         "status": "healthy",
         "app_name": settings.app_name,
         "version": settings.version,
-        "environment": "production",
-        "supported_archetypes": [
-            "24_7_continuous_retail",
-            "18_6_extended_retail",
-            "16_7_two_shift_retail",
-            "14_5_weekday_commercial",
-            "12_7_split_crew_retail",
-        ],
-        "default_safe_rest_hours": 16.0,
+        "environment": current_environment(),
+        # The real registered preset ids. This previously listed five ids
+        # ("24_7_continuous_retail" and friends) that match no preset in the app.
+        "supported_archetypes": sorted(ARCHETYPE_PRESETS),
+        "default_safe_rest_hours": float(settings.min_rest_hours_between_shifts),
         "clopening_forbidden": True,
     }
 
@@ -96,7 +111,7 @@ def kubernetes_liveness() -> dict:
     return {
         "status": "alive",
         "uptime_seconds": round(time.time() - APP_START_TIME, 2),
-        "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
     }
 
 
@@ -165,6 +180,13 @@ def kubernetes_readiness():
         "database": {
             "status": "healthy" if db_ok else "unhealthy",
             "latency_ms": db_latency_ms,
+            # Reachable is not the same as durable. On the serverless default the file
+            # lives under /tmp, is local to one function instance and is lost on a cold
+            # start, so readiness says so instead of reporting a clean bill of health.
+            "durable": not db_is_ephemeral(),
+            # Read through the module, not a from-import: the configured path can be
+            # rebound (the test runner gives each module its own file).
+            "path": shiftflow_db.DB_FILE,
         },
         "solver_engine": solver_check,
         "idempotency_store": idempotency_check,

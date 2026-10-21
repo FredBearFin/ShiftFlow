@@ -1,21 +1,43 @@
 """Database session and repository management for ShiftFlow Studio SQLite entities."""
 
 import json
+import logging
 import os
 import sqlite3
 from typing import Any, Dict, Generator, List, Optional
 import uuid
 
+logger = logging.getLogger("shiftflow.database")
+
 # Marks an update argument the caller did not pass, so an explicit None can clear a stored value.
 _NOT_SENT = object()
 
-# Durable SQLite file. Set SHIFTFLOW_DB_PATH to a path on a mounted volume in containers.
-# Serverless platforms (e.g. Vercel) only allow writes under /tmp, so default there when
-# no path is configured; /tmp is not durable across cold starts on those platforms.
+# SQLite file. Set SHIFTFLOW_DB_PATH to a path on a mounted volume in containers.
+#
+# Serverless platforms (e.g. Vercel) only allow writes under /tmp, so that is the default
+# there when no path is configured. THAT DEFAULT LOSES DATA. On a serverless platform /tmp
+# is local to one function instance and does not survive a cold start, so:
+#   - every row written through it can disappear without warning, and
+#   - user accounts live in it too, so an account created on one instance is unknown to
+#     another: a valid session cookie then fails the user-exists check in app/auth.py and
+#     the person is signed out, or their sign-up appears to vanish.
+# There is no code fix for this inside SQLite; it needs either a network database
+# (PostgreSQL) or a deployment target with a persistent disk. See DEPLOYMENT_GUIDE.md
+# section 5, "Data durability", for the options and what each one costs.
 DB_FILE = os.environ.get(
     "SHIFTFLOW_DB_PATH",
     os.path.join("/tmp", "shiftflow.db") if os.environ.get("VERCEL") else os.path.join("data", "shiftflow.db"),
 )
+
+
+def db_is_ephemeral() -> bool:
+    """True when the configured database file cannot be relied on to survive a restart.
+
+    A path under /tmp is the case that matters: it is the serverless default and it is
+    not durable. Reported by /health/readiness and warned about once at startup so an
+    operator is not told everything is fine while their records are being thrown away.
+    """
+    return os.path.abspath(DB_FILE).startswith(os.path.abspath("/tmp") + os.sep)
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -37,6 +59,15 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
 
 def init_db() -> None:
     """Initializes the SQLite schema if not already present."""
+    if db_is_ephemeral():
+        logger.warning(
+            "ShiftFlow is storing its database at %s. On a serverless platform that path "
+            "is local to one function instance and is lost on a cold start: schedules, "
+            "staff records, separation audits and USER ACCOUNTS can all disappear without "
+            "warning. Set SHIFTFLOW_DB_PATH to a persistent disk, or move to PostgreSQL. "
+            "See DEPLOYMENT_GUIDE.md section 5.",
+            DB_FILE,
+        )
     db_dir = os.path.dirname(DB_FILE)
     if db_dir:
         os.makedirs(db_dir, exist_ok=True)
@@ -145,7 +176,12 @@ def init_db() -> None:
         response_body TEXT,
         in_flight INTEGER NOT NULL DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at REAL
+        expires_at REAL,
+        -- When the in-flight LOCK on this key expires, as distinct from expires_at, which
+        -- is when the stored response stops being replayable. A row still marked in_flight
+        -- past this time belonged to a process that died, and the lock is reclaimed. See
+        -- IN_FLIGHT_LEASE_SECONDS in app/middleware.py.
+        in_flight_expires_at REAL
     );
     """)
 
@@ -165,6 +201,15 @@ def init_db() -> None:
     for column, definition in employee_column_additions.items():
         if column not in existing_employee_columns:
             cursor.execute(f"ALTER TABLE employees ADD COLUMN {column} {definition}")
+
+    # Same for the in-flight lock lease on an existing idempotency table. Rows already
+    # present get NULL, which app/middleware.py falls back to the record's own start time
+    # for, so an orphan written before this column existed is still recoverable.
+    existing_idempotency_columns = {
+        row[1] for row in cursor.execute("PRAGMA table_info(idempotency_records)").fetchall()
+    }
+    if "in_flight_expires_at" not in existing_idempotency_columns:
+        cursor.execute("ALTER TABLE idempotency_records ADD COLUMN in_flight_expires_at REAL")
 
     conn.commit()
     conn.close()
@@ -418,7 +463,10 @@ class ShiftFlowRepository:
             (separation_category, separation_reason, recorded_by, employee_id),
         )
 
-        # 2. Log immutable separation audit (stored under the same owner-scoped facility id as the employee)
+        # 2. Log the separation audit (stored under the same owner-scoped facility id as the
+        # employee). No code path updates or deletes this row, and delete_employee refuses
+        # while one exists, so it is append-only within the database. It is not "immutable"
+        # in any stronger sense: it is as durable as the database file underneath it.
         audit_id = f"SEP-{uuid.uuid4().hex[:8].upper()}"
         cursor.execute(
             """
@@ -519,7 +567,14 @@ class ShiftFlowRepository:
         self.conn.commit()
 
     # -------------------------------------------------------------
-    # Roster Snapshots & Labor Audits (3-Year FLSA Retention)
+    # Roster snapshots and labor audits
+    #
+    # This section header used to read "(3-Year FLSA Retention)". Nothing here provides a
+    # retention guarantee: rows live in one SQLite file whose durability is entirely a
+    # property of where it is deployed, and on the serverless default (/tmp) they do not
+    # survive a cold start at all. Snapshots are append-only in the sense that no code
+    # path updates or deletes them, which is not the same as being immune to loss.
+    # Retention is a deployment decision; see DEPLOYMENT_GUIDE.md section 5.
     # -------------------------------------------------------------
     def save_roster_snapshot(
         self,

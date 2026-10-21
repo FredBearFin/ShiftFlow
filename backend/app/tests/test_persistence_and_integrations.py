@@ -147,6 +147,36 @@ class TestPersistenceAndIntegrations(unittest.TestCase):
         self.assertGreater(summary["total_weekly_sales"], 9000.0)
         self.assertEqual(summary["total_weekly_transactions"], 7)
 
+    def test_03b_staff_cap_is_configurable_and_reports_when_it_bites(self):
+        """A site with more than 6 people on the floor must be able to say so.
+
+        The default cap of 6 suits a convenience store. A hospital ward or plant line
+        needs a higher ceiling, and when the ceiling does bite the forecast has to say
+        so rather than reporting a quietly flattened peak.
+        """
+        # One very busy hour: $6,000 at $250 per staff hour wants 24 people.
+        busy_csv = "Day,Hour,Total\n0,12,$6000.00\n"
+
+        capped = POSDemandForecaster(sales_per_staff_hour=250.0, max_staff_cap=6)
+        matrix, summary = capped.calculate_demand_matrix(capped.parse_pos_csv(busy_csv))
+        self.assertEqual(matrix[0][12], 6, "default cap must still hold at 6")
+        self.assertEqual(summary["max_staff_cap"], 6)
+        self.assertEqual(summary["hours_limited_by_staff_cap"], 1, "the capped hour must be reported")
+
+        ward = POSDemandForecaster(sales_per_staff_hour=250.0, max_staff_cap=30)
+        matrix, summary = ward.calculate_demand_matrix(ward.parse_pos_csv(busy_csv))
+        self.assertEqual(matrix[0][12], 24, "a raised cap must let the real peak through")
+        self.assertEqual(summary["hours_limited_by_staff_cap"], 0)
+
+        uncapped = POSDemandForecaster(sales_per_staff_hour=250.0, max_staff_cap=None)
+        matrix, summary = uncapped.calculate_demand_matrix(uncapped.parse_pos_csv(busy_csv))
+        self.assertEqual(matrix[0][12], 24)
+        self.assertIsNone(summary["max_staff_cap"])
+        self.assertEqual(summary["hours_limited_by_staff_cap"], 0)
+
+        with self.assertRaises(ValueError):
+            POSDemandForecaster(min_staff_open=4, max_staff_cap=2)
+
     def test_04_payroll_export_csv_generation(self):
         """Verify Gusto and ADP CSV generators produce valid standard headers and calculations."""
         mock_roster_lines = [

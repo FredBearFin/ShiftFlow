@@ -1,5 +1,6 @@
 """Tests for CORS origins, the durable database path, account login, and login hardening."""
 
+import asyncio
 import contextlib
 import os
 import unittest
@@ -9,6 +10,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from app import auth
+from app import main as app_main
 from app.database import get_db_connection
 from app.main import app
 
@@ -154,6 +156,69 @@ class FailClosedTests(unittest.TestCase):
         """An empty signing key must never be usable to mint a valid session."""
         with env(SHIFTFLOW_SESSION_SECRET=None, SHIFTFLOW_AUTH_DISABLED=None):
             self.assertIsNone(auth.session_user_id("USR-FAKE.9999999999.deadbeef"))
+
+
+class StartupSequenceTests(unittest.TestCase):
+    """The app's own startup, not just validate_auth_config() called directly.
+
+    The startup handler is a lifespan context manager. These tests pin the two things
+    about it that matter and that a refactor could silently drop: it runs
+    validate_auth_config() before init_db(), and a server with login on but no usable
+    secret refuses to come up at all rather than booting and serving.
+    """
+
+    def test_auth_is_validated_before_the_database_is_touched(self):
+        order = []
+        with mock.patch.object(app_main, "validate_auth_config", lambda: order.append("validate_auth_config")), \
+             mock.patch.object(app_main, "init_db", lambda: order.append("init_db")):
+            async def run_lifespan():
+                async with app_main.lifespan(app_main.app):
+                    pass
+
+            asyncio.run(run_lifespan())
+        self.assertEqual(
+            order,
+            ["validate_auth_config", "init_db"],
+            "startup must refuse a misconfigured deployment before creating or migrating any database",
+        )
+
+    def test_app_refuses_to_come_up_with_a_weak_secret(self):
+        for weak in ("short", "x" * 31, "change-me-to-a-long-random-value-at-least-32-chars"):
+            with env(SHIFTFLOW_SESSION_SECRET=weak, SHIFTFLOW_AUTH_DISABLED=None):
+                with self.assertRaises(RuntimeError, msg=weak):
+                    with TestClient(app):
+                        pass
+
+    def test_app_comes_up_with_a_strong_secret(self):
+        with env(SHIFTFLOW_SESSION_SECRET="k" * 48, SHIFTFLOW_AUTH_DISABLED=None):
+            with TestClient(app) as client:
+                self.assertEqual(client.get("/health").status_code, 200)
+
+
+class HealthEnvironmentTests(unittest.TestCase):
+    """/health must report the environment the operator declared, not a hardcoded one."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.client = TestClient(app)
+
+    def test_declared_environment_is_reported(self):
+        with env(SHIFTFLOW_ENV="staging", APP_ENV=None):
+            self.assertEqual(self.client.get("/health").json()["environment"], "staging")
+
+    def test_compose_app_env_is_honoured_as_a_fallback(self):
+        with env(SHIFTFLOW_ENV=None, APP_ENV="production"):
+            self.assertEqual(self.client.get("/health").json()["environment"], "production")
+
+    def test_undeclared_environment_is_not_called_production(self):
+        with env(SHIFTFLOW_ENV=None, APP_ENV=None):
+            self.assertEqual(self.client.get("/health").json()["environment"], "development")
+
+    def test_supported_archetypes_are_the_real_preset_ids(self):
+        from app.api.archetype_routes import ARCHETYPE_PRESETS
+
+        reported = self.client.get("/health").json()["supported_archetypes"]
+        self.assertEqual(sorted(reported), sorted(ARCHETYPE_PRESETS))
 
 
 class LoginHardeningTests(unittest.TestCase):

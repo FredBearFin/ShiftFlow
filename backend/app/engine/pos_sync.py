@@ -65,6 +65,19 @@ def _parse_hour(raw: Optional[str]) -> int:
     return hr
 
 
+# The per-hour staffing ceiling the forecast will not exceed.
+#
+# 6 suits a convenience store or a single-counter cafe and nothing larger: a hospital ward
+# or a plant line needs many more people on the floor in one hour, and a cap of 6 silently
+# flattens their real peaks into a schedule that cannot cover them. It is a site property,
+# not a property of the engine, so it is a constructor argument with a documented default
+# rather than a hidden constant. Callers that know the site should pass their own.
+DEFAULT_MAX_STAFF_PER_HOUR = 6
+
+# A site that wants no ceiling at all passes this instead of guessing a large number.
+NO_STAFF_CAP = None
+
+
 class POSDemandForecaster:
     """Ingests POS transaction records and converts sales velocity into hourly staffing demand R_gi."""
 
@@ -73,8 +86,19 @@ class POSDemandForecaster:
         sales_per_staff_hour: float = 220.0,
         tx_per_staff_hour: float = 14.0,
         min_staff_open: int = 1,
-        max_staff_cap: int = 6,
+        max_staff_cap: Optional[int] = DEFAULT_MAX_STAFF_PER_HOUR,
     ):
+        """max_staff_cap is the most people the forecast will ever ask for in one hour.
+
+        Pass the site's own ceiling, or None (NO_STAFF_CAP) for no ceiling at all. The
+        default of 6 fits a small retail floor; larger operations must raise it or their
+        peak hours come back understated.
+        """
+        if max_staff_cap is not None and max_staff_cap < min_staff_open:
+            raise ValueError(
+                f"max_staff_cap ({max_staff_cap}) is below min_staff_open ({min_staff_open}), "
+                "so no staffing level would satisfy both."
+            )
         self.sales_per_staff_hour = sales_per_staff_hour
         self.tx_per_staff_hour = tx_per_staff_hour
         self.min_staff_open = min_staff_open
@@ -140,13 +164,32 @@ class POSDemandForecaster:
 
                     # Round to nearest integer with minimum threshold during open hours
                     staff_int = max(self.min_staff_open, round(needed))
-                    demand_matrix[d][h] = min(self.max_staff_cap, staff_int)
+                    if self.max_staff_cap is not None:
+                        staff_int = min(self.max_staff_cap, staff_int)
+                    demand_matrix[d][h] = staff_int
+
+        # Say so when the ceiling actually bit. Without this the forecast quietly reports a
+        # flat peak and the schedule built from it is understaffed for reasons nothing names.
+        capped_hours = 0
+        if self.max_staff_cap is not None:
+            for d in range(7):
+                for h in range(open_hour, min(close_hour, 24)):
+                    sales = hourly_sales[d][h]
+                    tx_cnt = hourly_tx_count[d][h]
+                    wanted = max(
+                        self.min_staff_open,
+                        round(max(sales / self.sales_per_staff_hour, tx_cnt / self.tx_per_staff_hour)),
+                    )
+                    if wanted > self.max_staff_cap:
+                        capped_hours += 1
 
         summary = {
             "total_weekly_sales": round(total_weekly_sales, 2),
             "total_weekly_transactions": total_weekly_tx,
             "peak_hour": self._find_peak_hour(hourly_sales),
             "open_hours": f"{open_hour:02d}:00–{close_hour:02d}:00",
+            "max_staff_cap": self.max_staff_cap,
+            "hours_limited_by_staff_cap": capped_hours,
         }
 
         return demand_matrix, summary

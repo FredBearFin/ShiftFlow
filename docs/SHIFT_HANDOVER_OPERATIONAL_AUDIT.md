@@ -1,3 +1,18 @@
+> **CORRECTION, 2026-10-20.** This document describes digital handover checklists, cash
+> till reconciliation and overlap-buffer metrics as things ShiftFlow Studio implements. It
+> does not implement them. Five of the six handover API routes returned
+> `501 "not implemented: no source data"`, and the sixth accepted a custom task into a
+> process-global dictionary that no route could read back, that was lost on restart, and
+> that was shared across every account. Those routes and their engine module have been
+> removed rather than left to imply a feature that is not there. Nothing in the UI called
+> them.
+>
+> Read what follows as the operational case FOR building shift handover - which is sound,
+> and is why the checklist content here is worth keeping - and not as a description of
+> shipped behaviour. Building it needs owner-scoped tables for checklist state and till
+> audits, the variance arithmetic, and screens; that is a feature with a real cost, not a
+> documentation fix.
+
 # FRONTLINE SHIFT SUPERVISOR OPERATIONAL AUDIT
 **SHIFT HANDOVER FRICTION, OVERLAP BUFFERS, & FLOOR ROTATION CHECKLISTS**
 

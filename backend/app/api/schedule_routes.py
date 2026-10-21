@@ -36,7 +36,10 @@ def solve_schedule(request: SolveRequestSchema) -> SolveResponseSchema:
 
 @router.get("/default-solution/{archetype_id}", response_model=SolveResponseSchema)
 def solve_default_archetype(
-    archetype_id: str = "healthcare_24_7",
+    # archetype_id is a path parameter, so it is always supplied by the caller. It
+    # previously carried a "healthcare_24_7" default that FastAPI could never use but
+    # that read, in the generated API docs and in review, as a shipped default archetype.
+    archetype_id: str,
     leeway_pct: float = 5.0,
     facility_id: str = Query(default="FAC-OMAHA-01", max_length=64),
     repo: ShiftFlowRepository = Depends(get_repo),

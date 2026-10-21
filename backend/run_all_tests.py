@@ -6,6 +6,7 @@ module shares state with another and none touches /tmp/shiftflow.db.
 """
 
 import importlib
+import logging
 import os
 import sys
 import tempfile
@@ -13,6 +14,13 @@ import unittest
 
 import app.database as shiftflow_db
 from app.tests import _modules
+
+# Each module below deliberately runs against a throwaway file under /tmp, so init_db's
+# "this database is not durable" warning is correct here and would just be 14 lines of
+# noise in the gate output. One test asserts the warning still fires (see
+# test_distributed_architecture.test_03c), which is why this silences the handler rather
+# than removing the warning.
+logging.getLogger("shiftflow.database").setLevel(logging.ERROR)
 
 
 def run_module(name):

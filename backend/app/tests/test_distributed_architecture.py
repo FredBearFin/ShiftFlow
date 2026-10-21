@@ -7,6 +7,7 @@ Verifies:
 """
 
 import concurrent.futures
+import tempfile
 import time
 import unittest
 from fastapi.testclient import TestClient
@@ -18,6 +19,10 @@ from app.engine.isd_rwsp_solver import ISDRWSPSolver
 from app.main import app
 from app.middleware import IdempotencyStore
 from app.schemas import SolveRequestSchema
+
+# A real, persisted, owner-scoped mutation. These tests previously posted to a handover
+# route that stored nothing, so "exactly once" was never actually observable.
+MUTATION_PATH = "/api/employees"
 
 
 class TestDistributedArchitecture(unittest.TestCase):
@@ -35,31 +40,37 @@ class TestDistributedArchitecture(unittest.TestCase):
         """Verify mutating request with Idempotency-Key stores and replays cached response."""
         key = "IDEM-CALLOUT-TEST-001"
         payload = {
-            "checklist_type": "morning_to_midday",
-            "category": "Safety",
-            "task": "Check ice merchandiser",
-            "responsible_shift": "Morning Shift",
+            "facility_id": "FAC-IDEM-DIST-01",
+            "name": "Marcus Vance",
+            "role": "Frontline Clerk",
+            "wage": 16.50,
         }
         headers = {"Idempotency-Key": key}
 
         # 1. First execution: MISS-STORED
-        resp1 = self.client.post("/api/handover/task", json=payload, headers=headers)
+        resp1 = self.client.post(MUTATION_PATH, json=payload, headers=headers)
         self.assertEqual(resp1.status_code, 200)
         self.assertEqual(resp1.headers.get("X-Cache-Lookup"), "MISS-STORED")
         self.assertEqual(resp1.headers.get("Idempotency-Key"), key)
         data1 = resp1.json()
-        self.assertEqual(data1["task"], "Check ice merchandiser")
-        self.assertEqual(data1["status"], "pending")
+        self.assertEqual(data1["name"], "Marcus Vance")
 
         # 2. Second execution (network retry / mobile redelivery): HIT-IDEMPOTENT
-        resp2 = self.client.post("/api/handover/task", json=payload, headers=headers)
+        resp2 = self.client.post(MUTATION_PATH, json=payload, headers=headers)
         self.assertEqual(resp2.status_code, 200)
         self.assertEqual(resp2.headers.get("X-Cache-Lookup"), "HIT-IDEMPOTENT")
         self.assertEqual(resp2.headers.get("Idempotency-Key"), key)
         data2 = resp2.json()
 
-        # Both payloads must be byte-for-byte identical
+        # Both payloads must be byte-for-byte identical, and the replay must not have
+        # created a second employee.
         self.assertEqual(data1, data2)
+        listed = self.client.get(f"{MUTATION_PATH}?facility_id=FAC-IDEM-DIST-01").json()
+        self.assertEqual(
+            sum(1 for e in listed if e["name"] == "Marcus Vance"),
+            1,
+            "a replayed request must not mutate twice",
+        )
 
     def test_02_idempotency_different_keys_execute_independently(self):
         """Verify distinct keys generate unique store entries."""
@@ -67,17 +78,17 @@ class TestDistributedArchitecture(unittest.TestCase):
         key_b = "IDEM-SWAP-B"
 
         payload_task = {
-            "checklist_type": "morning_to_midday",
-            "category": "Safety",
-            "task": "Audit propane tanks",
-            "responsible_shift": "Midday Shift",
+            "facility_id": "FAC-IDEM-DIST-02",
+            "name": "Devon Taylor",
+            "role": "Inventory Specialist",
+            "wage": 18.25,
         }
 
-        resp_a = self.client.post("/api/handover/task", json=payload_task, headers={"Idempotency-Key": key_a})
+        resp_a = self.client.post(MUTATION_PATH, json=payload_task, headers={"Idempotency-Key": key_a})
         self.assertEqual(resp_a.status_code, 200)
         self.assertEqual(resp_a.headers.get("X-Cache-Lookup"), "MISS-STORED")
 
-        resp_b = self.client.post("/api/handover/task", json=payload_task, headers={"Idempotency-Key": key_b})
+        resp_b = self.client.post(MUTATION_PATH, json=payload_task, headers={"Idempotency-Key": key_b})
         self.assertEqual(resp_b.status_code, 200)
         self.assertEqual(resp_b.headers.get("X-Cache-Lookup"), "MISS-STORED")
 
@@ -102,6 +113,61 @@ class TestDistributedArchitecture(unittest.TestCase):
         self.assertGreaterEqual(db_check["latency_ms"], 0)
         self.assertEqual(data_ready["checks"]["solver_engine"]["status"], "healthy")
         self.assertEqual(data_ready["checks"]["idempotency_store"]["status"], "healthy")
+
+    def test_03b_readiness_reports_whether_the_database_is_durable(self):
+        """Reachable is not durable, and readiness must not conflate the two.
+
+        The serverless default puts the database under /tmp, which is local to one
+        function instance and lost on a cold start. A readiness probe that reports only
+        "healthy" lets that go unnoticed, so it reports the path and a durable flag.
+        """
+        import app.database as shiftflow_db
+
+        db_check = self.client.get("/health/readiness").json()["checks"]["database"]
+        self.assertIn("durable", db_check)
+        self.assertIn("path", db_check)
+        self.assertEqual(db_check["path"], shiftflow_db.DB_FILE)
+
+        # The suite runs each module against a temp file, which is itself under /tmp, so
+        # assert the classification directly rather than against the ambient path.
+        previous = shiftflow_db.DB_FILE
+        try:
+            shiftflow_db.DB_FILE = "/tmp/shiftflow-ephemeral.db"
+            self.assertTrue(shiftflow_db.db_is_ephemeral())
+            self.assertIs(
+                self.client.get("/health/readiness").json()["checks"]["database"]["durable"],
+                False,
+            )
+
+            shiftflow_db.DB_FILE = "/var/lib/shiftflow/shiftflow.db"
+            self.assertFalse(shiftflow_db.db_is_ephemeral())
+            self.assertIs(
+                self.client.get("/health/readiness").json()["checks"]["database"]["durable"],
+                True,
+            )
+
+            # A path merely starting with the letters "/tmp" is not under /tmp.
+            shiftflow_db.DB_FILE = "/tmpdata/shiftflow.db"
+            self.assertFalse(shiftflow_db.db_is_ephemeral())
+        finally:
+            shiftflow_db.DB_FILE = previous
+
+    def test_03c_startup_warns_when_the_database_cannot_survive_a_restart(self):
+        """An operator must be told, not left to find out when the records are gone."""
+        import app.database as shiftflow_db
+
+        previous = shiftflow_db.DB_FILE
+        try:
+            with tempfile.NamedTemporaryFile(prefix="shiftflow-warn-", suffix=".db", dir="/tmp") as handle:
+                shiftflow_db.DB_FILE = handle.name
+                with self.assertLogs("shiftflow.database", level="WARNING") as captured:
+                    shiftflow_db.init_db()
+            joined = "\n".join(captured.output)
+            self.assertIn(handle.name, joined)
+            self.assertIn("cold start", joined)
+            self.assertIn("SHIFTFLOW_DB_PATH", joined)
+        finally:
+            shiftflow_db.DB_FILE = previous
 
     def test_04_monday_rollover_concurrency_and_ring_buffer(self):
         """Verify concurrent multi-store Monday rollovers maintain mathematical state consistency."""

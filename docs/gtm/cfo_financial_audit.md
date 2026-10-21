@@ -59,7 +59,7 @@ MODELED NET VALUE / STORE REVENUE                                   : +188.2 Bas
 - **The Empirical Baseline**: Baseline 5.5 hours of unintended overtime per week (assumed). This arises from unexpected shift extensions, manual coverage patching, and erratic call-ins.
 - **The ShiftFlow Elimination**: By deploying standardized cyclic rotation lines (`Line 1` to `Line N`), every shift is balanced precisely to 40 regular hours across single standalone workweeks (Mon 00:00 to Sun 23:59). ShiftFlow cuts it by an assumed **85%**. $2,005 a year = 5.5 x 0.85 x 52 x $8.25, truncated.
 - **Audit Valuation Formula**:
-  $$\text{Hard OT Savings} = \$2,005 / \text{year}$$ (source: `gtm/roi_calculator.md` line 35)
+  $$\text{Hard OT Savings} = \$2,005 / \text{year}$$ (source: `docs/gtm/roi_calculator.md` line 35)
 - **Controller Classification**: **Hard Cash Reduction**. Reduces direct cash outflow on payroll disbursements dollar-for-dollar.
 
 ### 2.2 Direct Cashier Separation & Churn Avoidance (assumed benchmark)
@@ -67,7 +67,7 @@ MODELED NET VALUE / STORE REVENUE                                   : +188.2 Bas
 - **Baseline Retail Turnover**: Shift-based retail stores experience an assumed annual clerk turnover of **65%** (3.9 quits per year for a 6-associate crew).
 - **Circadian Burnout Elimination**: ShiftFlow's solver schedules at least 16 hours of rest between shifts where it can, and the roster audit flags any shorter gap. The 35% drop in quits is an assumption.
 - **Audit Valuation Formula**:
-  $$\text{Separation Cost Savings} = 1.365 \text{ avoided quits} \times \$4,129.00 = \$5,636.09 / \text{year}$$ (1.365 × $4,129 = $5,636.09, as in gtm/roi_calculator.md)
+  $$\text{Separation Cost Savings} = 1.365 \text{ avoided quits} \times \$4,129.00 = \$5,636.09 / \text{year}$$ (1.365 × $4,129 = $5,636.09, as in docs/gtm/roi_calculator.md)
 - **Controller Classification**: **Direct Cost Avoidance**. Reduces onboarding cash outlays and preserves store transactional productivity.
 
 ### 2.3 General Manager Administrative Time Reallocated to Floor Operations

@@ -6,10 +6,15 @@ trades, employee terminations, or roster advancements during client/mobile
 network retries or distributed broker redelivery.
 
 Implemented as a pure ASGI middleware to guarantee zero-deadlock streaming compatibility.
+
+A key held by a request that never finished is reclaimed after
+IN_FLIGHT_LEASE_SECONDS, so a process killed mid-mutation does not lock that key out
+for the whole 24-hour record TTL. See IdempotencyStore below.
 """
 
 import hashlib
 import json
+import logging
 import sqlite3
 import threading
 import time
@@ -21,11 +26,54 @@ from starlette.responses import Response, JSONResponse
 from app.auth import require_login
 from app.database import get_db_connection
 
+logger = logging.getLogger("shiftflow.idempotency")
+
+# How long a stored response stays replayable under its key.
+DEFAULT_RECORD_TTL_SECONDS = 86400
+
+
+# How long one in-flight request may hold its key before the lock is presumed orphaned.
+#
+# The record itself lives for ttl_seconds (24h by default) so a completed response can be
+# replayed. The LOCK is a separate, much shorter lease. Without it, a process killed
+# mid-request left in_flight = 1 for the full 24 hours and every retry of that key got 409
+# for a day - the "Orphan In-Flight Mutation Lock Recovery" the old resilience.py docstring
+# promised but never contained.
+#
+# 120s is above any request this app can legitimately take (the longest work it does is a
+# solve, which is milliseconds on the bundled presets) and far below the record TTL, so a
+# genuinely concurrent duplicate is still refused while a crashed one recovers quickly.
+IN_FLIGHT_LEASE_SECONDS = 120
+
 
 class IdempotencyStore:
-    """Thread-safe and SQLite-backed idempotency persistence store."""
+    """Thread-safe and SQLite-backed idempotency persistence store.
+
+    The thread lock below serialises this process only. Two processes serving the same
+    database still race, and the SQLite primary key on `key` is what actually prevents a
+    double insert, so start_request treats an IntegrityError as a lost race.
+
+    Keys arrive already namespaced per user by the caller (see store_key in
+    IdempotencyMiddleware). Everything here treats `key` as opaque, so that namespacing
+    is preserved whatever it contains.
+    """
 
     _lock = threading.Lock()
+
+    @staticmethod
+    def _lock_is_stale(record: dict, now: float) -> bool:
+        """True when this record claims to be in flight but its lease has run out."""
+        if record.get("in_flight") != 1:
+            return False
+        lease = record.get("in_flight_expires_at")
+        if lease is None:
+            # Written before the lease column existed. Fall back to the record's own
+            # start time, which is expires_at minus the TTL it was created with.
+            expires_at = record.get("expires_at")
+            if expires_at is None:
+                return False
+            lease = (expires_at - DEFAULT_RECORD_TTL_SECONDS) + IN_FLIGHT_LEASE_SECONDS
+        return lease < now
 
     @classmethod
     def get_record(cls, key: str) -> Optional[dict]:
@@ -34,16 +82,35 @@ class IdempotencyStore:
             try:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT key, method, path, request_hash, status_code, response_headers_json, response_body, in_flight, created_at, expires_at FROM idempotency_records WHERE key = ?",
+                    "SELECT key, method, path, request_hash, status_code, response_headers_json, response_body, in_flight, created_at, expires_at, in_flight_expires_at FROM idempotency_records WHERE key = ?",
                     (key,),
                 )
                 row = cursor.fetchone()
                 if not row:
                     return None
                 record = dict(row)
+                now = time.time()
                 expires_at = record.get("expires_at")
-                if expires_at is not None and expires_at < time.time():
+                if expires_at is not None and expires_at < now:
                     cursor.execute("DELETE FROM idempotency_records WHERE key = ?", (key,))
+                    conn.commit()
+                    return None
+                if cls._lock_is_stale(record, now):
+                    # The process that held this key died before completing or clearing
+                    # it. Drop the orphan so the caller can retry now instead of being
+                    # told "already executing" until the 24-hour TTL expires. No response
+                    # was ever stored under it, so nothing replayable is lost.
+                    logger.warning(
+                        "Reclaiming orphaned idempotency lock for key %r on %s %s: "
+                        "in flight for more than %ss with no result.",
+                        key,
+                        record.get("method"),
+                        record.get("path"),
+                        IN_FLIGHT_LEASE_SECONDS,
+                    )
+                    cursor.execute(
+                        "DELETE FROM idempotency_records WHERE key = ? AND in_flight = 1", (key,)
+                    )
                     conn.commit()
                     return None
                 return record
@@ -51,34 +118,63 @@ class IdempotencyStore:
                 conn.close()
 
     @classmethod
-    def start_request(cls, key: str, method: str, path: str, request_hash: str, ttl_seconds: int = 86400) -> bool:
-        """Attempts to register an in-flight request. Returns True if registered, False if collision."""
+    def start_request(
+        cls,
+        key: str,
+        method: str,
+        path: str,
+        request_hash: str,
+        ttl_seconds: int = DEFAULT_RECORD_TTL_SECONDS,
+    ) -> bool:
+        """Registers an in-flight request. True if this caller owns the key, False on collision.
+
+        An existing record whose in-flight lease has run out is reclaimed rather than
+        treated as a collision, so a key orphaned by a killed process becomes usable again
+        after IN_FLIGHT_LEASE_SECONDS instead of after the record TTL.
+        """
         with cls._lock:
             conn = get_db_connection()
             try:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT in_flight, created_at, expires_at FROM idempotency_records WHERE key = ?",
+                    "SELECT in_flight, created_at, expires_at, in_flight_expires_at FROM idempotency_records WHERE key = ?",
                     (key,),
                 )
                 row = cursor.fetchone()
                 now = time.time()
+                lease_expires_at = now + IN_FLIGHT_LEASE_SECONDS
                 if row:
-                    if row["in_flight"] == 1:
+                    if not cls._lock_is_stale(dict(row), now):
+                        # Either genuinely running right now, or already completed and
+                        # replayable. Neither is this caller's to take.
                         return False
-                    return False
+                    logger.warning(
+                        "Taking over orphaned idempotency lock for key %r on %s %s.", key, method, path
+                    )
+                    cursor.execute(
+                        """
+                        UPDATE idempotency_records
+                        SET method = ?, path = ?, request_hash = ?, in_flight = 1,
+                            status_code = NULL, response_headers_json = NULL, response_body = NULL,
+                            created_at = CURRENT_TIMESTAMP, expires_at = ?, in_flight_expires_at = ?
+                        WHERE key = ? AND in_flight = 1;
+                        """,
+                        (method, path, request_hash, now + ttl_seconds, lease_expires_at, key),
+                    )
+                    conn.commit()
+                    return cursor.rowcount == 1
 
-                expires_at = now + ttl_seconds
                 cursor.execute(
                     """
-                    INSERT INTO idempotency_records (key, method, path, request_hash, in_flight, created_at, expires_at)
-                    VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?);
+                    INSERT INTO idempotency_records (key, method, path, request_hash, in_flight, created_at, expires_at, in_flight_expires_at)
+                    VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP, ?, ?);
                     """,
-                    (key, method, path, request_hash, expires_at),
+                    (key, method, path, request_hash, now + ttl_seconds, lease_expires_at),
                 )
                 conn.commit()
                 return True
             except sqlite3.IntegrityError:
+                # Another process inserted the same key between the SELECT and the INSERT.
                 return False
             finally:
                 conn.close()
@@ -91,7 +187,7 @@ class IdempotencyStore:
         response_headers: dict,
         response_body: str,
     ) -> None:
-        """Stores the response and marks the key as complete."""
+        """Stores the response, marks the key complete, and releases the in-flight lease."""
         with cls._lock:
             conn = get_db_connection()
             try:
@@ -100,6 +196,7 @@ class IdempotencyStore:
                     """
                     UPDATE idempotency_records
                     SET in_flight = 0,
+                        in_flight_expires_at = NULL,
                         status_code = ?,
                         response_headers_json = ?,
                         response_body = ?
