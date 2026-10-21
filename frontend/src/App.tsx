@@ -223,12 +223,6 @@ export function App() {
     if (needsOnboarding) setIsWizardOpen(true);
   }, [needsOnboarding]);
 
-  // Close the wizard when a solve fails so the failed-solve alert is visible,
-  // unless setup is still mandatory (no staff yet).
-  useEffect(() => {
-    if (solveStatus === 'error' && !needsOnboarding) setIsWizardOpen(false);
-  }, [solveStatus, needsOnboarding]);
-
   const advanceWeek = useCallback((delta: number) => {
     if (!solution || solution.employee_count === 0) return;
     setRotationWeekOffset(
