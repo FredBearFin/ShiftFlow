@@ -60,7 +60,13 @@ _EXEMPT_PATH_PREFIXES = (
     "/api/auth/password-reset/request",
     "/api/auth/password-reset/confirm",
 )
-_PBKDF2_ITERATIONS = 390_000
+# OWASP currently recommends >= 600,000 iterations for PBKDF2-HMAC-SHA256. This was raised
+# from the original 390_000 after this session's pentest flagged it as below guidance.
+# Existing hashes keep working - see the hash format note on hash_password/verify_password
+# below - and get quietly upgraded to the new count the next time their owner logs in
+# (see needs_rehash and its call site in app/api/auth_routes.py's login()).
+_PBKDF2_ITERATIONS = 600_000
+_LEGACY_PBKDF2_ITERATIONS = 390_000
 
 MIN_SECRET_LENGTH = 32
 _PLACEHOLDER_SECRET_PREFIX = "change-me"
@@ -119,18 +125,59 @@ def ensure_auth_configured() -> None:
 
 
 def hash_password(password: str) -> str:
+    """Hash format is "{iterations}$salt$digest" - the iteration count travels with the
+    hash so a later bump to _PBKDF2_ITERATIONS (as happened once already - see its comment
+    above) never breaks verifying a hash written under the old count. New hashes always use
+    the current _PBKDF2_ITERATIONS."""
     salt = secrets.token_hex(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), _PBKDF2_ITERATIONS)
-    return f"{salt}${digest.hex()}"
+    return f"{_PBKDF2_ITERATIONS}${salt}${digest.hex()}"
+
+
+def _parse_password_hash(stored_hash: str) -> Optional[tuple]:
+    """Returns (iterations, salt, digest_hex), or None if stored_hash is malformed.
+
+    Accepts both the current 3-field format and the original 2-field one ("salt$digest",
+    with no iteration count, always _LEGACY_PBKDF2_ITERATIONS) written before hash_password
+    started embedding the count - so every password ever hashed by this app still verifies,
+    without a one-time migration of the users table.
+    """
+    parts = stored_hash.split("$")
+    if len(parts) == 3:
+        iterations_str, salt, digest_hex = parts
+        try:
+            return int(iterations_str), salt, digest_hex
+        except ValueError:
+            return None
+    if len(parts) == 2:
+        salt, digest_hex = parts
+        return _LEGACY_PBKDF2_ITERATIONS, salt, digest_hex
+    return None
 
 
 def verify_password(password: str, stored_hash: str) -> bool:
+    parsed = _parse_password_hash(stored_hash)
+    if parsed is None:
+        return False
+    iterations, salt, digest_hex = parsed
     try:
-        salt, digest_hex = stored_hash.split("$", 1)
+        salt_bytes = bytes.fromhex(salt)
     except ValueError:
         return False
-    candidate = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), _PBKDF2_ITERATIONS)
+    candidate = hashlib.pbkdf2_hmac("sha256", password.encode(), salt_bytes, iterations)
     return hmac.compare_digest(candidate.hex(), digest_hex)
+
+
+def needs_rehash(stored_hash: str) -> bool:
+    """True when a hash was written under a weaker iteration count than today's
+    _PBKDF2_ITERATIONS (including every legacy 2-field hash) and should be upgraded the
+    next time its owner proves they know the password - see login() in
+    app/api/auth_routes.py, the only place this should ever trigger a rehash."""
+    parsed = _parse_password_hash(stored_hash)
+    if parsed is None:
+        return False
+    iterations, _salt, _digest_hex = parsed
+    return iterations < _PBKDF2_ITERATIONS
 
 
 @functools.lru_cache(maxsize=1)

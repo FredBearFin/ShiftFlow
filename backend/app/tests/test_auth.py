@@ -1,7 +1,9 @@
 """Tests for CORS origins, the durable database path, account login, and login hardening."""
 
 import contextlib
+import hashlib
 import os
+import secrets
 import unittest
 import uuid
 from unittest import mock
@@ -9,7 +11,7 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from app import auth
-from app.database import get_db_connection
+from app.database import ShiftFlowRepository, get_db_connection
 from app.main import app
 
 
@@ -313,6 +315,112 @@ class SignupThrottleTests(unittest.TestCase):
         )
         self.assertEqual(locked.status_code, 429, locked.text)
         self.assertEqual(locked.headers.get("retry-after"), str(SIGNUP_WINDOW_SECONDS))
+
+
+def _legacy_hash(password: str) -> str:
+    """Builds a hash in the original "salt$digest" format (no iteration count, implicitly
+    auth._LEGACY_PBKDF2_ITERATIONS) - what every password hashed before this session's
+    PBKDF2 iteration bump looks like on disk."""
+    salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt), auth._LEGACY_PBKDF2_ITERATIONS)
+    return f"{salt}${digest.hex()}"
+
+
+class PasswordHashFormatTests(unittest.TestCase):
+    """app.auth.hash_password/verify_password/needs_rehash - see this session's pentest
+    flag that _PBKDF2_ITERATIONS (390_000) was below current OWASP guidance."""
+
+    def test_new_hash_embeds_the_current_iteration_count_and_does_not_need_rehash(self):
+        hashed = auth.hash_password("correcthorse")
+        self.assertTrue(hashed.startswith(f"{auth._PBKDF2_ITERATIONS}$"))
+        self.assertTrue(auth.verify_password("correcthorse", hashed))
+        self.assertFalse(auth.verify_password("wrongpassword", hashed))
+        self.assertFalse(auth.needs_rehash(hashed))
+
+    def test_legacy_two_field_hash_still_verifies_and_is_flagged_for_rehash(self):
+        legacy = _legacy_hash("correcthorse")
+        self.assertTrue(auth.verify_password("correcthorse", legacy))
+        self.assertFalse(auth.verify_password("wrongpassword", legacy))
+        self.assertTrue(auth.needs_rehash(legacy))
+
+    def test_malformed_hash_is_rejected_not_crashed_on(self):
+        self.assertFalse(auth.verify_password("correcthorse", "not-a-real-hash"))
+        self.assertFalse(auth.needs_rehash("not-a-real-hash"))
+
+
+class PasswordHashLazyRehashTests(unittest.TestCase):
+    """login() upgrades a legacy-format hash to the current iteration count the moment its
+    owner proves they know the password - see app/api/auth_routes.py's login()."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls._previous_secret = os.environ.get("SHIFTFLOW_SESSION_SECRET")
+        os.environ["SHIFTFLOW_SESSION_SECRET"] = "r" * 48
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls._previous_secret is not None:
+            os.environ["SHIFTFLOW_SESSION_SECRET"] = cls._previous_secret
+        else:
+            os.environ.pop("SHIFTFLOW_SESSION_SECRET", None)
+
+    def _create_legacy_user(self, label: str, password: str) -> str:
+        email = unique_email(label)
+        conn = get_db_connection()
+        try:
+            ShiftFlowRepository(conn).create_user(email, _legacy_hash(password))
+        finally:
+            conn.close()
+        return email
+
+    def test_successful_login_upgrades_a_legacy_hash_in_place(self):
+        email = self._create_legacy_user("legacy", "correcthorse")
+        conn = get_db_connection()
+        try:
+            before = ShiftFlowRepository(conn).get_user_by_email(email)["password_hash"]
+        finally:
+            conn.close()
+        self.assertTrue(auth.needs_rehash(before))
+
+        client = TestClient(app, base_url="https://testserver")
+        ok = client.post("/api/auth/login", json={"email": email, "password": "correcthorse"})
+        self.assertEqual(ok.status_code, 200, ok.text)
+
+        conn = get_db_connection()
+        try:
+            after = ShiftFlowRepository(conn).get_user_by_email(email)["password_hash"]
+        finally:
+            conn.close()
+        self.assertNotEqual(before, after)
+        self.assertFalse(auth.needs_rehash(after))
+
+        # The freshly issued cookie keeps working - it must be fingerprinted against the
+        # *new* hash, not invalidated by the very rehash this login just performed.
+        self.assertEqual(client.get("/api/employees").status_code, 200)
+
+        # And the account still logs in normally afterwards, now under the new hash.
+        client.post("/api/auth/logout")
+        again = client.post("/api/auth/login", json={"email": email, "password": "correcthorse"})
+        self.assertEqual(again.status_code, 200, again.text)
+
+    def test_failed_login_does_not_touch_an_unverified_legacy_hash(self):
+        email = self._create_legacy_user("legacyfail", "correcthorse")
+        conn = get_db_connection()
+        try:
+            before = ShiftFlowRepository(conn).get_user_by_email(email)["password_hash"]
+        finally:
+            conn.close()
+
+        client = TestClient(app, base_url="https://testserver")
+        bad = client.post("/api/auth/login", json={"email": email, "password": "wrongpassword"})
+        self.assertEqual(bad.status_code, 401)
+
+        conn = get_db_connection()
+        try:
+            after = ShiftFlowRepository(conn).get_user_by_email(email)["password_hash"]
+        finally:
+            conn.close()
+        self.assertEqual(before, after)
 
 
 if __name__ == "__main__":

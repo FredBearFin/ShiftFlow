@@ -30,6 +30,7 @@ from app.auth import (
     ensure_auth_configured,
     hash_password,
     login_enabled,
+    needs_rehash,
     signup_allowed,
     verify_password,
 )
@@ -183,7 +184,20 @@ def login(payload: LoginRequest, response: Response, db: sqlite3.Connection = De
         raise HTTPException(status_code=401, detail="Incorrect email or password.")
 
     repo.clear_login_failures(email)
-    _set_session(response, user["id"], user["password_hash"])
+
+    password_hash = user["password_hash"]
+    if needs_rehash(password_hash):
+        # Only reachable here, right after verify_password above proved this request
+        # carried the real plaintext password - a stored hash is never rehashed from
+        # anywhere else. Upgrades a hash written under an old, weaker PBKDF2 iteration
+        # count (see app/auth.py's _PBKDF2_ITERATIONS) without forcing every existing
+        # account through a reset. Uses the freshly rehashed value for this request's
+        # session fingerprint so the cookie just issued isn't immediately invalidated by
+        # app.auth._password_fingerprint comparing it against the old stored hash.
+        password_hash = hash_password(payload.password)
+        repo.update_user_password(user["id"], password_hash)
+
+    _set_session(response, user["id"], password_hash)
     return {"status": "ok", "email": user["email"]}
 
 
