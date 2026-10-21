@@ -8,6 +8,7 @@ const STEP_TERMS: Record<number, string[]> = {
   3: ['shift', 'shift type'],
   4: ['rule', 'consecutive days', 'consecutive nights', 'consecutive evenings', 'rest between shifts'],
   5: ['extra cost', 'staff comfort'],
+  6: ['role', 'hourly wage', 'available days'],
 };
 
 interface ExplainThisProps {
