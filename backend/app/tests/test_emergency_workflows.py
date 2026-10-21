@@ -8,6 +8,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 
+from app.config import settings
 from app.main import app
 
 NO_SOURCE = {"detail": "not implemented: no source data"}
@@ -18,7 +19,15 @@ class TestEmergencyWorkflows(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Emergency workflows are off by default outside V1; this suite explicitly
+        # turns the flag on so the real routes (not a 404) are exercised.
+        cls._enable_emergency_workflows_was = settings.enable_emergency_workflows
+        settings.enable_emergency_workflows = True
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls):
+        settings.enable_emergency_workflows = cls._enable_emergency_workflows_was
 
     def test_01_callout_returns_501_without_stored_data(self):
         """Saturday evening callout returns 501 and names no fixed candidate."""

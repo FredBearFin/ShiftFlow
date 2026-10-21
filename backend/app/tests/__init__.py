@@ -12,6 +12,20 @@ _tests_dir = os.path.dirname(os.path.abspath(__file__))
 # test_tenant_isolation) set their own SHIFTFLOW_SESSION_SECRET, which turns login on.
 os.environ["SHIFTFLOW_AUTH_DISABLED"] = "1"
 
+# POS integration, emergency workflows and shift handover are off by default outside the
+# V1 product surface (see app/config.py), but several existing tests across this suite
+# exercise those routes directly (not just test_pos_payroll_routes.py / test_emergency_
+# workflows.py / test_shift_handover.py, which also toggle `settings` themselves). Default
+# them on for the whole test session so those routes behave as before rather than 404ing.
+# This mutates the already-constructed `settings` singleton (app/__init__.py imports
+# app.config, constructing it, before this module runs) rather than setting the
+# SHIFTFLOW_ENABLE_* env vars, which would be read too late to matter.
+from app.config import settings as _settings  # noqa: E402
+
+_settings.enable_pos_integration = True
+_settings.enable_emergency_workflows = True
+_settings.enable_shift_handover = True
+
 _modules = [
     "test_solver",
     "test_persistence_and_integrations",

@@ -1,6 +1,20 @@
 """Configuration settings for ShiftFlow Studio."""
 
-from pydantic import BaseModel
+import os
+
+from pydantic import BaseModel, Field
+
+
+def _env_flag(name: str, default: bool) -> bool:
+    """Reads a boolean feature flag from the environment (same convention as app/auth.py).
+
+    Unset or blank keeps the default; "0"/"false"/"no"/"off" (any case) means off,
+    anything else means on.
+    """
+    raw = os.environ.get(name)
+    if raw is None or not raw.strip():
+        return default
+    return raw.strip().lower() not in ("0", "false", "no", "off")
 
 
 class ShiftDesignWeights(BaseModel):
@@ -33,6 +47,20 @@ class AppConfig(BaseModel):
     min_rest_hours_between_shifts: int = 16
     shift_weights: ShiftDesignWeights = ShiftDesignWeights()
     ergo_weights: ErgonomicsWeights = ErgonomicsWeights()
+
+    # Feature flags for modules built during an earlier "enterprise workforce OS" phase.
+    # They are kept (not deleted) but default off, outside the V1 "happy path" product
+    # surface for small independent retail/food-service managers. Flip on via env var,
+    # e.g. SHIFTFLOW_ENABLE_POS_INTEGRATION=1, for anyone who wants that functionality.
+    enable_pos_integration: bool = Field(
+        default_factory=lambda: _env_flag("SHIFTFLOW_ENABLE_POS_INTEGRATION", False)
+    )
+    enable_emergency_workflows: bool = Field(
+        default_factory=lambda: _env_flag("SHIFTFLOW_ENABLE_EMERGENCY_WORKFLOWS", False)
+    )
+    enable_shift_handover: bool = Field(
+        default_factory=lambda: _env_flag("SHIFTFLOW_ENABLE_SHIFT_HANDOVER", False)
+    )
 
 
 settings = AppConfig()

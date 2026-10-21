@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 
+from app.config import settings
 from app.main import app
 from app.engine.shift_handover import ShiftHandoverEngine
 
@@ -17,7 +18,15 @@ from app.engine.shift_handover import ShiftHandoverEngine
 class TestShiftHandover(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # Shift handover is off by default outside V1; this suite explicitly turns
+        # the flag on so the real routes (not a 404) are exercised.
+        cls._enable_shift_handover_was = settings.enable_shift_handover
+        settings.enable_shift_handover = True
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls):
+        settings.enable_shift_handover = cls._enable_shift_handover_was
 
     def test_01_checklist_categories_and_items(self):
         """Verifies standard checklists cover multiple industry archetypes."""

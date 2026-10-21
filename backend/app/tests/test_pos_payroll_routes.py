@@ -6,6 +6,7 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 
+from app.config import settings
 from app.database import init_db, get_db_connection, ShiftFlowRepository
 from app.main import app
 
@@ -32,6 +33,11 @@ class TestPayrollNullWageExclusion(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # POS integration is off by default outside V1; this test suite explicitly
+        # turns it on so the real routes (not a 404) are exercised.
+        cls._enable_pos_integration_was = settings.enable_pos_integration
+        settings.enable_pos_integration = True
+
         init_db()
         conn = get_db_connection()
         try:
@@ -46,6 +52,10 @@ class TestPayrollNullWageExclusion(unittest.TestCase):
         finally:
             conn.close()
         cls.client = TestClient(app)
+
+    @classmethod
+    def tearDownClass(cls):
+        settings.enable_pos_integration = cls._enable_pos_integration_was
 
     def test_01_null_wage_staff_is_excluded_and_named_in_header(self):
         """The null-wage employee is left out of the Gusto export and named in X-Excluded-Staff."""

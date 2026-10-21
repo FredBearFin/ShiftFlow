@@ -61,12 +61,43 @@ def on_startup():
     init_db()
 
 
+def _feature_flag_guard(flag_name: str, feature_label: str):
+    """Builds a dependency that 404s a router's routes unless its feature flag is on.
+
+    Reads `settings` live at request time (not once at import), so flipping the flag
+    (env var at process start, or `settings.<flag_name>` directly in tests) takes effect
+    immediately, regardless of when app.main was first imported.
+    """
+
+    def _check() -> None:
+        if not getattr(settings, flag_name):
+            raise HTTPException(
+                status_code=404,
+                detail=f"{feature_label} is not enabled on this server",
+            )
+
+    return _check
+
+
 app.include_router(archetype_router, prefix=settings.api_prefix)
 app.include_router(schedule_router, prefix=settings.api_prefix)
 app.include_router(employee_router)
-app.include_router(pos_payroll_router)
-app.include_router(emergency_router)
-app.include_router(handover_router)
+
+# Not part of the V1 "happy path" product surface (see app/config.py) - default off,
+# so these return 404 unless explicitly enabled via env var or `settings` override.
+app.include_router(
+    pos_payroll_router,
+    dependencies=[Depends(_feature_flag_guard("enable_pos_integration", "POS integration"))],
+)
+app.include_router(
+    emergency_router,
+    dependencies=[Depends(_feature_flag_guard("enable_emergency_workflows", "Emergency workflows"))],
+)
+app.include_router(
+    handover_router,
+    dependencies=[Depends(_feature_flag_guard("enable_shift_handover", "Shift handover"))],
+)
+
 app.include_router(auth_router)
 
 
