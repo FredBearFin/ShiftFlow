@@ -458,7 +458,7 @@ class ISDRWSPSolver:
                     if self.guardrails.avoid_single_night_shifts and steps_remaining == 1:
                         continue
 
-                if cand == "E" and len(candidates) > 1:
+                if cand == "E":
                     consec_e = 0
                     for prev_s in reversed(seq_shifts):
                         if prev_s == "E":

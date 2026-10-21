@@ -29,6 +29,7 @@ _modules = [
     "test_pos_payroll_routes",
     "test_payroll_uses_saved_schedule",
     "test_payroll_never_invents_people",
+    "test_evening_guardrail",
 ]
 
 for _mod in _modules:
