@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ParetoPoint, SolveResponse } from '../types';
 import { Term } from './ui/Term';
 import { Button } from './ui/Button';
+import {
+  ScenarioSnapshot,
+  MAX_SAVED_SCENARIOS,
+  buildScenarioSnapshot,
+  buildRosterComplianceCsv,
+  loadSavedScenarios,
+  saveSavedScenarios,
+} from './paretoScenarios';
 
 interface ParetoExplorerViewProps {
   solution: SolveResponse;
@@ -15,6 +23,52 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   onSelectLeewayPct,
 }) => {
   const points = solution.pareto_frontier;
+  const [savedScenarios, setSavedScenarios] = useState<ScenarioSnapshot[]>(() => loadSavedScenarios());
+  const [scenarioLabel, setScenarioLabel] = useState('');
+  const [scenarioMsg, setScenarioMsg] = useState<string | null>(null);
+  const [exportMsg, setExportMsg] = useState<string | null>(null);
+
+  // Optional polish: scenarios survive a reload too. If the browser blocks storage
+  // this quietly no-ops — the scenarios still work for the rest of the tab.
+  useEffect(() => {
+    saveSavedScenarios(savedScenarios);
+  }, [savedScenarios]);
+
+  const handleSaveScenario = () => {
+    // buildScenarioSnapshot falls back to a "+N% leeway" label when this is blank.
+    const snapshot = buildScenarioSnapshot(solution, scenarioLabel, selectedLeewayPct);
+    setSavedScenarios((prev) => {
+      const next = [...prev, snapshot];
+      return next.length > MAX_SAVED_SCENARIOS ? next.slice(next.length - MAX_SAVED_SCENARIOS) : next;
+    });
+    setScenarioMsg(
+      savedScenarios.length >= MAX_SAVED_SCENARIOS
+        ? `Saved "${snapshot.label}" — oldest saved scenario was dropped to keep up to ${MAX_SAVED_SCENARIOS}.`
+        : `Saved "${snapshot.label}" for comparison.`
+    );
+    setScenarioLabel('');
+    setTimeout(() => setScenarioMsg(null), 3500);
+  };
+
+  const handleRemoveScenario = (id: string) => {
+    setSavedScenarios((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const handleExportCsv = () => {
+    const csvContent = buildRosterComplianceCsv(solution);
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `roster_compliance_${solution.archetype_id}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setExportMsg('Roster & compliance CSV downloaded.');
+    setTimeout(() => setExportMsg(null), 3000);
+  };
+
   const minShift = Math.min(...points.map((p) => p.obj_shift));
   const maxShift = Math.max(...points.map((p) => p.obj_shift), minShift + 10);
   const minErgo = 0;
@@ -318,6 +372,100 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Scenario save/compare + roster & compliance export */}
+      <div className="card p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
+          <div className="max-w-2xl">
+            <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
+              Save a couple, compare side by side
+            </span>
+            <h3 className="text-sm font-bold text-slate-900 mt-0.5">
+              Pin whatever's on screen now, then try another leeway and compare
+            </h3>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Save the schedule currently applied (+{selectedLeewayPct}% leeway) under a short
+              label — before/after a wizard change, or a couple of leeway settings you're
+              weighing. Keeps up to {MAX_SAVED_SCENARIOS} at a time.
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={scenarioLabel}
+                onChange={(e) => setScenarioLabel(e.target.value)}
+                placeholder={`e.g. "+${selectedLeewayPct}% leeway" or "Before wizard change"`}
+                aria-label="Scenario label"
+                className="text-xs border border-[#7F8A92] rounded-md px-3 py-1.5 w-56 bg-white"
+              />
+              <Button size="sm" variant="primary" onClick={handleSaveScenario}>
+                Save this scenario
+              </Button>
+            </div>
+            <Button size="sm" variant="secondary" onClick={handleExportCsv}>
+              ↓ Export roster & compliance CSV
+            </Button>
+            {(scenarioMsg || exportMsg) && (
+              <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+                ✓ {scenarioMsg || exportMsg}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {savedScenarios.length === 0 ? (
+          <p className="text-xs text-slate-500 italic">
+            No scenarios saved yet. Save this one, change the leeway above, then save again to compare.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500 bg-slate-50">
+                  <th className="py-2.5 px-3">Scenario</th>
+                  <th className="py-2.5 px-3 text-right">Leeway</th>
+                  <th className="py-2.5 px-3 text-right">Weekly payroll</th>
+                  <th className="py-2.5 px-3 text-right">Overtime hrs</th>
+                  <th className="py-2.5 px-3 text-right">
+                    <Term explanation="The same scheduling-strain score shown elsewhere in this view — long stretches without a day off, back-to-back closing-then-opening shifts, and similar. Lower is better.">Staff strain</Term>
+                  </th>
+                  <th className="py-2.5 px-3 text-right">Health index</th>
+                  <th className="py-2.5 px-3 text-right">Full weekends off</th>
+                  <th className="py-2.5 px-3 text-right">Clopenings</th>
+                  <th className="py-2.5 px-3 text-right">Remove</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 font-mono-tabular">
+                {savedScenarios.map((s) => (
+                  <tr key={s.id} className="hover:bg-slate-50">
+                    <td className="py-2.5 px-3 font-sans font-semibold text-slate-900">
+                      {s.label}
+                      <span className="block text-xs font-sans font-normal text-slate-500">
+                        {s.employeeCount} shift patterns
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">+{s.selectedLeewayPct}%</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-slate-900">
+                      ${Math.round(s.totalPayrollCost).toLocaleString()}
+                    </td>
+                    <td className="py-2.5 px-3 text-right">{s.totalOvertimeHours}h</td>
+                    <td className="py-2.5 px-3 text-right">{s.ergoObjective.toFixed(1)}</td>
+                    <td className="py-2.5 px-3 text-right">{s.healthIndexScore.toFixed(1)}</td>
+                    <td className="py-2.5 px-3 text-right">{s.fullWeekendsOffPct}%</td>
+                    <td className="py-2.5 px-3 text-right">{s.clopeningViolations}</td>
+                    <td className="py-2.5 px-3 text-right font-sans">
+                      <Button size="sm" variant="ghost" onClick={() => handleRemoveScenario(s.id)}>
+                        Remove
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
