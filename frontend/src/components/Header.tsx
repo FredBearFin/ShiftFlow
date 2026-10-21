@@ -1,15 +1,9 @@
 import React from 'react';
 import { ActiveTabId, SolveResponse } from '../types';
-
-// Number keys bound in App.tsx keyboard handler; tabs without a key show no badge.
-const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
-  roster: 1,
-  labor: 2,
-  coverage: 3,
-  pareto: 4,
-  ergonomics: 5,
-  compliance: 6,
-};
+// Number keys bound in App.tsx's keyboard handler, shared with the cheatsheet
+// so the two cannot drift. Tabs without a key show no badge.
+import { TAB_KEY_NUMBERS } from './tabKeys';
+import { WIZARD_STEP_COUNT } from './OnboardingWizard';
 
 interface HeaderProps {
   activeTab: ActiveTabId;
@@ -147,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <span>Configure Facility Wizard</span>
               <span className="px-1.5 py-0.5 rounded bg-slate-700 text-xs font-mono-tabular text-slate-200">
-                5 Steps
+                {WIZARD_STEP_COUNT} Steps
               </span>
             </button>
 

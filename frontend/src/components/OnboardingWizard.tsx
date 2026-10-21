@@ -53,6 +53,10 @@ const STEP_LABELS = [
   { step: 6, title: 'Add your staff', subtitle: 'Who actually works here' },
 ];
 
+/** One number for "how many steps", so the header chip cannot say 5 while the
+ *  wizard renders 6. */
+export const WIZARD_STEP_COUNT = STEP_LABELS.length;
+
 const WAGE_MIN = 7.25;
 const WAGE_MAX = 100;
 const parseWage = (raw: string): number | null => {
@@ -222,7 +226,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-xs font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
-                6 quick steps
+                {WIZARD_STEP_COUNT} quick steps
               </span>
               <span className="text-xs text-slate-400">
                 Tell us how your store runs. We'll build the schedule.
