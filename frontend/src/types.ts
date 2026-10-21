@@ -297,6 +297,36 @@ export interface ArchetypePreset {
 export type ActiveTabId = 'roster' | 'staff' | 'labor' | 'coverage' | 'pareto' | 'ergonomics' | 'compliance';
 
 
+/**
+ * One stored day slot of a facility's roster: the shift, its clock times and the rest
+ * interval before it. This is the data the callout queue ranks replacements against,
+ * and the reason callout-replacement used to have no source.
+ */
+export interface StoredAssignmentShift {
+  line_number: number;
+  cycle_week: number;
+  day_index: number;
+  shift_code: ShiftOrOffCode;
+  employee_id: string | null;
+  start_hour: number;
+  duration_hours: number;
+  rest_hours_before: number;
+}
+
+export interface StoredRosterResponse {
+  facility_id: string;
+  slots_stored: number;
+  shifts: StoredAssignmentShift[];
+}
+
+export interface EmergencyCalloutRequest {
+  facility_id: string;
+  target_day_index: number;
+  target_shift_code: ShiftOrOffCode;
+  missing_employee_id?: string | null;
+  line_number: number;
+}
+
 export interface CalloutCandidate {
   employee_id: string;
   employee_name: string;
@@ -326,6 +356,36 @@ export interface EmergencyCalloutResponse {
   operational_guidance: string;
 }
 
+/**
+ * A swap proposal, carrying the per-line data the verdict is computed from.
+ *
+ * The WHOLE cycle goes with it, in line order, because a roster is one continuous cycle
+ * of day slots: line i's Sunday is followed by line i+1's Monday, so a swap cannot be
+ * checked for rest or clopening without the lines either side of it.
+ */
+export interface ShiftSwapRequest {
+  associate_a_id: string;
+  associate_b_id: string;
+  day_a_index: number;
+  day_b_index: number;
+  roster_lines: ShiftSwapLineInput[];
+}
+
+export interface ShiftSwapLineInput {
+  line_number: number;
+  assigned_employee_id: string | null;
+  assigned_person: string | null;
+  hourly_wage: number | null;
+  days: ShiftSwapCellInput[];
+}
+
+export interface ShiftSwapCellInput {
+  day_index: number;
+  shift_code: ShiftOrOffCode;
+  start_hour: number;
+  duration_hours: number;
+}
+
 export interface ShiftSwapValidationResponse {
   is_approved: boolean;
   associate_a_name: string;
@@ -339,3 +399,44 @@ export interface ShiftSwapValidationResponse {
   validation_messages: string[];
   next_monday_rotation_impact: string;
 }
+
+/**
+ * One manager edit to a generated roster cell.
+ *
+ * Keyed by the shift pattern (`cycle_week`, the solver's `current_cycle_week`) rather
+ * than the row the cell happens to sit on this week. A cyclic roster rotates every
+ * pattern down one row each Monday, so a row number names a different pattern next
+ * week while the pattern itself is the thing that was generated and then changed.
+ *
+ * `original_shift_code` is the generated value, kept so the edit can be undone and so
+ * the cell can state what it was changed from.
+ */
+export interface RosterCellOverride {
+  cycle_week: number;
+  day_index: number;
+  shift_code: ShiftOrOffCode;
+  original_shift_code: ShiftOrOffCode;
+}
+
+/** Which rule an override or swap check reports on. */
+export type RosterRuleId = 'rest' | 'clopening' | 'overtime';
+
+/**
+ * One rule finding against an edited line. `line_number` is the row the finding lands
+ * on, which for a cycle-boundary finding is the row AFTER the edited one: line i's
+ * Sunday is followed by line i+1's Monday.
+ */
+export interface RosterRuleFinding {
+  rule: RosterRuleId;
+  line_number: number;
+  day_index: number | null;
+  message: string;
+}
+
+/** A shift code's concrete clock times, as a solved roster reports them. */
+export interface ShiftClock {
+  start_hour: number;
+  duration_hours: number;
+  time_window: string;
+}
+

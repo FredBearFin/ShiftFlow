@@ -120,9 +120,68 @@ class TenantIsolationTests(unittest.TestCase):
             "/api/employees",
             "/api/employees/audits/separations",
             "/api/payroll/export/gusto",
+            "/api/emergency/stored-roster",
             "/api/v1/schedules/default-solution/downtown_foodmart_omaha",
         ):
             self.assertEqual(anonymous.get(path).status_code, 401, path)
+
+    def test_a_stored_roster_and_its_callout_queue_stay_with_their_account(self):
+        """assignment_shifts is owner-scoped like every other facility table."""
+        self._create(self.a, "Alice Cover", assigned_line=2)
+        shifts = [
+            {
+                "line_number": line_number,
+                "cycle_week": line_number,
+                "day_index": day,
+                "shift_code": "D" if day < 5 else "OFF",
+                "start_hour": 10.0 if day < 5 else 0.0,
+                "duration_hours": 8.0 if day < 5 else 0.0,
+                "rest_hours_before": 24.0,
+            }
+            for line_number in (1, 2)
+            for day in range(7)
+        ]
+
+        stored = self.a.put(
+            "/api/emergency/stored-roster", json={"facility_id": FACILITY, "shifts": shifts}
+        )
+        self.assertEqual(stored.status_code, 200, stored.text)
+        self.assertEqual(stored.json()["slots_stored"], 14)
+        self.assertEqual(stored.json()["facility_id"], FACILITY)
+
+        # Bob uses the same facility id. He has no facility row of his own yet, so his
+        # read and write of "FAC-OMAHA-01" reach nothing, and a 404 does not tell him
+        # whether anyone else has one.
+        self.assertEqual(self.b.get(f"/api/emergency/stored-roster?facility_id={FACILITY}").status_code, 404)
+        self.assertEqual(
+            self.b.put("/api/emergency/stored-roster", json={"facility_id": FACILITY, "shifts": shifts}).status_code,
+            404,
+        )
+        self.assertEqual(
+            self.b.post(
+                "/api/emergency/callout-replacement",
+                json={"facility_id": FACILITY, "target_day_index": 5, "target_shift_code": "D"},
+            ).status_code,
+            404,
+        )
+
+        # Once Bob has his own facility, his roster is empty: Alice's 14 slots are not his.
+        self._create(self.b, "Bob Cover", assigned_line=2)
+        self.assertEqual(
+            self.b.get(f"/api/emergency/stored-roster?facility_id={FACILITY}").json()["slots_stored"], 0
+        )
+        self.assertEqual(
+            self.a.get(f"/api/emergency/stored-roster?facility_id={FACILITY}").json()["slots_stored"], 14
+        )
+
+        # And Bob's callout is refused for having no roster, not answered from Alice's.
+        bob_callout = self.b.post(
+            "/api/emergency/callout-replacement",
+            json={"facility_id": FACILITY, "target_day_index": 5, "target_shift_code": "D", "line_number": 1},
+        )
+        self.assertEqual(bob_callout.status_code, 409)
+        self.assertIn("No roster is stored", bob_callout.json()["detail"])
+        self.assertNotIn("Alice Cover", bob_callout.text)
 
     def test_idempotency_keys_are_private_per_account(self):
         key = f"shared-key-{uuid.uuid4().hex}"
@@ -157,6 +216,22 @@ class ClaimLegacyDataTests(unittest.TestCase):
             emp = repo.create_employee(facility_id, "Old Hand", "Clerk", 18.0, [0, 1, 2])
             repo.deactivate_employee(emp["id"], "voluntary_resignation", "moved", "Old Manager")
             repo.save_roster_snapshot(facility_id, 1, 0, {"lines": []})
+            repo.replace_assignment_shifts(
+                facility_id,
+                [
+                    {
+                        "line_number": 1,
+                        "cycle_week": 1,
+                        "day_index": d,
+                        "shift_code": "D",
+                        "employee_id": emp["id"],
+                        "start_hour": 10.0,
+                        "duration_hours": 8.0,
+                        "rest_hours_before": 24.0,
+                    }
+                    for d in range(7)
+                ],
+            )
             return emp["id"]
         finally:
             conn.close()
@@ -172,6 +247,7 @@ class ClaimLegacyDataTests(unittest.TestCase):
             self.assertGreaterEqual(moved["employees"], 1)
             self.assertGreaterEqual(moved["separation_audits"], 1)
             self.assertGreaterEqual(moved["roster_snapshots"], 1)
+            self.assertGreaterEqual(moved["assignment_shifts"], 7)
             self.assertEqual(conn.execute("PRAGMA foreign_key_check;").fetchall(), [])
 
             owner = ShiftFlowRepository(conn, owner_id="USR-CLAIMER1")
@@ -179,11 +255,13 @@ class ClaimLegacyDataTests(unittest.TestCase):
             self.assertEqual([e["name"] for e in owner.list_employees(facility_id)], ["Old Hand"])
             self.assertEqual(len(owner.list_separation_audits(facility_id)), 1)
             self.assertEqual(len(owner.list_roster_snapshots(facility_id)), 1)
+            self.assertEqual(len(owner.list_assignment_shifts(facility_id)), 7)
             self.assertEqual(owner.get_employee(emp_id)["facility_id"], facility_id)
 
             stranger = ShiftFlowRepository(conn, owner_id="USR-STRANGER9")
             self.assertIsNone(stranger.get_facility(facility_id))
             self.assertIsNone(stranger.get_employee(emp_id))
+            self.assertEqual(stranger.list_assignment_shifts(facility_id), [])
 
             # Running it again finds nothing left to move, so it cannot re-assign claimed data.
             again = claim_legacy_data(conn, "USR-SOMEONE99")

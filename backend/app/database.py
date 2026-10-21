@@ -128,6 +128,37 @@ def init_db() -> None:
         FOREIGN KEY (facility_id) REFERENCES facilities(id)
     );
 
+    /* One day slot of the facility's current roster: which line works it, who holds
+       that line, the shift's concrete clock times and the rest interval before it.
+
+       This is the data the emergency callout queue needs and could not have: without
+       stored shift times and rest intervals there was nothing to rank a replacement
+       against, which is why callout-replacement returned 501.
+
+       Owner-scoped exactly like every other facility table - facility_id is stored
+       owner-prefixed by ShiftFlowRepository, so two accounts can both hold a roster for
+       FAC-OMAHA-01 and neither can see the other's. One roster per facility: the unique
+       index below makes a line/day slot a single row, replaced wholesale when a new
+       roster is stored, so a stale half-roster can never be read back as current. */
+    CREATE TABLE IF NOT EXISTS assignment_shifts (
+        id TEXT PRIMARY KEY,
+        facility_id TEXT NOT NULL,
+        employee_id TEXT,
+        line_number INTEGER NOT NULL,
+        cycle_week INTEGER NOT NULL,
+        day_index INTEGER NOT NULL,
+        shift_code TEXT NOT NULL,
+        start_hour REAL NOT NULL DEFAULT 0,
+        duration_hours REAL NOT NULL DEFAULT 0,
+        rest_hours_before REAL NOT NULL DEFAULT 24,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (facility_id) REFERENCES facilities(id)
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_assignment_shifts_slot
+        ON assignment_shifts (facility_id, line_number, day_index);
+    CREATE INDEX IF NOT EXISTS idx_assignment_shifts_facility
+        ON assignment_shifts (facility_id);
+
     CREATE TABLE IF NOT EXISTS labor_analyses (
         id TEXT PRIMARY KEY,
         facility_id TEXT NOT NULL,
@@ -643,6 +674,80 @@ class ShiftFlowRepository:
             "schedule_data": schedule_data,
             "created_at": row["created_at"],
         }
+    # -------------------------------------------------------------
+    # Per-assignment shift storage
+    #
+    # The concrete shift times and rest intervals of the facility's current roster.
+    # Scoped by the owner-prefixed facility id like everything else here, so a read
+    # under one account can never see another account's roster.
+    # -------------------------------------------------------------
+    def replace_assignment_shifts(
+        self, facility_id: str, shifts: List[Dict[str, Any]]
+    ) -> int:
+        """Stores the facility's roster, replacing whatever was stored before.
+
+        Replaced whole rather than merged: a roster is one rotation, and leaving old
+        slots behind would let a callout be answered against a line/day mix that was
+        never a real schedule. Returns how many day slots were stored.
+        """
+        stored_facility_id = self._stored_facility_id(facility_id)
+        cursor = self.conn.cursor()
+        try:
+            cursor.execute("DELETE FROM assignment_shifts WHERE facility_id = ?", (stored_facility_id,))
+            for shift in shifts:
+                cursor.execute(
+                    """
+                    INSERT INTO assignment_shifts
+                        (id, facility_id, employee_id, line_number, cycle_week, day_index,
+                         shift_code, start_hour, duration_hours, rest_hours_before)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                    """,
+                    (
+                        f"ASG-{uuid.uuid4().hex[:10].upper()}",
+                        stored_facility_id,
+                        shift.get("employee_id"),
+                        int(shift["line_number"]),
+                        int(shift["cycle_week"]),
+                        int(shift["day_index"]),
+                        str(shift["shift_code"]),
+                        float(shift.get("start_hour") or 0.0),
+                        float(shift.get("duration_hours") or 0.0),
+                        float(shift.get("rest_hours_before") if shift.get("rest_hours_before") is not None else 24.0),
+                    ),
+                )
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
+        return len(shifts)
+
+    def list_assignment_shifts(self, facility_id: str) -> List[Dict[str, Any]]:
+        """The facility's stored roster in cycle order (line 1 Monday first)."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, facility_id, employee_id, line_number, cycle_week, day_index,
+                   shift_code, start_hour, duration_hours, rest_hours_before, created_at
+            FROM assignment_shifts
+            WHERE facility_id = ?
+            ORDER BY line_number ASC, day_index ASC
+            """,
+            (self._stored_facility_id(facility_id),),
+        )
+        shifts = [dict(r) for r in cursor.fetchall()]
+        for shift in shifts:
+            shift["facility_id"] = self._caller_facility_id(shift["facility_id"])
+        return shifts
+
+    def clear_assignment_shifts(self, facility_id: str) -> int:
+        """Forgets the facility's stored roster."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "DELETE FROM assignment_shifts WHERE facility_id = ?",
+            (self._stored_facility_id(facility_id),),
+        )
+        self.conn.commit()
+        return cursor.rowcount
 
     def save_labor_analysis(
         self,

@@ -1,7 +1,12 @@
-"""Tests for Store Manager Emergency Callout & Shift Swap operations.
+"""Tests for Store Manager Emergency Operations, at the edges where there is no source.
 
-Both endpoints need stored shift and rest data, which the schema does not hold,
-so each must answer 501 rather than return a fixed roster or verdict.
+Both emergency endpoints used to answer 501 because nothing stored per-employee shift
+times or rest intervals. That storage now exists (assignment_shifts), so the refusals
+below are the narrower ones that remain: a facility that does not exist, and a request
+carrying nothing to compute a verdict from. Neither is ever answered with a fixed
+roster, a default name or an invented figure.
+
+The cases that exercise real verdicts live in test_shift_swap.py and test_callout_cover.py.
 """
 
 import unittest
@@ -9,8 +14,6 @@ from fastapi.testclient import TestClient
 
 
 from app.main import app
-
-NO_SOURCE = {"detail": "not implemented: no source data"}
 
 
 class TestEmergencyWorkflows(unittest.TestCase):
@@ -20,48 +23,52 @@ class TestEmergencyWorkflows(unittest.TestCase):
     def setUpClass(cls):
         cls.client = TestClient(app)
 
-    def test_01_callout_returns_501_without_stored_data(self):
-        """Saturday evening callout returns 501 and names no fixed candidate."""
+    def test_01_callout_for_an_unknown_facility_names_no_candidate(self):
+        """A facility that does not exist is a 404, not a ranked queue of invented names."""
         payload = {
+            "facility_id": "FAC-DOES-NOT-EXIST",
             "target_day_index": 5,      # Saturday
-            "target_shift_code": "E",   # Evening (16:00-24:00)
+            "target_shift_code": "E",   # Evening
             "line_number": 6,
             "missing_employee_id": "EMP-03",
         }
         response = self.client.post("/api/emergency/callout-replacement", json=payload)
-        self.assertEqual(response.status_code, 501)
-        self.assertEqual(response.json(), NO_SOURCE)
+        self.assertEqual(response.status_code, 404)
         self.assertNotIn("Devon Taylor", response.text)
         self.assertNotIn("Elena Rodriguez", response.text)
 
-    def test_02_swap_returns_501_for_adjacent_and_non_adjacent_days(self):
-        """Shift swap validation returns 501 for both adjacent and non-adjacent days."""
-        dangerous_swap = {
-            "associate_a_id": "EMP-04",
-            "associate_b_id": "EMP-03",
-            "day_a_index": 2,  # Wednesday
-            "day_b_index": 3,  # Thursday
-        }
-        res_danger = self.client.post("/api/emergency/validate-swap", json=dangerous_swap)
-        self.assertEqual(res_danger.status_code, 501)
-        self.assertEqual(res_danger.json(), NO_SOURCE)
-        self.assertNotIn("11.0 hours", res_danger.text)
+    def test_02_swap_without_a_roster_is_refused_not_answered(self):
+        """A swap carrying no roster has no source for a verdict, so it is rejected.
 
-        safe_swap = {
-            "associate_a_id": "EMP-04",
-            "associate_b_id": "EMP-03",
-            "day_a_index": 1,  # Tuesday
-            "day_b_index": 4,  # Friday
-        }
-        res_safe = self.client.post("/api/emergency/validate-swap", json=safe_swap)
-        self.assertEqual(res_safe.status_code, 501)
-        self.assertEqual(res_safe.json(), NO_SOURCE)
+        Both an adjacent-day and a non-adjacent-day request are checked, and neither
+        comes back with the hard-coded rest figure the old fixed verdict used to quote.
+        """
+        for day_a, day_b in ((2, 3), (1, 4)):
+            res = self.client.post(
+                "/api/emergency/validate-swap",
+                json={
+                    "associate_a_id": "EMP-04",
+                    "associate_b_id": "EMP-03",
+                    "day_a_index": day_a,
+                    "day_b_index": day_b,
+                },
+            )
+            self.assertEqual(res.status_code, 422)
+            self.assertIn("roster_lines", res.text)
+            self.assertNotIn("11.0 hours", res.text)
 
-    def test_03_callout_without_employee_id_returns_501(self):
-        """A callout with no missing employee also returns 501, not a default name."""
-        res = self.client.post("/api/emergency/callout-replacement", json={"target_day_index": 0, "target_shift_code": "M"})
-        self.assertEqual(res.status_code, 501)
-        self.assertEqual(res.json(), NO_SOURCE)
+    def test_03_callout_without_an_employee_id_still_invents_no_name(self):
+        """A callout naming nobody is refused on the facility, not answered with a default."""
+        res = self.client.post(
+            "/api/emergency/callout-replacement",
+            json={"facility_id": "FAC-DOES-NOT-EXIST", "target_day_index": 0, "target_shift_code": "M"},
+        )
+        self.assertEqual(res.status_code, 404)
+        self.assertNotIn("Devon Taylor", res.text)
+
+    def test_04_stored_roster_for_an_unknown_facility_is_a_404(self):
+        res = self.client.get("/api/emergency/stored-roster?facility_id=FAC-DOES-NOT-EXIST")
+        self.assertEqual(res.status_code, 404)
 
 
 if __name__ == "__main__":

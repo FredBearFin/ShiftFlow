@@ -17,6 +17,8 @@ _modules = [
     "test_persistence_and_integrations",
     "test_legal_compliance",
     "test_emergency_workflows",
+    "test_shift_swap",
+    "test_callout_cover",
     "test_distributed_architecture",
     "test_idempotency",
     "test_timecard_audit",

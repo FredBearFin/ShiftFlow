@@ -369,8 +369,38 @@ class CalloutCandidateSchema(BaseModel):
     audit_notes: List[str] = Field(default_factory=list)
 
 
+class AssignmentShiftSchema(BaseModel):
+    """One stored day slot of a facility's roster: its shift, clock times and rest before it."""
+    line_number: int = Field(..., ge=1)
+    cycle_week: int = Field(..., ge=1)
+    day_index: int = Field(..., ge=0, le=6)
+    shift_code: Literal["M", "D", "E", "N", "OFF"]
+    employee_id: Optional[str] = None
+    start_hour: float = Field(default=0.0, ge=0, le=24)
+    duration_hours: float = Field(default=0.0, ge=0, le=24)
+    rest_hours_before: float = Field(default=24.0, ge=0, le=24)
+
+
+class StoredRosterWriteSchema(BaseModel):
+    """The roster to store for a facility, replacing whatever was stored before."""
+    facility_id: str = Field(default="FAC-OMAHA-01")
+    shifts: List[AssignmentShiftSchema] = Field(..., min_length=1)
+
+
+class StoredRosterSchema(BaseModel):
+    """What a facility currently has stored."""
+    facility_id: str
+    slots_stored: int
+    shifts: List[AssignmentShiftSchema]
+
+
 class EmergencyCalloutRequestSchema(BaseModel):
-    """Request to find compliant replacements for sudden frontline absence."""
+    """Request to find compliant replacements for sudden frontline absence.
+
+    Answered from the facility's STORED per-assignment shift times and rest intervals.
+    Without a stored roster there is nothing to rank against, and the request is refused
+    rather than answered.
+    """
     facility_id: Optional[str] = None
     target_day_index: int = Field(default=5, ge=0, le=6, description="Day index: 5=Saturday")
     target_shift_code: str = Field(default="E", description="M=Morning, D=Mid, E=Evening, N=Night")
@@ -390,12 +420,44 @@ class EmergencyCalloutResponseSchema(BaseModel):
     operational_guidance: str
 
 
+class SwapCellSchema(BaseModel):
+    """One day slot of a solved roster line, with the clock times behind its shift code."""
+    day_index: int = Field(..., ge=0, le=6)
+    shift_code: Literal["M", "D", "E", "N", "OFF"]
+    start_hour: float = Field(default=0.0, ge=0, le=24, description="Clock start; 0 for OFF")
+    duration_hours: float = Field(default=0.0, ge=0, le=24, description="Shift length; 0 for OFF")
+
+
+class SwapLineSchema(BaseModel):
+    """One line of a solved roster, as the caller already holds it.
+
+    The whole cycle is sent in line order because a roster is ONE continuous cycle of
+    day slots: line i's Sunday is followed by line i+1's Monday, so a swap cannot be
+    checked for rest or clopening without the lines either side of it.
+    """
+    line_number: int = Field(..., ge=1)
+    assigned_employee_id: Optional[str] = None
+    assigned_person: Optional[str] = None
+    hourly_wage: Optional[float] = Field(default=None, ge=0)
+    days: List[SwapCellSchema] = Field(..., min_length=7, max_length=7)
+
+
 class ShiftSwapRequestSchema(BaseModel):
-    """Peer-to-peer shift trade proposal validation."""
+    """Peer-to-peer shift trade proposal validation.
+
+    `roster_lines` carries the per-line shift, rest and hours data the verdict is
+    computed from. It is required: there is no stored per-employee punch data to fall
+    back on, and a verdict reached without the real roster would be a guess.
+    """
     associate_a_id: str = Field(..., description="First associate requesting swap")
     associate_b_id: str = Field(..., description="Second associate agreeing to swap")
     day_a_index: int = Field(default=2, ge=0, le=6, description="Shift day of Associate A (e.g., 2=Wednesday)")
     day_b_index: int = Field(default=3, ge=0, le=6, description="Shift day of Associate B (e.g., 3=Thursday)")
+    roster_lines: List[SwapLineSchema] = Field(
+        ...,
+        min_length=1,
+        description="The solved roster, every line, in line order (line 1 first)",
+    )
 
 
 class ShiftSwapValidationResponseSchema(BaseModel):

@@ -2,14 +2,40 @@ import React, { useRef, useState } from 'react';
 import { useDialogFocus } from './ui/useDialogFocus';
 import { Term } from './ui/Term';
 import {
+  CalloutCandidate,
   EmployeeRecord,
   NewEmployeeInput,
+  RosterCellOverride,
   RosterLine,
   SeparationCategory,
+  EmergencyCalloutResponse,
+  ShiftOrOffCode,
+  ShiftSwapValidationResponse,
   SolveResponse,
   StaffMemberAssignment,
 } from '../types';
-import { DAYS_OF_WEEK } from '../services/api';
+import {
+  DAYS_OF_WEEK,
+  findCalloutCoverApi,
+  storeRosterAssignmentsApi,
+  validateShiftSwapApi,
+} from '../services/api';
+import {
+  OVERTIME_THRESHOLD_HOURS,
+  SHIFT_CODE_LABELS,
+  availableShiftCodes,
+  buildStoredRosterShifts,
+  buildSwapLines,
+  coverAsOverrides,
+  findingsByLine,
+  indexOverrides,
+  overrideKey,
+  previewOverride,
+  resolveCell,
+  resolvedLineHours,
+  shiftClocksFromSolution,
+  swapAsOverrides,
+} from '../services/rosterOverrides';
 import { formatCurrency, formatHourlyRate } from '../utils/format';
 import { Button } from './ui/Button';
 
@@ -42,6 +68,15 @@ interface MasterRosterViewProps {
   onAdvanceWeek: (delta: number) => void;
   onResetWeek: () => void;
   onUpdateStaffAssignments: (assignments: StaffMemberAssignment[]) => void;
+  /**
+   * The manager's hand edits to the generated roster. Optional so a caller that does
+   * not own them (and the view tests) renders the generated roster unchanged; when the
+   * setter is absent the edits are held in this component for the session instead.
+   */
+  rosterOverrides?: RosterCellOverride[];
+  onUpdateRosterOverrides?: (overrides: RosterCellOverride[]) => void;
+  /** The facility whose stored roster the callout queue is ranked against. */
+  facilityId?: string;
   onAddEmployee: (emp: NewEmployeeInput) => void;
   onToggleEmployeeStatus: (
     empId: string,
@@ -63,6 +98,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   onAdvanceWeek,
   onResetWeek,
   onUpdateStaffAssignments,
+  rosterOverrides: extOverrides,
+  onUpdateRosterOverrides: extSetOverrides,
+  facilityId = 'FAC-OMAHA-01',
   onAddEmployee,
   onToggleEmployeeStatus,
   onUpdateEmployee,
@@ -82,6 +120,224 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   const setShowAddModal = extSetAddModal || setInternalAddModal;
   const addDialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(addDialogRef, showAddModal, () => setShowAddModal(false));
+
+  /* ------------------------------------------------------------------
+   * Editing a generated roster cell
+   *
+   * A supervisor's week is edits: someone calls out, one person cannot work Sundays.
+   * An edit is applied to the solved roster as it stands and only the affected line is
+   * re-checked, because re-solving would reshuffle everybody else's week to deliver the
+   * one cell that was asked for.
+   * ------------------------------------------------------------------ */
+  const [internalOverrides, setInternalOverrides] = useState<RosterCellOverride[]>([]);
+  const overrides = extOverrides ?? internalOverrides;
+  const setOverrides = extSetOverrides ?? setInternalOverrides;
+
+  const [editingCell, setEditingCell] = useState<{ cycleWeek: number; dayIndex: number } | null>(null);
+  const [draftCode, setDraftCode] = useState<ShiftOrOffCode>('OFF');
+
+  const shiftClocks = shiftClocksFromSolution(solution);
+  const shiftCodeChoices = availableShiftCodes(shiftClocks);
+  const overridesByKey = indexOverrides(overrides);
+  const lineFindings = findingsByLine(solution, overrides);
+
+  const editedCycleWeeks = new Set(overrides.map((o) => o.cycle_week));
+
+  const startEditingCell = (cycleWeek: number, dayIndex: number, currentCode: ShiftOrOffCode) => {
+    setEditingCell({ cycleWeek, dayIndex });
+    setDraftCode(currentCode);
+  };
+
+  const commitEdit = (cycleWeek: number, dayIndex: number, generatedCode: ShiftOrOffCode) => {
+    const key = overrideKey(cycleWeek, dayIndex);
+    const withoutThisCell = overrides.filter((o) => overrideKey(o.cycle_week, o.day_index) !== key);
+    // Choosing the generated value back is not an edit, so no override is recorded and
+    // the cell stops reporting itself as modified.
+    setOverrides(
+      draftCode === generatedCode
+        ? withoutThisCell
+        : [
+            ...withoutThisCell,
+            {
+              cycle_week: cycleWeek,
+              day_index: dayIndex,
+              shift_code: draftCode,
+              original_shift_code: generatedCode,
+            },
+          ]
+    );
+    setEditingCell(null);
+  };
+
+  const revertEdit = (cycleWeek: number, dayIndex: number) => {
+    const key = overrideKey(cycleWeek, dayIndex);
+    setOverrides(overrides.filter((o) => overrideKey(o.cycle_week, o.day_index) !== key));
+    setEditingCell(null);
+  };
+
+  /* ------------------------------------------------------------------
+   * Trading two assigned shifts between two people
+   *
+   * The manager picks two shifts and the backend validates both resulting weeks
+   * against the 16-hour rest rule, the zero-clopening guardrail and the 40-hour
+   * overtime boundary. A trade that breaks one of those is refused with the reason,
+   * and nothing is applied.
+   * ------------------------------------------------------------------ */
+  type SwapPick = { line_number: number; day_index: number; shift_code: ShiftOrOffCode };
+
+  const [swapMode, setSwapMode] = useState(false);
+  const [swapPicks, setSwapPicks] = useState<SwapPick[]>([]);
+  const [swapVerdict, setSwapVerdict] = useState<ShiftSwapValidationResponse | null>(null);
+  const [swapError, setSwapError] = useState<string | null>(null);
+  const [swapChecking, setSwapChecking] = useState(false);
+
+  const resetSwap = () => {
+    setSwapPicks([]);
+    setSwapVerdict(null);
+    setSwapError(null);
+    setSwapChecking(false);
+  };
+
+  const isPicked = (lineNumber: number, dayIndex: number) =>
+    swapPicks.some((p) => p.line_number === lineNumber && p.day_index === dayIndex);
+
+  const toggleSwapPick = (pick: SwapPick) => {
+    setSwapVerdict(null);
+    setSwapError(null);
+    setSwapPicks((prev) => {
+      const without = prev.filter(
+        (p) => !(p.line_number === pick.line_number && p.day_index === pick.day_index)
+      );
+      if (without.length !== prev.length) return without;
+      // Two shifts make a trade; a third replaces the older of the two.
+      return [...without, pick].slice(-2);
+    });
+  };
+
+  const employeeIdForLine = (lineNumber: number): string | null =>
+    solution.roster_lines.find((l) => l.line_number === lineNumber)?.assigned_employee_id ?? null;
+
+  const swapBlockedReason = (): string | null => {
+    if (swapPicks.length !== 2) return 'Pick two assigned shifts to trade.';
+    const [a, b] = swapPicks;
+    if (a.shift_code === 'OFF' || b.shift_code === 'OFF') {
+      return 'Both shifts have to be ones somebody is actually working. To put somebody on a day they are off, change that one cell instead.';
+    }
+    if (a.line_number === b.line_number) {
+      return 'A trade is between two people. Both of these shifts are on the same line.';
+    }
+    if (!employeeIdForLine(a.line_number) || !employeeIdForLine(b.line_number)) {
+      return 'A trade needs a named person on both lines. One of these lines has nobody assigned to it.';
+    }
+    return null;
+  };
+
+  const checkSwap = async () => {
+    if (swapPicks.length !== 2) return;
+    const [a, b] = swapPicks;
+    const idA = employeeIdForLine(a.line_number);
+    const idB = employeeIdForLine(b.line_number);
+    if (!idA || !idB) return;
+
+    setSwapChecking(true);
+    setSwapError(null);
+    setSwapVerdict(null);
+    try {
+      const verdict = await validateShiftSwapApi({
+        associate_a_id: idA,
+        associate_b_id: idB,
+        day_a_index: a.day_index,
+        day_b_index: b.day_index,
+        roster_lines: buildSwapLines(solution, overrides),
+      });
+      setSwapVerdict(verdict);
+    } catch (err) {
+      setSwapError(err instanceof Error ? err.message : 'The swap could not be checked.');
+    } finally {
+      setSwapChecking(false);
+    }
+  };
+
+  /* ------------------------------------------------------------------
+   * Covering a shift somebody has called out of
+   *
+   * The ranking comes from the backend, which reads the facility's stored shift times
+   * and rest intervals. The roster on screen is stored first, so the queue is ranked
+   * against what the manager is actually looking at - including their edits - rather
+   * than whatever was stored last.
+   * ------------------------------------------------------------------ */
+  const [coverTarget, setCoverTarget] = useState<{
+    line_number: number;
+    day_index: number;
+    shift_code: ShiftOrOffCode;
+  } | null>(null);
+  const [coverResult, setCoverResult] = useState<EmergencyCalloutResponse | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [coverLoading, setCoverLoading] = useState(false);
+
+  const coverDialogRef = useRef<HTMLDivElement>(null);
+
+  const closeCover = () => {
+    setCoverTarget(null);
+    setCoverResult(null);
+    setCoverError(null);
+    setCoverLoading(false);
+  };
+
+  const openCoverFor = async (line: RosterLine, dayIndex: number, code: ShiftOrOffCode) => {
+    setCoverTarget({ line_number: line.line_number, day_index: dayIndex, shift_code: code });
+    setCoverResult(null);
+    setCoverError(null);
+    setCoverLoading(true);
+    try {
+      await storeRosterAssignmentsApi(facilityId, buildStoredRosterShifts(solution, overrides));
+      setCoverResult(
+        await findCalloutCoverApi({
+          facility_id: facilityId,
+          target_day_index: dayIndex,
+          target_shift_code: code,
+          missing_employee_id: line.assigned_employee_id,
+          line_number: line.line_number,
+        })
+      );
+    } catch (err) {
+      setCoverError(err instanceof Error ? err.message : 'Cover could not be worked out.');
+    } finally {
+      setCoverLoading(false);
+    }
+  };
+
+  useDialogFocus(coverDialogRef, coverTarget !== null, closeCover);
+
+  const applyCover = (employeeId: string) => {
+    if (coverTarget === null) return;
+    const next = coverAsOverrides(
+      solution,
+      overrides,
+      coverTarget.line_number,
+      employeeId,
+      coverTarget.day_index
+    );
+    if (next === null) {
+      setCoverError('That cover can no longer be applied to this roster, so nothing was changed.');
+      return;
+    }
+    setOverrides(next);
+    closeCover();
+  };
+
+  const applySwap = () => {
+    if (swapPicks.length !== 2 || !swapVerdict?.is_approved) return;
+    const [a, b] = swapPicks;
+    const next = swapAsOverrides(solution, overrides, a, b);
+    if (next === null) {
+      setSwapError('Those shifts are no longer on this roster, so nothing was changed.');
+      return;
+    }
+    setOverrides(next);
+    setSwapMode(false);
+    resetSwap();
+  };
 
 
 
@@ -347,6 +603,19 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-ink-strong text-card text-xs font-mono-tabular font-bold">A</kbd>
             </Button>
 
+            <Button
+              variant={swapMode ? 'primary' : 'secondary'}
+              size="sm"
+              aria-pressed={swapMode}
+              onClick={() => {
+                setSwapMode(!swapMode);
+                setEditingCell(null);
+                resetSwap();
+              }}
+            >
+              {swapMode ? 'Done swapping' : 'Swap two shifts'}
+            </Button>
+
             <Button variant="secondary" size="sm" onClick={() => window.print()}>
               Print Roster <kbd className="px-1.5 py-0.5 rounded bg-surface-sunken text-ink-soft text-xs font-mono-tabular font-bold">P</kbd>
             </Button>
@@ -591,6 +860,134 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </div>
         )}
 
+        {/* Trading two assigned shifts between two people. */}
+        {swapMode && (
+          <div className="p-4 sm:px-6 border-b border-border-subtle bg-surface-subtle no-print">
+            <h3 className="type-subsection-title text-ink">Swap two shifts</h3>
+            <p className="type-prose text-muted">
+              Choose one shift from each person's week. Both resulting weeks are checked
+              against the 16-hour rest rule, the zero-clopening guardrail and the{' '}
+              {OVERTIME_THRESHOLD_HOURS}-hour overtime boundary before anything changes. A
+              trade that would break one of those is refused and nothing is applied.
+            </p>
+
+            <p className="mt-2 type-prose text-ink font-semibold" aria-live="polite">
+              {swapPicks.length === 0
+                ? 'No shifts chosen yet.'
+                : swapPicks
+                    .map(
+                      (p) =>
+                        `Line ${p.line_number}, ${DAY_FULL_NAMES[p.day_index]} (${p.shift_code})`
+                    )
+                    .join(' ↔ ')}
+            </p>
+
+            {swapPicks.length === 2 && swapBlockedReason() !== null && (
+              <p id="roster-swap-blocked" className="mt-1 text-xs font-semibold text-status-risk-ink">
+                {swapBlockedReason()}
+              </p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              <Button
+                variant="primary"
+                size="sm"
+                loading={swapChecking}
+                disabled={swapBlockedReason() !== null}
+                aria-describedby={
+                  swapPicks.length === 2 && swapBlockedReason() !== null
+                    ? 'roster-swap-blocked'
+                    : undefined
+                }
+                onClick={checkSwap}
+              >
+                Check this swap
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={!swapVerdict?.is_approved}
+                onClick={applySwap}
+              >
+                Apply swap
+              </Button>
+              <Button variant="secondary" size="sm" onClick={resetSwap}>
+                Clear choices
+              </Button>
+            </div>
+
+            {swapError !== null && (
+              <p className="mt-2.5 text-xs font-semibold text-status-risk-ink" role="alert">
+                {swapError}
+              </p>
+            )}
+
+            {swapVerdict !== null && (
+              <div
+                className={`mt-2.5 rounded-md border px-3 py-2.5 ${
+                  swapVerdict.is_approved
+                    ? 'border-status-ok bg-status-ok-soft'
+                    : 'border-status-risk bg-status-risk-soft'
+                }`}
+                role="status"
+              >
+                <p className="text-xs font-bold text-ink">
+                  {swapVerdict.is_approved ? 'Swap allowed' : 'Swap refused'} —{' '}
+                  {swapVerdict.swap_summary}
+                </p>
+                <ul className="mt-1 space-y-1">
+                  {swapVerdict.validation_messages.map((message, idx) => (
+                    <li key={`${idx}-${message.slice(0, 24)}`} className="text-xs text-ink">
+                      {message}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-xs text-muted font-mono-tabular">
+                  {swapVerdict.associate_a_name}: {swapVerdict.overtime_hours_a}h OT •{' '}
+                  {swapVerdict.associate_b_name}: {swapVerdict.overtime_hours_b}h OT • payroll{' '}
+                  {swapVerdict.payroll_cost_delta >= 0 ? '+' : ''}
+                  {formatCurrency(swapVerdict.payroll_cost_delta)}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {swapVerdict.next_monday_rotation_impact}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Edits to the generated roster, and what on this page they do and do not move. */}
+        {overrides.length > 0 && (
+          <div className="p-4 sm:px-6 border-b border-border-subtle bg-surface-subtle">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="type-subsection-title text-ink">
+                  {overrides.length} cell{overrides.length === 1 ? '' : 's'} modified from generated
+                </h3>
+                <p className="type-prose text-muted">
+                  Each edit was checked against the {OVERTIME_THRESHOLD_HOURS}-hour overtime
+                  boundary, the 16-hour rest rule and the zero-clopening guardrail on its own
+                  line only — nothing else in the rotation was re-solved or moved. The hours and
+                  weekly payroll on an edited row below are recalculated. The KPI cards above,
+                  the ergonomics score and the under-staffed totals still describe the generated
+                  roster, because they come from the solve and no edit has been fed back into it.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="no-print"
+                onClick={() => {
+                  setOverrides([]);
+                  setEditingCell(null);
+                }}
+              >
+                Undo all edits
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Weekly Schedule Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -614,14 +1011,30 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle text-xs">
-              {solution.roster_lines.map((line: RosterLine) => (
+              {solution.roster_lines.map((line: RosterLine) => {
+                const isEdited = editedCycleWeeks.has(line.current_cycle_week);
+                const editedHours = resolvedLineHours(line, overridesByKey, shiftClocks);
+                // An edit changes the hours on the line, so the money on it follows:
+                // regular up to the overtime boundary, then time and a half. An
+                // unassigned line still has no wage and so still costs nothing.
+                const editedPayroll =
+                  line.hourly_wage === null
+                    ? null
+                    : Math.round(
+                        (editedHours.regular_hours * line.hourly_wage +
+                          editedHours.overtime_hours * line.hourly_wage * 1.5) *
+                          100
+                      ) / 100;
+                const findings = lineFindings.get(line.line_number) ?? [];
+
+                return (
                 <tr
                   key={line.cohort_id}
-                  className="hover:bg-slate-50/80 transition-colors"
+                  className="transition-colors"
                 >
                   <th scope="row" className="py-3 px-4 text-left font-normal">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-ink text-white font-mono-tabular font-bold text-xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded bg-ink text-card font-mono-tabular font-bold text-xs">
                         {line.cohort_id}
                       </span>
                       <span className="font-semibold text-ink">
@@ -629,6 +1042,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           ? line.assigned_person
                           : `Shift Pattern ${line.line_number}`}
                       </span>
+                      {isEdited && (
+                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-accent-soft text-accent-strong border border-accent">
+                          Modified from generated
+                        </span>
+                      )}
                       {line.availability_conflicts_count > 0 && (
                         <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-surface-sunken text-ink border border-border-control before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-warning before:mr-1.5 before:align-middle">
                           {line.availability_conflicts_count} Avail Alert
@@ -651,6 +1069,18 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       <span>•</span>
                       <span>Next Mon → Line {line.next_week_line_number}</span>
                     </div>
+                    {findings.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {findings.map((finding) => (
+                          <li
+                            key={`${finding.rule}-${finding.day_index}`}
+                            className="text-xs font-semibold text-status-risk-ink"
+                          >
+                            {finding.message}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </th>
 
                   <td className="py-3 px-2 text-center">
@@ -659,53 +1089,213 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     </span>
                   </td>
 
-                  {line.days.map((cell) => (
-                    <td
-                      key={cell.day_index}
-                      className={`p-2 text-center ${
-                        cell.is_weekend ? 'bg-slate-50/70' : ''
-                      }`}
-                    >
-                      <div
-                        className={`shift-pill-${cell.shift_code} rounded-lg py-1.5 px-2 flex flex-col items-center justify-center relative ${
-                          cell.availability_conflict ? 'ring-2 ring-amber-500' : ''
-                        }`}
+                  {line.days.map((cell) => {
+                    const resolved = resolveCell(
+                      cell,
+                      line.current_cycle_week,
+                      overridesByKey,
+                      shiftClocks
+                    );
+                    const isEditing =
+                      !swapMode &&
+                      editingCell !== null &&
+                      editingCell.cycleWeek === line.current_cycle_week &&
+                      editingCell.dayIndex === cell.day_index;
+                    const picked = isPicked(line.line_number, cell.day_index);
+                    const cellDomId = `roster-cell-${line.current_cycle_week}-${cell.day_index}`;
+                    const rowName = line.assigned_person ?? `Shift Pattern ${line.line_number}`;
+                    const dayName = DAY_FULL_NAMES[cell.day_index];
+                    const draftPreview = isEditing
+                      ? previewOverride(solution, overrides, {
+                          cycle_week: line.current_cycle_week,
+                          day_index: cell.day_index,
+                          shift_code: draftCode,
+                          original_shift_code: resolved.original_shift_code,
+                        })
+                      : null;
+                    const draftFindings = draftPreview ? draftPreview.findings : [];
+
+                    return (
+                      <td
+                        key={cell.day_index}
+                        className={`p-2 text-center ${cell.is_weekend ? 'bg-surface-subtle' : ''}`}
                       >
-                        <span className="font-mono-tabular font-bold text-xs">
-                          {cell.shift_code}
-                        </span>
-                        <span className="text-xs opacity-85 font-mono-tabular mt-0.5">
-                          {cell.shift_code === 'OFF' ? 'Rest' : cell.time_window}
-                        </span>
-                        {cell.availability_conflict && (
-                          <span className="text-[9px] font-bold uppercase tracking-wide text-amber-900 mt-0.5">
-                            ! Conflict
-                          </span>
+                        {isEditing ? (
+                          <div className="min-w-[9rem] text-left no-print">
+                            <label
+                              htmlFor={`${cellDomId}-shift`}
+                              className="block text-xs font-semibold text-ink-soft mb-1"
+                            >
+                              {rowName} — {dayName} shift
+                            </label>
+                            <select
+                              id={`${cellDomId}-shift`}
+                              value={draftCode}
+                              onChange={(e) => setDraftCode(e.target.value as ShiftOrOffCode)}
+                              aria-describedby={
+                                draftFindings.length > 0 ? `${cellDomId}-findings` : undefined
+                              }
+                              className="w-full px-2 py-1 border border-border-control rounded-md text-xs bg-card text-ink"
+                            >
+                              {shiftCodeChoices.map((code) => (
+                                <option key={code} value={code}>
+                                  {code} — {SHIFT_CODE_LABELS[code]}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="mt-1 text-xs text-muted">
+                              Generated: {resolved.original_shift_code}
+                              {draftPreview
+                                ? ` • this line would work ${draftPreview.weekly_hours}h`
+                                : ''}
+                            </p>
+                            {draftFindings.length > 0 && (
+                              <ul id={`${cellDomId}-findings`} className="mt-1 space-y-1">
+                                {draftFindings.map((finding) => (
+                                  <li
+                                    key={`${finding.rule}-${finding.line_number}-${finding.day_index}`}
+                                    className="text-xs font-semibold text-status-risk-ink"
+                                  >
+                                    {finding.message}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() =>
+                                  commitEdit(
+                                    line.current_cycle_week,
+                                    cell.day_index,
+                                    resolved.original_shift_code
+                                  )
+                                }
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setEditingCell(null)}
+                              >
+                                Cancel
+                              </Button>
+                              {resolved.is_modified && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() =>
+                                    revertEdit(line.current_cycle_week, cell.day_index)
+                                  }
+                                >
+                                  Undo edit
+                                </Button>
+                              )}
+                              {resolved.shift_code !== 'OFF' && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() =>
+                                    openCoverFor(line, cell.day_index, resolved.shift_code)
+                                  }
+                                >
+                                  Cover this shift
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            aria-pressed={swapMode ? picked : undefined}
+                            onClick={() =>
+                              swapMode
+                                ? toggleSwapPick({
+                                    line_number: line.line_number,
+                                    day_index: cell.day_index,
+                                    shift_code: resolved.shift_code,
+                                  })
+                                : startEditingCell(
+                                    line.current_cycle_week,
+                                    cell.day_index,
+                                    resolved.shift_code
+                                  )
+                            }
+                            aria-label={
+                              (swapMode
+                                ? `${picked ? 'Remove from the swap' : 'Choose for the swap'}: ` +
+                                  `${rowName}'s ${dayName} shift. Currently `
+                                : `Change ${rowName}'s ${dayName} shift. Currently `) +
+                              `${resolved.shift_code}, ${resolved.time_window}` +
+                              (resolved.is_modified
+                                ? `, modified from the generated ${resolved.original_shift_code}.`
+                                : ' as generated.')
+                            }
+                            className="w-full rounded-lg text-left"
+                          >
+                            <div
+                              className={`shift-pill-${resolved.shift_code} rounded-lg py-1.5 px-2 flex flex-col items-center justify-center relative ${
+                                cell.availability_conflict ? 'ring-2 ring-status-watch' : ''
+                              } ${resolved.is_modified ? 'border-2 border-accent-strong' : ''} ${
+                                picked ? 'ring-2 ring-accent-strong' : ''
+                              }`}
+                            >
+                              {picked && (
+                                <span className="text-[9px] font-bold uppercase tracking-wide text-accent-strong">
+                                  Chosen for swap
+                                </span>
+                              )}
+                              <span className="font-mono-tabular font-bold text-xs">
+                                {resolved.shift_code}
+                              </span>
+                              <span className="text-xs font-mono-tabular mt-0.5">
+                                {resolved.shift_code === 'OFF' ? 'Rest' : resolved.time_window}
+                              </span>
+                              {resolved.is_modified && (
+                                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-accent-strong">
+                                  Modified from {resolved.original_shift_code}
+                                </span>
+                              )}
+                              {cell.availability_conflict && (
+                                <span className="text-[9px] font-bold uppercase tracking-wide text-status-watch-ink mt-0.5">
+                                  ! Conflict
+                                </span>
+                              )}
+                              {cell.availability_conflict && (
+                                <span
+                                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-status-watch"
+                                  title="Worker marked this day as unavailable!"
+                                />
+                              )}
+                            </div>
+                          </button>
                         )}
-                        {cell.availability_conflict && (
-                          <span
-                            className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500"
-                            title="Worker marked this day as unavailable!"
-                          />
-                        )}
-                      </div>
-                    </td>
-                  ))}
+                      </td>
+                    );
+                  })}
 
                   <td className="py-3 px-3 text-right font-mono-tabular">
-                    <span className="font-bold text-ink">{line.weekly_hours}h</span>
-                    {line.overtime_hours > 0 && (
-                      <span className="block text-xs text-amber-700 font-semibold">
-                        +{line.overtime_hours}h OT
+                    <span className="font-bold text-ink">{editedHours.weekly_hours}h</span>
+                    {editedHours.overtime_hours > 0 && (
+                      <span className="block text-xs text-status-watch-ink font-semibold">
+                        +{editedHours.overtime_hours}h OT
+                      </span>
+                    )}
+                    {isEdited && editedHours.weekly_hours !== line.weekly_hours && (
+                      <span className="block text-xs text-muted">
+                        was {line.weekly_hours}h
                       </span>
                     )}
                   </td>
 
                   <td className="py-3 px-4 text-right font-mono-tabular font-bold text-ink">
-                    {formatCurrency(line.estimated_weekly_payroll)}
+                    {formatCurrency(editedPayroll)}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
             {/* Understaffing is a per-day total, not a header: it belongs in the
                 foot as data, so no body cell inherits it as a column header. */}
@@ -731,6 +1321,134 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Cover this shift: who can pick it up, ranked by rest then overtime headroom.
+          The overlay below is the same as the Add Staff dialog's, and deliberately NOT a
+          token utility with an opacity modifier (bg-ink-strong/40): Tailwind v3 emits no
+          rule for those, so the backdrop would silently render with no background. */}
+      {coverTarget !== null && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+          <div
+            ref={coverDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="roster-cover-title"
+            className="bg-card border border-border-control rounded-lg max-w-2xl w-full p-6 space-y-3 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-border-subtle">
+              <div className="min-w-0">
+                <h3 id="roster-cover-title" className="text-base font-bold text-ink">
+                  Cover the {DAY_FULL_NAMES[coverTarget.day_index]} {coverTarget.shift_code} shift
+                  on line {coverTarget.line_number}
+                </h3>
+                <p className="type-prose text-muted">
+                  Ranked on rest compliance first and overtime headroom second, from the
+                  roster on screen. Everyone with a line is listed with the figures behind
+                  them: nobody already working that day, and nobody whose cover would break
+                  the 16-hour rest rule, create a clopening or cross the{' '}
+                  {OVERTIME_THRESHOLD_HOURS}-hour boundary, is recommended.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={closeCover}
+                className="text-muted hover:text-ink font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {coverLoading && (
+              <p className="type-prose text-muted" aria-live="polite">
+                Working out who can cover…
+              </p>
+            )}
+
+            {coverError !== null && (
+              <p className="text-xs font-semibold text-status-risk-ink" role="alert">
+                {coverError}
+              </p>
+            )}
+
+            {coverResult !== null && (
+              <div className="space-y-2.5">
+                <p className="type-prose text-ink">
+                  <strong className="font-bold">
+                    {coverResult.missing_employee_name}
+                  </strong>{' '}
+                  — {coverResult.target_day_name} {coverResult.target_shift_code},{' '}
+                  {coverResult.target_shift_window}. {coverResult.candidates_count} staff checked.
+                </p>
+                <p className="type-prose text-muted">{coverResult.operational_guidance}</p>
+
+                {coverResult.candidates.length === 0 ? (
+                  <p className="type-prose text-ink font-semibold">
+                    Nobody else holds a line on this roster, so there is nobody to rank.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {coverResult.candidates.map((candidate: CalloutCandidate) => (
+                      <li
+                        key={candidate.employee_id}
+                        className={`rounded-md border px-3 py-2.5 ${
+                          candidate.is_recommended
+                            ? 'border-status-ok bg-status-ok-soft'
+                            : 'border-border-control bg-surface-subtle'
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-ink">
+                              {candidate.employee_name}
+                              {candidate.is_recommended && (
+                                <span className="ml-2 px-1.5 py-0.5 rounded text-xs font-bold bg-status-ok text-card">
+                                  Recommended
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-xs text-muted">
+                              {candidate.role} • {candidate.status_label}
+                            </p>
+                          </div>
+                          <Button
+                            variant={candidate.is_recommended ? 'primary' : 'secondary'}
+                            size="sm"
+                            onClick={() => applyCover(candidate.employee_id)}
+                          >
+                            Give them this shift
+                          </Button>
+                        </div>
+                        <p className="mt-1 text-xs font-mono-tabular text-ink-soft">
+                          rest {candidate.prior_rest_hours}h before /{' '}
+                          {candidate.next_rest_hours}h after •{' '}
+                          {candidate.current_scheduled_hours}h →{' '}
+                          {candidate.hours_with_shift}h • adds{' '}
+                          {formatCurrency(candidate.estimated_added_payroll)}
+                        </p>
+                        {candidate.audit_notes.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {candidate.audit_notes.map((note, idx) => (
+                              <li
+                                key={`${candidate.employee_id}-${idx}`}
+                                className={`text-xs ${
+                                  candidate.is_recommended ? 'text-ink' : 'text-status-risk-ink'
+                                }`}
+                              >
+                                {note}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Add New Employee Modal */}
       {showAddModal && (

@@ -202,6 +202,581 @@ def is_backward_rotation(prev_code: str, curr_code: str) -> bool:
     return TEMPLATE_ORDER.get(curr_code, 0) < TEMPLATE_ORDER.get(prev_code, 0)
 
 
+# -----------------------------------------------------------------------------
+# Shift swap validation
+#
+# The entry point the emergency swap route calls. It reads only the per-line shift,
+# rest and hours data a solved roster already carries: there is no stored per-employee
+# punch data, and inventing one would make the verdict a guess.
+#
+# The adjacency used throughout is the real one. A roster is ONE continuous cycle of
+# line_count * 7 day slots in line order, so the day after a line's Sunday is the NEXT
+# line's Monday, not that line's own Monday. A swap is therefore checked across line
+# boundaries as well as within a week, and the cycle wraps: the last line's Sunday is
+# followed by the first line's Monday. The zero-clopening guardrail in
+# isd_rwsp_solver.py uses the same adjacency, and used to compare a line's Sunday
+# against its own Monday - six days and a rest block apart - which is the bug this must
+# not reproduce.
+# -----------------------------------------------------------------------------
+
+OVERTIME_THRESHOLD_HOURS = 40.0
+
+# A supervisor reads a refusal under pressure, so the days are spelled out. The
+# abbreviated DAYS_OF_WEEK stays the wire format for roster cells.
+DAY_FULL_NAMES = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+]
+
+
+class SwapRefused(ValueError):
+    """A swap that cannot be validated at all, as distinct from one that is refused on a rule."""
+
+
+def _slot_index(line_index: int, day_index: int) -> int:
+    return line_index * 7 + day_index
+
+
+def _format_hours(hours: float) -> str:
+    return str(int(hours)) if float(hours).is_integer() else f"{hours:.1f}"
+
+
+def _rest_between_slots(prev: Dict, curr: Dict) -> float:
+    return compute_rest_hours_between(
+        prev["shift_code"],
+        prev["start_hour"],
+        prev["duration_hours"],
+        curr["shift_code"],
+        curr["start_hour"],
+    )
+
+
+def validate_shift_swap(
+    lines: List[Dict],
+    associate_a_id: str,
+    day_a_index: int,
+    associate_b_id: str,
+    day_b_index: int,
+) -> Dict:
+    """Decide whether two assigned shifts may be traded, and say exactly why not.
+
+    `lines` is the whole solved cycle in line order. Each entry is a mapping with
+    `line_number`, `assigned_employee_id`, `assigned_person`, `hourly_wage` and `days`
+    (seven mappings of `day_index`, `shift_code`, `start_hour`, `duration_hours`).
+
+    A swap is refused when, after the trade, any adjacency either shift now sits in
+    leaves less than the required rest, creates a closing-then-opening pair, or when
+    either week crosses the overtime boundary it was not already over. Each refusal
+    names the rule, the days and the figures it found.
+
+    Raises SwapRefused when the request cannot be validated: an associate who holds no
+    line, a day with no shift on it, or the same shift traded with itself.
+    """
+    min_rest = float(settings.min_rest_hours_between_shifts)
+    line_count = len(lines)
+    if line_count == 0:
+        raise SwapRefused("The roster has no lines, so there is nothing to swap.")
+
+    index_by_employee: Dict[str, int] = {}
+    for idx, line in enumerate(lines):
+        emp_id = line.get("assigned_employee_id")
+        if emp_id:
+            index_by_employee.setdefault(emp_id, idx)
+
+    def resolve(associate_id: str, label: str) -> int:
+        if associate_id not in index_by_employee:
+            raise SwapRefused(
+                f"{label} ({associate_id}) does not hold a line on this roster, "
+                "so there is no shift of theirs to trade."
+            )
+        return index_by_employee[associate_id]
+
+    idx_a = resolve(associate_a_id, "Associate A")
+    idx_b = resolve(associate_b_id, "Associate B")
+
+    line_a, line_b = lines[idx_a], lines[idx_b]
+    name_a = line_a.get("assigned_person") or f"Line {line_a['line_number']}"
+    name_b = line_b.get("assigned_person") or f"Line {line_b['line_number']}"
+
+    if idx_a == idx_b and day_a_index == day_b_index:
+        raise SwapRefused("A shift cannot be traded with itself.")
+
+    # The flat cycle, so slot i+1 is always the day after slot i.
+    slots: List[Dict] = []
+    for line in lines:
+        by_day = {int(c["day_index"]): c for c in line["days"]}
+        for d in range(7):
+            cell = by_day.get(d)
+            if cell is None:
+                raise SwapRefused(
+                    f"Line {line['line_number']} is missing day {d}, so its week cannot be checked."
+                )
+            code = cell["shift_code"]
+            slots.append(
+                {
+                    "line_number": line["line_number"],
+                    "day_index": d,
+                    "shift_code": code,
+                    "start_hour": 0.0 if code == "OFF" else float(cell["start_hour"]),
+                    "duration_hours": 0.0 if code == "OFF" else float(cell["duration_hours"]),
+                }
+            )
+
+    slot_a = _slot_index(idx_a, day_a_index)
+    slot_b = _slot_index(idx_b, day_b_index)
+
+    for slot_idx, who, day_idx in ((slot_a, name_a, day_a_index), (slot_b, name_b, day_b_index)):
+        if slots[slot_idx]["shift_code"] == "OFF":
+            raise SwapRefused(
+                f"{who} is off on {DAY_FULL_NAMES[day_idx]}, so there is no assigned shift to trade. "
+                "Use a single-cell change to put somebody on a day they are off."
+            )
+
+    hours_before_a = sum(s["duration_hours"] for s in slots[idx_a * 7 : idx_a * 7 + 7])
+    hours_before_b = sum(s["duration_hours"] for s in slots[idx_b * 7 : idx_b * 7 + 7])
+
+    # Trade the two slots. Only the shift moves; the day and the line it lands on stay.
+    traded = [dict(s) for s in slots]
+    for target, source in ((slot_a, slots[slot_b]), (slot_b, slots[slot_a])):
+        traded[target]["shift_code"] = source["shift_code"]
+        traded[target]["start_hour"] = source["start_hour"]
+        traded[target]["duration_hours"] = source["duration_hours"]
+
+    total_slots = len(traded)
+    messages: List[str] = []
+    clopening_a = False
+    clopening_b = False
+
+    # Every adjacency either swapped slot now sits in: the pair before it and the pair
+    # after it, wrapping round the cycle. Checked once each, in cycle order.
+    touched = sorted({(slot - 1) % total_slots for slot in (slot_a, slot_b)} | {slot_a % total_slots, slot_b % total_slots})
+    for from_idx in touched:
+        to_idx = (from_idx + 1) % total_slots
+        prev, curr = traded[from_idx], traded[to_idx]
+        if prev["shift_code"] == "OFF" or curr["shift_code"] == "OFF":
+            continue
+
+        crosses_lines = prev["line_number"] != curr["line_number"]
+        where = (
+            f"{DAY_FULL_NAMES[prev['day_index']]} on line {prev['line_number']} into "
+            f"{DAY_FULL_NAMES[curr['day_index']]} on line {curr['line_number']}"
+            if crosses_lines
+            else f"{DAY_FULL_NAMES[prev['day_index']]} into {DAY_FULL_NAMES[curr['day_index']]} "
+            f"on line {prev['line_number']}"
+        )
+
+        if prev["shift_code"] == "E" and curr["shift_code"] == "M":
+            messages.append(
+                f"Refused - clopening: the swap puts a closing evening shift straight into an "
+                f"opening morning shift, {where}."
+                + (
+                    " In a rotating roster one line's Sunday is followed by the next line's "
+                    "Monday, so this pair is a real back-to-back close and open."
+                    if crosses_lines
+                    else ""
+                )
+            )
+            # The pair sits on one or two lines. Each swapping party is flagged when
+            # their own line is one of them, so a clopening across a line boundary is
+            # reported against both weeks it actually falls on.
+            pair_lines = {prev["line_number"], curr["line_number"]}
+            if line_a["line_number"] in pair_lines:
+                clopening_a = True
+            if line_b["line_number"] in pair_lines:
+                clopening_b = True
+
+        rest = _rest_between_slots(prev, curr)
+        if rest < min_rest:
+            messages.append(
+                f"Refused - rest: the swap leaves {_format_hours(rest)} hours between the "
+                f"{prev['shift_code']} shift and the {curr['shift_code']} shift, {where}. "
+                f"The rule is {_format_hours(min_rest)} hours."
+            )
+
+    hours_after_a = sum(s["duration_hours"] for s in traded[idx_a * 7 : idx_a * 7 + 7])
+    hours_after_b = sum(s["duration_hours"] for s in traded[idx_b * 7 : idx_b * 7 + 7])
+
+    def overtime(hours: float) -> float:
+        return max(0.0, hours - OVERTIME_THRESHOLD_HOURS)
+
+    ot_a, ot_b = overtime(hours_after_a), overtime(hours_after_b)
+
+    # Overtime the swap itself creates or deepens. A line already over the boundary
+    # before the swap is not refused for staying where it was.
+    for who, before, after in ((name_a, hours_before_a, hours_after_a), (name_b, hours_before_b, hours_after_b)):
+        if overtime(after) > overtime(before):
+            messages.append(
+                f"Refused - overtime: the swap takes {who} from {_format_hours(before)} to "
+                f"{_format_hours(after)} hours, {_format_hours(overtime(after))} hours past the "
+                f"{_format_hours(OVERTIME_THRESHOLD_HOURS)}-hour boundary."
+            )
+
+    def weekly_cost(hours: float, wage: Optional[float]) -> float:
+        if wage is None:
+            return 0.0
+        regular = min(OVERTIME_THRESHOLD_HOURS, hours)
+        return regular * wage + overtime(hours) * wage * 1.5
+
+    cost_before = weekly_cost(hours_before_a, line_a.get("hourly_wage")) + weekly_cost(
+        hours_before_b, line_b.get("hourly_wage")
+    )
+    cost_after = weekly_cost(hours_after_a, line_a.get("hourly_wage")) + weekly_cost(
+        hours_after_b, line_b.get("hourly_wage")
+    )
+
+    is_approved = len(messages) == 0
+    if is_approved:
+        messages.append(
+            f"Approved: both weeks keep at least {_format_hours(min_rest)} hours between shifts, "
+            "neither creates a closing-then-opening pair, and neither crosses the "
+            f"{_format_hours(OVERTIME_THRESHOLD_HOURS)}-hour boundary."
+        )
+
+    code_a = slots[slot_a]["shift_code"]
+    code_b = slots[slot_b]["shift_code"]
+    swap_summary = (
+        f"{name_a}'s {DAY_FULL_NAMES[day_a_index]} {code_a} shift for "
+        f"{name_b}'s {DAY_FULL_NAMES[day_b_index]} {code_b} shift."
+    )
+
+    # What the next Monday does to the swap, stated from the rotation the roster
+    # already reports rather than guessed: every line advances one row, so the two
+    # edited lines move on and the trade travels with the pattern, not the person.
+    rotation_impact = (
+        f"Next Monday every line advances one row, so line {line_a['line_number']} becomes line "
+        f"{(line_a['line_number'] % line_count) + 1} and line {line_b['line_number']} becomes line "
+        f"{(line_b['line_number'] % line_count) + 1}. The traded shifts stay with the patterns, "
+        "so this swap applies to whoever holds those patterns in a later week too."
+    )
+
+    return {
+        "is_approved": is_approved,
+        "associate_a_name": name_a,
+        "associate_b_name": name_b,
+        "swap_summary": swap_summary,
+        "clopening_violation_a": clopening_a,
+        "clopening_violation_b": clopening_b,
+        "overtime_hours_a": round(ot_a, 2),
+        "overtime_hours_b": round(ot_b, 2),
+        "payroll_cost_delta": round(cost_after - cost_before, 2),
+        "validation_messages": messages,
+        "next_monday_rotation_impact": rotation_impact,
+    }
+
+
+# -----------------------------------------------------------------------------
+# Callout cover
+#
+# Ranks who could pick up a shift somebody has called out of, from the STORED per-
+# assignment shift times and rest intervals. Same flat-cycle adjacency as the swap
+# validator: a candidate covering their own line's day d takes its rest from day d-1 of
+# their line, or from the PREVIOUS line's Sunday when d is Monday, and hands off to day
+# d+1, or to the NEXT line's Monday when d is Sunday.
+# -----------------------------------------------------------------------------
+
+
+class CalloutUnanswerable(ValueError):
+    """The callout cannot be assessed at all, as distinct from having no eligible cover."""
+
+
+def rank_callout_candidates(
+    stored_shifts: List[Dict],
+    employees: List[Dict],
+    target_day_index: int,
+    target_shift_code: str,
+    missing_line_number: Optional[int] = None,
+    missing_employee_id: Optional[str] = None,
+) -> Dict:
+    """Rank who can cover a called-out shift, by rest compliance then overtime headroom.
+
+    `stored_shifts` is the facility's stored roster: one mapping per line/day slot with
+    `line_number`, `cycle_week`, `day_index`, `shift_code`, `start_hour`,
+    `duration_hours` and `employee_id`. `employees` are the facility's staff records
+    (`id`, `name`, `role`, `wage`, `active`, `available_days`, `assigned_line`).
+
+    Every candidate is reported with the figures behind it. Nobody already working that
+    day is recommended, and nobody whose cover would break the rest rule, create a
+    closing-then-opening pair or cross the overtime boundary is recommended either - each
+    is listed with the reason instead, so the manager can see what the trade-off is
+    rather than being handed a shortlist with the reasoning hidden.
+
+    Raises CalloutUnanswerable when there is no stored roster, or when the target shift
+    code has no clock times anywhere in it.
+    """
+    min_rest = float(settings.min_rest_hours_between_shifts)
+    if not stored_shifts:
+        raise CalloutUnanswerable(
+            "No roster is stored for this facility, so there are no shift times or rest "
+            "intervals to assess a replacement against. Store the current roster first."
+        )
+    if not 0 <= target_day_index <= 6:
+        raise CalloutUnanswerable(f"{target_day_index} is not a day of the week.")
+
+    by_slot: Dict[Tuple[int, int], Dict] = {}
+    line_numbers = set()
+    for shift in stored_shifts:
+        line_number = int(shift["line_number"])
+        day_index = int(shift["day_index"])
+        line_numbers.add(line_number)
+        by_slot[(line_number, day_index)] = shift
+
+    ordered_lines = sorted(line_numbers)
+    line_count = len(ordered_lines)
+    position = {line_number: idx for idx, line_number in enumerate(ordered_lines)}
+
+    for line_number in ordered_lines:
+        for day_index in range(7):
+            if (line_number, day_index) not in by_slot:
+                raise CalloutUnanswerable(
+                    f"The stored roster is missing line {line_number} day {day_index}, "
+                    "so no week on it can be checked."
+                )
+
+    # The target shift's clock times, read from the stored roster rather than assumed.
+    target_clock: Optional[Dict] = None
+    if target_shift_code != "OFF":
+        for shift in stored_shifts:
+            if shift["shift_code"] == target_shift_code:
+                target_clock = shift
+                break
+    if target_clock is None:
+        raise CalloutUnanswerable(
+            f"The stored roster has no {target_shift_code} shift in it, so that shift's "
+            "times and the rest around it are unknown."
+        )
+
+    target_start = float(target_clock["start_hour"])
+    target_duration = float(target_clock["duration_hours"])
+    target_window = _format_window(target_start, target_duration)
+
+    employees_by_id = {str(emp["id"]): emp for emp in employees}
+    missing_name = "Unnamed"
+    if missing_employee_id and missing_employee_id in employees_by_id:
+        missing_name = employees_by_id[missing_employee_id]["name"]
+    elif missing_line_number is not None:
+        slot_holder = by_slot.get((missing_line_number, target_day_index), {}).get("employee_id")
+        if slot_holder and str(slot_holder) in employees_by_id:
+            missing_name = employees_by_id[str(slot_holder)]["name"]
+        else:
+            missing_name = f"Line {missing_line_number}"
+
+    def neighbour(line_number: int, day_index: int, step: int) -> Dict:
+        """The slot `step` days away in the real cycle, crossing line boundaries."""
+        idx = position[line_number]
+        raw = idx * 7 + day_index + step
+        total = line_count * 7
+        raw %= total
+        return by_slot[(ordered_lines[raw // 7], raw % 7)]
+
+    candidates: List[Dict] = []
+    for emp in employees:
+        emp_id = str(emp["id"])
+        if not emp.get("active", True):
+            continue
+        if missing_employee_id and emp_id == missing_employee_id:
+            continue
+        line_number = emp.get("assigned_line")
+        if line_number is None or int(line_number) not in position:
+            continue
+        line_number = int(line_number)
+        if missing_line_number is not None and line_number == missing_line_number:
+            continue
+
+        own_slot = by_slot[(line_number, target_day_index)]
+        is_off_duty = own_slot["shift_code"] == "OFF"
+
+        week = [by_slot[(line_number, d)] for d in range(7)]
+        current_hours = sum(
+            0.0 if s["shift_code"] == "OFF" else float(s["duration_hours"]) for s in week
+        )
+        # Covering replaces whatever they had that day, so their own shift's hours come
+        # off before the cover's go on.
+        own_hours = 0.0 if is_off_duty else float(own_slot["duration_hours"])
+        hours_with_shift = current_hours - own_hours + target_duration
+
+        prev_slot = neighbour(line_number, target_day_index, -1)
+        next_slot = neighbour(line_number, target_day_index, 1)
+
+        prior_rest = compute_rest_hours_between(
+            prev_slot["shift_code"],
+            float(prev_slot["start_hour"]),
+            float(prev_slot["duration_hours"]),
+            target_shift_code,
+            target_start,
+        )
+        next_rest = compute_rest_hours_between(
+            target_shift_code,
+            target_start,
+            target_duration,
+            next_slot["shift_code"],
+            float(next_slot["start_hour"]),
+        )
+
+        clopening = (prev_slot["shift_code"] == "E" and target_shift_code == "M") or (
+            target_shift_code == "E" and next_slot["shift_code"] == "M"
+        )
+        rest_short = prior_rest < min_rest or next_rest < min_rest
+        overtime_hours = max(0.0, hours_with_shift - OVERTIME_THRESHOLD_HOURS)
+        overtime_risk = overtime_hours > 0
+
+        available_days = emp.get("available_days") or list(range(7))
+        day_available = target_day_index in available_days
+
+        wage = emp.get("wage")
+        if wage is None:
+            added_payroll = 0.0
+        else:
+            before = _weekly_cost(current_hours, float(wage))
+            after = _weekly_cost(hours_with_shift, float(wage))
+            added_payroll = after - before
+
+        notes: List[str] = []
+        if not is_off_duty:
+            notes.append(
+                f"Already working a {own_slot['shift_code']} shift on "
+                f"{DAY_FULL_NAMES[target_day_index]}; covering would mean dropping it."
+            )
+        if not day_available:
+            notes.append(f"Has {DAY_FULL_NAMES[target_day_index]} marked unavailable.")
+        if clopening:
+            notes.append(
+                "Would be a closing shift straight into an opening shift, which "
+                "zero-clopening forbids."
+            )
+        if rest_short:
+            notes.append(
+                f"Leaves {_format_hours(min(prior_rest, next_rest))}h rest, under the "
+                f"{_format_hours(min_rest)}h rule."
+            )
+        if overtime_risk:
+            notes.append(
+                f"Takes the week to {_format_hours(hours_with_shift)}h, "
+                f"{_format_hours(overtime_hours)}h past the "
+                f"{_format_hours(OVERTIME_THRESHOLD_HOURS)}h boundary."
+            )
+
+        is_recommended = (
+            is_off_duty and day_available and not clopening and not rest_short and not overtime_risk
+        )
+        if is_recommended:
+            headroom = OVERTIME_THRESHOLD_HOURS - hours_with_shift
+            status_label = (
+                f"Clear - {_format_hours(min(prior_rest, next_rest))}h rest either side, "
+                f"{_format_hours(headroom)}h before overtime"
+            )
+            notes.append(status_label)
+        elif not is_off_duty:
+            status_label = "Already working that day"
+        elif clopening:
+            status_label = "Clopening"
+        elif rest_short:
+            status_label = "Under the rest rule"
+        elif overtime_risk:
+            status_label = "Into overtime"
+        else:
+            status_label = "Marked unavailable"
+
+        candidates.append(
+            {
+                "employee_id": emp_id,
+                "employee_name": emp["name"],
+                "role": emp.get("role") or "",
+                "hourly_wage": float(wage) if wage is not None else 0.0,
+                "is_off_duty_target_day": is_off_duty,
+                "prior_rest_hours": round(prior_rest, 2),
+                "next_rest_hours": round(next_rest, 2),
+                "current_scheduled_hours": int(round(current_hours)),
+                "hours_with_shift": int(round(hours_with_shift)),
+                "overtime_risk": overtime_risk,
+                "clopening_risk": clopening or rest_short,
+                "estimated_added_payroll": round(added_payroll, 2),
+                "is_recommended": is_recommended,
+                "status_label": status_label,
+                "audit_notes": notes,
+                # Sort keys only; not part of the response schema.
+                "_min_rest": min(prior_rest, next_rest),
+                "_headroom": OVERTIME_THRESHOLD_HOURS - hours_with_shift,
+            }
+        )
+
+    # Rest compliance first, then overtime headroom - the order the ranking is specified
+    # in. Within that, the cheaper cover comes first.
+    candidates.sort(
+        key=lambda c: (
+            not c["is_recommended"],
+            not c["is_off_duty_target_day"],
+            c["clopening_risk"],
+            c["overtime_risk"],
+            -c["_min_rest"],
+            -c["_headroom"],
+            c["estimated_added_payroll"],
+            c["employee_name"],
+        )
+    )
+    for candidate in candidates:
+        candidate.pop("_min_rest", None)
+        candidate.pop("_headroom", None)
+
+    recommended = next((c for c in candidates if c["is_recommended"]), None)
+    if recommended is not None:
+        guidance = (
+            f"{recommended['employee_name']} is the clear cover: off duty on "
+            f"{DAY_FULL_NAMES[target_day_index]}, {_format_hours(recommended['prior_rest_hours'])}h "
+            f"rest before the shift and {_format_hours(recommended['next_rest_hours'])}h after, and "
+            f"{_format_hours(OVERTIME_THRESHOLD_HOURS - recommended['hours_with_shift'])}h still "
+            f"before overtime. Adds {recommended['estimated_added_payroll']:.2f} to the week."
+        )
+    elif candidates:
+        guidance = (
+            f"Nobody can cover this shift without breaking a rule. All {len(candidates)} "
+            "staff checked are listed with what each one would cost in rest, clopening or "
+            "overtime, so the choice is a judgement call rather than a compliant one."
+        )
+    else:
+        guidance = (
+            "No other staff member holds a line on this roster, so there is nobody to "
+            "rank. Assign staff to the remaining lines first."
+        )
+
+    return {
+        "target_day_name": DAY_FULL_NAMES[target_day_index],
+        "target_shift_window": target_window,
+        "target_shift_code": target_shift_code,
+        "missing_employee_name": missing_name,
+        "candidates_count": len(candidates),
+        "recommended_candidate_id": recommended["employee_id"] if recommended else None,
+        "candidates": candidates,
+        "operational_guidance": guidance,
+    }
+
+
+def _weekly_cost(hours: float, wage: float) -> float:
+    regular = min(OVERTIME_THRESHOLD_HOURS, hours)
+    overtime_hours = max(0.0, hours - OVERTIME_THRESHOLD_HOURS)
+    return regular * wage + overtime_hours * wage * 1.5
+
+
+def _format_window(start_hour: float, duration_hours: float) -> str:
+    """The same shape the solver's formatted_window uses, so the UI reads one convention.
+
+    End times wrap at midnight exactly as the solver's `(start + duration) % 24` does, so
+    a closing shift reads 16:00-00:00 here and on the roster grid.
+    """
+
+    def clock(value: float) -> str:
+        total_minutes = int(round(value * 60)) % (24 * 60)
+        return f"{total_minutes // 60:02d}:{total_minutes % 60:02d}"
+
+    if duration_hours <= 0:
+        return "Rest / Off"
+    return f"{clock(start_hour)}–{clock(start_hour + duration_hours)}"
+
+
 def evaluate_ergonomics_audit(
     shift_types: List[ShiftTypeResultSchema],
     multigraph_arcs: List[MultigraphArcSchema],
