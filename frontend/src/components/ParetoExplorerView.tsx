@@ -21,6 +21,10 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   const maxErgo = Math.max(...points.map((p) => p.obj_ergo), 20);
   const knee = points.find((p) => p.is_knee_point);
 
+  // Every payroll figure on this page prices only the lines that carry a wage.
+  const lineCount = solution.roster_lines.length;
+  const pricedLineCount = solution.roster_lines.filter((l) => l.estimated_weekly_payroll !== null).length;
+
   // SVG Coordinate projection
   const svgW = 720;
   const svgH = 320;
@@ -58,6 +62,11 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               people out — long stretches without a day off, back-to-back closing-then-opening
               shifts, lost weekends. Click any point on the curve or table below to switch your
               actual schedule to it; each one shows its real weekly payroll cost.
+            </p>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Every payroll figure below prices {pricedLineCount} of {lineCount} shift patterns —
+              the ones that have somebody assigned. Patterns with nobody on them cost nothing here
+              and would cost more once staffed.
             </p>
           </div>
           <div className="card p-4 text-xs">

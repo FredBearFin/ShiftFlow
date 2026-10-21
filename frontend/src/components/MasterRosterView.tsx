@@ -148,8 +148,27 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   );
   const totalUnderHours = underByDay.reduce((a, h) => a + h, 0);
 
+  // A payroll total only prices the lines that have a wage behind them, and day
+  // availability can only be checked on a line that has somebody on it. Both figures
+  // below say which part of the roster they actually measured.
+  const lineCount = solution.roster_lines.length;
+  const pricedLineCount = solution.roster_lines.filter((l) => l.estimated_weekly_payroll !== null).length;
+  const unstaffedLineCount = solution.roster_lines.filter((l) => l.assigned_person === null).length;
+  const availConflicts = solution.roster_lines.reduce((a, l) => a + l.availability_conflicts_count, 0);
+
   return (
     <div className="space-y-5">
+      {activeEmployees.length < solution.employee_count && (
+        <div className="rounded-md border border-[#C28B47] bg-[#FDF8F0] px-4 py-3 text-xs text-[#6B4B1C]">
+          <strong className="font-bold">
+            {activeEmployees.length} active staff for {solution.employee_count} shift patterns.
+          </strong>{' '}
+          Every figure on this page that depends on a person — payroll, wages, day availability — is
+          measured over the {pricedLineCount} pattern{pricedLineCount === 1 ? '' : 's'} that have
+          somebody assigned, not over the whole schedule. Staffing the remaining{' '}
+          {solution.employee_count - pricedLineCount} would cost more than the total shown.
+        </div>
+      )}
       {/* Top Executive KPI Summary Row */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 no-print">
         <div className="card p-4">
@@ -178,11 +197,14 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               ${solution.labor_analysis.total_payroll_cost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
             </span>
             <span className="text-xs font-mono-tabular text-slate-500">
-              {solution.labor_analysis.avg_hourly_wage === null ? '' : `$${solution.labor_analysis.avg_hourly_wage.toFixed(2)}/hr`}
+              {pricedLineCount} of {lineCount} lines priced
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
             OT: ${solution.labor_analysis.overtime_payroll_cost.toFixed(2)}
+            {solution.labor_analysis.avg_hourly_wage === null
+              ? ''
+              : ` • $${solution.labor_analysis.avg_hourly_wage.toFixed(2)}/hr avg`}
           </p>
         </div>
 
@@ -226,16 +248,20 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-[#2B3A42]">
-              {solution.roster_lines.reduce((a, l) => a + l.availability_conflicts_count, 0) === 0
+              {unstaffedLineCount > 0
+                ? 'Not assessable'
+                : availConflicts === 0
                 ? '100%'
-                : `${solution.roster_lines.reduce((a, l) => a + l.availability_conflicts_count, 0)} Conflicts`}
+                : `${availConflicts} Conflicts`}
             </span>
             <span className="text-xs font-mono-tabular text-slate-500">
               {solution.solve_time_ms} ms
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Staff day availability checked
+            {unstaffedLineCount > 0
+              ? `Not assessable — ${unstaffedLineCount} of ${lineCount} lines unstaffed, so nobody's days could be checked against them`
+              : 'Staff day availability checked on all lines'}
           </p>
         </div>
       </div>

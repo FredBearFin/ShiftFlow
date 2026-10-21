@@ -30,6 +30,13 @@ export const Header: React.FC<HeaderProps> = ({
   leewayPct,
   onLogout,
 }) => {
+  // A payroll total only covers the lines that carry a wage, so every payroll figure
+  // in this header is shown alongside the share of the roster it priced.
+  const lineCount = solution ? solution.roster_lines.length : 0;
+  const pricedLineCount = solution
+    ? solution.roster_lines.filter((l) => l.estimated_weekly_payroll !== null).length
+    : 0;
+
   const navTabs: { id: ActiveTabId; label: string; badge?: string }[] = [
     {
       id: 'roster',
@@ -45,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'labor',
       label: 'Labor & Payroll Economics',
       badge: solution
-        ? `$${Math.round(solution.labor_analysis.total_payroll_cost).toLocaleString()}`
+        ? `$${Math.round(solution.labor_analysis.total_payroll_cost).toLocaleString()} · ${pricedLineCount}/${lineCount} priced`
         : undefined,
     },
     {
@@ -88,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {solution
-                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll`
+                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll · ${pricedLineCount} of ${lineCount} lines priced`
                   : 'Automated weekly schedule builder'}
               </p>
             </div>
@@ -101,6 +108,9 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="text-slate-500">Payroll:</span>
                   <span className="ml-1 font-mono-tabular font-bold text-slate-900">
                     ${solution.labor_analysis.total_payroll_cost.toFixed(0)}
+                  </span>
+                  <span className="ml-1 font-mono-tabular text-slate-500">
+                    ({pricedLineCount}/{lineCount} priced)
                   </span>
                 </div>
                 <div className="h-3.5 w-px bg-slate-200" />
