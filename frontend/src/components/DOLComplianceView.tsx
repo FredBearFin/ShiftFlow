@@ -17,8 +17,8 @@ type RowStatus = 'pass' | 'warn' | 'fail' | 'unassessed';
 const ROW_STYLES: Record<RowStatus, string> = {
   pass: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   warn: 'border-amber-200 bg-amber-50 text-amber-800',
-  fail: 'border-[#9F3A32] bg-white text-[#9F3A32]',
-  unassessed: 'border-slate-300 bg-slate-50 text-slate-700',
+  fail: 'border-danger bg-white text-danger',
+  unassessed: 'border-border bg-surface-subtle text-ink-soft',
 };
 
 const ROW_ICONS: Record<RowStatus, string> = { pass: '✓', warn: '!', fail: '✗', unassessed: '–' };
@@ -57,13 +57,13 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
   return (
     <div className="space-y-5">
       <div className="enterprise-card p-5 bg-white">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
+        <span className="text-xs font-bold uppercase tracking-wider text-muted block">
           Compliance
         </span>
-        <h2 className="type-section-title text-slate-900 mt-0.5">
+        <h2 className="type-section-title text-ink mt-0.5">
           What this schedule actually does, checked against common labor rules
         </h2>
-        <p className="type-prose text-slate-500 mt-0.5">
+        <p className="type-prose text-muted mt-0.5">
           These checks use the same schedule shown in Weekly Schedule and Ergonomics — nothing new is
           calculated here, it's the same numbers viewed as compliance checks instead of{' '}
           <Term explanation="How tiring the week looks for the people working it, counted in penalty points. Lower is better. The Ergonomics tab shows the same schedule scored this way.">
@@ -71,7 +71,7 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
           </Term>
           .
         </p>
-        <p className="text-xs text-slate-500 mt-1">
+        <p className="text-xs text-muted mt-1">
           A check this tool does not perform is marked "not assessed" and is never shown as a pass.
           Not assessed is not the same as compliant: it means you still have to check it yourself.
         </p>
@@ -127,7 +127,7 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
         />
       </div>
 
-      <div className="enterprise-card p-4 text-xs text-slate-500">
+      <div className="enterprise-card p-4 text-xs text-muted">
         This page checks scheduling mechanics it can actually compute from the shifts shown. It is
         not legal advice and does not check state-specific rules, meal/rest breaks, predictive
         scheduling ordinances, or minor labor law — check those separately for your location.

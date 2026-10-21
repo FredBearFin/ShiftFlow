@@ -164,7 +164,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   return (
     <div className="space-y-5">
       {activeEmployees.length < solution.employee_count && (
-        <div className="rounded-md border border-[#C28B47] bg-[#FDF8F0] px-4 py-3 text-xs text-[#6B4B1C]">
+        <div className="rounded-md border border-warning bg-[#FDF8F0] px-4 py-3 text-xs text-[#6B4B1C]">
           <strong className="font-bold">
             {activeEmployees.length} active staff for {solution.employee_count} shift patterns.
           </strong>{' '}
@@ -177,38 +177,38 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
       {/* Top Executive KPI Summary Row */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 no-print">
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Shift Patterns
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {solution.employee_count}
             </span>
-            <span className="text-xs font-medium text-slate-500">
+            <span className="text-xs font-medium text-muted">
               {solution.employee_count}-Wk Cycle
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             {activeEmployees.length} Active Staff • {inactiveEmployees.length} Inactive
           </p>
         </div>
 
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Estimated Weekly Payroll
           </span>
           {/* The priced-fraction chip pushed this row 3px past the viewport at
               375px, scrolling the whole document. It wraps instead of
               truncating: half a payroll figure is a wrong payroll figure. */}
           <div className="flex flex-wrap items-baseline justify-between gap-x-2 min-w-0 mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900 min-w-0">
+            <span className="text-2xl font-bold font-mono-tabular text-ink min-w-0">
               {formatCurrency(solution.labor_analysis.total_payroll_cost)}
             </span>
-            <span className="text-xs font-mono-tabular text-slate-500 min-w-0">
+            <span className="text-xs font-mono-tabular text-muted min-w-0">
               {pricedLineCount} of {lineCount} lines priced
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             OT: {formatCurrency(solution.labor_analysis.overtime_payroll_cost)}
             {solution.labor_analysis.avg_hourly_wage === null
               ? ''
@@ -217,57 +217,57 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
         </div>
 
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Ergonomics Health Index
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-[#2B3A42]">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {solution.ergonomics_audit.health_index_score}/100
             </span>
             <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               {solution.ergonomics_audit.clopening_violations} Clopenings
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Higher is better, 55–99.5 range • Min rest:{' '}
             {solution.ergonomics_audit.min_rest_hours_observed}h observed
           </p>
         </div>
 
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Full Weekends Off (Sat+Sun)
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {solution.ergonomics_audit.full_weekends_off_pct}%
             </span>
-            <span className="text-xs font-mono-tabular text-slate-600">
+            <span className="text-xs font-mono-tabular text-ink-soft">
               {solution.ergonomics_audit.full_weekends_off_count}/{solution.employee_count} Shift Patterns
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Both Saturday & Sunday OFF together
           </p>
         </div>
 
         <div className="card p-4 col-span-2 lg:col-span-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Availability Adherence
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-[#2B3A42]">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {unstaffedLineCount > 0
                 ? 'Not assessable'
                 : availConflicts === 0
                 ? '100%'
                 : `${availConflicts} Conflicts`}
             </span>
-            <span className="text-xs font-mono-tabular text-slate-500">
+            <span className="text-xs font-mono-tabular text-muted">
               {solution.solve_time_ms} ms
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             {unstaffedLineCount > 0
               ? `Not assessable — ${unstaffedLineCount} of ${lineCount} lines unstaffed, so nobody's days could be checked against them`
               : 'Staff day availability checked on all lines'}
@@ -278,25 +278,25 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
       {/* Weekly Schedule Card */}
       <div className="card overflow-hidden">
         {/* Print-only header: visible on paper, hidden on screen */}
-        <div className="hidden print:block px-6 pt-4 pb-3 border-b border-slate-300">
-          <h2 className="type-section-title text-slate-900">{solution.instance_name}</h2>
-          <p className="type-prose text-slate-700 font-mono-tabular">
+        <div className="hidden print:block px-6 pt-4 pb-3 border-b border-border">
+          <h2 className="type-section-title text-ink">{solution.instance_name}</h2>
+          <p className="type-prose text-ink-soft font-mono-tabular">
             Week {activeCycleWeek} of {solution.employee_count}
           </p>
         </div>
 
         {/* Roster Action Toolbar */}
-        <div className="p-4 sm:px-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-white">
+        <div className="p-4 sm:px-6 border-b border-border-subtle flex flex-wrap items-center justify-between gap-4 bg-white">
           <div>
             <div className="flex items-center gap-2.5">
-              <h2 className="type-section-title text-slate-900">
+              <h2 className="type-section-title text-ink">
                 Weekly Schedule (Patterns 1 to {solution.employee_count})
               </h2>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono-tabular font-semibold bg-slate-100 text-slate-800 border border-slate-300">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-mono-tabular font-semibold bg-surface text-ink border border-border">
                 Showing Week {activeCycleWeek} of {solution.employee_count}
               </span>
             </div>
-            <p className="type-prose text-slate-500 mt-0.5">
+            <p className="type-prose text-muted mt-0.5">
               {solution.employee_count} shift patterns are repeating schedule slots built from your
               hours — they exist before you assign any real staff. Every Monday morning, each one
               advances down one row. Manage employee availability, hourly wages, and active/fired
@@ -305,7 +305,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2 no-print">
-            <div className="inline-flex items-center rounded-md border border-[#7F8A92] bg-slate-50 p-0.5">
+            <div className="inline-flex items-center rounded-md border border-border-control bg-surface-subtle p-0.5">
               <Button
                 variant="ghost"
                 size="sm"
@@ -337,18 +337,18 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               size="sm"
               onClick={() => setShowDirectoryDrawer(!showDirectoryDrawer)}
             >
-              <span>Staff & Directory</span><kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-xs font-mono-tabular font-bold ml-1">D</kbd>
-              <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-xs">
+              <span>Staff & Directory</span><kbd className="px-1.5 py-0.5 rounded bg-surface-sunken text-ink text-xs font-mono-tabular font-bold ml-1">D</kbd>
+              <span className="px-1.5 py-0.5 rounded bg-surface-sunken text-ink text-xs">
                 {activeEmployees.length}
               </span>
             </Button>
 
             <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
-              + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-[#1E2A31] text-[#FFFFFF] text-xs font-mono-tabular font-bold">A</kbd>
+              + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-ink-strong text-card text-xs font-mono-tabular font-bold">A</kbd>
             </Button>
 
             <Button variant="secondary" size="sm" onClick={() => window.print()}>
-              Print Roster <kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-xs font-mono-tabular font-bold">P</kbd>
+              Print Roster <kbd className="px-1.5 py-0.5 rounded bg-surface-sunken text-ink-soft text-xs font-mono-tabular font-bold">P</kbd>
             </Button>
 
             <Button variant="accent" onClick={onExportCsv}>
@@ -359,13 +359,13 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
         {/* Staff & Availability Directory Management Drawer */}
         {showDirectoryDrawer && (
-          <div className="p-4 sm:px-6 bg-slate-50 border-b border-slate-200 space-y-4 no-print">
+          <div className="p-4 sm:px-6 bg-surface-subtle border-b border-border-subtle space-y-4 no-print">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h3 className="type-subsection-title text-slate-800">
+                <h3 className="type-subsection-title text-ink">
                   Staff Directory & Availability Controls (Add / Fire / Adjust Wages)
                 </h3>
-                <p className="type-prose text-slate-500">
+                <p className="type-prose text-muted">
                   Manage active staff, fire or deactivate employees, adjust individual hourly wages,
                   and set allowed working days. Inactive/fired staff are instantly unmapped from lines.
                 </p>
@@ -381,17 +381,17 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   key={emp.employee_id}
                   className={`p-3 rounded-lg border flex flex-col justify-between ${
                     emp.is_active
-                      ? 'bg-white border-[#7F8A92]'
-                      : 'bg-slate-100/80 border-[#7F8A92] opacity-60'
+                      ? 'bg-white border-border-control'
+                      : 'bg-slate-100/80 border-border-control opacity-60'
                   }`}
                 >
                   <div>
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span className="font-bold text-xs text-slate-900 block">
+                        <span className="font-bold text-xs text-ink block">
                           {emp.name}
                         </span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-muted">
                           {emp.role} {emp.assigned_line_id ? `• Line ${emp.assigned_line_id}` : '• Unassigned'}
                         </span>
                       </div>
@@ -406,9 +406,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       </span>
                     </div>
 
-                    <div className="mt-2.5 pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+                    <div className="mt-2.5 pt-2 border-t border-border-subtle grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label htmlFor={`roster-wage-${emp.employee_id}`} className="text-xs text-slate-500 block">Wage ($/hr)</label>
+                        <label htmlFor={`roster-wage-${emp.employee_id}`} className="text-xs text-muted block">Wage ($/hr)</label>
                         <input id={`roster-wage-${emp.employee_id}`}
                           type="number"
                           step="0.5"
@@ -437,16 +437,16 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') e.currentTarget.blur();
                           }}
-                          className="w-full px-2 py-1 border border-[#7F8A92] rounded-md font-mono-tabular text-xs"
+                          className="w-full px-2 py-1 border border-border-control rounded-md font-mono-tabular text-xs"
                         />
                         {wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null && (
-                          <p id={`roster-wage-${emp.employee_id}-error`} className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                          <p id={`roster-wage-${emp.employee_id}-error`} className="mt-1 text-xs font-semibold text-danger">
                             {WAGE_ERROR}
                           </p>
                         )}
                       </div>
                       <div>
-                        <label htmlFor={`roster-line-${emp.employee_id}`} className="text-xs text-slate-500 block">Assigned Line</label>
+                        <label htmlFor={`roster-line-${emp.employee_id}`} className="text-xs text-muted block">Assigned Line</label>
                         <select id={`roster-line-${emp.employee_id}`}
                           disabled={!emp.is_active}
                           value={emp.assigned_line_id || ''}
@@ -456,7 +456,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                               assigned_line_id: e.target.value ? parseInt(e.target.value, 10) : null,
                             })
                           }
-                          className="w-full px-2 py-1 border border-[#7F8A92] rounded-md text-xs bg-slate-50"
+                          className="w-full px-2 py-1 border border-border-control rounded-md text-xs bg-surface-subtle"
                         >
                           <option value="">Auto-Assign</option>
                           {Array.from({ length: solution.employee_count }, (_, i) => i + 1).map((l) => (
@@ -469,7 +469,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     </div>
 
                     <div className="mt-2">
-                      <label className="text-xs text-slate-500 block mb-1">
+                      <label className="text-xs text-muted block mb-1">
                         Available Days ({emp.available_days.length}/7):
                       </label>
                       <div className="flex gap-1">
@@ -490,8 +490,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                               }}
                               className={`w-6 h-6 rounded-md text-xs font-mono-tabular font-bold flex items-center justify-center ${
                                 isAvail
-                                  ? 'bg-[#2B3A42] text-[#FFFFFF]'
-                                  : 'bg-slate-200 text-slate-600'
+                                  ? 'bg-ink text-card'
+                                  : 'bg-surface-sunken text-ink-soft'
                               }`}
                               title={`${dName}: ${isAvail ? 'Available' : 'Unavailable'}`}
                             >
@@ -503,7 +503,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <div className="mt-3 pt-2 border-t border-border-subtle flex items-center justify-between">
                     <span className="text-xs text-muted font-mono-tabular">
                       ID: {emp.employee_id}
                     </span>
@@ -525,17 +525,17 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   {emp.is_active && sepEmpId === emp.employee_id && (
                     <form
                       onSubmit={(e) => submitSeparation(e, emp.employee_id)}
-                      className="mt-3 pt-3 border-t border-slate-100 space-y-2"
+                      className="mt-3 pt-3 border-t border-border-subtle space-y-2"
                     >
                       <div>
-                        <label htmlFor={`sep-category-${emp.employee_id}`} className="text-xs text-slate-500 block">
+                        <label htmlFor={`sep-category-${emp.employee_id}`} className="text-xs text-muted block">
                           Separation category
                         </label>
                         <select
                           id={`sep-category-${emp.employee_id}`}
                           value={sepCategory}
                           onChange={(e) => setSepCategory(e.target.value as SeparationCategory)}
-                          className="w-full px-2 py-1 border border-[#7F8A92] rounded-md text-xs bg-white"
+                          className="w-full px-2 py-1 border border-border-control rounded-md text-xs bg-white"
                         >
                           {SEPARATION_OPTIONS.map((opt) => (
                             <option key={opt.value} value={opt.value}>
@@ -545,7 +545,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         </select>
                       </div>
                       <div>
-                        <label htmlFor={`sep-reason-${emp.employee_id}`} className="text-xs text-slate-500 block">
+                        <label htmlFor={`sep-reason-${emp.employee_id}`} className="text-xs text-muted block">
                           Reason (required)
                         </label>
                         <input
@@ -554,11 +554,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           required
                           value={sepReason}
                           onChange={(e) => setSepReason(e.target.value)}
-                          className="w-full px-2 py-1 border border-[#7F8A92] rounded-md text-xs"
+                          className="w-full px-2 py-1 border border-border-control rounded-md text-xs"
                         />
                       </div>
                       <div>
-                        <label htmlFor={`sep-recorded-by-${emp.employee_id}`} className="text-xs text-slate-500 block">
+                        <label htmlFor={`sep-recorded-by-${emp.employee_id}`} className="text-xs text-muted block">
                           Recorded by (required)
                         </label>
                         <input
@@ -567,7 +567,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           required
                           value={sepRecordedBy}
                           onChange={(e) => setSepRecordedBy(e.target.value)}
-                          className="w-full px-2 py-1 border border-[#7F8A92] rounded-md text-xs"
+                          className="w-full px-2 py-1 border border-border-control rounded-md text-xs"
                         />
                       </div>
                       <div className="flex justify-end gap-2 pt-1">
@@ -595,7 +595,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-surface-subtle border-b border-border-subtle text-xs font-bold uppercase tracking-wider text-muted">
                 <th scope="col" className="py-3 px-4 min-w-[200px]">Shift Pattern / Staff Member</th>
                 <th scope="col" className="py-3 px-2 text-center">Pattern Wk</th>
                 {DAYS_OF_WEEK.map((day, idx) => (
@@ -603,7 +603,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     key={day}
                     scope="col"
                     className={`py-3 px-2.5 text-center ${
-                      idx >= 5 ? 'bg-slate-100/80 text-slate-800' : ''
+                      idx >= 5 ? 'bg-slate-100/80 text-ink' : ''
                     }`}
                   >
                     {day}
@@ -613,7 +613,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 <th scope="col" className="py-3 px-4 text-right">Weekly Payroll</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 text-xs">
+            <tbody className="divide-y divide-border-subtle text-xs">
               {solution.roster_lines.map((line: RosterLine) => (
                 <tr
                   key={line.cohort_id}
@@ -621,16 +621,16 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 >
                   <th scope="row" className="py-3 px-4 text-left font-normal">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono-tabular font-bold text-xs">
+                      <span className="px-2 py-0.5 rounded bg-ink text-white font-mono-tabular font-bold text-xs">
                         {line.cohort_id}
                       </span>
-                      <span className="font-semibold text-slate-900">
+                      <span className="font-semibold text-ink">
                         {line.assigned_person
                           ? line.assigned_person
                           : `Shift Pattern ${line.line_number}`}
                       </span>
                       {line.availability_conflicts_count > 0 && (
-                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-surface-sunken text-ink border border-border-control before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-warning before:mr-1.5 before:align-middle">
                           {line.availability_conflicts_count} Avail Alert
                         </span>
                       )}
@@ -642,7 +642,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           behind it appeared and disappeared purely from stepping the
                           viewed week. The Compliance tab says it is not assessed. */}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
+                    <div className="text-xs text-muted mt-0.5 flex items-center gap-2">
                       <Term explanation="The pay and skill band this shift pattern is costed at, and what appears as the Role in the payroll file you export. &quot;Union Line Standard&quot; is the ordinary rate for the job, with nothing added for extra skills or seniority.">
                         {line.qualification_tier}
                       </Term>
@@ -654,7 +654,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   </th>
 
                   <td className="py-3 px-2 text-center">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono-tabular font-semibold text-xs">
+                    <span className="px-2 py-0.5 rounded bg-surface text-ink-soft font-mono-tabular font-semibold text-xs">
                       Wk {line.current_cycle_week}
                     </span>
                   </td>
@@ -693,7 +693,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   ))}
 
                   <td className="py-3 px-3 text-right font-mono-tabular">
-                    <span className="font-bold text-slate-900">{line.weekly_hours}h</span>
+                    <span className="font-bold text-ink">{line.weekly_hours}h</span>
                     {line.overtime_hours > 0 && (
                       <span className="block text-xs text-amber-700 font-semibold">
                         +{line.overtime_hours}h OT
@@ -701,7 +701,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     )}
                   </td>
 
-                  <td className="py-3 px-4 text-right font-mono-tabular font-bold text-slate-900">
+                  <td className="py-3 px-4 text-right font-mono-tabular font-bold text-ink">
                     {formatCurrency(line.estimated_weekly_payroll)}
                   </td>
                 </tr>
@@ -710,7 +710,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
             {/* Understaffing is a per-day total, not a header: it belongs in the
                 foot as data, so no body cell inherits it as a column header. */}
             <tfoot className="text-xs">
-              <tr className="bg-amber-50/70 border-t border-slate-200 font-semibold text-amber-900">
+              <tr className="bg-amber-50/70 border-t border-border-subtle font-semibold text-amber-900">
                 <th scope="row" className="py-2 px-4 text-left">Under-staffed hours per day</th>
                 <td className="py-2 px-2" />
                 {underByDay.map((h, idx) => (
@@ -735,13 +735,13 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
       {/* Add New Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="roster-add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 id="roster-add-staff-title" className="text-base font-bold text-slate-900">Add Staff Member</h3>
+          <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="roster-add-staff-title" className="bg-white border border-border-control rounded-lg max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+              <h3 id="roster-add-staff-title" className="text-base font-bold text-ink">Add Staff Member</h3>
               <button aria-label="Close"
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-muted hover:text-slate-800 font-bold"
+                className="text-muted hover:text-ink font-bold"
               >
                 ✕
               </button>
@@ -749,7 +749,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
             <form onSubmit={submitNewEmployee} className="space-y-3.5">
               <div>
-                <label htmlFor="roster-new-name" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="roster-new-name" className="block text-xs font-semibold text-ink-soft mb-1">
                   Full Name
                 </label>
                 <input id="roster-new-name"
@@ -758,24 +758,24 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="e.g., Alex Morgan"
-                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
+                  className="w-full px-3 py-2 border border-border-control rounded-md text-xs"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="roster-new-role" className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="roster-new-role" className="block text-xs font-semibold text-ink-soft mb-1">
                     Role / Position
                   </label>
                   <input id="roster-new-role"
                     type="text"
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
+                    className="w-full px-3 py-2 border border-border-control rounded-md text-xs"
                   />
                 </div>
                 <div>
-                  <label htmlFor="roster-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label htmlFor="roster-new-wage" className="block text-xs font-semibold text-ink-soft mb-1">
                     Hourly Wage ($/hr)
                   </label>
                   <input id="roster-new-wage"
@@ -787,10 +787,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     aria-describedby={newWage.trim() !== '' && newWageValue === null ? 'roster-new-wage-error' : undefined}
                     value={newWage}
                     onChange={(e) => setNewWage(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs font-mono-tabular"
+                    className="w-full px-3 py-2 border border-border-control rounded-md text-xs font-mono-tabular"
                   />
                   {newWage.trim() !== '' && newWageValue === null && (
-                    <p id="roster-new-wage-error" className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                    <p id="roster-new-wage-error" className="mt-1 text-xs font-semibold text-danger">
                       {WAGE_ERROR}
                     </p>
                   )}
@@ -798,7 +798,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-ink-soft mb-1">
                   Available Days for Shift Assignment:
                 </label>
                 <div className="grid grid-cols-7 gap-1">
@@ -813,8 +813,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         onClick={() => handleToggleDay(dIdx)}
                         className={`py-1.5 rounded text-xs font-mono-tabular font-bold border ${
                           isSel
-                            ? 'bg-[#2B3A42] text-[#FFFFFF] border-[#2B3A42]'
-                            : 'bg-slate-100 text-slate-600 border-slate-200'
+                            ? 'bg-ink text-card border-ink'
+                            : 'bg-surface text-ink-soft border-border-subtle'
                         }`}
                       >
                         {dName}
@@ -827,7 +827,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 </span>
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
+              <div className="pt-3 border-t border-border-subtle flex justify-end gap-2">
                 <Button variant="secondary" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </Button>

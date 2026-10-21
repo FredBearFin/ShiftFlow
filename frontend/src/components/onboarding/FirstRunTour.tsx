@@ -95,7 +95,7 @@ export function FirstRunTour({ onDone, returnFocusTo }: FirstRunTourProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         onKeyDown={handleKeyDown}
-        className="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl p-6"
+        className="bg-white border border-border-subtle rounded-2xl w-full max-w-md shadow-2xl p-6"
       >
         <p className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
           Quick tour, step {index + 1} of {TOUR_STEPS.length}
@@ -104,7 +104,7 @@ export function FirstRunTour({ onDone, returnFocusTo }: FirstRunTourProps) {
           id={titleId}
           ref={headingRef}
           tabIndex={-1}
-          className="text-lg font-bold text-slate-900 mt-2"
+          className="text-lg font-bold text-ink mt-2"
         >
           {TOUR_STEPS[index]}
         </h3>

@@ -88,23 +88,23 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-30 no-print">
+    <header className="bg-white border-b border-border-subtle sticky top-0 z-30 no-print">
       <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center justify-between py-3.5 gap-4 border-b border-slate-100">
+        <div className="flex flex-wrap items-center justify-between py-3.5 gap-4 border-b border-border-subtle">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#2B3A42] text-white flex items-center justify-center font-bold text-sm">
+            <div className="w-10 h-10 rounded-lg bg-ink text-white flex items-center justify-center font-bold text-sm">
               SF
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base font-bold text-[#2B3A42] tracking-tight">
+                <h1 className="text-base font-bold text-ink tracking-tight">
                   ShiftFlow Studio
                 </h1>
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#E4E9EC] text-[#2B3A42] border border-slate-200">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-surface-sunken text-ink border border-border-subtle">
                   Enterprise Workforce OS
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <p className="text-xs text-muted font-medium mt-0.5">
                 {solution
                   ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • ${formatCurrency(solution.labor_analysis.total_payroll_cost)} Weekly Payroll · ${pricedLineCount} of ${lineCount} lines priced`
                   : 'Automated weekly schedule builder'}
@@ -114,19 +114,19 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="flex items-center gap-2.5">
             {solution && (
-              <div className="hidden lg:flex items-center gap-4 px-3.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+              <div className="hidden lg:flex items-center gap-4 px-3.5 py-1.5 rounded-lg bg-surface-subtle border border-border-subtle text-xs">
                 <div>
-                  <span className="text-slate-500">Payroll:</span>
-                  <span className="ml-1 font-mono-tabular font-bold text-slate-900">
+                  <span className="text-muted">Payroll:</span>
+                  <span className="ml-1 font-mono-tabular font-bold text-ink">
                     {formatCurrency(solution.labor_analysis.total_payroll_cost)}
                   </span>
-                  <span className="ml-1 font-mono-tabular text-slate-500">
+                  <span className="ml-1 font-mono-tabular text-muted">
                     ({pricedLineCount}/{lineCount} priced)
                   </span>
                 </div>
-                <div className="h-3.5 w-px bg-slate-200" />
+                <div className="h-3.5 w-px bg-surface-sunken" />
                 <div>
-                  <span className="text-slate-500">OT Hours:</span>
+                  <span className="text-muted">OT Hours:</span>
                   <span
                     className={`ml-1 font-mono-tabular font-bold ${
                       solution.labor_analysis.total_overtime_hours > 0
@@ -137,10 +137,10 @@ export const Header: React.FC<HeaderProps> = ({
                     {solution.labor_analysis.total_overtime_hours}h
                   </span>
                 </div>
-                <div className="h-3.5 w-px bg-slate-200" />
+                <div className="h-3.5 w-px bg-surface-sunken" />
                 <div>
-                  <span className="text-slate-500">Rest Gain:</span>
-                  <span className="ml-1 font-mono-tabular font-semibold text-[#2B3A42]">
+                  <span className="text-muted">Rest Gain:</span>
+                  <span className="ml-1 font-mono-tabular font-semibold text-ink">
                     +{solution.integrated_ergo_gain_pct}%
                   </span>
                 </div>
@@ -155,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
                 title="Keyboard Shortcuts Cheatsheet (?)"
               >
                 <span>⌨️ Hotkeys</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-xs font-mono-tabular text-slate-600 font-bold">
+                <kbd className="px-1.5 py-0.5 rounded bg-surface border border-border text-xs font-mono-tabular text-ink-soft font-bold">
                   ?
                 </kbd>
               </Button>
@@ -163,7 +163,7 @@ export const Header: React.FC<HeaderProps> = ({
 
             <Button variant="primary" onClick={onOpenWizard}>
               <span>Configure Facility Wizard</span>
-              <span className="px-1.5 py-0.5 rounded bg-slate-700 text-xs font-mono-tabular text-slate-200">
+              <span className="px-1.5 py-0.5 rounded bg-ink-soft text-xs font-mono-tabular text-slate-200">
                 {WIZARD_STEP_COUNT} Steps
               </span>
             </Button>

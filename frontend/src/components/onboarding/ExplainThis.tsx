@@ -60,14 +60,14 @@ export function ExplainThis({ stepId }: ExplainThisProps) {
       <div
         id={panelId}
         hidden={!open}
-        className="rounded-lg border border-indigo-100 bg-indigo-50 p-3 text-xs text-slate-700"
+        className="rounded-lg border border-indigo-100 bg-indigo-50 p-3 text-xs text-ink-soft"
       >
         <dl className="space-y-3">
           {entries.map((entry) => (
             <div key={entry.term}>
               <dt className="font-semibold text-indigo-900">{entry.term}</dt>
               <dd>{entry.plain}</dd>
-              <dd className="text-slate-500">Example: {entry.example}</dd>
+              <dd className="text-muted">Example: {entry.example}</dd>
             </div>
           ))}
         </dl>

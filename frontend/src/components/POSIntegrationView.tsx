@@ -104,13 +104,13 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
   return (
     <div className="space-y-5">
       <div className="enterprise-card p-5 bg-white">
-        <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
+        <span className="text-xs font-bold uppercase tracking-wider text-muted block">
           Point-of-Sale Integration
         </span>
-        <h2 className="type-section-title text-slate-900 mt-0.5">
+        <h2 className="type-section-title text-ink mt-0.5">
           Recalculate Register Demand from a POS Export
         </h2>
-        <p className="type-prose text-slate-500 mt-0.5">
+        <p className="type-prose text-muted mt-0.5">
           Upload a transaction CSV to work out an hourly{' '}
           <Term explanation="How many people you need in each hour.">staff-needed</Term> table
           from your sales. You see it next to your current table and decide whether to use it.
@@ -118,7 +118,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
       </div>
 
       <div className="enterprise-card p-4">
-        <span className="text-xs font-semibold text-slate-700">
+        <span className="text-xs font-semibold text-ink-soft">
           {result
             ? `Last upload: ${result.records_parsed.toLocaleString()} transactions read from the file.`
             : 'Not connected: no POS data has been uploaded yet.'}
@@ -126,17 +126,17 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
       </div>
 
       <div className="enterprise-card p-5 space-y-4">
-        <h3 className="type-subsection-title text-slate-700">
+        <h3 className="type-subsection-title text-ink-soft">
           Upload POS Export CSV
         </h3>
-        <p className="type-prose text-slate-500">
+        <p className="type-prose text-muted">
           The file needs columns for the amount, day of week and hour of day. Nothing in your
           staffing table changes until you choose to use the result.
         </p>
 
         {/* The aria-label was the only label: nothing on screen named this
             field. CONSTITUTION 7 asks for a visible one. */}
-        <label htmlFor="pos-csv-file" className="block text-xs font-semibold text-slate-700">
+        <label htmlFor="pos-csv-file" className="block text-xs font-semibold text-ink-soft">
           POS export CSV file
         </label>
         <input
@@ -155,7 +155,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label htmlFor="pos-open-hour" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="pos-open-hour" className="block text-xs font-semibold text-ink-soft">
               Opening hour (0-23)
             </label>
             <input
@@ -166,11 +166,11 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
               step={1}
               value={openHour}
               onChange={(e) => setOpenHour(Number(e.target.value))}
-              className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs"
+              className="w-full px-2 py-1.5 border border-border rounded-lg text-xs"
             />
           </div>
           <div className="space-y-1">
-            <label htmlFor="pos-close-hour" className="block text-xs font-semibold text-slate-700">
+            <label htmlFor="pos-close-hour" className="block text-xs font-semibold text-ink-soft">
               Closing hour (1-24)
             </label>
             <input
@@ -181,7 +181,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
               step={1}
               value={closeHour}
               onChange={(e) => setCloseHour(Number(e.target.value))}
-              className="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs"
+              className="w-full px-2 py-1.5 border border-border rounded-lg text-xs"
             />
           </div>
         </div>
@@ -191,7 +191,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
             type="button"
             onClick={handleUpload}
             disabled={!file || isUploading}
-            className="px-4 py-2 bg-[#4A6B5D] hover:bg-[#3E5C50] text-[#FFFFFF] rounded-lg text-xs font-bold shadow-[0_1px_2px_rgba(43,58,66,0.08)] disabled:opacity-50"
+            className="px-4 py-2 bg-accent hover:bg-accent-strong text-card rounded-lg text-xs font-bold shadow-[0_1px_2px_rgba(43,58,66,0.08)] disabled:opacity-50"
           >
             {isUploading ? 'Reading the file...' : 'Read the file and show me the result'}
           </button>
@@ -205,7 +205,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
         )}
 
         {result && (
-          <div role="status" aria-live="polite" className="p-3 bg-[#FFFFFF] border border-[#7F8A92] rounded-lg text-xs text-[#2B3A42] font-semibold space-y-1">
+          <div role="status" aria-live="polite" className="p-3 bg-card border border-border-control rounded-lg text-xs text-ink font-semibold space-y-1">
             <div>Weekly sales in file: {formatCurrency(result.weekly_sales)}</div>
             <div>Weekly transactions in file: {result.weekly_transactions.toLocaleString()}</div>
           </div>
@@ -224,11 +224,11 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
 
       {result && canCompare && isUsableMatrix(suggested) && isUsableMatrix(currentDemandMatrix) && (
         <div className="enterprise-card p-5 space-y-4">
-          <div className="pb-3 border-b border-slate-200">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <div className="pb-3 border-b border-border-subtle">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
               {applied ? 'What the POS file changed' : 'What this POS file would change'}
             </h3>
-            <p className="text-xs text-slate-600 mt-1">
+            <p className="text-xs text-ink-soft mt-1">
               {applied
                 ? 'Your staffing table now comes from this file. You can put back the table you had before.'
                 : 'Your current staffing table is on the left, the one worked out from this file on the right. Nothing has changed yet.'}
@@ -236,32 +236,32 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3 rounded-lg bg-slate-50 border border-[#7F8A92]">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+            <div className="p-3 rounded-lg bg-surface-subtle border border-border-control">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
                 Your table now
               </span>
-              <span className="text-xl font-bold font-mono-tabular text-slate-900">
+              <span className="text-xl font-bold font-mono-tabular text-ink">
                 {weekTotal(currentDemandMatrix)}
               </span>
-              <span className="text-xs text-slate-500 block">person-hours a week</span>
+              <span className="text-xs text-muted block">person-hours a week</span>
             </div>
-            <div className="p-3 rounded-lg bg-slate-50 border border-[#7F8A92]">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+            <div className="p-3 rounded-lg bg-surface-subtle border border-border-control">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
                 From this POS file
               </span>
-              <span className="text-xl font-bold font-mono-tabular text-slate-900">
+              <span className="text-xl font-bold font-mono-tabular text-ink">
                 {weekTotal(suggested)}
               </span>
-              <span className="text-xs text-slate-500 block">person-hours a week</span>
+              <span className="text-xs text-muted block">person-hours a week</span>
             </div>
-            <div className="p-3 rounded-lg bg-slate-50 border border-[#7F8A92]">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+            <div className="p-3 rounded-lg bg-surface-subtle border border-border-control">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
                 Change
               </span>
-              <span className="text-xl font-bold font-mono-tabular text-slate-900">
+              <span className="text-xl font-bold font-mono-tabular text-ink">
                 {formatDelta(weekTotal(suggested) - weekTotal(currentDemandMatrix))}
               </span>
-              <span className="text-xs text-slate-500 block">person-hours a week</span>
+              <span className="text-xs text-muted block">person-hours a week</span>
             </div>
           </div>
 
@@ -272,20 +272,20 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
                 this POS file
               </caption>
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                <tr className="bg-surface-subtle border-b border-border-subtle text-xs font-bold uppercase tracking-wider text-muted">
                   <th scope="col" className="py-2 px-3">Day</th>
                   <th scope="col" className="py-2 px-3 text-right">Your table now</th>
                   <th scope="col" className="py-2 px-3 text-right">From this POS file</th>
                   <th scope="col" className="py-2 px-3 text-right">Change</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 font-mono-tabular">
+              <tbody className="divide-y divide-border-subtle font-mono-tabular">
                 {DAYS_OF_WEEK.map((dayName, idx) => {
                   const now = dayTotal(currentDemandMatrix, idx);
                   const next = dayTotal(suggested, idx);
                   return (
-                    <tr key={dayName} className={selectedDay === idx ? 'bg-slate-50' : undefined}>
-                      <th scope="row" className="py-2 px-3 font-sans font-semibold text-slate-900">
+                    <tr key={dayName} className={selectedDay === idx ? 'bg-surface-subtle' : undefined}>
+                      <th scope="row" className="py-2 px-3 font-sans font-semibold text-ink">
                         <button
                           type="button"
                           aria-pressed={selectedDay === idx}
@@ -295,9 +295,9 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
                           {dayName}
                         </button>
                       </th>
-                      <td className="py-2 px-3 text-right text-slate-700">{now}</td>
-                      <td className="py-2 px-3 text-right text-slate-900 font-bold">{next}</td>
-                      <td className="py-2 px-3 text-right text-slate-700">{formatDelta(next - now)}</td>
+                      <td className="py-2 px-3 text-right text-ink-soft">{now}</td>
+                      <td className="py-2 px-3 text-right text-ink font-bold">{next}</td>
+                      <td className="py-2 px-3 text-right text-ink-soft">{formatDelta(next - now)}</td>
                     </tr>
                   );
                 })}
@@ -305,8 +305,8 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
             </table>
           </div>
 
-          <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 block mb-2">
+          <div className="p-3 rounded-lg bg-surface-subtle border border-border-subtle">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-soft block mb-2">
               {DAYS_OF_WEEK[selectedDay]}, hour by hour — now, then from this file
             </span>
             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-12 gap-2">
@@ -317,13 +317,13 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
                   <div
                     key={hr}
                     className={`p-1.5 rounded border text-center ${
-                      now === next ? 'bg-white border-slate-200' : 'bg-amber-50 border-amber-300'
+                      now === next ? 'bg-white border-border-subtle' : 'bg-amber-50 border-amber-300'
                     }`}
                   >
-                    <span className="block text-[9px] font-mono-tabular text-slate-500">
+                    <span className="block text-[9px] font-mono-tabular text-muted">
                       {String(hr).padStart(2, '0')}:00
                     </span>
-                    <span className="block text-xs font-mono-tabular font-bold text-slate-900">
+                    <span className="block text-xs font-mono-tabular font-bold text-ink">
                       {now} → {next}
                     </span>
                   </div>
@@ -345,7 +345,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
             )}
             {applied && (
               <>
-                <span role="status" className="text-xs font-semibold text-slate-700">
+                <span role="status" className="text-xs font-semibold text-ink-soft">
                   Your staffing table was replaced with the one from this file.
                 </span>
                 {undoMatrix && (

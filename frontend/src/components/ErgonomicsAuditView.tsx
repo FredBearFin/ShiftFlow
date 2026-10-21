@@ -41,7 +41,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       {/* Plain-language summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
             Ergonomics Health Index
           </span>
           <div className="flex items-baseline gap-3 mt-1">
@@ -49,11 +49,11 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
               {audit.health_index_score}/100
             </span>
           </div>
-          <p className="text-xs text-slate-600 mt-1.5">
+          <p className="text-xs text-ink-soft mt-1.5">
             Higher is better. It is a score out of 100, not a percentage, and this tool only ever
             reports it between 55 and 99.5 — so a schedule never reads 0 and never reads 100.
           </p>
-          <p className="type-prose text-slate-600 mt-1.5 pt-1.5 border-t border-slate-100">
+          <p className="type-prose text-ink-soft mt-1.5 pt-1.5 border-t border-border-subtle">
             Separately, the fatigue penalty behind it: {audit.total_ergo_objective.toFixed(1)}{' '}
             penalty points across the {criteria.length} checks below, where lower is better, versus{' '}
             {audit.sequential_baseline_ergo.toFixed(1)} for a schedule built without any of them in
@@ -64,7 +64,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         </div>
 
         <div className="card p-5">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
             Rest Between Shifts
           </span>
           <div className="flex items-baseline gap-3 mt-1">
@@ -77,7 +77,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-600 mt-1.5">
+          <p className="text-xs text-ink-soft mt-1.5">
             Shortest gap between the end of one shift and the start of the next, anywhere in the
             schedule.{' '}
             {audit.clopening_violations > 0
@@ -89,7 +89,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         </div>
 
         <div className="card p-5">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
             <Term explanation="How many of the week's work and rest hand-offs line up. A hand-off is the point where one person's run of work days ends and their days off begin, so someone else has to pick the work up. When all 14 match, the rotation repeats week after week without gaps.">
               Rotation Balance
             </Term>
@@ -99,7 +99,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
               {balancedHandoffs}/{handoffCount}
             </span>
           </div>
-          <p className="text-xs text-slate-600 mt-1.5">
+          <p className="text-xs text-ink-soft mt-1.5">
             How many of the {handoffCount} weekly work/rest hand-offs (one pair per day) line up
             cleanly, so the {rotationWeeks}-week rotation repeats without gaps or overlaps.
           </p>
@@ -108,10 +108,10 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
 
       {/* Visual breakdown of the 8 checks */}
       <div className="card p-5">
-        <h2 className="type-section-title text-slate-900">
+        <h2 className="type-section-title text-ink">
           What's pulling the score down
         </h2>
-        <p className="type-prose text-slate-500 mt-0.5 mb-3">
+        <p className="type-prose text-muted mt-0.5 mb-3">
           Each bar is one thing this tool watches for. A longer bar doesn't always mean a bigger
           problem on its own — some checks (like weekend coverage) are weighted more heavily per
           occurrence and come up on almost every schedule, so they often show the longest bar even
@@ -131,7 +131,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   x={labelW - 10}
                   y={y + rowH / 2 + 4}
                   textAnchor="end"
-                  className="fill-slate-700"
+                  className="fill-ink-soft"
                   style={{ fontSize: 11, fontWeight: 600 }}
                 >
                   {criterionLabelFor(c.criterion_id, c.name)}
@@ -148,7 +148,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                 <text
                   x={labelW + Math.max(2, barW) + 8}
                   y={y + rowH / 2 + 4}
-                  className="fill-slate-500"
+                  className="fill-muted"
                   style={{ fontSize: 10, fontFamily: 'monospace' }}
                 >
                   {c.weighted_penalty.toFixed(1)} pts{c.raw_violations_count > 0 ? ` · ${c.raw_violations_count}×` : ''}
@@ -161,8 +161,8 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
 
       {/* Plain-language breakdown table */}
       <div className="card overflow-hidden">
-        <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
-          <h2 className="type-section-title text-slate-900">
+        <div className="p-4 sm:px-6 border-b border-border-subtle bg-white">
+          <h2 className="type-section-title text-ink">
             The {criteria.length} things this tool checks to avoid burning people out
           </h2>
         </div>
@@ -170,7 +170,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-surface-subtle border-b border-border-subtle text-xs font-bold uppercase tracking-wider text-muted">
                 <th className="py-3 px-4">Check</th>
                 <th className="py-3 px-3 text-right">How often</th>
                 <th className="py-3 px-3 text-right">Weight</th>
@@ -178,21 +178,21 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody className="divide-y divide-border-subtle">
               {criteria.map((c) => (
                 <tr key={c.criterion_id} className="hover:bg-slate-50/80">
                   <td className="py-3 px-4">
-                    <div className="font-semibold text-slate-900">
+                    <div className="font-semibold text-ink">
                       {criterionLabelFor(c.criterion_id, c.name)}
                     </div>
-                    <div className="text-xs text-slate-500 mt-0.5">
+                    <div className="text-xs text-muted mt-0.5">
                       {criterionExplanationFor(c.criterion_id, c.explanation)}
                     </div>
                   </td>
-                  <td className="py-3 px-3 text-right font-mono-tabular font-semibold text-slate-800">
+                  <td className="py-3 px-3 text-right font-mono-tabular font-semibold text-ink">
                     {c.raw_violations_count}×
                   </td>
-                  <td className="py-3 px-3 text-right font-mono-tabular text-slate-500">
+                  <td className="py-3 px-3 text-right font-mono-tabular text-muted">
                     ×{c.base_weight}
                   </td>
                   <td className="py-3 px-3 text-right font-mono-tabular font-bold text-ink">
@@ -221,10 +221,10 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       {/* Weekly rotation hand-off balance */}
       <div className="card p-5">
         <div className="mb-3">
-          <h3 className="type-subsection-title text-slate-700">
+          <h3 className="type-subsection-title text-ink-soft">
             Weekly rotation hand-offs
           </h3>
-          <p className="type-prose text-slate-500 mt-0.5">
+          <p className="type-prose text-muted mt-0.5">
             For each day, how many people are starting a work stretch versus starting a rest
             stretch — these should match up so the {rotationWeeks}-week rotation keeps repeating
             cleanly.
@@ -242,20 +242,20 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             return (
               <div
                 key={g}
-                className="p-3 rounded-lg bg-slate-50 border border-[#7F8A92] space-y-2 text-xs"
+                className="p-3 rounded-lg bg-surface-subtle border border-border-control space-y-2 text-xs"
               >
-                <div className="font-bold text-slate-900 flex items-center justify-between">
+                <div className="font-bold text-ink flex items-center justify-between">
                   <span>{wNode?.day_name}</span>
                 </div>
-                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
-                  <span className="text-slate-600">Starting work</span>
-                  <span className="font-bold text-slate-900">
+                <div className="p-1.5 rounded bg-white border border-border-subtle font-mono-tabular text-xs flex justify-between">
+                  <span className="text-ink-soft">Starting work</span>
+                  <span className="font-bold text-ink">
                     in:{wNode?.in_degree ?? '—'} / out:{wNode?.out_degree ?? '—'}
                   </span>
                 </div>
-                <div className="p-1.5 rounded bg-white border border-slate-200 font-mono-tabular text-xs flex justify-between">
-                  <span className="text-slate-600">Starting rest</span>
-                  <span className="font-bold text-slate-900">
+                <div className="p-1.5 rounded bg-white border border-border-subtle font-mono-tabular text-xs flex justify-between">
+                  <span className="text-ink-soft">Starting rest</span>
+                  <span className="font-bold text-ink">
                     in:{rNode?.in_degree ?? '—'} / out:{rNode?.out_degree ?? '—'}
                   </span>
                 </div>

@@ -269,15 +269,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
       aria-labelledby="onboarding-wizard-title"
       className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto"
     >
-      <div className="bg-white border border-slate-200 rounded-2xl max-w-[min(96vw,1600px)] w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="bg-white border border-border-subtle rounded-2xl max-w-[min(96vw,1600px)] w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Wizard Top Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3">
+        <div className="px-6 py-4 bg-ink text-white flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-xs font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
                 {WIZARD_STEP_COUNT} quick steps
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-muted">
                 Tell us how your store runs. We'll build the schedule.
               </span>
             </div>
@@ -290,7 +290,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               type="button"
               ref={showTourAgainRef}
               onClick={handleShowTourAgain}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-ink hover:bg-ink-soft text-slate-300 hover:text-white text-xs font-medium transition-colors"
             >
               Show the tour again
             </button>
@@ -298,7 +298,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-ink hover:bg-ink-soft text-slate-300 hover:text-white text-xs font-medium transition-colors"
               >
                 Skip setup for now
               </button>
@@ -307,7 +307,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         </div>
 
         {/* 5-Step Progress Stepper */}
-        <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap gap-3">
+        <div className="px-6 py-3 bg-surface-subtle border-b border-border-subtle flex flex-wrap gap-3">
           {STEP_LABELS.map((item) => {
             const isCurrent = currentStep === item.step;
             const isDone = currentStep > item.step;
@@ -321,7 +321,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   isCurrent
                     ? 'bg-white border-indigo-600 shadow-xs'
                     : isDone
-                    ? 'bg-slate-100/80 border-slate-200 hover:bg-white'
+                    ? 'bg-slate-100/80 border-border-subtle hover:bg-white'
                     : 'bg-transparent border-transparent opacity-70 hover:opacity-100'
                 }`}
               >
@@ -332,16 +332,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         ? 'bg-indigo-600 text-white'
                         : isDone
                         ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-200 text-slate-700'
+                        : 'bg-surface-sunken text-ink-soft'
                     }`}
                   >
                     {isDone ? '✓' : item.step}
                   </span>
-                  <span className="text-xs font-semibold text-slate-900">
+                  <span className="text-xs font-semibold text-ink">
                     {item.title}
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5 pl-6">
+                <p className="text-xs text-muted mt-0.5 pl-6">
                   {item.subtitle}
                 </p>
               </button>
@@ -356,12 +356,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           {currentStep === 1 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
             <div className="space-y-4 flex-1 min-w-0">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border-subtle">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-bold text-ink">
                     Tell us about your business
                   </h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
+                  <p className="text-xs text-ink-soft mt-0.5">
                     Every business is different, so answer for yours — the schedule is built from your
                     answers, not from a label like "retail" or "healthcare."
                   </p>
@@ -369,7 +369,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <div className="w-full sm:w-72">
                   <label
                     htmlFor="onboarding-facility-name"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1"
+                    className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1"
                   >
                     Business or location name
                   </label>
@@ -378,15 +378,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     type="text"
                     value={facilityName}
                     onChange={(e) => onChangeFacilityName(e.target.value)}
-                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-indigo-600 focus:outline-none font-medium text-slate-900"
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-border focus:border-indigo-600 focus:outline-none font-medium text-ink"
                     placeholder="e.g., Main Street Store"
                   />
                 </div>
               </div>
 
-              <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
+              <div className="p-5 rounded-xl bg-surface-subtle border border-border-subtle space-y-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                     Which days are you open?
                   </label>
                   <div className="flex flex-wrap gap-1.5">
@@ -398,8 +398,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         onClick={() => toggleOpenDay(idx)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                           answers.openDays.includes(idx)
-                            ? 'bg-slate-900 text-white border-slate-900'
-                            : 'bg-white text-slate-600 border-slate-300'
+                            ? 'bg-ink text-white border-ink'
+                            : 'bg-white text-ink-soft border-border'
                         }`}
                       >
                         {d}
@@ -409,7 +409,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                     <input
                       type="checkbox"
                       checked={answers.runs24Hours}
@@ -421,7 +421,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   {!answers.runs24Hours && (
                     <div className="flex items-center gap-3 mt-1">
                       <div>
-                        <label htmlFor="onboarding-opens-at" className="block text-xs text-slate-500 mb-1">Opens at</label>
+                        <label htmlFor="onboarding-opens-at" className="block text-xs text-muted mb-1">Opens at</label>
                         <input
                           id="onboarding-opens-at"
                           type="number"
@@ -429,12 +429,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           max={23}
                           value={answers.openHour}
                           onChange={(e) => setAnswers((p) => ({ ...p, openHour: Math.max(0, Math.min(23, parseInt(e.target.value || '0', 10))) }))}
-                          className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
+                          className="w-20 text-center font-mono-tabular text-sm border border-border rounded py-1"
                         />
                         <span className="text-xs text-muted ml-1">:00</span>
                       </div>
                       <div>
-                        <label htmlFor="onboarding-closes-at" className="block text-xs text-slate-500 mb-1">Closes at</label>
+                        <label htmlFor="onboarding-closes-at" className="block text-xs text-muted mb-1">Closes at</label>
                         <input
                           id="onboarding-closes-at"
                           type="number"
@@ -442,7 +442,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           max={24}
                           value={answers.closeHour}
                           onChange={(e) => setAnswers((p) => ({ ...p, closeHour: Math.max(1, Math.min(24, parseInt(e.target.value || '0', 10))) }))}
-                          className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
+                          className="w-20 text-center font-mono-tabular text-sm border border-border rounded py-1"
                         />
                         <span className="text-xs text-muted ml-1">:00 (24 = midnight)</span>
                       </div>
@@ -451,14 +451,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="busy-period" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  <label htmlFor="busy-period" className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                     When are you busiest?
                   </label>
                   <select
                     id="busy-period"
                     value={answers.busyPeriod}
                     onChange={(e) => setAnswers((p) => ({ ...p, busyPeriod: e.target.value as BusyPeriod }))}
-                    className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg py-1.5 px-2"
+                    className="w-full sm:w-64 text-sm border border-border rounded-lg py-1.5 px-2"
                   >
                     <option value="morning">Morning</option>
                     <option value="midday">Midday</option>
@@ -470,7 +470,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
 
                 <div className="grid grid-cols-2 gap-4 max-w-md">
                   <div>
-                    <label htmlFor="onboarding-peak-staff" className="block text-xs text-slate-500 mb-1">
+                    <label htmlFor="onboarding-peak-staff" className="block text-xs text-muted mb-1">
                       People needed at your busiest
                     </label>
                     <input
@@ -480,11 +480,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       max={100}
                       value={answers.peakStaff}
                       onChange={(e) => setAnswers((p) => ({ ...p, peakStaff: Math.max(1, parseInt(e.target.value || '1', 10)) }))}
-                      className="w-full text-center font-mono-tabular text-sm border border-slate-300 rounded py-1.5"
+                      className="w-full text-center font-mono-tabular text-sm border border-border rounded py-1.5"
                     />
                   </div>
                   <div>
-                    <label htmlFor="onboarding-min-staff" className="block text-xs text-slate-500 mb-1">
+                    <label htmlFor="onboarding-min-staff" className="block text-xs text-muted mb-1">
                       People needed at your quietest (while open)
                     </label>
                     <input
@@ -494,20 +494,20 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       max={100}
                       value={answers.minStaff}
                       onChange={(e) => setAnswers((p) => ({ ...p, minStaff: Math.max(0, parseInt(e.target.value || '0', 10)) }))}
-                      className="w-full text-center font-mono-tabular text-sm border border-slate-300 rounded py-1.5"
+                      className="w-full text-center font-mono-tabular text-sm border border-border rounded py-1.5"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="weekend-pattern" className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+                  <label htmlFor="weekend-pattern" className="block text-xs font-bold uppercase tracking-wider text-muted mb-1.5">
                     Weekends, compared to weekdays
                   </label>
                   <select
                     id="weekend-pattern"
                     value={answers.weekendPattern}
                     onChange={(e) => setAnswers((p) => ({ ...p, weekendPattern: e.target.value as WeekendPattern }))}
-                    className="w-full sm:w-64 text-sm border border-slate-300 rounded-lg py-1.5 px-2"
+                    className="w-full sm:w-64 text-sm border border-border rounded-lg py-1.5 px-2"
                   >
                     <option value="busier">Busier</option>
                     <option value="same">About the same</option>
@@ -562,13 +562,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   <div
                     id="onboarding-preset-solve-warning"
                     role="alert"
-                    className="mt-3 rounded-xl border border-[#9F3A32] bg-white p-3 text-xs text-[#9F3A32]"
+                    className="mt-3 rounded-xl border border-danger bg-white p-3 text-xs text-danger"
                   >
                     <p className="font-bold">
                       {blockedPreset.label} does not build a schedule on its own yet.
                     </p>
-                    <p className="mt-1 text-slate-700">{blockedPreset.message}</p>
-                    <p className="mt-1 text-slate-700">
+                    <p className="mt-1 text-ink-soft">{blockedPreset.message}</p>
+                    <p className="mt-1 text-ink-soft">
                       Its hours and staffing numbers are loaded, so you can keep going — but add a
                       shift or ease a rest rule before you finish, or the schedule will come back
                       empty.
@@ -599,7 +599,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       <button
                         type="button"
                         onClick={() => setBlockedPreset(null)}
-                        className="rounded-md px-2 py-1 text-xs font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
+                        className="rounded-md px-2 py-1 text-xs font-semibold text-danger hover:bg-canvas"
                       >
                         Dismiss
                       </button>
@@ -636,19 +636,19 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           className={`w-full text-left p-3 rounded-xl border cursor-pointer transition-all ${
                             isSelected
                               ? 'bg-indigo-50/50 border-indigo-600 ring-2 ring-indigo-600/15'
-                              : 'bg-white border-slate-200 hover:border-slate-300'
+                              : 'bg-white border-border-subtle hover:border-border'
                           }`}
                         >
-                          <span className="block text-sm font-bold text-slate-900">{arch.sector}</span>
-                          <span className="block text-xs text-slate-500 mt-0.5">
+                          <span className="block text-sm font-bold text-ink">{arch.sector}</span>
+                          <span className="block text-xs text-muted mt-0.5">
                             {presetLabelFor(arch.id, arch.sector)}
                           </span>
                           {blocker && (
-                            <span className="mt-1 inline-block rounded border border-[#9F3A32] px-1.5 py-0.5 text-xs font-bold text-[#9F3A32]">
+                            <span className="mt-1 inline-block rounded border border-danger px-1.5 py-0.5 text-xs font-bold text-danger">
                               {blocker.badge}
                             </span>
                           )}
-                          <span className="block text-xs text-slate-600 mt-2 leading-relaxed">
+                          <span className="block text-xs text-ink-soft mt-2 leading-relaxed">
                             {PRESET_LABELS[arch.id]?.description ?? ''}
                           </span>
                         </button>
@@ -666,15 +666,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           {currentStep === 2 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
             <div className="space-y-4 flex-1 min-w-0">
-              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
+              <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border-subtle">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
+                  <h3 className="text-base font-bold text-ink">
                     How many people you need
                   </h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
+                  <p className="text-xs text-ink-soft mt-0.5">
                     Fill in the number of people needed for each hour of each day, using the boxes below.
                   </p>
-                  <p className="text-xs text-slate-600 mt-0.5">
+                  <p className="text-xs text-ink-soft mt-0.5">
                     Enter how many people you need working each hour, for each day of the week.
                   </p>
                 </div>
@@ -683,21 +683,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(6, 14, 1)}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                    className="px-2.5 py-1.5 rounded-lg bg-surface hover:bg-surface-sunken text-ink-soft text-xs font-medium"
                   >
                     +1 person, 6am–2pm, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(14, 22, 1)}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                    className="px-2.5 py-1.5 rounded-lg bg-surface hover:bg-surface-sunken text-ink-soft text-xs font-medium"
                   >
                     +1 person, 2pm–10pm, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
                   <button
                     type="button"
                     onClick={() => adjustDayWindowDemand(0, 24, -1)}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium"
+                    className="px-2.5 py-1.5 rounded-lg bg-surface hover:bg-surface-sunken text-ink-soft text-xs font-medium"
                   >
                     −1 person, all hours, {DAYS_OF_WEEK[selectedDayTab]} only
                   </button>
@@ -714,8 +714,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     onClick={() => setSelectedDayTab(dIdx)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                       selectedDayTab === dIdx
-                        ? 'bg-slate-900 text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        ? 'bg-ink text-white'
+                        : 'bg-surface text-ink-soft hover:bg-surface-sunken'
                     }`}
                   >
                     {day} ({demandMatrix[dIdx].reduce((a, b) => a + b, 0)} staff-hrs)
@@ -725,14 +725,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               </div>
 
               {/* Selected Day 24-Hour Interactive Editor */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="p-4 rounded-xl bg-surface-subtle border border-border-subtle">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-ink uppercase tracking-wider">
                     {DAYS_OF_WEEK[selectedDayTab]} — people needed each hour
                   </span>
-                  <span className="text-xs text-slate-500 font-mono-tabular">
+                  <span className="text-xs text-muted font-mono-tabular">
                     Total for the week:{' '}
-                    <strong className="text-slate-900">
+                    <strong className="text-ink">
                       {demandMatrix.reduce(
                         (acc, r) => acc + r.reduce((a, b) => a + b, 0),
                         0
@@ -741,18 +741,18 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     </strong>
                   </span>
                 </div>
-                <p className="text-xs text-slate-600 mb-3">
+                <p className="text-xs text-ink-soft mb-3">
                   Tab moves between hours. Type the number of people needed.
                 </p>
                 <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
                   {demandMatrix[selectedDayTab].map((val, hr) => (
                     <div
                       key={hr}
-                      className="p-2 rounded-lg bg-white border border-slate-200 flex flex-col items-center"
+                      className="p-2 rounded-lg bg-white border border-border-subtle flex flex-col items-center"
                     >
                       <label
                         htmlFor={`demand-hour-${selectedDayTab}-${hr}`}
-                        className="text-xs font-mono-tabular text-slate-500"
+                        className="text-xs font-mono-tabular text-muted"
                       >
                         Hour {String(hr).padStart(2, '0')}:00
                       </label>
@@ -769,7 +769,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             parseInt(e.target.value || '0', 10)
                           )
                         }
-                        className="w-full sm:w-12 text-center font-mono-tabular font-bold text-xs text-slate-900 border border-slate-200 rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
+                        className="w-full sm:w-12 text-center font-mono-tabular font-bold text-xs text-ink border border-border-subtle rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
                       />
                       <span className="text-xs text-muted">
                         {hr < 6 ? 'Night' : hr < 14 ? 'Morn' : hr < 22 ? 'Eve' : 'Night'}
@@ -787,14 +787,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           {currentStep === 3 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
             <div className="space-y-4 flex-1 min-w-0">
-              <div className="pb-3 border-b border-slate-200">
-                <h3 className="text-base font-bold text-slate-900">
+              <div className="pb-3 border-b border-border-subtle">
+                <h3 className="text-base font-bold text-ink">
                   Shift times
                 </h3>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-ink-soft mt-0.5">
                   Fill in the start hour and length for each shift your store runs, and untick any shift it does not use.
                 </p>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-ink-soft mt-0.5">
                   Set when each shift starts and how long it runs. Morning (M), Midday (D), Evening (E) and Night (N).
                 </p>
               </div>
@@ -805,13 +805,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     key={tpl.code}
                     className={`p-4 rounded-xl border ${
                       tpl.enabled
-                        ? 'bg-white border-slate-200 shadow-xs'
-                        : 'bg-slate-50 border-slate-200 opacity-60'
+                        ? 'bg-white border-border-subtle shadow-xs'
+                        : 'bg-surface-subtle border-border-subtle opacity-60'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900">
+                        <span className="text-sm font-bold text-ink">
                           {SHIFT_PLAIN_NAMES[tpl.code] ? `${SHIFT_PLAIN_NAMES[tpl.code]} shift` : 'Shift'}
                         </span>
                         <span
@@ -820,14 +820,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           {tpl.code}
                         </span>
                       </div>
-                      <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink-soft cursor-pointer">
                         <input
                           type="checkbox"
                           checked={tpl.enabled}
                           onChange={(e) =>
                             updateTemplateField(tpl.code, 'enabled', e.target.checked)
                           }
-                          className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                          className="rounded border-border text-indigo-600 focus:ring-indigo-500"
                         />
                         <span>Active</span>
                       </label>
@@ -837,7 +837,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-preferred-start`}
-                          className="block text-xs text-slate-500 font-medium mb-1"
+                          className="block text-xs text-muted font-medium mb-1"
                         >
                           Usual start (hour, 0–23)
                         </label>
@@ -855,13 +855,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                               Math.max(0, Math.min(23, parseInt(e.target.value || '0', 10)))
                             )
                           }
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono-tabular text-slate-900"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-border font-mono-tabular text-ink"
                         />
                       </div>
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-preferred-duration`}
-                          className="block text-xs text-slate-500 font-medium mb-1"
+                          className="block text-xs text-muted font-medium mb-1"
                         >
                           Usual length (hours)
                         </label>
@@ -879,13 +879,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                               Math.max(6, Math.min(12, parseInt(e.target.value || '8', 10)))
                             )
                           }
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 font-mono-tabular text-slate-900"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-border font-mono-tabular text-ink"
                         />
                       </div>
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-earliest-start`}
-                          className="block text-xs text-slate-500 font-medium mb-1"
+                          className="block text-xs text-muted font-medium mb-1"
                         >
                           Earliest allowed start
                         </label>
@@ -903,13 +903,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                               Math.max(0, Math.min(23, parseInt(e.target.value || '0', 10)))
                             )
                           }
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 font-mono-tabular text-slate-700"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle font-mono-tabular text-ink-soft"
                         />
                       </div>
                       <div>
                         <label
                           htmlFor={`shift-${tpl.code}-max-duration`}
-                          className="block text-xs text-slate-500 font-medium mb-1"
+                          className="block text-xs text-muted font-medium mb-1"
                         >
                           Longest shift the solver may use (hours)
                         </label>
@@ -927,7 +927,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                               Math.max(7, Math.min(12, parseInt(e.target.value || '9', 10)))
                             )
                           }
-                          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 font-mono-tabular text-slate-700"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-border-subtle bg-surface-subtle font-mono-tabular text-ink-soft"
                         />
                       </div>
                     </div>
@@ -943,26 +943,26 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           {currentStep === 4 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
             <div className="space-y-4 flex-1 min-w-0">
-              <div className="pb-3 border-b border-slate-200">
-                <h3 className="text-base font-bold text-slate-900">
+              <div className="pb-3 border-b border-border-subtle">
+                <h3 className="text-base font-bold text-ink">
                   Scheduling rules
                 </h3>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-ink-soft mt-0.5">
                   Fill in the limits for work stretches and nights or evenings in a row, and check the rest rules you want.
                 </p>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-ink-soft mt-0.5">
                   Set limits that protect staff health and give everyone fair rest. Defaults are a good starting point.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                <div className="p-4 rounded-xl bg-surface-subtle border border-border-subtle space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
                     How long stretches can run
                   </h4>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                      <label htmlFor="rule-min-work-days" className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-min-work-days" className="block text-ink-soft mb-1 font-medium">
                         Min Work Stretch (days)
                       </label>
                       <input
@@ -977,11 +977,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             parseInt(e.target.value || '3', 10)
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-mono-tabular"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-white font-mono-tabular"
                       />
                     </div>
                     <div>
-                      <label htmlFor="rule-max-work-days" className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-work-days" className="block text-ink-soft mb-1 font-medium">
                         Max Work Stretch (days)
                       </label>
                       <input
@@ -996,11 +996,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             parseInt(e.target.value || '5', 10)
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-mono-tabular"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-white font-mono-tabular"
                       />
                     </div>
                     <div>
-                      <label htmlFor="rule-max-nights" className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-nights" className="block text-ink-soft mb-1 font-medium">
                         Max nights in a row
                       </label>
                       <input
@@ -1015,11 +1015,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             parseInt(e.target.value || '2', 10)
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-mono-tabular"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-white font-mono-tabular"
                       />
                     </div>
                     <div>
-                      <label htmlFor="rule-max-evenings" className="block text-slate-600 mb-1 font-medium">
+                      <label htmlFor="rule-max-evenings" className="block text-ink-soft mb-1 font-medium">
                         Max evenings in a row
                       </label>
                       <input
@@ -1034,14 +1034,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                             parseInt(e.target.value || '3', 10)
                           )
                         }
-                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-mono-tabular"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-white font-mono-tabular"
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                <div className="p-4 rounded-xl bg-surface-subtle border border-border-subtle space-y-2.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-ink-soft">
                     Rest and recovery rules
                   </h4>
                   {[
@@ -1073,7 +1073,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   ].map((item) => (
                     <label
                       key={item.field}
-                      className="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-200 cursor-pointer"
+                      className="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-border-subtle cursor-pointer"
                     >
                       <input
                         type="checkbox"
@@ -1081,13 +1081,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         onChange={(e) =>
                           updateGuardrailField(item.field, e.target.checked)
                         }
-                        className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                        className="mt-0.5 rounded border-border text-indigo-600 focus:ring-indigo-500"
                       />
                       <div>
-                        <span className="text-xs font-semibold text-slate-900 block">
+                        <span className="text-xs font-semibold text-ink block">
                           {item.label}
                         </span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-muted">
                           {item.desc}
                         </span>
                       </div>
@@ -1104,17 +1104,17 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           {currentStep === 5 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
             <div className="space-y-4 flex-1 min-w-0">
-              <div className="pb-3 border-b border-slate-200">
-                <h3 className="text-base font-bold text-slate-900">
+              <div className="pb-3 border-b border-border-subtle">
+                <h3 className="text-base font-bold text-ink">
                   How much staffing flexibility will you allow?
                 </h3>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-ink-soft mt-0.5">
                   The leanest possible schedule packs the work into as few shifts as it can, which
                   means more back-to-back closing-then-opening shifts, longer stretches without a day
                   off, and fewer full weekends off. Allowing more flexibility lets the schedule
                   spread the same work over more shifts and avoid those.
                 </p>
-                <p className="text-xs text-slate-600 mt-0.5">
+                <p className="text-xs text-ink-soft mt-0.5">
                   More flexibility is not the same as more money, and not the same as better
                   coverage. Pick a starting point below — once setup is done, the Flexibility vs.
                   Rest tab shows each option's own weekly payroll, uncovered hours and workload
@@ -1122,16 +1122,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </p>
               </div>
 
-              <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-4">
+              <div className="p-5 rounded-xl bg-surface-subtle border border-border-subtle space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <label
                       htmlFor="leeway-range"
-                      className="block text-xs font-bold uppercase tracking-wider text-slate-500"
+                      className="block text-xs font-bold uppercase tracking-wider text-muted"
                     >
                       Staffing flexibility you'll allow
                     </label>
-                    <div className="text-xl font-bold font-mono-tabular text-slate-900 mt-0.5">
+                    <div className="text-xl font-bold font-mono-tabular text-ink mt-0.5">
                       +{leewayPct}% flexibility
                     </div>
                   </div>
@@ -1164,7 +1164,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                       className={`p-2.5 rounded-lg border text-left transition-all ${
                         Math.abs(leewayPct - pt.lw) < 0.1
                           ? 'bg-indigo-600 text-white border-indigo-700 shadow-xs'
-                          : 'bg-white text-slate-800 border-slate-200 hover:border-slate-300'
+                          : 'bg-white text-ink border-border-subtle hover:border-border'
                       }`}
                     >
                       <div className="text-xs font-bold">{pt.tag}</div>
@@ -1181,48 +1181,48 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           {currentStep === 6 && (
             <div className="flex flex-col lg:flex-row gap-4 items-start">
               <div className="space-y-4 flex-1 min-w-0">
-                <div className="pb-3 border-b border-slate-200">
-                  <h3 className="text-base font-bold text-slate-900">Who actually works here?</h3>
-                  <p className="text-xs text-slate-600 mt-0.5">
+                <div className="pb-3 border-b border-border-subtle">
+                  <h3 className="text-base font-bold text-ink">Who actually works here?</h3>
+                  <p className="text-xs text-ink-soft mt-0.5">
                     The schedule above is just a shape until real people are assigned to it. Add at
                     least one staff member to finish setup — you can add the rest anytime from the
                     Staff Directory.
                   </p>
                 </div>
 
-                <form onSubmit={submitStaffMember} className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <form onSubmit={submitStaffMember} className="p-5 rounded-xl bg-surface-subtle border border-border-subtle space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label htmlFor="onboarding-staff-name" className="block text-xs font-semibold text-slate-600 mb-1">Name</label>
+                      <label htmlFor="onboarding-staff-name" className="block text-xs font-semibold text-ink-soft mb-1">Name</label>
                       <input
                         id="onboarding-staff-name"
                         value={staffName}
                         onChange={(e) => setStaffName(e.target.value)}
-                        className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                        className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm"
                       />
                     </div>
                     <div>
-                      <label htmlFor="onboarding-staff-role" className="block text-xs font-semibold text-slate-600 mb-1">Role</label>
+                      <label htmlFor="onboarding-staff-role" className="block text-xs font-semibold text-ink-soft mb-1">Role</label>
                       <input
                         id="onboarding-staff-role"
                         value={staffRole}
                         onChange={(e) => setStaffRole(e.target.value)}
-                        className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                        className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm"
                       />
                     </div>
                     <div>
-                      <label htmlFor="onboarding-staff-wage" className="block text-xs font-semibold text-slate-600 mb-1">Hourly wage ($)</label>
+                      <label htmlFor="onboarding-staff-wage" className="block text-xs font-semibold text-ink-soft mb-1">Hourly wage ($)</label>
                       <input
                         id="onboarding-staff-wage"
                         value={staffWage}
                         onChange={(e) => setStaffWage(e.target.value)}
                         placeholder="e.g. 17.50"
-                        className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm"
+                        className="w-full rounded-md border border-border px-2.5 py-1.5 text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 mb-1">Available days</label>
+                    <label className="block text-xs font-semibold text-ink-soft mb-1">Available days</label>
                     <div className="flex flex-wrap gap-1.5">
                       {DAYS_OF_WEEK.map((d, idx) => (
                         <button
@@ -1231,8 +1231,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           onClick={() => toggleStaffDay(idx)}
                           className={`px-2.5 py-1 rounded-md text-xs font-semibold border transition-colors ${
                             staffDays.includes(idx)
-                              ? 'bg-slate-900 text-white border-slate-900'
-                              : 'bg-white text-slate-600 border-slate-300'
+                              ? 'bg-ink text-white border-ink'
+                              : 'bg-white text-ink-soft border-border'
                           }`}
                         >
                           {d}
@@ -1250,20 +1250,20 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 </form>
 
                 <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted mb-2">
                     Staff added so far ({employees.length})
                   </h4>
                   {employees.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">Nobody yet — add at least one person above.</p>
+                    <p className="text-xs text-muted italic">Nobody yet — add at least one person above.</p>
                   ) : (
                     <ul className="space-y-1.5">
                       {employees.map((e) => (
                         <li
                           key={e.employee_id}
-                          className="flex items-center justify-between px-3 py-2 rounded-md bg-white border border-slate-200 text-sm"
+                          className="flex items-center justify-between px-3 py-2 rounded-md bg-white border border-border-subtle text-sm"
                         >
-                          <span className="font-semibold text-slate-900">{e.name}</span>
-                          <span className="text-slate-500 text-xs">
+                          <span className="font-semibold text-ink">{e.name}</span>
+                          <span className="text-muted text-xs">
                             {e.role} · ${e.hourly_wage.toFixed(2)}/hr
                           </span>
                         </li>
@@ -1278,7 +1278,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
         </div>
 
         {/* Wizard Footer Controls */}
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <div className="px-6 py-4 bg-surface-subtle border-t border-border-subtle flex items-center justify-between">
           <Button
             variant="secondary"
             disabled={currentStep === 1}
@@ -1302,7 +1302,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     on the disabled button itself: unreachable by keyboard and
                     absent on touch. It is visible text now. */}
                 {employees.length === 0 && (
-                  <p id="finish-setup-blocked" className="max-w-xs text-xs font-semibold text-[#9F3A32]">
+                  <p id="finish-setup-blocked" className="max-w-xs text-xs font-semibold text-danger">
                     Add at least one staff member, or choose "I'm just planning", before you can finish setup.
                   </p>
                 )}

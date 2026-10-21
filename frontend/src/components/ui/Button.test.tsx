@@ -20,7 +20,7 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Next' }).className).toContain('px-5 py-2');
     render(<Button variant="accent">Create</Button>);
     const accent = screen.getByRole('button', { name: 'Create' }).className;
-    expect(accent).toContain('bg-[#4A6B5D]');
+    expect(accent).toContain('bg-accent');
     expect(accent).toContain('font-bold');
   });
 

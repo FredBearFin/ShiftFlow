@@ -58,7 +58,7 @@ export function CompletionNote({ solution }: CompletionNoteProps) {
       role="status"
       aria-live="polite"
       aria-labelledby={headingId}
-      className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-slate-800"
+      className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-ink"
     >
       <h2 id={headingId} className="text-base font-semibold text-indigo-900">
         What your schedule shows

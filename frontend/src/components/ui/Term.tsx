@@ -94,7 +94,7 @@ export const Term: React.FC<TermProps> = ({ children, explanation, className = '
         onClick={handleClick}
         className={[
           'cursor-help bg-transparent p-0 border-0 font-inherit text-inherit',
-          'underline decoration-dotted decoration-slate-400 underline-offset-2',
+          'underline decoration-dotted decoration-muted underline-offset-2',
           className,
         ].join(' ')}
       >
@@ -107,7 +107,7 @@ export const Term: React.FC<TermProps> = ({ children, explanation, className = '
           id={popoverId}
           aria-labelledby={triggerId}
           className={[
-            'absolute top-full z-50 mt-2 block w-max max-w-[min(16rem,calc(100vw-2rem))] whitespace-normal break-words rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-xs font-normal leading-relaxed text-slate-900 shadow-lg',
+            'absolute top-full z-50 mt-2 block w-max max-w-[min(16rem,calc(100vw-2rem))] whitespace-normal break-words rounded-lg border border-border-subtle bg-white px-3 py-2 text-left text-xs font-normal leading-relaxed text-ink shadow-lg',
             alignRight ? 'right-0' : 'left-0',
           ].join(' ')}
         >

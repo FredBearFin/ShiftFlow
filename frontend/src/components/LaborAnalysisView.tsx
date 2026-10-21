@@ -57,7 +57,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   }
 
   const unpricedBadge = unpricedCount > 0 ? (
-    <span className="text-xs font-semibold text-[#2B3A42] bg-[#E4E9EC] border border-[#7F8A92] px-2 py-0.5 rounded before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
+    <span className="text-xs font-semibold text-ink bg-surface-sunken border border-border-control px-2 py-0.5 rounded before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-warning before:mr-1.5 before:align-middle">
       {unpricedCount} {unpricedCount === 1 ? 'line' : 'lines'} unpriced
     </span>
   ) : null;
@@ -153,13 +153,13 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       {/* Action Header with Export Buttons */}
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted block">
             Payroll & Cost Analytics
           </span>
-          <h2 className="type-section-title text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-ink mt-0.5">
             Store Labor Spend & 1-Click Payroll Integration
           </h2>
-          <p className="type-prose text-slate-500 mt-0.5">
+          <p className="type-prose text-muted mt-0.5">
             Real-time calculation distinguishing regular base wages from 1.5× overtime exposure with 1-click Gusto/ADP export.
           </p>
         </div>
@@ -220,39 +220,39 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       {/* Top Payroll & Hours Economics KPI Banner */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Est. Weekly Payroll
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {formatCurrency(labor.total_payroll_cost)}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Est. base: {formatCurrency(labor.regular_payroll_cost)}
           </p>
           {unpricedBadge && <div className="mt-1.5">{unpricedBadge}</div>}
         </div>
 
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Scheduled Labor Hours
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {labor.total_scheduled_hours} hrs
             </span>
-            <span className="text-xs font-mono-tabular text-slate-500">
+            <span className="text-xs font-mono-tabular text-muted">
               {solution.employee_count} Shift Patterns
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Reg: {labor.total_regular_hours}h • OT: {labor.total_overtime_hours}h
           </p>
         </div>
 
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Overtime Exposure
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -263,32 +263,32 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               {labor.overtime_lines_count > 0 ? `${labor.overtime_lines_count} OT Lines` : '0 OT Risk'}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             1.5× rate applied over 40h/line
           </p>
           {overtimePremiumByLine.size > 0 && (
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Overtime premium (extra 0.5x): {formatCurrency(overtimePremiumTotal)}
             </p>
           )}
         </div>
 
         <div className="card p-4">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Blended Average Wage
           </span>
           <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
+            <span className="text-2xl font-bold font-mono-tabular text-ink">
               {formatHourlyRate(avgWage)}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Across priced personnel hours
           </p>
         </div>
 
         <div className="card p-4 col-span-2 lg:col-span-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted block">
             Uncovered Hours This Week
           </span>
           <div className="flex items-baseline justify-between mt-1">
@@ -309,11 +309,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               {uncoveredHours > 0 ? 'Short' : 'Fully covered'}
             </span>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Hours where fewer people are scheduled than you asked for, added up across all 168
             hours of the week.
           </p>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted mt-1">
             Separately, paid hours come to {labor.labor_efficiency_pct}% of required hours. That is
             a total-against-total ratio and takes no account of which hours they are, so it can sit
             near 100% while the shortfall above is real.
@@ -325,19 +325,19 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
       <div className="card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="type-subsection-title text-slate-700">
+            <h3 className="type-subsection-title text-ink-soft">
               Daily Payroll Spend & Scheduled Hours (Monday – Sunday)
             </h3>
-            <p className="type-prose text-slate-500 mt-0.5">
+            <p className="type-prose text-muted mt-0.5">
               Tracks daily labor expenditure matching store demand and customer rush patterns.
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               Allocated pro rata from each line's estimated payroll.
             </p>
           </div>
           <div className="flex items-center gap-2">
             {unpricedBadge}
-            <span className="text-xs font-mono-tabular text-slate-600 bg-slate-100 px-3 py-1 rounded-md">
+            <span className="text-xs font-mono-tabular text-ink-soft bg-surface px-3 py-1 rounded-md">
               Est. Weekly Spend: {formatCurrency(labor.total_payroll_cost)}
             </span>
           </div>
@@ -354,25 +354,25 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                 key={dayName}
                 className={`p-3 rounded-lg border flex flex-col justify-between ${
                   isWeekend
-                    ? 'bg-slate-100/70 border-[#7F8A92]'
-                    : 'bg-slate-50 border-[#7F8A92]'
+                    ? 'bg-slate-100/70 border-border-control'
+                    : 'bg-surface-subtle border-border-control'
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900">{dayName}</span>
-                    <span className="text-xs font-mono-tabular text-slate-500">
+                    <span className="text-xs font-bold text-ink">{dayName}</span>
+                    <span className="text-xs font-mono-tabular text-muted">
                       {hours} hrs
                     </span>
                   </div>
-                  <span className="text-xs text-slate-500 block mt-1">Allocated daily spend</span>
-                  <div className="text-base font-bold font-mono-tabular text-slate-900">
+                  <span className="text-xs text-muted block mt-1">Allocated daily spend</span>
+                  <div className="text-base font-bold font-mono-tabular text-ink">
                     {formatCurrency(cost)}
                   </div>
                 </div>
 
                 <div className="mt-3">
-                  <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-surface-sunken rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-2 rounded-full ${
                         isWeekend ? 'bg-ink' : 'bg-ink-soft'
@@ -380,7 +380,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                       style={{ width: `${barPct}%` }}
                     />
                   </div>
-                  <span className="text-xs text-slate-500 mt-1 block text-right font-mono-tabular">
+                  <span className="text-xs text-muted mt-1 block text-right font-mono-tabular">
                     {hours > 0 ? formatHourlyRate(cost / hours) : '—'}
                   </span>
                 </div>
@@ -392,11 +392,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
 
       {/* Shift Pattern Payroll Table */}
       <div className="card overflow-hidden">
-        <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
-          <h3 className="type-subsection-title text-slate-700">
+        <div className="p-4 sm:px-6 border-b border-border-subtle bg-white">
+          <h3 className="type-subsection-title text-ink-soft">
             Payroll & Overtime Breakdown
           </h3>
-          <p className="type-prose text-slate-500 mt-0.5">
+          <p className="type-prose text-muted mt-0.5">
             Hours, wage rates, and estimated weekly earnings for each shift pattern.
           </p>
         </div>
@@ -404,7 +404,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-surface-subtle border-b border-border-subtle text-xs font-bold uppercase tracking-wider text-muted">
                 <th className="py-3 px-4">Pattern</th>
                 <th className="py-3 px-4">Assigned Personnel</th>
                 <th className="py-3 px-3">
@@ -419,29 +419,29 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                 <th className="py-3 px-4 text-right">Est. Weekly Payroll</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 font-mono-tabular">
+            <tbody className="divide-y divide-border-subtle font-mono-tabular">
               {solution.roster_lines.map((line) => (
                 <tr key={line.cohort_id} className="hover:bg-slate-50/80">
-                  <td className="py-3 px-4 font-bold text-slate-900">
+                  <td className="py-3 px-4 font-bold text-ink">
                     {line.cohort_id}
                   </td>
-                  <td className="py-3 px-4 font-sans font-semibold text-slate-900">
+                  <td className="py-3 px-4 font-sans font-semibold text-ink">
                     {line.assigned_person || (
-                      <span className="text-slate-500 italic font-normal">
+                      <span className="text-muted italic font-normal">
                         Unassigned shift pattern
                       </span>
                     )}
                   </td>
-                  <td className="py-3 px-3 font-sans text-slate-600">
+                  <td className="py-3 px-3 font-sans text-ink-soft">
                     {line.qualification_tier}
                   </td>
-                  <td className="py-3 px-3 text-right text-slate-700">
+                  <td className="py-3 px-3 text-right text-ink-soft">
                     {formatHourlyRate(line.hourly_wage)}
                   </td>
-                  <td className="py-3 px-3 text-right font-bold text-slate-900">
+                  <td className="py-3 px-3 text-right font-bold text-ink">
                     {line.weekly_hours}h
                   </td>
-                  <td className="py-3 px-3 text-right text-slate-600">
+                  <td className="py-3 px-3 text-right text-ink-soft">
                     {line.regular_hours}h
                   </td>
                   <td className="py-3 px-3 text-right">
@@ -457,10 +457,10 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                         )}
                       </>
                     ) : (
-                      <span className="text-slate-500">0h</span>
+                      <span className="text-muted">0h</span>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-right font-bold text-slate-900">
+                  <td className="py-3 px-4 text-right font-bold text-ink">
                     {formatCurrency(line.estimated_weekly_payroll)}
                   </td>
                 </tr>

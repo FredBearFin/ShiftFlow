@@ -70,18 +70,18 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white border border-[#7F8A92] rounded-lg max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
+        className="bg-white border border-border-control rounded-lg max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+        <div className="px-6 py-4 bg-ink text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <span className="text-lg">⌨️</span>
             <div>
               <h2 id="shortcuts-title" className="text-base font-bold text-white">
                 ShiftFlow Studio — Store Manager Keyboard Shortcuts
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-muted mt-0.5">
                 Engineered for hands-on-keyboard operation in loud, high-distraction retail backrooms.
               </p>
               <label className="mt-2 flex items-center gap-2 text-xs text-slate-200">
@@ -97,7 +97,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="text-xs px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-colors"
+            className="text-xs px-3 py-1.5 rounded-md bg-ink hover:bg-ink-soft text-slate-300 font-semibold transition-colors"
             // "Esc" is visible on this button, so 2.5.3 requires it in the name.
             aria-label="Close shortcuts list (Esc)"
           >
@@ -106,19 +106,19 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-5 divide-y divide-slate-100">
+        <div className="p-6 overflow-y-auto space-y-5 divide-y divide-border-subtle">
           {shortcutGroups.map((group, gIdx) => (
             <div key={group.category} className={gIdx > 0 ? 'pt-4' : ''}>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2.5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted mb-2.5">
                 {group.category}
               </h3>
               <div className="space-y-2">
                 {group.items.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-slate-50 text-xs"
+                    className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-surface-subtle text-xs"
                   >
-                    <span className="text-slate-700 font-medium">{item.desc}</span>
+                    <span className="text-ink-soft font-medium">{item.desc}</span>
                     <div className="flex items-center gap-1.5 shrink-0 ml-4">
                       {item.keys.map((k, kIdx) =>
                         k === 'or' ? (
@@ -128,7 +128,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                         ) : (
                           <kbd
                             key={kIdx}
-                            className="px-2 py-1 rounded bg-slate-100 border border-slate-300 text-xs font-mono-tabular font-bold text-slate-800"
+                            className="px-2 py-1 rounded bg-surface border border-border text-xs font-mono-tabular font-bold text-ink"
                           >
                             {k}
                           </kbd>
@@ -143,14 +143,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+        <div className="px-6 py-3.5 bg-surface-subtle border-t border-border-subtle flex items-center justify-between text-xs text-muted">
           <span>
             💡 <strong>Pro Tip:</strong> Shortcuts are automatically paused when typing in form inputs.
           </span>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-1.5 bg-[#2B3A42] hover:bg-[#1E2A31] text-[#FFFFFF] rounded-md text-xs font-bold shadow-[0_1px_2px_rgba(43,58,66,0.08)] transition-colors"
+            className="px-4 py-1.5 bg-ink hover:bg-ink-strong text-card rounded-md text-xs font-bold shadow-[0_1px_2px_rgba(43,58,66,0.08)] transition-colors"
           >
             Got It
           </button>

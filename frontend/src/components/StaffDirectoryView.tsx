@@ -110,14 +110,14 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       <div className="card p-5 bg-white flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted block">
               Workforce Management
             </span>
           </div>
-          <h2 className="type-section-title text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-ink mt-0.5">
             Staff Directory & Availability Matrix
           </h2>
-          <p className="type-prose text-slate-500 mt-0.5">
+          <p className="type-prose text-muted mt-0.5">
             Manage which days each associate can work, and record separations with their
             documentation. Days marked unavailable are reported as conflicts on the schedule, not
             enforced as a hard constraint — review any conflict flagged on the Weekly Schedule tab.
@@ -150,22 +150,22 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               key={emp.employee_id}
               className={`card p-4 flex flex-col justify-between transition-all ${
                 emp.is_active
-                  ? 'bg-white border-[#7F8A92]'
-                  : 'bg-slate-50 border-[#7F8A92] opacity-60'
+                  ? 'bg-white border-border-control'
+                  : 'bg-surface-subtle border-border-control opacity-60'
               }`}
             >
               <div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900">{emp.name}</h3>
-                    <span className="text-xs text-slate-500">{emp.role}</span>
+                    <h3 className="font-bold text-sm text-ink">{emp.name}</h3>
+                    <span className="text-xs text-muted">{emp.role}</span>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span
                       className={`text-xs font-bold px-2 py-0.5 rounded ${
                         emp.is_active
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-red-50 text-[#9F3A32] border border-red-200'
+                          : 'bg-red-50 text-danger border border-red-200'
                       }`}
                     >
                       {emp.is_active ? 'Active' : 'Separated'}
@@ -174,20 +174,20 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
 
                 <div className="mt-3 flex items-center justify-between text-xs font-mono-tabular">
-                  <span className="text-slate-500">Hourly Wage:</span>
-                  <span className="font-bold text-slate-900">{formatHourlyRate(emp.hourly_wage)}</span>
+                  <span className="text-muted">Hourly Wage:</span>
+                  <span className="font-bold text-ink">{formatHourlyRate(emp.hourly_wage)}</span>
                 </div>
 
                 <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-slate-500">
+                  <span className="text-muted">
                     <Term explanation="Which shift pattern this person works: one repeating week of work days and days off that the schedule built, which a person is then put on. Unassigned Pool means nobody has been put on a pattern for them yet.">
                       Current Assignment
                     </Term>
                     :
                   </span>
-                  <span className="font-semibold text-slate-800">
+                  <span className="font-semibold text-ink">
                     {assignedLine ? (
-                      <span className="px-1.5 py-0.5 rounded bg-slate-900 text-white text-xs font-mono-tabular">
+                      <span className="px-1.5 py-0.5 rounded bg-ink text-white text-xs font-mono-tabular">
                         {assignedLine.cohort_id}
                       </span>
                     ) : (
@@ -197,9 +197,9 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
 
                 {/* Availability Days */}
-                <div className="mt-3 pt-3 border-t border-slate-100">
+                <div className="mt-3 pt-3 border-t border-border-subtle">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-semibold text-slate-700">
+                    <span className="text-xs font-semibold text-ink-soft">
                       Available Days (Mon – Sun):
                     </span>
                   </div>
@@ -223,8 +223,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                           }}
                           className={`py-1 text-xs font-mono-tabular font-bold rounded border ${
                             isAvail
-                              ? 'bg-[#2B3A42] text-[#FFFFFF] border-[#2B3A42]'
-                              : 'bg-slate-100 text-slate-600 border-slate-200 line-through'
+                              ? 'bg-ink text-card border-ink'
+                              : 'bg-surface text-ink-soft border-border-subtle line-through'
                           }`}
                         >
                           {d}
@@ -237,7 +237,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
                 <span className="text-xs font-mono-tabular text-muted">{emp.employee_id}</span>
                 {emp.is_active ? (
                   <Button
@@ -266,37 +266,37 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       {/* Add Employee Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 id="add-staff-title" className="text-base font-bold text-slate-900">Add Staff Member</h3>
+          <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-border-control rounded-lg max-w-md w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
+              <h3 id="add-staff-title" className="text-base font-bold text-ink">Add Staff Member</h3>
               <button type="button" onClick={() => setShowAddModal(false)} className="text-muted font-bold">
                 Cancel
               </button>
             </div>
             <form onSubmit={handleSubmitAdd} className="space-y-3.5">
               <div>
-                <label htmlFor="staff-new-name" className="block text-xs font-semibold text-slate-700 mb-1">Full Name <span className="text-[#9F3A32]">Required</span></label>
+                <label htmlFor="staff-new-name" className="block text-xs font-semibold text-ink-soft mb-1">Full Name <span className="text-danger">Required</span></label>
                 <input id="staff-new-name"
                   type="text"
                   required
                   placeholder="e.g., Alex Morgan"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
+                  className="w-full px-3 py-2 border border-border-control rounded-md text-xs"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="staff-new-role" className="block text-xs font-semibold text-slate-700 mb-1">Role / Position</label>
+                  <label htmlFor="staff-new-role" className="block text-xs font-semibold text-ink-soft mb-1">Role / Position</label>
                   <input id="staff-new-role"
                     type="text"
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
+                    className="w-full px-3 py-2 border border-border-control rounded-md text-xs"
                   />
                 </div>
                 <div>
-                  <label htmlFor="staff-new-wage" className="block text-xs font-semibold text-slate-700 mb-1">Wage ($/hr) <span className="text-[#9F3A32]">Required</span></label>
+                  <label htmlFor="staff-new-wage" className="block text-xs font-semibold text-ink-soft mb-1">Wage ($/hr) <span className="text-danger">Required</span></label>
                   <input id="staff-new-wage"
                     type="number"
                     step="0.25"
@@ -306,10 +306,10 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     aria-describedby={newWage.trim() !== '' && newWageValue === null ? 'staff-new-wage-error' : undefined}
                     value={newWage}
                     onChange={(e) => setNewWage(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs font-mono-tabular"
+                    className="w-full px-3 py-2 border border-border-control rounded-md text-xs font-mono-tabular"
                   />
                   {newWage.trim() !== '' && newWageValue === null && (
-                    <p id="staff-new-wage-error" className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                    <p id="staff-new-wage-error" className="mt-1 text-xs font-semibold text-danger">
                       {WAGE_ERROR}
                     </p>
                   )}
@@ -322,7 +322,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   Record a protected day by marking it unavailable below. */}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-ink-soft mb-1">
                   Available Days (Mon – Sun)
                 </label>
                 <div className="grid grid-cols-7 gap-1">
@@ -335,8 +335,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                       onClick={() => handleToggleDay(i)}
                       className={`py-1.5 rounded text-xs font-mono-tabular font-bold border ${
                         newDays.includes(i)
-                          ? 'bg-[#2B3A42] text-[#FFFFFF] border-[#2B3A42]'
-                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                          ? 'bg-ink text-card border-ink'
+                          : 'bg-surface text-ink-soft border-border-subtle'
                       }`}
                     >
                       {d}
@@ -345,7 +345,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
+              <div className="pt-3 border-t border-border-subtle flex justify-end gap-2">
                 <Button variant="secondary" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </Button>
@@ -361,13 +361,13 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
       {/* Structured Legal Separation Modal (Retaliation Defense) */}
       {separatingEmp && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div ref={separationDialogRef} role="dialog" aria-modal="true" aria-labelledby="separation-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-lg w-full p-6 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+          <div ref={separationDialogRef} role="dialog" aria-modal="true" aria-labelledby="separation-title" className="bg-white border border-border-control rounded-lg max-w-lg w-full p-6 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border-subtle">
               <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted block">
                   Contemporaneous HR Separation Audit
                 </span>
-                <h3 id="separation-title" className="text-base font-bold text-slate-900">
+                <h3 id="separation-title" className="text-base font-bold text-ink">
                   Deactivate / Separate: {separatingEmp.name}
                 </h3>
               </div>
@@ -377,8 +377,8 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
             </div>
 
             {/* Legal Warning Notice */}
-            <div className="p-3 bg-white border border-[#7F8A92] border-l-4 border-l-[#C28B47] rounded-lg text-xs text-[#2B3A42] space-y-1">
-              <span className="font-bold flex items-center gap-1.5 text-[#2B3A42]">
+            <div className="p-3 bg-white border border-border-control border-l-4 border-l-warning rounded-lg text-xs text-ink space-y-1">
+              <span className="font-bold flex items-center gap-1.5 text-ink">
                 ⚠ Legal Compliance Notice (FLSA § 15(a)(3) & Title VII § 704(a))
               </span>
               <p className="text-xs leading-relaxed">
@@ -388,13 +388,13 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
             <div className="space-y-3">
               <div>
-                <label htmlFor="staff-sep-category" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="staff-sep-category" className="block text-xs font-semibold text-ink-soft mb-1">
                   Separation Classification
                 </label>
                 <select id="staff-sep-category"
                   value={sepCategory}
                   onChange={(e) => setSepCategory(e.target.value as SeparationCategory)}
-                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs bg-white"
+                  className="w-full px-3 py-2 border border-border-control rounded-md text-xs bg-white"
                 >
                   <option value="voluntary_resignation">Voluntary Resignation (Employee notice/departure)</option>
                   <option value="mutual_agreement">Mutual Separation (Agreed end of contract)</option>
@@ -404,7 +404,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
               </div>
 
               <div>
-                <label htmlFor="staff-sep-reason" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="staff-sep-reason" className="block text-xs font-semibold text-ink-soft mb-1">
                   Contemporaneous Business Justification & Notes
                 </label>
                 <textarea id="staff-sep-reason"
@@ -412,24 +412,24 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   value={sepReason}
                   onChange={(e) => setSepReason(e.target.value)}
                   placeholder="Document specific business rationale, prior warnings, or resignation details..."
-                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
+                  className="w-full px-3 py-2 border border-border-control rounded-md text-xs"
                 />
               </div>
 
               <div>
-                <label htmlFor="staff-sep-recorded-by" className="block text-xs font-semibold text-slate-700 mb-1">
+                <label htmlFor="staff-sep-recorded-by" className="block text-xs font-semibold text-ink-soft mb-1">
                   Certifying Manager / Administrator
                 </label>
                 <input id="staff-sep-recorded-by"
                   type="text"
                   value={recordedBy}
                   onChange={(e) => setRecordedBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs"
+                  className="w-full px-3 py-2 border border-border-control rounded-md text-xs"
                 />
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
+            <div className="pt-3 border-t border-border-subtle flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setSeparatingEmp(null)}>
                 Cancel
               </Button>

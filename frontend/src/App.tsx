@@ -459,14 +459,14 @@ export function App() {
   };
 
   if (authState === 'checking') {
-    return <div className="min-h-screen bg-[#F4F1EA]" />;
+    return <div className="min-h-screen bg-canvas" />;
   }
   if (authState === 'needs-login') {
     return <LoginView onLogin={handleLogin} onSignup={handleSignup} signupAllowed={signupAllowed} />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F1EA] text-[#2B3A42]">
+    <div className="min-h-screen flex flex-col bg-canvas text-ink">
       <Header
         activeTab={activeTab}
         onSelectTab={setActiveTab}
@@ -508,32 +508,32 @@ export function App() {
           </div>
         )}
         {configRestore.status === 'failed' && (
-          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+          <div role="alert" className="mb-4 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger">
             Your saved setup could not be restored because {configRestore.reason}. This
             schedule was built from the default staffing table, not yours — open "Set up
             your schedule" and check it before you rely on it.
           </div>
         )}
         {configRestore.status === 'partial' && (
-          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+          <div role="alert" className="mb-4 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger">
             Part of your saved setup could not be restored: {configRestore.missing.join(', ')}.
             Those parts fell back to defaults, so this schedule is not entirely yours — check
             them in "Set up your schedule".
           </div>
         )}
         {configSaveFailed && (
-          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+          <div role="alert" className="mb-4 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger">
             This browser is refusing to save your setup, so the staffing table and shift
             times will be lost when you reload. Export the roster before you close the tab.
           </div>
         )}
         {staffError && (
-          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+          <div role="alert" className="mb-4 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger">
             {staffError}
           </div>
         )}
         {separationError && (
-          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+          <div role="alert" className="mb-4 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger">
             {separationError}
           </div>
         )}
@@ -542,7 +542,7 @@ export function App() {
           // <main>, so an in-flow banner here is invisible. Lift it above the overlay.
           <div
             role="alert"
-            className={`flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32] ${
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger ${
               isWizardOpen
                 ? 'fixed inset-x-3 top-3 z-[60] mx-auto max-w-3xl sm:inset-x-6'
                 : 'mb-4'
@@ -571,10 +571,10 @@ export function App() {
         <div role="status" aria-live="polite" className={solveStatus === 'loading' && solution ? 'mb-4' : undefined}>
           {solveStatus === 'loading' ? (
             solution ? (
-              <span className="inline-flex items-center gap-2 rounded-md border border-[#7F8A92] bg-white px-3 py-1.5 text-xs font-semibold text-[#2B3A42]">
+              <span className="inline-flex items-center gap-2 rounded-md border border-border-control bg-white px-3 py-1.5 text-xs font-semibold text-ink">
                 <span
                   aria-hidden="true"
-                  className="h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
+                  className="h-3 w-3 animate-spin rounded-full border-2 border-border border-t-slate-600"
                 />
                 Working out the updated schedule…
               </span>
@@ -639,10 +639,10 @@ export function App() {
             {activeTab === 'compliance' && <DOLComplianceView solution={solution} />}
           </>
         ) : solveStatus === 'loading' ? (
-          <div className="enterprise-card p-12 text-center text-sm text-slate-500">
+          <div className="enterprise-card p-12 text-center text-sm text-muted">
             <span
               aria-hidden="true"
-              className="mx-auto mb-4 block h-6 w-6 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600"
+              className="mx-auto mb-4 block h-6 w-6 animate-spin rounded-full border-2 border-border border-t-slate-600"
             />
             Calculating Optimized Schedule, Coverage & Labor Economics...
           </div>

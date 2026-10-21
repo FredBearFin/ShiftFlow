@@ -75,10 +75,10 @@ export function BardPanel({ stepId, className }: BardPanelProps) {
             {hidden ? 'Show the guide' : 'Hide the guide'}
           </button>
         </div>
-        <div id={bodyId} hidden={hidden} className="mt-3 space-y-3 text-sm text-slate-700">
+        <div id={bodyId} hidden={hidden} className="mt-3 space-y-3 text-sm text-ink-soft">
           <p>{lesson.explanation}</p>
           <div>
-            <p className="font-semibold text-slate-900">For example</p>
+            <p className="font-semibold text-ink">For example</p>
             <p>{lesson.example}</p>
           </div>
           <p>{lesson.whyItMatters}</p>

@@ -31,16 +31,16 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
       {/* Coverage Equation Banner */}
       <div className="card p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770]">
+          <span className="text-xs font-bold uppercase tracking-wider text-muted">
             24-Hour Coverage
           </span>
-          <h2 className="type-section-title text-slate-900 mt-0.5">
+          <h2 className="type-section-title text-ink mt-0.5">
             Scheduled vs. <Term explanation="How many people you need in each hour.">required</Term> staff, hour by hour across the week
           </h2>
-          <p className="type-prose text-slate-600 mt-0.5">
+          <p className="type-prose text-ink-soft mt-0.5">
             Check scheduled staff each hour against the need: short or extra.
           </p>
-          <p className="text-xs text-slate-500 mt-1.5 max-w-2xl">
+          <p className="text-xs text-muted mt-1.5 max-w-2xl">
             "Scheduled" counts rotation <Term explanation="A repeating work/rest pattern over the cycle — not necessarily one specific named person, especially before real staff are assigned.">lines</Term> on duty that hour, not individual people — in planning
             mode (no real staff added yet) this can look uneven day to day even though the underlying
             demand is smooth, simply because a small number of rotating lines happen to line up
@@ -51,28 +51,28 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
         {/* Without flex-wrap this row sat 534px wide and forced the whole page
             to scroll sideways at 375px (scrollWidth 571 vs clientWidth 375). */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="px-3.5 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono-tabular">
-            <span className="text-slate-500 block text-xs">Scheduled Hrs</span>
-            <strong className="text-slate-900 text-sm">{totalScheduled}h</strong>
+          <div className="px-3.5 py-2 rounded-lg bg-surface-subtle border border-border-subtle text-xs font-mono-tabular">
+            <span className="text-muted block text-xs">Scheduled Hrs</span>
+            <strong className="text-ink text-sm">{totalScheduled}h</strong>
           </div>
-          <div className="px-3.5 py-2 rounded-lg bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] text-xs font-mono-tabular">
-            <span className="text-[#2B3A42] block text-xs before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">Understaffed hours</span>
-            <strong className="text-[#2B3A42] text-sm">{totalUnder}h</strong>
+          <div className="px-3.5 py-2 rounded-lg bg-surface-sunken text-ink border border-border-control text-xs font-mono-tabular">
+            <span className="text-ink block text-xs before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-warning before:mr-1.5 before:align-middle">Understaffed hours</span>
+            <strong className="text-ink text-sm">{totalUnder}h</strong>
           </div>
-          <div className="px-3.5 py-2 rounded-lg bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] text-xs font-mono-tabular">
-            <span className="text-[#2B3A42] block text-xs">Overstaffed hours</span>
-            <strong className="text-[#2B3A42] text-sm">{totalOver}h</strong>
+          <div className="px-3.5 py-2 rounded-lg bg-surface-sunken text-ink border border-border-control text-xs font-mono-tabular">
+            <span className="text-ink block text-xs">Overstaffed hours</span>
+            <strong className="text-ink text-sm">{totalOver}h</strong>
           </div>
 
-          <div className="inline-flex rounded-md border border-[#7F8A92] p-0.5 bg-slate-100">
+          <div className="inline-flex rounded-md border border-border-control p-0.5 bg-surface">
             <button
               type="button"
               aria-pressed={displayMode === 'scheduled'}
               onClick={() => setDisplayMode('scheduled')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'scheduled'
-                  ? 'bg-white text-slate-900 shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
-                  : 'text-slate-600'
+                  ? 'bg-white text-ink shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
+                  : 'text-ink-soft'
               }`}
             >
               Scheduled / Required staff
@@ -83,8 +83,8 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
               onClick={() => setDisplayMode('deviation')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'deviation'
-                  ? 'bg-white text-slate-900 shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
-                  : 'text-slate-600'
+                  ? 'bg-white text-ink shadow-[0_1px_2px_rgba(43,58,66,0.08)]'
+                  : 'text-ink-soft'
               }`}
             >
               Net Difference (over minus under)
@@ -95,13 +95,13 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
 
       {/* 7 x 24 Interval Heatmap Matrix */}
       <div className="card p-5 overflow-x-auto">
-        <h3 className="type-subsection-title text-slate-700 mb-3">
+        <h3 className="type-subsection-title text-ink-soft mb-3">
           24-Hour × 7-Day Interval Staffing Heatmap
         </h3>
         <table className="w-full border-collapse text-center text-xs font-mono-tabular">
           <thead>
-            <tr className="border-b border-slate-200 text-slate-500">
-              <th className="py-2 px-3 text-left font-sans font-bold text-slate-700">
+            <tr className="border-b border-border-subtle text-muted">
+              <th className="py-2 px-3 text-left font-sans font-bold text-ink-soft">
                 Day \ Hour
               </th>
               {Array.from({ length: 24 }, (_, hr) => (
@@ -111,12 +111,12 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border-subtle">
             {DAYS_OF_WEEK.map((dayName, g) => {
               const cells = byDay[g] || [];
               return (
                 <tr key={dayName}>
-                  <th scope="row" className="py-2.5 px-3 text-left font-sans font-bold text-slate-900 bg-slate-50/80 whitespace-nowrap">
+                  <th scope="row" className="py-2.5 px-3 text-left font-sans font-bold text-ink bg-slate-50/80 whitespace-nowrap">
                     {dayName}
                   </th>
                   {cells.map((c) => {
@@ -168,13 +168,13 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
 
       {/* Shift Design Utilization Table (xi_{gt} & phi_t) */}
       <div className="card p-5">
-        <h3 className="type-subsection-title text-slate-700 mb-3">
+        <h3 className="type-subsection-title text-ink-soft mb-3">
           Shift Types: Active and Staff per Day
         </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+              <tr className="bg-surface-subtle border-b border-border-subtle text-xs font-bold uppercase tracking-wider text-muted">
                 <th className="py-2.5 px-3">Shift Type ID</th>
                 <th className="py-2.5 px-3">Template</th>
                 <th className="py-2.5 px-3">Time Window</th>
@@ -187,12 +187,12 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                 <th className="py-2.5 px-3 text-right">Weekly Shifts</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200 font-mono-tabular">
+            <tbody className="divide-y divide-border-subtle font-mono-tabular">
               {solution.shift_types.map((st) => {
                 const total = st.daily_counts.reduce((a, b) => a + b, 0);
                 return (
                   <tr key={st.type_id}>
-                    <td className="py-2.5 px-3 font-bold text-slate-900">
+                    <td className="py-2.5 px-3 font-bold text-ink">
                       {st.type_id}
                     </td>
                     <td className="py-2.5 px-3 font-sans">
@@ -202,7 +202,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                         {st.template_name}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-slate-700">
+                    <td className="py-2.5 px-3 text-ink-soft">
                       {st.formatted_window} ({st.duration_hours}h)
                     </td>
                     <td className="py-2.5 px-3 text-center">
@@ -210,18 +210,18 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
                         className={`px-2 py-0.5 rounded text-xs font-bold ${
                           st.active
                             ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-slate-100 text-slate-500'
+                            : 'bg-surface text-muted'
                         }`}
                       >
                         {st.active ? 'Active' : 'Off'}
                       </span>
                     </td>
                     {st.daily_counts.map((cnt, idx) => (
-                      <td key={idx} className="py-2.5 px-2 text-center text-slate-800">
+                      <td key={idx} className="py-2.5 px-2 text-center text-ink">
                         {cnt}
                       </td>
                     ))}
-                    <td className="py-2.5 px-3 text-right font-bold text-slate-900">
+                    <td className="py-2.5 px-3 text-right font-bold text-ink">
                       {total}
                     </td>
                   </tr>
