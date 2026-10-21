@@ -30,5 +30,27 @@ export function buildOwnerShareSummary(solution: SolveResponse): string {
 
   lines.push(`Staffing: ${solution.employee_count} shift patterns`);
 
+  // Optimized-vs-baseline overtime/payroll comparison, when the solver provided it
+  // (a real re-solve of the same demand at 0% leeway — the tightest, least
+  // rest-optimized schedule it can build).
+  if (typeof labor.overtime_cost_savings_vs_baseline === 'number') {
+    const otSavings = labor.overtime_cost_savings_vs_baseline;
+    const payrollSavings = labor.payroll_cost_savings_vs_baseline ?? 0;
+    lines.push('');
+    lines.push('Vs. an unoptimized (0%-leeway) schedule for the same demand:');
+    if (otSavings > 0) {
+      lines.push(`  Overtime savings: ${money(otSavings)}/week`);
+    } else if (otSavings < 0) {
+      lines.push(`  Overtime cost vs. baseline: +${money(Math.abs(otSavings))}/week (more OT there avoided here)`);
+    } else {
+      lines.push('  Overtime: no difference vs. baseline');
+    }
+    if (payrollSavings !== 0) {
+      lines.push(
+        `  Total payroll ${payrollSavings > 0 ? 'savings' : 'cost'}: ${money(Math.abs(payrollSavings))}/week`,
+      );
+    }
+  }
+
   return lines.join('\n');
 }

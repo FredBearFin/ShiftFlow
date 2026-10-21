@@ -36,6 +36,12 @@ export const CRITERIA_LABELS: Record<string, { label: string; explanation: strin
     label: 'One-day breaks',
     explanation: "A single day off on its own, rather than 2+ days off together — less useful for actually resting.",
   },
+  // Not one of the 8 scored criteria above — a separate fairness summary over the same
+  // solved roster, showing how evenly nights + weekends are shared across the crew.
+  night_weekend_fairness: {
+    label: 'Night/weekend fairness',
+    explanation: "How evenly night shifts and weekend shifts are shared across your crew, measured as the typical spread (standard deviation) in each person's combined night+weekend shift count. Closer to 0 means everyone carries about the same undesirable-shift load; a higher number means it's concentrated on fewer people.",
+  },
 };
 
 /** Returns the plain label for a criterion id, or the fallback (e.g. the backend's own name) when none is mapped. */

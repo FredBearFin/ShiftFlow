@@ -958,46 +958,13 @@ class ISDRWSPSolver:
                     )
                 )
 
-        # Build LaborAnalysisSchema
-        tot_sched_hours = total_reg_hours + total_ot_hours
-        avg_wage = (
-            round(total_reg_payroll / max(1, total_reg_hours), 2)
-            if total_reg_hours > 0
-            else None
-        )
-        labor_eff = round(
-            (total_weekly_req_hours / max(1, tot_sched_hours)) * 100.0, 1
-        )
-        labor_analysis = LaborAnalysisSchema(
-            total_scheduled_hours=tot_sched_hours,
-            total_regular_hours=total_reg_hours,
-            total_overtime_hours=total_ot_hours,
-            regular_payroll_cost=round(total_reg_payroll, 2),
-            overtime_payroll_cost=round(total_ot_payroll, 2),
-            total_payroll_cost=round(total_payroll, 2),
-            avg_hourly_wage=avg_wage,
-            hours_per_day=daily_hours_sum,
-            cost_per_day=[round(c, 2) for c in daily_cost_sum],
-            overtime_lines_count=overtime_lines_count,
-            labor_efficiency_pct=labor_eff,
-        )
-
-        # Real total cost: staff count + shift variety + over/understaffing, computed directly
-        # from the schedule actually built - not scaled by a formula unrelated to what was built.
-        sw = settings.shift_weights
-        obj_shift_min_bound = round(
-            sw.w_employees * employee_count
-            + sw.w_shift_types * active_shift_types_count
-            + sw.w_understaffing * total_under
-            + sw.w_overstaffing * total_over,
-            2,
-        )
-        obj_shift = obj_shift_min_bound
-
         # Real comparison: solve the same request at 0% leeway (the cheapest, tightest
         # version of this schedule) and use its actual score as the baseline - not an
         # estimate. include_baseline guards against this baseline solve recursing further.
+        # This same real re-solve also supplies the labor-cost baseline below, so the
+        # cost/OT savings numbers come from an actually-solved alternative schedule too.
         baseline_audit = None
+        baseline_solution = None
         if self.include_baseline:
             baseline_request = self.req.model_copy(update={"pareto_leeway_pct": 0.0})
             baseline_solution = ISDRWSPSolver(
@@ -1012,6 +979,63 @@ class ISDRWSPSolver:
             guardrails=self.guardrails,
             baseline_audit=baseline_audit,
         )
+
+        # Build LaborAnalysisSchema
+        tot_sched_hours = total_reg_hours + total_ot_hours
+        avg_wage = (
+            round(total_reg_payroll / max(1, total_reg_hours), 2)
+            if total_reg_hours > 0
+            else None
+        )
+        labor_eff = round(
+            (total_weekly_req_hours / max(1, tot_sched_hours)) * 100.0, 1
+        )
+        total_payroll_rounded = round(total_payroll, 2)
+        total_ot_payroll_rounded = round(total_ot_payroll, 2)
+
+        # Baseline labor figures: the real 0%-leeway re-solve's own labor analysis when one
+        # was computed above, or this same schedule's own figures (so the delta is honestly
+        # 0) when this request already IS the 0%-leeway case.
+        if baseline_solution is not None:
+            baseline_total_payroll = round(baseline_solution.labor_analysis.total_payroll_cost, 2)
+            baseline_ot_hours = baseline_solution.labor_analysis.total_overtime_hours
+            baseline_ot_payroll = round(baseline_solution.labor_analysis.overtime_payroll_cost, 2)
+        else:
+            baseline_total_payroll = total_payroll_rounded
+            baseline_ot_hours = total_ot_hours
+            baseline_ot_payroll = total_ot_payroll_rounded
+
+        labor_analysis = LaborAnalysisSchema(
+            total_scheduled_hours=tot_sched_hours,
+            total_regular_hours=total_reg_hours,
+            total_overtime_hours=total_ot_hours,
+            regular_payroll_cost=round(total_reg_payroll, 2),
+            overtime_payroll_cost=total_ot_payroll_rounded,
+            total_payroll_cost=total_payroll_rounded,
+            avg_hourly_wage=avg_wage,
+            hours_per_day=daily_hours_sum,
+            cost_per_day=[round(c, 2) for c in daily_cost_sum],
+            overtime_lines_count=overtime_lines_count,
+            labor_efficiency_pct=labor_eff,
+            baseline_total_payroll_cost=baseline_total_payroll,
+            baseline_overtime_hours=baseline_ot_hours,
+            baseline_overtime_payroll_cost=baseline_ot_payroll,
+            payroll_cost_savings_vs_baseline=round(baseline_total_payroll - total_payroll_rounded, 2),
+            overtime_hours_saved_vs_baseline=round(baseline_ot_hours - total_ot_hours, 2),
+            overtime_cost_savings_vs_baseline=round(baseline_ot_payroll - total_ot_payroll_rounded, 2),
+        )
+
+        # Real total cost: staff count + shift variety + over/understaffing, computed directly
+        # from the schedule actually built - not scaled by a formula unrelated to what was built.
+        sw = settings.shift_weights
+        obj_shift_min_bound = round(
+            sw.w_employees * employee_count
+            + sw.w_shift_types * active_shift_types_count
+            + sw.w_understaffing * total_under
+            + sw.w_overstaffing * total_over,
+            2,
+        )
+        obj_shift = obj_shift_min_bound
 
         if self.include_pareto_frontier:
             pareto_frontier = generate_pareto_frontier(

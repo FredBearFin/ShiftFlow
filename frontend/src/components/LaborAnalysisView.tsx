@@ -6,6 +6,13 @@ import { Term } from './ui/Term';
 import { POSIntegrationView } from './POSIntegrationView';
 import { buildOwnerShareSummary } from './laborShareSummary';
 
+// POS integration is a module from an earlier, broader "enterprise workforce OS" phase -
+// kept working (and its backend route still exists behind its own default-off flag), but
+// outside the V1 happy path for independent retail/food-service managers. Flip this back on
+// once that funnel is actually being sold. Keeping the entry point wired, just not rendered,
+// means this is a one-line change rather than re-plumbing it later.
+const POS_INTEGRATION_ENABLED_IN_UI = false;
+
 interface LaborAnalysisViewProps {
   solution: SolveResponse;
   facilityId?: string;
@@ -21,6 +28,13 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
 }) => {
   const labor = solution.labor_analysis;
   const maxDayCost = Math.max(...labor.cost_per_day, 100);
+
+  // Real re-solve comparison vs. the 0%-leeway (tightest, least rest-optimized) version of
+  // this same schedule. Older cached solutions may not carry these fields yet (additive/optional).
+  const hasBaselineCompare = typeof labor.overtime_cost_savings_vs_baseline === 'number';
+  const otCostSavings = labor.overtime_cost_savings_vs_baseline ?? 0;
+  const payrollCostSavings = labor.payroll_cost_savings_vs_baseline ?? 0;
+  const baselineTotalPayroll = labor.baseline_total_payroll_cost ?? labor.total_payroll_cost;
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
   const [showPosUpload, setShowPosUpload] = useState(false);
   const [shareMsg, setShareMsg] = useState<string | null>(null);
@@ -214,7 +228,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           >
             Print Audit
           </Button>
-          {facilityId && (
+          {facilityId && POS_INTEGRATION_ENABLED_IN_UI && (
             <Button variant="secondary" onClick={() => setShowPosUpload((v) => !v)}>
               {showPosUpload ? 'Hide POS upload' : 'Update demand from POS data'}
             </Button>
@@ -222,12 +236,62 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
         </div>
       </div>
 
-      {facilityId && showPosUpload && (
+      {facilityId && POS_INTEGRATION_ENABLED_IN_UI && showPosUpload && (
         <POSIntegrationView
           facilityId={facilityId}
           currentDemandMatrix={currentDemandMatrix}
           onDemandUpdated={onDemandUpdated}
         />
+      )}
+
+      {/* Optimized-vs-baseline overtime savings callout */}
+      {hasBaselineCompare && (
+        <div
+          className={`card p-5 border-2 ${
+            otCostSavings > 0
+              ? 'border-emerald-300 bg-emerald-50/60'
+              : otCostSavings < 0
+              ? 'border-amber-300 bg-amber-50/50'
+              : 'border-slate-200 bg-slate-50'
+          }`}
+        >
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
+            Optimized vs. unoptimized schedule
+          </span>
+          {otCostSavings > 0 ? (
+            <p className="text-sm text-slate-800 mt-1">
+              You're saving approximately{' '}
+              <strong className="text-emerald-700 font-mono-tabular">${otCostSavings.toFixed(2)}/week</strong>{' '}
+              in overtime pay compared with the tightest, least rest-optimized schedule this tool
+              can build for the same demand ({labor.baseline_overtime_hours ?? 0}h of OT there vs.{' '}
+              {labor.total_overtime_hours}h here).
+            </p>
+          ) : otCostSavings < 0 ? (
+            <p className="text-sm text-slate-800 mt-1">
+              This rest-optimized schedule costs about{' '}
+              <strong className="text-amber-800 font-mono-tabular">${Math.abs(otCostSavings).toFixed(2)}/week</strong>{' '}
+              more in overtime than the tightest, least rest-optimized version of this same demand —
+              the extra staff used to protect rest and spread the workload shows up here as more
+              overtime, not less.
+            </p>
+          ) : (
+            <p className="text-sm text-slate-800 mt-1">
+              No overtime difference to report: this schedule's overtime already matches the
+              tightest, least rest-optimized version this tool can build for the same demand.
+            </p>
+          )}
+          <p className="text-xs text-slate-500 mt-1.5">
+            Total estimated weekly payroll vs. that same baseline: ${labor.total_payroll_cost.toFixed(2)} here vs. $
+            {baselineTotalPayroll.toFixed(2)} baseline
+            {payrollCostSavings !== 0 && (
+              <>
+                {' '}({payrollCostSavings > 0 ? 'saving' : 'costing'} $
+                {Math.abs(payrollCostSavings).toFixed(2)}/week)
+              </>
+            )}
+            . Both numbers come from real, independently solved schedules — not an estimate.
+          </p>
+        </div>
       )}
 
       {/* Top Payroll & Hours Economics KPI Banner */}

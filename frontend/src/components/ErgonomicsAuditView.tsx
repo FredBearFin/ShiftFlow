@@ -13,6 +13,9 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
   const audit = solution.ergonomics_audit;
   const criteria = audit.criteria_breakdown;
   const maxPenalty = Math.max(...criteria.map((c) => c.weighted_penalty), 1);
+  // Older cached solutions may not carry this field yet (it's additive/optional).
+  const fairnessStdev =
+    typeof audit.night_weekend_fairness_stdev === 'number' ? audit.night_weekend_fairness_stdev : null;
 
   // Simple horizontal bar chart: one row per criterion, length proportional to its penalty.
   const chartW = 640;
@@ -27,7 +30,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
   return (
     <div className="space-y-5">
       {/* Plain-language summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="card p-5">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Workload Score
@@ -82,6 +85,27 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             6-week rotation repeats without gaps or overlaps.
           </p>
         </div>
+
+        {fairnessStdev !== null && (
+          <div className="card p-5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <Term explanation={criterionExplanationFor('night_weekend_fairness', '')}>
+                {criterionLabelFor('night_weekend_fairness', 'Night/Weekend Fairness')}
+              </Term>
+            </span>
+            <div className="flex items-baseline gap-3 mt-1">
+              <span className="text-3xl font-bold font-mono-tabular text-indigo-700">
+                ±{fairnessStdev.toFixed(1)}
+              </span>
+              <span className="text-xs text-slate-500">shifts</span>
+            </div>
+            <p className="text-xs text-slate-600 mt-1.5">
+              {fairnessStdev === 0
+                ? 'Nights and weekends are split exactly evenly across your crew.'
+                : `Nights and weekends are spread within about ${fairnessStdev.toFixed(1)} shifts of each other across your crew — each person's combined night + weekend shift count typically differs from the team average by that much.`}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Visual breakdown of the 8 checks */}

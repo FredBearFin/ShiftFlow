@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.engine.ergonomics import (
+    compute_night_weekend_fairness_stdev,
     compute_rest_hours_between,
     evaluate_rest_sequence_penalty,
     evaluate_shift_type_penalties,
@@ -34,7 +35,13 @@ from app.engine.isd_rwsp_solver import (
     verify_multigraph_eulerian_conditions,
 )
 from app.main import app
-from app.schemas import EmployeeRecord, SolveRequestSchema, StaffMemberAssignment
+from app.schemas import (
+    EmployeeRecord,
+    RosterCellSchema,
+    RosterLineSchema,
+    SolveRequestSchema,
+    StaffMemberAssignment,
+)
 
 
 class TestBeckerISDRWSPSolver(unittest.TestCase):
@@ -179,6 +186,8 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
             self.assertEqual(len(sol.ergonomics_audit.criteria_breakdown), 8)
             self.assertEqual(len(sol.interval_coverage), 168)
             self.assertEqual(sol.labor_analysis.total_payroll_cost, 0.0)
+            self.assertGreaterEqual(sol.ergonomics_audit.night_weekend_fairness_stdev, 0.0)
+            self.assertGreaterEqual(sol.labor_analysis.baseline_total_payroll_cost, 0.0)
 
             for cell in sol.interval_coverage:
                 lhs = cell.scheduled_staff
@@ -358,6 +367,135 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         r_csv = self.client.post("/api/v1/schedules/export-csv", json=payload)
         self.assertEqual(r_csv.status_code, 200)
         self.assertIn("Shift Pattern,Pattern ID", r_csv.text)
+
+    @staticmethod
+    def _make_roster_line(line_number: int, codes: list) -> RosterLineSchema:
+        """Build a minimal RosterLineSchema from a list of 7 shift codes for day 0..6,
+        marking Saturday (5) and Sunday (6) as weekend days."""
+        days = [
+            RosterCellSchema(
+                day_index=i,
+                day_name="Day",
+                is_weekend=i in (5, 6),
+                shift_code=codes[i],
+                time_window="00:00-00:00",
+                duration_hours=8 if codes[i] != "OFF" else 0,
+                rest_hours_before=24.0,
+                clopening_violation=False,
+                backward_rotation_violation=False,
+                availability_conflict=False,
+            )
+            for i in range(7)
+        ]
+        work_days = sum(1 for c in codes if c != "OFF")
+        return RosterLineSchema(
+            line_number=line_number,
+            cohort_id=f"L{line_number}",
+            display_label=f"Line {line_number}",
+            current_cycle_week=1,
+            next_week_line_number=line_number,
+            days=days,
+            weekly_hours=work_days * 8,
+            regular_hours=work_days * 8,
+            overtime_hours=0,
+            work_days_count=work_days,
+            rest_days_count=7 - work_days,
+            full_weekend_off=False,
+            availability_conflicts_count=0,
+            line_ergo_penalty=0.0,
+        )
+
+    def test_11_night_weekend_fairness_stdev_known_example(self) -> None:
+        """compute_night_weekend_fairness_stdev must equal the hand-computed population
+        standard deviation of each employee's (night shifts + weekend shifts worked)
+        count, derived directly from the roster cells - not estimated."""
+        # Employee 1: 2 night shifts ("N","N") + 1 Saturday shift worked => 3 undesirable shifts.
+        line1 = self._make_roster_line(1, ["N", "N", "OFF", "OFF", "OFF", "D", "OFF"])
+        # Employee 2: works only a Sunday => 1 undesirable shift.
+        line2 = self._make_roster_line(2, ["OFF", "OFF", "OFF", "OFF", "OFF", "OFF", "D"])
+        # Employee 3: 1 night shift only => 1 undesirable shift.
+        line3 = self._make_roster_line(3, ["N", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"])
+
+        # counts = [3, 1, 1]; population mean = 5/3; population variance = 8/9;
+        # population stdev = sqrt(8/9) = 0.942809... -> rounds to 0.94
+        stdev = compute_night_weekend_fairness_stdev([line1, line2, line3])
+        self.assertAlmostEqual(stdev, 0.94, places=2)
+
+        # A perfectly even distribution of the same undesirable load scores exactly 0.
+        even1 = self._make_roster_line(4, ["N", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"])
+        even2 = self._make_roster_line(5, ["N", "OFF", "OFF", "OFF", "OFF", "OFF", "OFF"])
+        self.assertEqual(compute_night_weekend_fairness_stdev([even1, even2]), 0.0)
+
+        # No roster lines at all must not raise (StatisticsError guarded against).
+        self.assertEqual(compute_night_weekend_fairness_stdev([]), 0.0)
+
+    def test_12_labor_cost_baseline_savings_matches_real_resolve(self) -> None:
+        """Verify the labor baseline-vs-optimized fields come from a real, independent
+        re-solve of the same request at 0% leeway (never an invented percentage), and
+        that the savings fields are exact arithmetic over those two real solves."""
+        preset = ARCHETYPE_PRESETS["downtown_foodmart_omaha"]
+        staff = [
+            StaffMemberAssignment(
+                line_id=i + 1,
+                cohort_label=f"Line {i + 1}",
+                assigned_staff_name=f"Staff {i + 1}",
+                qualification_tier="Associate",
+                hourly_wage=20.0,
+            )
+            for i in range(10)
+        ]
+        req = SolveRequestSchema(
+            archetype_id=preset.id,
+            facility_name=preset.name,
+            demand_matrix=preset.demand_matrix,
+            templates=preset.templates,
+            guardrails=preset.guardrails,
+            pareto_leeway_pct=10.0,
+            staff_assignments=staff,
+        )
+        sol = ISDRWSPSolver(req).solve()
+        la = sol.labor_analysis
+        self.assertGreater(la.total_payroll_cost, 0.0, "precondition: staff must be paid")
+
+        # The baseline fields must match an independent direct re-solve at 0% leeway exactly.
+        baseline_req = req.model_copy(update={"pareto_leeway_pct": 0.0})
+        baseline_sol = ISDRWSPSolver(
+            baseline_req, include_baseline=False, include_pareto_frontier=False
+        ).solve()
+        baseline_la = baseline_sol.labor_analysis
+
+        self.assertEqual(la.baseline_total_payroll_cost, round(baseline_la.total_payroll_cost, 2))
+        self.assertEqual(la.baseline_overtime_hours, baseline_la.total_overtime_hours)
+        self.assertEqual(
+            la.baseline_overtime_payroll_cost, round(baseline_la.overtime_payroll_cost, 2)
+        )
+
+        # The savings fields are exact arithmetic deltas, not estimates.
+        self.assertAlmostEqual(
+            la.payroll_cost_savings_vs_baseline,
+            round(la.baseline_total_payroll_cost - la.total_payroll_cost, 2),
+            places=2,
+        )
+        self.assertAlmostEqual(
+            la.overtime_hours_saved_vs_baseline,
+            la.baseline_overtime_hours - la.total_overtime_hours,
+            places=2,
+        )
+        self.assertAlmostEqual(
+            la.overtime_cost_savings_vs_baseline,
+            round(la.baseline_overtime_payroll_cost - la.overtime_payroll_cost, 2),
+            places=2,
+        )
+
+        # When the request already IS the 0%-leeway case, no extra re-solve happens and the
+        # baseline must equal the schedule itself: an honest 0 delta, never a fabricated one.
+        zero_sol = ISDRWSPSolver(baseline_req).solve()
+        zero_la = zero_sol.labor_analysis
+        self.assertEqual(zero_la.baseline_total_payroll_cost, zero_la.total_payroll_cost)
+        self.assertEqual(zero_la.baseline_overtime_hours, zero_la.total_overtime_hours)
+        self.assertEqual(zero_la.payroll_cost_savings_vs_baseline, 0.0)
+        self.assertEqual(zero_la.overtime_hours_saved_vs_baseline, 0.0)
+        self.assertEqual(zero_la.overtime_cost_savings_vs_baseline, 0.0)
 
 
 if __name__ == "__main__":

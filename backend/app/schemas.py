@@ -223,6 +223,16 @@ class ErgonomicsAuditSchema(BaseModel):
     statutory_accommodation_violations_count: int = 0
     fair_workweek_compliant: Optional[bool] = None
     mandatory_rest_violations: int = 0
+    night_weekend_fairness_stdev: float = Field(
+        0.0,
+        description=(
+            "Population standard deviation, across employees, of each employee's combined "
+            "count of night shifts plus weekend shifts worked in the solved schedule. 0 means "
+            "every employee carries the exact same night/weekend load; higher values mean the "
+            "undesirable shifts are concentrated on fewer people. Computed directly from the "
+            "solved roster lines, not estimated."
+        ),
+    )
 
 
 class IntervalCoverageCell(BaseModel):
@@ -251,6 +261,46 @@ class LaborAnalysisSchema(BaseModel):
     cost_per_day: List[float]
     overtime_lines_count: int
     labor_efficiency_pct: float
+    baseline_total_payroll_cost: float = Field(
+        0.0,
+        description=(
+            "Total weekly payroll cost of the same demand solved at 0% pareto leeway (the "
+            "tightest, least rest-optimized schedule the engine can build for this request), "
+            "from a real re-solve. If this request already IS the 0% leeway case, it equals "
+            "total_payroll_cost and the savings fields below are 0."
+        ),
+    )
+    baseline_overtime_hours: int = Field(
+        0,
+        description="Total weekly overtime hours in that same 0%-leeway baseline re-solve.",
+    )
+    baseline_overtime_payroll_cost: float = Field(
+        0.0,
+        description="Overtime payroll cost (at 1.5x) in that same 0%-leeway baseline re-solve.",
+    )
+    payroll_cost_savings_vs_baseline: float = Field(
+        0.0,
+        description=(
+            "baseline_total_payroll_cost minus total_payroll_cost. Positive means the solved "
+            "schedule costs less per week than the 0%-leeway baseline; can be negative when the "
+            "extra rest-optimization heads cost more than they save."
+        ),
+    )
+    overtime_hours_saved_vs_baseline: float = Field(
+        0.0,
+        description=(
+            "baseline_overtime_hours minus total_overtime_hours. Positive means the solved "
+            "schedule generates fewer weekly overtime hours than the 0%-leeway baseline."
+        ),
+    )
+    overtime_cost_savings_vs_baseline: float = Field(
+        0.0,
+        description=(
+            "baseline_overtime_payroll_cost minus overtime_payroll_cost. The actual dollar "
+            "amount saved (or lost) per week on overtime premium pay versus the 0%-leeway "
+            "baseline."
+        ),
+    )
 
 
 class ParetoPointSchema(BaseModel):

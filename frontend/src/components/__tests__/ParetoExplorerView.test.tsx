@@ -222,8 +222,8 @@ describe('exporting the roster + compliance summary', () => {
   /** jsdom's Blob can't be read back with Response/.text(), so capture its source parts instead. */
   function captureBlobParts() {
     const parts: string[] = [];
-    const OriginalBlob = global.Blob;
-    vi.spyOn(global, 'Blob').mockImplementation((blobParts?: BlobPart[], options?: BlobPropertyBag) => {
+    const OriginalBlob = globalThis.Blob;
+    vi.spyOn(globalThis, 'Blob').mockImplementation((blobParts?: BlobPart[], options?: BlobPropertyBag) => {
       parts.push((blobParts || []).join(''));
       return new OriginalBlob(blobParts, options);
     });

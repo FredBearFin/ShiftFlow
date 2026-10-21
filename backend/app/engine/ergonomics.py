@@ -6,6 +6,7 @@ shifts, weekend load, single days off). Also verifies every shift change leaves 
 least the required rest hours and that rotations only ever advance forward in time.
 """
 
+from statistics import pstdev
 from typing import Dict, List, Optional, Tuple
 from app.config import TEMPLATE_ORDER, settings
 from app.schemas import (
@@ -200,6 +201,25 @@ def is_backward_rotation(prev_code: str, curr_code: str) -> bool:
     if prev_code == "OFF" or curr_code == "OFF":
         return False
     return TEMPLATE_ORDER.get(curr_code, 0) < TEMPLATE_ORDER.get(prev_code, 0)
+
+
+def compute_night_weekend_fairness_stdev(roster_lines: List[RosterLineSchema]) -> float:
+    """Population standard deviation, across employees, of each employee's combined count
+    of night shifts ("N") plus weekend shifts worked (any non-OFF shift on a weekend day),
+    read directly from the solved roster. 0 means the undesirable load is spread perfectly
+    evenly; a larger number means it is concentrated on fewer people.
+    """
+    per_employee_counts: List[int] = []
+    for line in roster_lines:
+        night_count = sum(1 for cell in line.days if cell.shift_code == "N")
+        weekend_count = sum(
+            1 for cell in line.days if cell.is_weekend and cell.shift_code != "OFF"
+        )
+        per_employee_counts.append(night_count + weekend_count)
+
+    if not per_employee_counts:
+        return 0.0
+    return round(pstdev(per_employee_counts), 2)
 
 
 def evaluate_ergonomics_audit(
@@ -454,4 +474,5 @@ def evaluate_ergonomics_audit(
         statutory_accommodation_violations_count=sum(1 for line in roster_lines if line.statutory_accommodation_violation),
         fair_workweek_compliant=None,  # Fair Workweek: not assessed
         mandatory_rest_violations=clopening_violations,
+        night_weekend_fairness_stdev=compute_night_weekend_fairness_stdev(roster_lines),
     )

@@ -177,6 +177,10 @@ export interface ErgonomicsAudit {
   statutory_accommodation_violations_count?: number;
   fair_workweek_compliant?: boolean;
   mandatory_rest_violations?: number;
+  // Population standard deviation, across employees, of each employee's combined
+  // night-shift + weekend-shift count. 0 = perfectly even; higher = more concentrated
+  // on fewer people. Computed directly from the solved roster, not estimated.
+  night_weekend_fairness_stdev?: number;
 }
 
 export interface IntervalCoverageCell {
@@ -203,6 +207,16 @@ export interface LaborAnalysis {
   cost_per_day: number[];
   overtime_lines_count: number;
   labor_efficiency_pct: number;
+  // Real re-solve of the same demand at 0% pareto leeway (the tightest, least
+  // rest-optimized schedule the engine can build), plus the savings deltas vs it.
+  // Equal to this schedule's own figures (0 delta) when this request already IS
+  // the 0%-leeway case.
+  baseline_total_payroll_cost?: number;
+  baseline_overtime_hours?: number;
+  baseline_overtime_payroll_cost?: number;
+  payroll_cost_savings_vs_baseline?: number;
+  overtime_hours_saved_vs_baseline?: number;
+  overtime_cost_savings_vs_baseline?: number;
 }
 
 export interface ParetoPoint {
