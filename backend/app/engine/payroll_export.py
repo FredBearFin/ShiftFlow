@@ -6,6 +6,14 @@ from typing import Any, Dict, List
 
 
 class PayrollExportEngine:
+    """Builds payroll CSVs from solved roster lines.
+
+    A rotation line with nobody assigned is not a person and is never invented into
+    one. These builders used to fall back to "Shift Pattern 3" / "Associate 3" with a
+    role of "Floor Clerk", which lands in a payroll file looking exactly like a real
+    employee owed real money. An unassigned line is skipped instead, and the caller is
+    told how many were skipped so a coverage gap is reported rather than paid.
+    """
     """Formats calculated labor records into standard payroll provider ingestion formats."""
 
     @staticmethod
@@ -29,11 +37,16 @@ class PayrollExportEngine:
             "Notes",
         ])
 
+        skipped: List[int] = []
         for line in roster_lines:
             line_num = line.get("line_number") or line.get("lineNum") or 1
-            emp_id = line.get("assigned_employee_id") or line.get("empId") or f"PATTERN-{line_num:02d}"
-            name = line.get("assigned_person") or line.get("empName") or f"Shift Pattern {line_num}"
-            role = line.get("qualification_tier") or line.get("role") or "Floor Clerk"
+            emp_id = line.get("assigned_employee_id") or line.get("empId")
+            name = line.get("assigned_person") or line.get("empName")
+            if not emp_id or not name:
+                # Nobody is on this line. Skipping it is the whole point: see the class docstring.
+                skipped.append(line_num)
+                continue
+            role = line.get("qualification_tier") or line.get("role") or ""
             reg = round(float(line.get("regular_hours", line.get("regHours", 0.0))), 2)
             ot = round(float(line.get("overtime_hours", line.get("otHours", 0.0))), 2)
             wage_raw = line.get("hourly_wage", line.get("wage"))
@@ -77,10 +90,15 @@ class PayrollExportEngine:
             "Gross Amount",
         ])
 
+        skipped: List[int] = []
         for line in roster_lines:
             line_num = line.get("line_number") or line.get("lineNum") or 1
-            emp_id = line.get("assigned_employee_id") or line.get("empId") or f"L{line_num:02d}"
-            name = line.get("assigned_person") or line.get("empName") or f"Associate {line_num}"
+            emp_id = line.get("assigned_employee_id") or line.get("empId")
+            name = line.get("assigned_person") or line.get("empName")
+            if not emp_id or not name:
+                # Nobody is on this line. Skipping it is the whole point: see the class docstring.
+                skipped.append(line_num)
+                continue
             reg = round(float(line.get("regular_hours", line.get("regHours", 0.0))), 2)
             ot = round(float(line.get("overtime_hours", line.get("otHours", 0.0))), 2)
             wage_raw = line.get("hourly_wage", line.get("wage"))
