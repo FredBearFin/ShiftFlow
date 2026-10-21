@@ -7,7 +7,9 @@ import {
   ArchetypePreset,
   ErgonomicGuardrails,
   PersistedSolveConfig,
+  RosterCellOverride,
   SeparationCategory,
+  ShiftOrOffCode,
   ShiftTemplate,
   SolveRequest,
   SolveResponse,
@@ -232,6 +234,41 @@ export type SolveConfigRestore =
   | { status: 'partial'; config: Partial<PersistedSolveConfig>; missing: string[] }
   | { status: 'failed'; reason: string };
 
+/**
+ * The manager's hand edits to the generated roster, stored in the same record as the
+ * rest of the setup.
+ *
+ * Deliberately NOT part of PersistedSolveConfig: a roster with no edits on it has no
+ * overrides, so an absent list is the normal case and must never be reported to the
+ * manager as setup that failed to restore. A stored list that is unreadable is dropped
+ * rather than partially applied — half a manager's edits is a roster nobody authored.
+ */
+const OVERRIDES_FIELD = 'roster_overrides';
+
+const SHIFT_OR_OFF_CODES: ShiftOrOffCode[] = ['M', 'D', 'E', 'N', 'OFF'];
+
+const isShiftOrOffCode = (v: unknown): v is ShiftOrOffCode =>
+  typeof v === 'string' && (SHIFT_OR_OFF_CODES as string[]).includes(v);
+
+function readRosterOverrides(raw: unknown): RosterCellOverride[] {
+  if (!Array.isArray(raw)) return [];
+  const out: RosterCellOverride[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') return [];
+    const rec = entry as Record<string, unknown>;
+    if (!isFiniteNumber(rec.cycle_week) || rec.cycle_week < 1) return [];
+    if (!isFiniteNumber(rec.day_index) || rec.day_index < 0 || rec.day_index > 6) return [];
+    if (!isShiftOrOffCode(rec.shift_code) || !isShiftOrOffCode(rec.original_shift_code)) return [];
+    out.push({
+      cycle_week: Math.round(rec.cycle_week),
+      day_index: Math.round(rec.day_index),
+      shift_code: rec.shift_code,
+      original_shift_code: rec.original_shift_code,
+    });
+  }
+  return out;
+}
+
 /** Plain-language names for the saved fields, for telling a shift supervisor what was lost. */
 const SOLVE_CONFIG_FIELD_LABELS: Record<keyof PersistedSolveConfig, string> = {
   archetype_id: 'the example it started from',
@@ -303,17 +340,46 @@ function readGuardrails(raw: unknown): ErgonomicGuardrails | null {
   return raw as ErgonomicGuardrails;
 }
 
-/** Saves the whole solve configuration. Returns false when the browser refuses to store it. */
-export function saveSolveConfig(config: PersistedSolveConfig): boolean {
+/**
+ * Saves the whole solve configuration, with the manager's roster edits alongside it.
+ * Returns false when the browser refuses to store it.
+ */
+export function saveSolveConfig(
+  config: PersistedSolveConfig,
+  rosterOverrides: RosterCellOverride[] = []
+): boolean {
   try {
     window.localStorage.setItem(
       SOLVE_CONFIG_KEY,
-      JSON.stringify({ version: SOLVE_CONFIG_VERSION, ...config })
+      JSON.stringify({
+        version: SOLVE_CONFIG_VERSION,
+        ...config,
+        [OVERRIDES_FIELD]: rosterOverrides,
+      })
     );
     return true;
   } catch {
     // Storage can be blocked or full. The caller surfaces this rather than hiding it.
     return false;
+  }
+}
+
+/**
+ * The saved roster edits on their own, for the one read at startup that happens before
+ * any solve has come back. Returns an empty list when there are none, when the record
+ * cannot be read, or when its list is malformed.
+ */
+export function loadRosterOverrides(): RosterCellOverride[] {
+  try {
+    const raw = window.localStorage.getItem(SOLVE_CONFIG_KEY);
+    if (raw === null) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return [];
+    const rec = parsed as Record<string, unknown>;
+    if (rec.version !== SOLVE_CONFIG_VERSION) return [];
+    return readRosterOverrides(rec[OVERRIDES_FIELD]);
+  } catch {
+    return [];
   }
 }
 

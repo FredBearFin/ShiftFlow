@@ -339,3 +339,44 @@ export interface ShiftSwapValidationResponse {
   validation_messages: string[];
   next_monday_rotation_impact: string;
 }
+
+/**
+ * One manager edit to a generated roster cell.
+ *
+ * Keyed by the shift pattern (`cycle_week`, the solver's `current_cycle_week`) rather
+ * than the row the cell happens to sit on this week. A cyclic roster rotates every
+ * pattern down one row each Monday, so a row number names a different pattern next
+ * week while the pattern itself is the thing that was generated and then changed.
+ *
+ * `original_shift_code` is the generated value, kept so the edit can be undone and so
+ * the cell can state what it was changed from.
+ */
+export interface RosterCellOverride {
+  cycle_week: number;
+  day_index: number;
+  shift_code: ShiftOrOffCode;
+  original_shift_code: ShiftOrOffCode;
+}
+
+/** Which rule an override or swap check reports on. */
+export type RosterRuleId = 'rest' | 'clopening' | 'overtime';
+
+/**
+ * One rule finding against an edited line. `line_number` is the row the finding lands
+ * on, which for a cycle-boundary finding is the row AFTER the edited one: line i's
+ * Sunday is followed by line i+1's Monday.
+ */
+export interface RosterRuleFinding {
+  rule: RosterRuleId;
+  line_number: number;
+  day_index: number | null;
+  message: string;
+}
+
+/** A shift code's concrete clock times, as a solved roster reports them. */
+export interface ShiftClock {
+  start_hour: number;
+  duration_hours: number;
+  time_window: string;
+}
+

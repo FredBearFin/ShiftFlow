@@ -4,12 +4,26 @@ import { Term } from './ui/Term';
 import {
   EmployeeRecord,
   NewEmployeeInput,
+  RosterCellOverride,
   RosterLine,
   SeparationCategory,
+  ShiftOrOffCode,
   SolveResponse,
   StaffMemberAssignment,
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import {
+  OVERTIME_THRESHOLD_HOURS,
+  SHIFT_CODE_LABELS,
+  availableShiftCodes,
+  findingsByLine,
+  indexOverrides,
+  overrideKey,
+  previewOverride,
+  resolveCell,
+  resolvedLineHours,
+  shiftClocksFromSolution,
+} from '../services/rosterOverrides';
 import { formatCurrency, formatHourlyRate } from '../utils/format';
 import { Button } from './ui/Button';
 
@@ -42,6 +56,13 @@ interface MasterRosterViewProps {
   onAdvanceWeek: (delta: number) => void;
   onResetWeek: () => void;
   onUpdateStaffAssignments: (assignments: StaffMemberAssignment[]) => void;
+  /**
+   * The manager's hand edits to the generated roster. Optional so a caller that does
+   * not own them (and the view tests) renders the generated roster unchanged; when the
+   * setter is absent the edits are held in this component for the session instead.
+   */
+  rosterOverrides?: RosterCellOverride[];
+  onUpdateRosterOverrides?: (overrides: RosterCellOverride[]) => void;
   onAddEmployee: (emp: NewEmployeeInput) => void;
   onToggleEmployeeStatus: (
     empId: string,
@@ -63,6 +84,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   onAdvanceWeek,
   onResetWeek,
   onUpdateStaffAssignments,
+  rosterOverrides: extOverrides,
+  onUpdateRosterOverrides: extSetOverrides,
   onAddEmployee,
   onToggleEmployeeStatus,
   onUpdateEmployee,
@@ -82,6 +105,60 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
   const setShowAddModal = extSetAddModal || setInternalAddModal;
   const addDialogRef = useRef<HTMLDivElement>(null);
   useDialogFocus(addDialogRef, showAddModal, () => setShowAddModal(false));
+
+  /* ------------------------------------------------------------------
+   * Editing a generated roster cell
+   *
+   * A supervisor's week is edits: someone calls out, one person cannot work Sundays.
+   * An edit is applied to the solved roster as it stands and only the affected line is
+   * re-checked, because re-solving would reshuffle everybody else's week to deliver the
+   * one cell that was asked for.
+   * ------------------------------------------------------------------ */
+  const [internalOverrides, setInternalOverrides] = useState<RosterCellOverride[]>([]);
+  const overrides = extOverrides ?? internalOverrides;
+  const setOverrides = extSetOverrides ?? setInternalOverrides;
+
+  const [editingCell, setEditingCell] = useState<{ cycleWeek: number; dayIndex: number } | null>(null);
+  const [draftCode, setDraftCode] = useState<ShiftOrOffCode>('OFF');
+
+  const shiftClocks = shiftClocksFromSolution(solution);
+  const shiftCodeChoices = availableShiftCodes(shiftClocks);
+  const overridesByKey = indexOverrides(overrides);
+  const lineFindings = findingsByLine(solution, overrides);
+
+  const editedCycleWeeks = new Set(overrides.map((o) => o.cycle_week));
+
+  const startEditingCell = (cycleWeek: number, dayIndex: number, currentCode: ShiftOrOffCode) => {
+    setEditingCell({ cycleWeek, dayIndex });
+    setDraftCode(currentCode);
+  };
+
+  const commitEdit = (cycleWeek: number, dayIndex: number, generatedCode: ShiftOrOffCode) => {
+    const key = overrideKey(cycleWeek, dayIndex);
+    const withoutThisCell = overrides.filter((o) => overrideKey(o.cycle_week, o.day_index) !== key);
+    // Choosing the generated value back is not an edit, so no override is recorded and
+    // the cell stops reporting itself as modified.
+    setOverrides(
+      draftCode === generatedCode
+        ? withoutThisCell
+        : [
+            ...withoutThisCell,
+            {
+              cycle_week: cycleWeek,
+              day_index: dayIndex,
+              shift_code: draftCode,
+              original_shift_code: generatedCode,
+            },
+          ]
+    );
+    setEditingCell(null);
+  };
+
+  const revertEdit = (cycleWeek: number, dayIndex: number) => {
+    const key = overrideKey(cycleWeek, dayIndex);
+    setOverrides(overrides.filter((o) => overrideKey(o.cycle_week, o.day_index) !== key));
+    setEditingCell(null);
+  };
 
 
 
@@ -591,6 +668,38 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </div>
         )}
 
+        {/* Edits to the generated roster, and what on this page they do and do not move. */}
+        {overrides.length > 0 && (
+          <div className="p-4 sm:px-6 border-b border-border-subtle bg-surface-subtle">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="type-subsection-title text-ink">
+                  {overrides.length} cell{overrides.length === 1 ? '' : 's'} modified from generated
+                </h3>
+                <p className="type-prose text-muted">
+                  Each edit was checked against the {OVERTIME_THRESHOLD_HOURS}-hour overtime
+                  boundary, the 16-hour rest rule and the zero-clopening guardrail on its own
+                  line only — nothing else in the rotation was re-solved or moved. The hours and
+                  weekly payroll on an edited row below are recalculated. The KPI cards above,
+                  the ergonomics score and the under-staffed totals still describe the generated
+                  roster, because they come from the solve and no edit has been fed back into it.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="no-print"
+                onClick={() => {
+                  setOverrides([]);
+                  setEditingCell(null);
+                }}
+              >
+                Undo all edits
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Weekly Schedule Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -614,14 +723,30 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle text-xs">
-              {solution.roster_lines.map((line: RosterLine) => (
+              {solution.roster_lines.map((line: RosterLine) => {
+                const isEdited = editedCycleWeeks.has(line.current_cycle_week);
+                const editedHours = resolvedLineHours(line, overridesByKey, shiftClocks);
+                // An edit changes the hours on the line, so the money on it follows:
+                // regular up to the overtime boundary, then time and a half. An
+                // unassigned line still has no wage and so still costs nothing.
+                const editedPayroll =
+                  line.hourly_wage === null
+                    ? null
+                    : Math.round(
+                        (editedHours.regular_hours * line.hourly_wage +
+                          editedHours.overtime_hours * line.hourly_wage * 1.5) *
+                          100
+                      ) / 100;
+                const findings = lineFindings.get(line.line_number) ?? [];
+
+                return (
                 <tr
                   key={line.cohort_id}
-                  className="hover:bg-slate-50/80 transition-colors"
+                  className="transition-colors"
                 >
                   <th scope="row" className="py-3 px-4 text-left font-normal">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded bg-ink text-white font-mono-tabular font-bold text-xs">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="px-2 py-0.5 rounded bg-ink text-card font-mono-tabular font-bold text-xs">
                         {line.cohort_id}
                       </span>
                       <span className="font-semibold text-ink">
@@ -629,6 +754,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           ? line.assigned_person
                           : `Shift Pattern ${line.line_number}`}
                       </span>
+                      {isEdited && (
+                        <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-accent-soft text-accent-strong border border-accent">
+                          Modified from generated
+                        </span>
+                      )}
                       {line.availability_conflicts_count > 0 && (
                         <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-surface-sunken text-ink border border-border-control before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-warning before:mr-1.5 before:align-middle">
                           {line.availability_conflicts_count} Avail Alert
@@ -651,6 +781,18 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       <span>•</span>
                       <span>Next Mon → Line {line.next_week_line_number}</span>
                     </div>
+                    {findings.length > 0 && (
+                      <ul className="mt-1 space-y-0.5">
+                        {findings.map((finding) => (
+                          <li
+                            key={`${finding.rule}-${finding.day_index}`}
+                            className="text-xs font-semibold text-status-risk-ink"
+                          >
+                            {finding.message}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </th>
 
                   <td className="py-3 px-2 text-center">
@@ -659,53 +801,183 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     </span>
                   </td>
 
-                  {line.days.map((cell) => (
-                    <td
-                      key={cell.day_index}
-                      className={`p-2 text-center ${
-                        cell.is_weekend ? 'bg-slate-50/70' : ''
-                      }`}
-                    >
-                      <div
-                        className={`shift-pill-${cell.shift_code} rounded-lg py-1.5 px-2 flex flex-col items-center justify-center relative ${
-                          cell.availability_conflict ? 'ring-2 ring-amber-500' : ''
-                        }`}
+                  {line.days.map((cell) => {
+                    const resolved = resolveCell(
+                      cell,
+                      line.current_cycle_week,
+                      overridesByKey,
+                      shiftClocks
+                    );
+                    const isEditing =
+                      editingCell !== null &&
+                      editingCell.cycleWeek === line.current_cycle_week &&
+                      editingCell.dayIndex === cell.day_index;
+                    const cellDomId = `roster-cell-${line.current_cycle_week}-${cell.day_index}`;
+                    const rowName = line.assigned_person ?? `Shift Pattern ${line.line_number}`;
+                    const dayName = DAY_FULL_NAMES[cell.day_index];
+                    const draftPreview = isEditing
+                      ? previewOverride(solution, overrides, {
+                          cycle_week: line.current_cycle_week,
+                          day_index: cell.day_index,
+                          shift_code: draftCode,
+                          original_shift_code: resolved.original_shift_code,
+                        })
+                      : null;
+                    const draftFindings = draftPreview ? draftPreview.findings : [];
+
+                    return (
+                      <td
+                        key={cell.day_index}
+                        className={`p-2 text-center ${cell.is_weekend ? 'bg-surface-subtle' : ''}`}
                       >
-                        <span className="font-mono-tabular font-bold text-xs">
-                          {cell.shift_code}
-                        </span>
-                        <span className="text-xs opacity-85 font-mono-tabular mt-0.5">
-                          {cell.shift_code === 'OFF' ? 'Rest' : cell.time_window}
-                        </span>
-                        {cell.availability_conflict && (
-                          <span className="text-[9px] font-bold uppercase tracking-wide text-amber-900 mt-0.5">
-                            ! Conflict
-                          </span>
+                        {isEditing ? (
+                          <div className="min-w-[9rem] text-left no-print">
+                            <label
+                              htmlFor={`${cellDomId}-shift`}
+                              className="block text-xs font-semibold text-ink-soft mb-1"
+                            >
+                              {rowName} — {dayName} shift
+                            </label>
+                            <select
+                              id={`${cellDomId}-shift`}
+                              value={draftCode}
+                              onChange={(e) => setDraftCode(e.target.value as ShiftOrOffCode)}
+                              aria-describedby={
+                                draftFindings.length > 0 ? `${cellDomId}-findings` : undefined
+                              }
+                              className="w-full px-2 py-1 border border-border-control rounded-md text-xs bg-card text-ink"
+                            >
+                              {shiftCodeChoices.map((code) => (
+                                <option key={code} value={code}>
+                                  {code} — {SHIFT_CODE_LABELS[code]}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="mt-1 text-xs text-muted">
+                              Generated: {resolved.original_shift_code}
+                              {draftPreview
+                                ? ` • this line would work ${draftPreview.weekly_hours}h`
+                                : ''}
+                            </p>
+                            {draftFindings.length > 0 && (
+                              <ul id={`${cellDomId}-findings`} className="mt-1 space-y-1">
+                                {draftFindings.map((finding) => (
+                                  <li
+                                    key={`${finding.rule}-${finding.line_number}-${finding.day_index}`}
+                                    className="text-xs font-semibold text-status-risk-ink"
+                                  >
+                                    {finding.message}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() =>
+                                  commitEdit(
+                                    line.current_cycle_week,
+                                    cell.day_index,
+                                    resolved.original_shift_code
+                                  )
+                                }
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setEditingCell(null)}
+                              >
+                                Cancel
+                              </Button>
+                              {resolved.is_modified && (
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={() =>
+                                    revertEdit(line.current_cycle_week, cell.day_index)
+                                  }
+                                >
+                                  Undo edit
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              startEditingCell(
+                                line.current_cycle_week,
+                                cell.day_index,
+                                resolved.shift_code
+                              )
+                            }
+                            aria-label={
+                              `Change ${rowName}'s ${dayName} shift. Currently ` +
+                              `${resolved.shift_code}, ${resolved.time_window}` +
+                              (resolved.is_modified
+                                ? `, modified from the generated ${resolved.original_shift_code}.`
+                                : ' as generated.')
+                            }
+                            className="w-full rounded-lg text-left"
+                          >
+                            <div
+                              className={`shift-pill-${resolved.shift_code} rounded-lg py-1.5 px-2 flex flex-col items-center justify-center relative ${
+                                cell.availability_conflict ? 'ring-2 ring-status-watch' : ''
+                              } ${resolved.is_modified ? 'border-2 border-accent-strong' : ''}`}
+                            >
+                              <span className="font-mono-tabular font-bold text-xs">
+                                {resolved.shift_code}
+                              </span>
+                              <span className="text-xs font-mono-tabular mt-0.5">
+                                {resolved.shift_code === 'OFF' ? 'Rest' : resolved.time_window}
+                              </span>
+                              {resolved.is_modified && (
+                                <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-accent-strong">
+                                  Modified from {resolved.original_shift_code}
+                                </span>
+                              )}
+                              {cell.availability_conflict && (
+                                <span className="text-[9px] font-bold uppercase tracking-wide text-status-watch-ink mt-0.5">
+                                  ! Conflict
+                                </span>
+                              )}
+                              {cell.availability_conflict && (
+                                <span
+                                  className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-status-watch"
+                                  title="Worker marked this day as unavailable!"
+                                />
+                              )}
+                            </div>
+                          </button>
                         )}
-                        {cell.availability_conflict && (
-                          <span
-                            className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-500"
-                            title="Worker marked this day as unavailable!"
-                          />
-                        )}
-                      </div>
-                    </td>
-                  ))}
+                      </td>
+                    );
+                  })}
 
                   <td className="py-3 px-3 text-right font-mono-tabular">
-                    <span className="font-bold text-ink">{line.weekly_hours}h</span>
-                    {line.overtime_hours > 0 && (
-                      <span className="block text-xs text-amber-700 font-semibold">
-                        +{line.overtime_hours}h OT
+                    <span className="font-bold text-ink">{editedHours.weekly_hours}h</span>
+                    {editedHours.overtime_hours > 0 && (
+                      <span className="block text-xs text-status-watch-ink font-semibold">
+                        +{editedHours.overtime_hours}h OT
+                      </span>
+                    )}
+                    {isEdited && editedHours.weekly_hours !== line.weekly_hours && (
+                      <span className="block text-xs text-muted">
+                        was {line.weekly_hours}h
                       </span>
                     )}
                   </td>
 
                   <td className="py-3 px-4 text-right font-mono-tabular font-bold text-ink">
-                    {formatCurrency(line.estimated_weekly_payroll)}
+                    {formatCurrency(editedPayroll)}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
             {/* Understaffing is a per-day total, not a header: it belongs in the
                 foot as data, so no body cell inherits it as a column header. */}

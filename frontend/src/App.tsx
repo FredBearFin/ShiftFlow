@@ -5,6 +5,7 @@ import {
   EmployeeRecord,
   ErgonomicGuardrails,
   NewEmployeeInput,
+  RosterCellOverride,
   SeparationCategory,
   ShiftTemplate,
   SolveResponse,
@@ -27,10 +28,12 @@ import {
   signupApi,
   logoutApi,
   loadSolveConfig,
+  loadRosterOverrides,
   saveSolveConfig,
   clearSolveConfig,
   SolveConfigRestore,
 } from './services/api';
+import { pruneOverrides } from './services/rosterOverrides';
 
 import { Header } from './components/Header';
 import { LoginView } from './components/LoginView';
@@ -95,6 +98,13 @@ export function App() {
   const [leewayPct, setLeewayPct] = useState<number>(restored?.pareto_leeway_pct ?? 10.0);
   const [rotationWeekOffset, setRotationWeekOffset] = useState<number>(restored?.rotation_week_offset ?? 0);
 
+  // The manager's hand edits to the generated roster. Restored before the first solve
+  // comes back, then pruned against it, so an edit survives a reload the same way the
+  // rest of the setup does.
+  const [rosterOverrides, setRosterOverrides] = useState<RosterCellOverride[]>(() =>
+    loadRosterOverrides()
+  );
+
   const [staffAssignments, setStaffAssignments] = useState<StaffMemberAssignment[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [employeesLoaded, setEmployeesLoaded] = useState<boolean>(false);
@@ -150,6 +160,7 @@ export function App() {
     // The saved setup is per-browser, not per-account, so it must not be left behind
     // for whoever signs in next on this machine.
     clearSolveConfig();
+    setRosterOverrides([]);
     setAuthState('needs-login');
   };
 
@@ -195,15 +206,18 @@ export function App() {
   // schedule instead of a default one. A refused write is surfaced below, not swallowed.
   useEffect(() => {
     setConfigSaveFailed(
-      !saveSolveConfig({
-        archetype_id: selectedArchetypeId,
-        facility_name: facilityName,
-        demand_matrix: demandMatrix,
-        templates,
-        guardrails,
-        pareto_leeway_pct: leewayPct,
-        rotation_week_offset: rotationWeekOffset,
-      })
+      !saveSolveConfig(
+        {
+          archetype_id: selectedArchetypeId,
+          facility_name: facilityName,
+          demand_matrix: demandMatrix,
+          templates,
+          guardrails,
+          pareto_leeway_pct: leewayPct,
+          rotation_week_offset: rotationWeekOffset,
+        },
+        rosterOverrides
+      )
     );
   }, [
     selectedArchetypeId,
@@ -213,6 +227,7 @@ export function App() {
     guardrails,
     leewayPct,
     rotationWeekOffset,
+    rosterOverrides,
   ]);
 
   useEffect(() => {
@@ -232,6 +247,13 @@ export function App() {
       }).then((res) => {
         if (isMounted) {
           setSolution(res);
+          // An edit names a shift pattern in the roster it was made against. A new
+          // solve can have fewer patterns, so one that no longer names a real cell is
+          // dropped rather than silently applied to whatever now sits in that slot.
+          setRosterOverrides((prev) => {
+            const kept = pruneOverrides(prev, res);
+            return kept.length === prev.length ? prev : kept;
+          });
           setSolveError(null);
           setSolveStatus('ready');
         }
@@ -366,6 +388,9 @@ export function App() {
     setLeewayPct(preset.default_leeway_pct);
     setRotationWeekOffset(0);
     setStaffAssignments([]);
+    // A different preset is a different generated roster, so edits against the old one
+    // no longer describe any cell that exists.
+    setRosterOverrides([]);
   };
 
   const handleAddEmployee = async (newEmpData: NewEmployeeInput) => {
@@ -597,6 +622,8 @@ export function App() {
                 onAdvanceWeek={(delta) => advanceWeek(delta)}
                 onResetWeek={() => setRotationWeekOffset(0)}
                 onUpdateStaffAssignments={setStaffAssignments}
+                rosterOverrides={rosterOverrides}
+                onUpdateRosterOverrides={setRosterOverrides}
                 onAddEmployee={handleAddEmployee}
                 onToggleEmployeeStatus={(empId, sep) =>
                   sep ? handleSeparateEmployee(empId, sep) : handleToggleEmployeeStatus(empId)
