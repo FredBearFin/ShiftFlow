@@ -1,6 +1,7 @@
 import React from 'react';
 import { ActiveTabId, SolveResponse } from '../types';
 import { formatCurrency } from '../utils/format';
+import { Button } from './ui/Button';
 
 // Number keys bound in App.tsx keyboard handler; tabs without a key show no badge.
 const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
@@ -128,39 +129,30 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {onOpenShortcuts && (
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={onOpenShortcuts}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 shadow-[0_1px_2px_rgba(43,58,66,0.08)] transition-colors"
                 title="Keyboard Shortcuts Cheatsheet (?)"
               >
                 <span>⌨️ Hotkeys</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-300 text-xs font-mono-tabular text-slate-600 font-bold">
                   ?
                 </kbd>
-              </button>
+              </Button>
             )}
 
-            <button
-              type="button"
-              onClick={onOpenWizard}
-              className="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors shadow-sm flex items-center gap-2"
-            >
+            <Button variant="primary" onClick={onOpenWizard}>
               <span>Configure Facility Wizard</span>
               <span className="px-1.5 py-0.5 rounded bg-slate-700 text-xs font-mono-tabular text-slate-200">
                 5 Steps
               </span>
-            </button>
+            </Button>
 
             {onLogout && (
-              <button
-                type="button"
-                onClick={onLogout}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors"
-                title="Log out"
-              >
+              <Button variant="secondary" size="sm" onClick={onLogout} title="Log out">
                 Log out
-              </button>
+              </Button>
             )}
           </div>
         </div>

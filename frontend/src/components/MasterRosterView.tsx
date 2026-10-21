@@ -10,6 +10,7 @@ import {
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
 import { formatCurrency, formatHourlyRate } from '../utils/format';
+import { Button } from './ui/Button';
 
 const WAGE_MIN = 7.25;
 const WAGE_MAX = 100;
@@ -272,69 +273,54 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
 
           <div className="flex flex-wrap items-center gap-2 no-print">
             <div className="inline-flex items-center rounded-md border border-[#7F8A92] bg-slate-50 p-0.5">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => onAdvanceWeek(-1)}
-                className="px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-white rounded-md transition-colors"
                 title="Step backward 1 rotation week"
               >
                 ← Prev Wk
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={onResetWeek}
-                className="px-2.5 py-1 text-xs font-mono-tabular font-semibold text-slate-600 hover:text-slate-900"
+                className="font-mono-tabular"
               >
                 Wk {activeCycleWeek}
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => onAdvanceWeek(1)}
-                className="px-2.5 py-1 text-xs font-semibold text-[#2B3A42] bg-white shadow-[0_1px_2px_rgba(43,58,66,0.08)] rounded-md hover:bg-[#F4F1EA] transition-colors"
                 title="Advance all shift patterns by 1 week"
               >
                 Advance +1 Wk →
-              </button>
+              </Button>
             </div>
 
-            <button
-              type="button"
+            <Button
+              variant={showDirectoryDrawer ? 'primary' : 'secondary'}
+              size="sm"
               onClick={() => setShowDirectoryDrawer(!showDirectoryDrawer)}
-              className={`px-3 py-1.5 rounded-md border text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-                showDirectoryDrawer
-                  ? 'bg-[#2B3A42] text-[#FFFFFF] border-[#2B3A42]'
-                  : 'bg-[#FFFFFF] text-[#2B3A42] border-[#7F8A92] hover:bg-[#F4F1EA]'
-              }`}
             >
               <span>Staff & Directory</span><kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-xs font-mono-tabular font-bold ml-1">D</kbd>
               <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-800 text-xs">
                 {activeEmployees.length}
               </span>
-            </button>
+            </Button>
 
-            <button
-              type="button"
-              onClick={() => setShowAddModal(true)}
-              className="px-3 py-1.5 rounded-md bg-[#2B3A42] hover:bg-[#1E2A31] text-[#FFFFFF] text-xs font-semibold shadow-[0_1px_2px_rgba(43,58,66,0.08)]"
-            >
-              + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-[#1E2A31] text-[#FFFFFF] text-xs font-mono-tabular font-bold ml-1">A</kbd>
-            </button>
+            <Button variant="primary" size="sm" onClick={() => setShowAddModal(true)}>
+              + Add Employee <kbd className="px-1.5 py-0.5 rounded bg-[#1E2A31] text-[#FFFFFF] text-xs font-mono-tabular font-bold">A</kbd>
+            </Button>
 
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="px-3 py-1.5 rounded-md border border-[#7F8A92] bg-[#FFFFFF] hover:bg-[#F4F1EA] text-xs font-semibold text-[#2B3A42]"
-            >
-              Print Roster <kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-xs font-mono-tabular font-bold ml-1">P</kbd>
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => window.print()}>
+              Print Roster <kbd className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-xs font-mono-tabular font-bold">P</kbd>
+            </Button>
 
-            <button
-              type="button"
-              onClick={onExportCsv}
-              className="px-3.5 py-1.5 rounded-md bg-[#4A6B5D] hover:bg-[#3E5C50] text-[#FFFFFF] text-xs font-semibold shadow-[0_1px_2px_rgba(43,58,66,0.08)]"
-            >
+            <Button variant="accent" onClick={onExportCsv}>
               Export CSV
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -351,13 +337,9 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   and set allowed working days. Inactive/fired staff are instantly unmapped from lines.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowAddModal(true)}
-                className="px-3 py-1.5 rounded-md border border-[#7F8A92] bg-[#FFFFFF] hover:bg-[#F4F1EA] text-[#2B3A42] text-xs font-semibold"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setShowAddModal(true)}>
                 + New Employee Form
-              </button>
+              </Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
@@ -483,21 +465,17 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       ID: {emp.employee_id}
                     </span>
                     {!(emp.is_active && sepEmpId === emp.employee_id) && (
-                      <button
-                        type="button"
+                      <Button
+                        variant={emp.is_active ? 'danger' : 'secondary'}
+                        size="sm"
                         onClick={() =>
                           emp.is_active
                             ? openSeparationForm(emp.employee_id)
                             : onToggleEmployeeStatus(emp.employee_id)
                         }
-                        className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          emp.is_active
-                            ? 'bg-[#9F3A32] text-[#FFFFFF] hover:bg-[#862F28] border border-[#9F3A32]'
-                            : 'bg-[#FFFFFF] text-[#2B3A42] hover:bg-[#F4F1EA] border border-[#7F8A92]'
-                        }`}
                       >
                         {emp.is_active ? 'Deactivate / Fire' : 'Reactivate'}
-                      </button>
+                      </Button>
                     )}
                   </div>
 
@@ -550,20 +528,17 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                         />
                       </div>
                       <div className="flex justify-end gap-2 pt-1">
-                        <button
-                          type="button"
-                          onClick={() => setSepEmpId(null)}
-                          className="px-2 py-1 border border-[#7F8A92] rounded-md text-xs font-semibold text-[#2B3A42] bg-[#FFFFFF] hover:bg-[#F4F1EA]"
-                        >
+                        <Button variant="secondary" size="sm" onClick={() => setSepEmpId(null)}>
                           Cancel
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
                           type="submit"
                           disabled={!sepReason.trim() || !sepRecordedBy.trim()}
-                          className="px-2 py-1 rounded-md text-xs font-semibold bg-[#9F3A32] hover:bg-[#862F28] text-[#FFFFFF] disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
                         >
                           Confirm Deactivate
-                        </button>
+                        </Button>
                       </div>
                     </form>
                   )}
@@ -800,20 +775,12 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               </div>
 
               <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-[#7F8A92] rounded-md text-xs font-semibold text-[#2B3A42] bg-[#FFFFFF] hover:bg-[#F4F1EA]"
-                >
+                <Button variant="secondary" onClick={() => setShowAddModal(false)}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={newWageValue === null}
-                  className="px-4 py-2 bg-[#2B3A42] hover:bg-[#1E2A31] text-[#FFFFFF] rounded-md text-xs font-bold disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed"
-                >
+                </Button>
+                <Button variant="primary" type="submit" disabled={newWageValue === null}>
                   Save & Map to Schedule
-                </button>
+                </Button>
               </div>
             </form>
           </div>
