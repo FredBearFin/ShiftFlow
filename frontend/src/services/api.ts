@@ -172,7 +172,7 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
   },
   {
     id: 'custom',
-    name: 'Custom Enterprise Workforce Topology',
+    name: 'Custom Schedule',
     sector: 'Custom Operations',
     tagline: 'Fully customizable 24-hour interval demand matrix and shift templates',
     description: 'Configure bespoke operating windows and demand from scratch.',
