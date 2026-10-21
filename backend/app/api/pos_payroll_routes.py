@@ -6,10 +6,15 @@ from typing import Any, Dict, List, Optional
 
 from app.database import ShiftFlowRepository
 from app.deps import get_repo
-from app.engine.pos_sync import POSDemandForecaster
+from app.engine.pos_sync import DEFAULT_MAX_STAFF_PER_HOUR, POSDemandForecaster
 from app.engine.payroll_export import PayrollExportEngine
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
-from app.schemas import EmployeeRecord, SolveRequestSchema, ShiftTemplateSchema
+from app.schemas import (
+    MAX_DEMAND_PER_INTERVAL,
+    EmployeeRecord,
+    SolveRequestSchema,
+    ShiftTemplateSchema,
+)
 
 router = APIRouter(prefix="/api", tags=["POS & Payroll Integrations"])
 
@@ -31,6 +36,16 @@ async def upload_pos_csv(
     facility_id: str = Query(default="FAC-OMAHA-01", max_length=64),
     open_hour: int = Query(default=6, ge=0, le=23),
     close_hour: int = Query(default=24, ge=1, le=24),
+    max_staff_per_hour: int = Query(
+        default=DEFAULT_MAX_STAFF_PER_HOUR,
+        ge=1,
+        le=MAX_DEMAND_PER_INTERVAL,
+        description=(
+            "Most people the forecast will ask for in any one hour. The default of 6 fits a "
+            "small retail floor; a hospital ward or plant line needs a higher value or its "
+            "peak hours come back understated."
+        ),
+    ),
     repo: ShiftFlowRepository = Depends(get_repo),
 ):
     if open_hour >= close_hour:
@@ -48,7 +63,7 @@ async def upload_pos_csv(
     except UnicodeDecodeError:
         raise HTTPException(status_code=400, detail="POS CSV must be UTF-8 text.")
 
-    forecaster = POSDemandForecaster()
+    forecaster = POSDemandForecaster(max_staff_cap=max_staff_per_hour)
     try:
         records = forecaster.parse_pos_csv(csv_text)
     except ValueError as exc:
@@ -79,6 +94,8 @@ async def upload_pos_csv(
         "weekly_transactions": summary["total_weekly_transactions"],
         "peak_period": summary["peak_hour"],
         "suggested_demand_matrix": demand_matrix,
+        "max_staff_per_hour": summary["max_staff_cap"],
+        "hours_limited_by_staff_cap": summary["hours_limited_by_staff_cap"],
     }
 
 
@@ -169,7 +186,7 @@ def export_gusto_payroll(
         )
     )
     result = solver.solve()
-    roster_lines = [line.dict() for line in result.roster_lines]
+    roster_lines = [line.model_dump() for line in result.roster_lines]
 
     csv_data = PayrollExportEngine.export_gusto_csv(roster_lines)
     return Response(
@@ -200,7 +217,7 @@ def export_adp_payroll(
         )
     )
     result = solver.solve()
-    roster_lines = [line.dict() for line in result.roster_lines]
+    roster_lines = [line.model_dump() for line in result.roster_lines]
 
     csv_data = PayrollExportEngine.export_adp_workforce_csv(roster_lines)
     return Response(
