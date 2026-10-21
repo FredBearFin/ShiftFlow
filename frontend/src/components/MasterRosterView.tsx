@@ -214,14 +214,15 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-[#2B3A42]">
-              {solution.ergonomics_audit.health_index_score}%
+              {solution.ergonomics_audit.health_index_score}/100
             </span>
             <span className="px-1.5 py-0.5 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               {solution.ergonomics_audit.clopening_violations} Clopenings
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Min rest: {solution.ergonomics_audit.min_rest_hours_observed}h observed
+            Higher is better, 55–99.5 range • Min rest:{' '}
+            {solution.ergonomics_audit.min_rest_hours_observed}h observed
           </p>
         </div>
 

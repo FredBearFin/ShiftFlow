@@ -13,6 +13,11 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
   const criteria = audit.criteria_breakdown;
   const maxPenalty = Math.max(...criteria.map((c) => c.weighted_penalty), 1);
 
+  // Both of these were hardcoded ("/14", "6-week") and did not match a live solve.
+  const handoffCount = solution.multigraph_nodes.length;
+  const balancedHandoffs = solution.multigraph_nodes.filter((n) => n.is_balanced).length;
+  const rotationWeeks = solution.employee_count;
+
   // Simple horizontal bar chart: one row per criterion, length proportional to its penalty.
   const chartW = 640;
   const rowH = 32;
@@ -29,7 +34,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Workload Score
+            Ergonomics Health Index
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-emerald-700">
@@ -37,9 +42,14 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
             </span>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Lower is better here, measured in penalty points — {audit.total_ergo_objective.toFixed(1)}{' '}
-            points total across the 8 checks below, versus {audit.sequential_baseline_ergo.toFixed(1)}{' '}
-            for a schedule built without any of them in mind. That's a{' '}
+            Higher is better. It is a score out of 100, not a percentage, and this tool only ever
+            reports it between 55 and 99.5 — so a schedule never reads 0 and never reads 100.
+          </p>
+          <p className="text-xs text-slate-600 mt-1.5 pt-1.5 border-t border-slate-100">
+            Separately, the fatigue penalty behind it: {audit.total_ergo_objective.toFixed(1)}{' '}
+            penalty points across the {criteria.length} checks below, where lower is better, versus{' '}
+            {audit.sequential_baseline_ergo.toFixed(1)} for a schedule built without any of them in
+            mind. That's a{' '}
             <strong className="text-indigo-700">{audit.ergo_improvement_pct}%</strong> reduction in
             the things that burn people out.
           </p>
@@ -71,12 +81,12 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </span>
           <div className="flex items-baseline gap-3 mt-1">
             <span className="text-3xl font-bold font-mono-tabular text-indigo-700">
-              {solution.multigraph_nodes.filter((n) => n.is_balanced).length}/14
+              {balancedHandoffs}/{handoffCount}
             </span>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            How many of the 14 weekly work/rest hand-offs (one pair per day) line up cleanly, so the
-            6-week rotation repeats without gaps or overlaps.
+            How many of the {handoffCount} weekly work/rest hand-offs (one pair per day) line up
+            cleanly, so the {rotationWeeks}-week rotation repeats without gaps or overlaps.
           </p>
         </div>
       </div>
@@ -135,7 +145,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
           <h2 className="text-base font-bold text-slate-900">
-            The 8 things this tool checks to avoid burning people out
+            The {criteria.length} things this tool checks to avoid burning people out
           </h2>
         </div>
 
@@ -198,7 +208,8 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
             For each day, how many people are starting a work stretch versus starting a rest
-            stretch — these should match up so the 6-week rotation keeps repeating cleanly.
+            stretch — these should match up so the {rotationWeeks}-week rotation keeps repeating
+            cleanly.
           </p>
         </div>
 
