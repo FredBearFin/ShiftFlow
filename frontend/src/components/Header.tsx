@@ -2,16 +2,10 @@ import React from 'react';
 import { ActiveTabId, SolveResponse } from '../types';
 import { formatCurrency } from '../utils/format';
 import { Button } from './ui/Button';
-
-// Number keys bound in App.tsx keyboard handler; tabs without a key show no badge.
-const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
-  roster: 1,
-  labor: 2,
-  coverage: 3,
-  pareto: 4,
-  ergonomics: 5,
-  compliance: 6,
-};
+// Number keys bound in App.tsx's keyboard handler, shared with the cheatsheet
+// so the two cannot drift. Tabs without a key show no badge.
+import { TAB_KEY_NUMBERS } from './tabKeys';
+import { WIZARD_STEP_COUNT } from './OnboardingWizard';
 
 interface HeaderProps {
   activeTab: ActiveTabId;
@@ -170,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Button variant="primary" onClick={onOpenWizard}>
               <span>Configure Facility Wizard</span>
               <span className="px-1.5 py-0.5 rounded bg-slate-700 text-xs font-mono-tabular text-slate-200">
-                5 Steps
+                {WIZARD_STEP_COUNT} Steps
               </span>
             </Button>
 
@@ -194,6 +188,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 key={tab.id}
                 type="button"
+                aria-current={isActive ? 'page' : undefined}
                 onClick={() => onSelectTab(tab.id)}
                 className={`px-3.5 py-2 rounded-t-md text-xs font-semibold transition-colors flex items-center gap-2 whitespace-nowrap border-b-2 ${
                   isActive
@@ -206,6 +201,8 @@ export const Header: React.FC<HeaderProps> = ({
                     className={`px-1 py-0.5 rounded text-xs font-mono-tabular font-bold ${
                       isActive
                         ? 'bg-card text-ink'
+                        // --muted on --surface measures 5.02:1 at 12px; the slate-500
+                        // this replaced measured 4.34:1 and failed.
                         : 'bg-surface text-muted'
                     }`}
                   >
@@ -227,6 +224,11 @@ export const Header: React.FC<HeaderProps> = ({
             );
           })}
         </nav>
+
+        {/* A number-key jump leaves focus where it was, so the active tab's own
+            aria-current change is never read out. This says which view is up. */}
+        <div role="status" aria-live="polite" className="sr-only">
+          {navTabs.find((tab) => tab.id === activeTab)?.label} view</div>
       </div>
     </header>
   );

@@ -96,7 +96,6 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
     link.click();
     document.body.removeChild(link);
     setDownloadMsg('Gusto Payroll CSV downloaded successfully!');
-    setTimeout(() => setDownloadMsg(null), 3000);
   };
 
   const handleDownloadAdp = () => {
@@ -135,7 +134,6 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
     link.click();
     document.body.removeChild(link);
     setDownloadMsg('ADP Workforce Now CSV downloaded successfully!');
-    setTimeout(() => setDownloadMsg(null), 3000);
   };
 
   // The solver echoes back the staffing table it was given as interval_coverage's
@@ -167,11 +165,22 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {downloadMsg && (
-            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
-              ✓ {downloadMsg}
-            </span>
-          )}
+          {/* Stays until dismissed: a 3s auto-dismiss gave no time to read or re-read it. */}
+          <div role="status" aria-live="polite">
+            {downloadMsg && (
+              <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+                ✓ {downloadMsg}
+                <button
+                  type="button"
+                  onClick={() => setDownloadMsg(null)}
+                  aria-label="Dismiss download confirmation"
+                  className="rounded px-1 font-bold text-emerald-900 hover:bg-emerald-100"
+                >
+                  ✕
+                </button>
+              </span>
+            )}
+          </div>
           <Button
             variant="primary"
             onClick={handleDownloadGusto}

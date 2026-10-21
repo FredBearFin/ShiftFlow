@@ -41,6 +41,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
           <div className="flex rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-xs font-semibold">
             <button
               type="button"
+              aria-pressed={mode === 'login'}
               onClick={() => {
                 setMode('login');
                 setError(null);
@@ -53,6 +54,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
             </button>
             <button
               type="button"
+              aria-pressed={mode === 'signup'}
               onClick={() => {
                 setMode('signup');
                 setError(null);
@@ -76,6 +78,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
             autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? 'login-error' : undefined}
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B3A42]/30"
           />
         </div>
@@ -89,15 +93,21 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupA
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={
+              [mode === 'signup' ? 'password-rule' : null, error ? 'login-error' : null]
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
             className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B3A42]/30"
           />
           {mode === 'signup' && (
-            <p className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+            <p id="password-rule" className="mt-1 text-xs text-muted">At least 8 characters.</p>
           )}
         </div>
 
         {error && (
-          <div role="alert" className="rounded-md border border-[#9F3A32] bg-white px-3 py-2 text-xs text-[#9F3A32]">
+          <div id="login-error" role="alert" className="rounded-md border border-[#9F3A32] bg-white px-3 py-2 text-xs text-[#9F3A32]">
             {error}
           </div>
         )}

@@ -10,6 +10,7 @@ const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 const WAGE_MIN = 7.25;
 const WAGE_MAX = 100;
+const WAGE_ERROR = `Enter an hourly wage between $${WAGE_MIN.toFixed(2)} and $${WAGE_MAX.toFixed(2)}. Until it is in range nothing is saved.`;
 
 // A blank or out-of-bounds wage is not a number: no substitute value is ever used.
 const parseWage = (raw: string): number | null => {
@@ -190,7 +191,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                         {assignedLine.cohort_id}
                       </span>
                     ) : (
-                      <span className="text-slate-400 italic">Unassigned Pool</span>
+                      <span className="text-muted italic">Unassigned Pool</span>
                     )}
                   </span>
                 </div>
@@ -237,7 +238,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
               {/* Action Buttons */}
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs font-mono-tabular text-slate-400">{emp.employee_id}</span>
+                <span className="text-xs font-mono-tabular text-muted">{emp.employee_id}</span>
                 {emp.is_active ? (
                   <Button
                     variant="danger"
@@ -268,7 +269,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <h3 id="add-staff-title" className="text-base font-bold text-slate-900">Add Staff Member</h3>
-              <button type="button" aria-label="Close" onClick={() => setShowAddModal(false)} className="text-slate-400 font-bold">
+              <button type="button" onClick={() => setShowAddModal(false)} className="text-muted font-bold">
                 Cancel
               </button>
             </div>
@@ -302,10 +303,16 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                     min={WAGE_MIN}
                     max={WAGE_MAX}
                     aria-invalid={newWage.trim() !== '' && newWageValue === null}
+                    aria-describedby={newWage.trim() !== '' && newWageValue === null ? 'staff-new-wage-error' : undefined}
                     value={newWage}
                     onChange={(e) => setNewWage(e.target.value)}
                     className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs font-mono-tabular"
                   />
+                  {newWage.trim() !== '' && newWageValue === null && (
+                    <p id="staff-new-wage-error" className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                      {WAGE_ERROR}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -364,7 +371,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                   Deactivate / Separate: {separatingEmp.name}
                 </h3>
               </div>
-              <button type="button" aria-label="Close" onClick={() => setSeparatingEmp(null)} className="text-slate-400 font-bold">
+              <button type="button" aria-label="Close" onClick={() => setSeparatingEmp(null)} className="text-muted font-bold">
                 ✕
               </button>
             </div>

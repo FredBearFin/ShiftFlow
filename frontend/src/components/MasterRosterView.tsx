@@ -23,6 +23,8 @@ const parseWage = (raw: string): number | null => {
   return Number.isFinite(n) && n >= WAGE_MIN && n <= WAGE_MAX ? n : null;
 };
 
+const WAGE_ERROR = `Enter an hourly wage between $${WAGE_MIN.toFixed(2)} and $${WAGE_MAX.toFixed(2)}. Until it is in range nothing is saved.`;
+
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 const SEPARATION_OPTIONS: { value: SeparationCategory; label: string }[] = [
@@ -195,11 +197,14 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
             Estimated Weekly Payroll
           </span>
-          <div className="flex items-baseline justify-between mt-1">
-            <span className="text-2xl font-bold font-mono-tabular text-slate-900">
+          {/* The priced-fraction chip pushed this row 3px past the viewport at
+              375px, scrolling the whole document. It wraps instead of
+              truncating: half a payroll figure is a wrong payroll figure. */}
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2 min-w-0 mt-1">
+            <span className="text-2xl font-bold font-mono-tabular text-slate-900 min-w-0">
               {formatCurrency(solution.labor_analysis.total_payroll_cost)}
             </span>
-            <span className="text-xs font-mono-tabular text-slate-500">
+            <span className="text-xs font-mono-tabular text-slate-500 min-w-0">
               {pricedLineCount} of {lineCount} lines priced
             </span>
           </div>
@@ -411,6 +416,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           max={WAGE_MAX}
                           disabled={!emp.is_active}
                           aria-invalid={wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null}
+                          aria-describedby={
+                            wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null
+                              ? `roster-wage-${emp.employee_id}-error`
+                              : undefined
+                          }
                           value={wageDrafts[emp.employee_id] ?? String(emp.hourly_wage)}
                           onChange={(e) => {
                             const raw = e.target.value;
@@ -429,6 +439,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                           }}
                           className="w-full px-2 py-1 border border-[#7F8A92] rounded-md font-mono-tabular text-xs"
                         />
+                        {wageDrafts[emp.employee_id] !== undefined && parseWage(wageDrafts[emp.employee_id]) === null && (
+                          <p id={`roster-wage-${emp.employee_id}-error`} className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                            {WAGE_ERROR}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label htmlFor={`roster-line-${emp.employee_id}`} className="text-xs text-slate-500 block">Assigned Line</label>
@@ -489,7 +504,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   </div>
 
                   <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-xs text-slate-400 font-mono-tabular">
+                    <span className="text-xs text-muted font-mono-tabular">
                       ID: {emp.employee_id}
                     </span>
                     {!(emp.is_active && sepEmpId === emp.employee_id) && (
@@ -581,11 +596,12 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="py-3 px-4 min-w-[200px]">Shift Pattern / Staff Member</th>
-                <th className="py-3 px-2 text-center">Pattern Wk</th>
+                <th scope="col" className="py-3 px-4 min-w-[200px]">Shift Pattern / Staff Member</th>
+                <th scope="col" className="py-3 px-2 text-center">Pattern Wk</th>
                 {DAYS_OF_WEEK.map((day, idx) => (
                   <th
                     key={day}
+                    scope="col"
                     className={`py-3 px-2.5 text-center ${
                       idx >= 5 ? 'bg-slate-100/80 text-slate-800' : ''
                     }`}
@@ -593,25 +609,8 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     {day}
                   </th>
                 ))}
-                <th className="py-3 px-3 text-right">Hours</th>
-                <th className="py-3 px-4 text-right">Weekly Payroll</th>
-              </tr>
-              <tr className="bg-amber-50/70 border-b border-slate-200 text-xs font-semibold normal-case tracking-normal text-amber-900">
-                <th className="py-2 px-4 text-left">Under-staffed hours per day</th>
-                <th className="py-2 px-2" />
-                {underByDay.map((h, idx) => (
-                  <th
-                    key={DAYS_OF_WEEK[idx]}
-                    className={`py-2 px-2.5 text-center font-mono-tabular ${
-                      idx >= 5 ? 'bg-amber-100/60' : ''
-                    }`}
-                  >
-                    {h}h
-                  </th>
-                ))}
-                <th colSpan={2} className="py-2 px-4 text-right font-mono-tabular">
-                  Week total: {totalUnderHours}h
-                </th>
+                <th scope="col" className="py-3 px-3 text-right">Hours</th>
+                <th scope="col" className="py-3 px-4 text-right">Weekly Payroll</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 text-xs">
@@ -620,7 +619,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   key={line.cohort_id}
                   className="hover:bg-slate-50/80 transition-colors"
                 >
-                  <td className="py-3 px-4">
+                  <th scope="row" className="py-3 px-4 text-left font-normal">
                     <div className="flex items-center gap-2">
                       <span className="px-2 py-0.5 rounded bg-slate-900 text-white font-mono-tabular font-bold text-xs">
                         {line.cohort_id}
@@ -652,7 +651,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       <span>•</span>
                       <span>Next Mon → Line {line.next_week_line_number}</span>
                     </div>
-                  </td>
+                  </th>
 
                   <td className="py-3 px-2 text-center">
                     <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono-tabular font-semibold text-xs">
@@ -708,6 +707,27 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 </tr>
               ))}
             </tbody>
+            {/* Understaffing is a per-day total, not a header: it belongs in the
+                foot as data, so no body cell inherits it as a column header. */}
+            <tfoot className="text-xs">
+              <tr className="bg-amber-50/70 border-t border-slate-200 font-semibold text-amber-900">
+                <th scope="row" className="py-2 px-4 text-left">Under-staffed hours per day</th>
+                <td className="py-2 px-2" />
+                {underByDay.map((h, idx) => (
+                  <td
+                    key={DAYS_OF_WEEK[idx]}
+                    className={`py-2 px-2.5 text-center font-mono-tabular ${
+                      idx >= 5 ? 'bg-amber-100/60' : ''
+                    }`}
+                  >
+                    {h}h
+                  </td>
+                ))}
+                <td colSpan={2} className="py-2 px-4 text-right font-mono-tabular">
+                  Week total: {totalUnderHours}h
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
@@ -721,7 +741,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               <button aria-label="Close"
                 type="button"
                 onClick={() => setShowAddModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold"
+                className="text-muted hover:text-slate-800 font-bold"
               >
                 ✕
               </button>
@@ -764,10 +784,16 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     min={WAGE_MIN}
                     max={WAGE_MAX}
                     aria-invalid={newWage.trim() !== '' && newWageValue === null}
+                    aria-describedby={newWage.trim() !== '' && newWageValue === null ? 'roster-new-wage-error' : undefined}
                     value={newWage}
                     onChange={(e) => setNewWage(e.target.value)}
                     className="w-full px-3 py-2 border border-[#7F8A92] rounded-md text-xs font-mono-tabular"
                   />
+                  {newWage.trim() !== '' && newWageValue === null && (
+                    <p id="roster-new-wage-error" className="mt-1 text-xs font-semibold text-[#9F3A32]">
+                      {WAGE_ERROR}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -796,7 +822,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     );
                   })}
                 </div>
-                <span className="text-xs text-slate-400 mt-1 block">
+                <span className="text-xs text-muted mt-1 block">
                   Tap to toggle available working days.
                 </span>
               </div>

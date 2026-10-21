@@ -196,3 +196,10 @@ export function makeSolution(opts: FixtureOptions = {}): SolveResponse {
     ...opts.solution,
   };
 }
+
+/**
+ * A ready-made solution for tests that need a realistic response and do not care
+ * about its particulars. Track E's accessibility tests use this; tests that need
+ * to vary the shape call makeSolution() directly.
+ */
+export const solutionFixture: SolveResponse = makeSolution();

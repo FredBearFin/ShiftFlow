@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useDialogFocus } from './ui/useDialogFocus';
+import { TAB_KEY_NUMBERS, TAB_LABELS } from './tabKeys';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
@@ -29,13 +30,17 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
     },
     {
       category: 'Jump to a Tab',
+      // Generated from TAB_KEY_NUMBERS, the same map App.tsx binds, so this
+      // list cannot document a key the app does not have. Tabs with no number
+      // key are listed as such instead of being left out.
       items: [
-        { keys: ['1'], desc: 'Weekly Schedule' },
-        { keys: ['2'], desc: 'Labor & Payroll' },
-        { keys: ['3'], desc: '24h Coverage Heatmap' },
-        { keys: ['4'], desc: 'Cost vs. Rest Trade-off' },
-        { keys: ['5'], desc: 'Ergonomics Health Audit' },
-        { keys: ['6'], desc: 'DOL Compliance' },
+        ...TAB_LABELS.filter((tab) => TAB_KEY_NUMBERS[tab.id] !== undefined)
+          .sort((a, b) => TAB_KEY_NUMBERS[a.id]! - TAB_KEY_NUMBERS[b.id]!)
+          .map((tab) => ({ keys: [String(TAB_KEY_NUMBERS[tab.id])], desc: tab.label })),
+        ...TAB_LABELS.filter((tab) => TAB_KEY_NUMBERS[tab.id] === undefined).map((tab) => ({
+          keys: ['—'],
+          desc: `${tab.label} (no number key; use the tab or D)`,
+        })),
       ],
     },
     {
@@ -93,9 +98,10 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             type="button"
             onClick={onClose}
             className="text-xs px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition-colors"
-            aria-label="Close shortcuts modal"
+            // "Esc" is visible on this button, so 2.5.3 requires it in the name.
+            aria-label="Close shortcuts list (Esc)"
           >
-            ✕ Esc
+            <span aria-hidden="true">✕ </span>Esc
           </button>
         </div>
 
@@ -116,7 +122,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                     <div className="flex items-center gap-1.5 shrink-0 ml-4">
                       {item.keys.map((k, kIdx) =>
                         k === 'or' ? (
-                          <span key={kIdx} className="text-xs text-slate-400 font-medium">
+                          <span key={kIdx} className="text-xs text-muted font-medium">
                             or
                           </span>
                         ) : (

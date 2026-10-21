@@ -54,6 +54,10 @@ const STEP_LABELS = [
   { step: 6, title: 'Add your staff', subtitle: 'Who actually works here' },
 ];
 
+/** One number for "how many steps", so the header chip cannot say 5 while the
+ *  wizard renders 6. */
+export const WIZARD_STEP_COUNT = STEP_LABELS.length;
+
 const WAGE_MIN = 7.25;
 const WAGE_MAX = 100;
 const parseWage = (raw: string): number | null => {
@@ -271,7 +275,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded text-xs font-mono-tabular font-semibold uppercase tracking-wider bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
-                6 quick steps
+                {WIZARD_STEP_COUNT} quick steps
               </span>
               <span className="text-xs text-slate-400">
                 Tell us how your store runs. We'll build the schedule.
@@ -311,6 +315,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               <button
                 key={item.step}
                 type="button"
+                aria-current={isCurrent ? 'step' : undefined}
                 onClick={() => setCurrentStep(item.step)}
                 className={`text-left p-2 rounded-lg border transition-all ${
                   isCurrent
@@ -426,7 +431,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           onChange={(e) => setAnswers((p) => ({ ...p, openHour: Math.max(0, Math.min(23, parseInt(e.target.value || '0', 10))) }))}
                           className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
                         />
-                        <span className="text-xs text-slate-400 ml-1">:00</span>
+                        <span className="text-xs text-muted ml-1">:00</span>
                       </div>
                       <div>
                         <label htmlFor="onboarding-closes-at" className="block text-xs text-slate-500 mb-1">Closes at</label>
@@ -439,7 +444,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                           onChange={(e) => setAnswers((p) => ({ ...p, closeHour: Math.max(1, Math.min(24, parseInt(e.target.value || '0', 10))) }))}
                           className="w-20 text-center font-mono-tabular text-sm border border-slate-300 rounded py-1"
                         />
-                        <span className="text-xs text-slate-400 ml-1">:00 (24 = midnight)</span>
+                        <span className="text-xs text-muted ml-1">:00 (24 = midnight)</span>
                       </div>
                     </div>
                   )}
@@ -766,7 +771,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         }
                         className="w-full sm:w-12 text-center font-mono-tabular font-bold text-xs text-slate-900 border border-slate-200 rounded py-1 my-1 focus:border-indigo-600 focus:outline-none"
                       />
-                      <span className="text-[9px] text-slate-400">
+                      <span className="text-xs text-muted">
                         {hr < 6 ? 'Night' : hr < 14 ? 'Morn' : hr < 22 ? 'Eve' : 'Night'}
                       </span>
                     </div>
@@ -1293,6 +1298,14 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
               </Button>
             ) : (
               <>
+                {/* The only explanation for the disabled button used to be a title
+                    on the disabled button itself: unreachable by keyboard and
+                    absent on touch. It is visible text now. */}
+                {employees.length === 0 && (
+                  <p id="finish-setup-blocked" className="max-w-xs text-xs font-semibold text-[#9F3A32]">
+                    Add at least one staff member, or choose "I'm just planning", before you can finish setup.
+                  </p>
+                )}
                 {employees.length === 0 && onPlanWithoutStaff && (
                   <Button variant="secondary" onClick={onPlanWithoutStaff}>
                     I'm just planning — no real staff yet
@@ -1301,7 +1314,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 <Button
                   variant="accent"
                   disabled={employees.length === 0}
-                  title={employees.length === 0 ? 'Add at least one staff member, or choose "just planning"' : undefined}
+                  aria-describedby={employees.length === 0 ? 'finish-setup-blocked' : undefined}
                   onClick={onCompleteWizard}
                 >
                   <span>Finish setup</span>

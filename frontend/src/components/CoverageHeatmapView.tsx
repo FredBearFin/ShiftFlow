@@ -48,7 +48,9 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* Without flex-wrap this row sat 534px wide and forced the whole page
+            to scroll sideways at 375px (scrollWidth 571 vs clientWidth 375). */}
+        <div className="flex flex-wrap items-center gap-3">
           <div className="px-3.5 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs font-mono-tabular">
             <span className="text-slate-500 block text-xs">Scheduled Hrs</span>
             <strong className="text-slate-900 text-sm">{totalScheduled}h</strong>
@@ -65,6 +67,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
           <div className="inline-flex rounded-md border border-[#7F8A92] p-0.5 bg-slate-100">
             <button
               type="button"
+              aria-pressed={displayMode === 'scheduled'}
               onClick={() => setDisplayMode('scheduled')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'scheduled'
@@ -76,6 +79,7 @@ export const CoverageHeatmapView: React.FC<CoverageHeatmapViewProps> = ({
             </button>
             <button
               type="button"
+              aria-pressed={displayMode === 'deviation'}
               onClick={() => setDisplayMode('deviation')}
               className={`px-3 py-1.5 rounded-md text-xs font-semibold ${
                 displayMode === 'deviation'
