@@ -192,8 +192,11 @@ export function App() {
           setSolveStatus('ready');
         }
       }).catch((err: unknown) => {
-        // Keep the last schedule that was computed; only the status and error change.
+        // The previous schedule answered a different configuration. Leaving it on screen
+        // would present its roster, KPI cards, payroll total and CSV/print exports as the
+        // result for the settings now showing, so it is cleared rather than kept.
         if (isMounted) {
+          setSolution(null);
           setSolveError(err instanceof Error ? err.message : 'The scheduling service is unavailable.');
           setSolveStatus('error');
         }
@@ -462,7 +465,10 @@ export function App() {
         )}
         {solveStatus === 'error' && !errorBannerDismissed && (
           <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
-            <span>{solveError}</span>
+            <span>
+              {solveError} No schedule is shown for these settings — the last one that worked
+              answered different settings, so it is not displayed, printed or exported here.
+            </span>
             <div className="flex items-center gap-2">
               <button
                 type="button"
