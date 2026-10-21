@@ -137,6 +137,14 @@ export function App() {
   const [solveError, setSolveError] = useState<string | null>(null);
   const [solveAttempt, setSolveAttempt] = useState(0);
   const [separationError, setSeparationError] = useState<string | null>(null);
+  const [planningBannerDismissed, setPlanningBannerDismissed] = useState<boolean>(false);
+  const [errorBannerDismissed, setErrorBannerDismissed] = useState<boolean>(false);
+
+  // Dismissing the solve-error banner only hides *that* error - a new or changed
+  // error message should surface again rather than staying silently dismissed.
+  useEffect(() => {
+    setErrorBannerDismissed(false);
+  }, [solveError]);
 
   useEffect(() => {
     let isMounted = true;
@@ -412,22 +420,32 @@ export function App() {
       />
 
       <main className="flex-1 max-w-[1920px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {planningOnly && employees.length === 0 && (
+        {planningOnly && employees.length === 0 && !planningBannerDismissed && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
             <span>
               Planning mode: this schedule has no real staff on it yet, so lines show as
               unassigned. Add your team when you're ready to run it for real.
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('roster');
-                setIsAddEmpOpen(true);
-              }}
-              className="rounded-md border border-indigo-300 bg-white px-3 py-1 font-semibold text-indigo-800 hover:bg-indigo-100 whitespace-nowrap"
-            >
-              Add your team
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('roster');
+                  setIsAddEmpOpen(true);
+                }}
+                className="rounded-md border border-indigo-300 bg-white px-3 py-1 font-semibold text-indigo-800 hover:bg-indigo-100 whitespace-nowrap"
+              >
+                Add your team
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlanningBannerDismissed(true)}
+                aria-label="Dismiss"
+                className="rounded-md px-2 py-1 font-semibold text-indigo-700 hover:bg-indigo-100"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
         {staffError && (
@@ -440,16 +458,26 @@ export function App() {
             {separationError}
           </div>
         )}
-        {solveStatus === 'error' && (
+        {solveStatus === 'error' && !errorBannerDismissed && (
           <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
             <span>{solveError}</span>
-            <button
-              type="button"
-              onClick={() => setSolveAttempt((n) => n + 1)}
-              className="rounded-md border border-[#9F3A32] bg-white px-3 py-1 font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
-            >
-              Retry
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSolveAttempt((n) => n + 1)}
+                className="rounded-md border border-[#9F3A32] bg-white px-3 py-1 font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
+              >
+                Retry
+              </button>
+              <button
+                type="button"
+                onClick={() => setErrorBannerDismissed(true)}
+                aria-label="Dismiss"
+                className="rounded-md px-2 py-1 font-semibold text-[#9F3A32] hover:bg-[#F4F1EA]"
+              >
+                ✕
+              </button>
+            </div>
           </div>
         )}
         {solution ? (

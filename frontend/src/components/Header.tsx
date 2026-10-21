@@ -33,8 +33,8 @@ export const Header: React.FC<HeaderProps> = ({
   const navTabs: { id: ActiveTabId; label: string; badge?: string }[] = [
     {
       id: 'roster',
-      label: 'Master Cyclic Roster',
-      badge: solution ? `${solution.employee_count} Lines` : undefined,
+      label: 'Weekly Schedule',
+      badge: solution ? `${solution.employee_count} Shift Patterns` : undefined,
     },
     {
       id: 'staff',
@@ -55,7 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
     },
     {
       id: 'pareto',
-      label: 'Flexibility & Rest Optimizer',
+      label: 'Cost vs. Rest Trade-off',
       badge: `+${leewayPct}% Leeway`,
     },
     {
@@ -89,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {solution
                   ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll`
-                  : 'Automated Store Roster & Anti-Burnout Engine'}
+                  : 'Automated weekly schedule builder'}
               </p>
             </div>
           </div>

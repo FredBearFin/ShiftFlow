@@ -154,11 +154,11 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5 no-print">
         <div className="card p-4">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 block">
-            Rotation Cohorts (e)
+            Shift Patterns
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-slate-900">
-              {solution.employee_count} Lines
+              {solution.employee_count}
             </span>
             <span className="text-xs font-medium text-slate-500">
               {solution.employee_count}-Wk Cycle
@@ -212,7 +212,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
               {solution.ergonomics_audit.full_weekends_off_pct}%
             </span>
             <span className="text-xs font-mono-tabular text-slate-600">
-              {solution.ergonomics_audit.full_weekends_off_count}/{solution.employee_count} Lines
+              {solution.ergonomics_audit.full_weekends_off_count}/{solution.employee_count} Shift Patterns
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -240,13 +240,13 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
         </div>
       </div>
 
-      {/* Master Cyclic Roster Card */}
+      {/* Weekly Schedule Card */}
       <div className="card overflow-hidden">
         {/* Print-only header: visible on paper, hidden on screen */}
         <div className="hidden print:block px-6 pt-4 pb-3 border-b border-slate-300">
           <h2 className="text-lg font-bold text-slate-900">{solution.instance_name}</h2>
           <p className="text-sm text-slate-700 font-mono-tabular">
-            Rotation Week {activeCycleWeek} of {solution.employee_count}
+            Week {activeCycleWeek} of {solution.employee_count}
           </p>
         </div>
 
@@ -255,15 +255,17 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           <div>
             <div className="flex items-center gap-2.5">
               <h2 className="text-base font-bold text-slate-900">
-                Master Cyclic Rotation Roster (Lines 1 to {solution.employee_count})
+                Weekly Schedule (Patterns 1 to {solution.employee_count})
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono-tabular font-semibold bg-slate-100 text-slate-800 border border-slate-300">
-                Active Cycle Horizon: Week {activeCycleWeek} of {solution.employee_count}
+                Showing Week {activeCycleWeek} of {solution.employee_count}
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Every Monday morning, each line advances down one row. Manage employee availability,
-              hourly wages, and active/fired status in the Staff & Directory drawer (key D).
+              {solution.employee_count} shift patterns are repeating schedule slots built from your
+              hours — they exist before you assign any real staff. Every Monday morning, each one
+              advances down one row. Manage employee availability, hourly wages, and active/fired
+              status in the Staff & Directory drawer (key D).
             </p>
           </div>
 
@@ -288,7 +290,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                 type="button"
                 onClick={() => onAdvanceWeek(1)}
                 className="px-2.5 py-1 text-xs font-semibold text-[#2B3A42] bg-white shadow-[0_1px_2px_rgba(43,58,66,0.08)] rounded-md hover:bg-[#F4F1EA] transition-colors"
-                title="Advance all cohorts by 1 rotation week"
+                title="Advance all shift patterns by 1 week"
               >
                 Advance +1 Wk →
               </button>
@@ -570,12 +572,12 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </div>
         )}
 
-        {/* Master Cyclic Roster Table */}
+        {/* Weekly Schedule Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="py-3 px-4 min-w-[200px]">Rotation Cohort / Personnel</th>
+                <th className="py-3 px-4 min-w-[200px]">Shift Pattern / Staff Member</th>
                 <th className="py-3 px-2 text-center">Pattern Wk</th>
                 {DAYS_OF_WEEK.map((day, idx) => (
                   <th
@@ -622,7 +624,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                       <span className="font-semibold text-slate-900">
                         {line.assigned_person
                           ? line.assigned_person
-                          : `Rotation Line ${line.line_number}`}
+                          : `Shift Pattern ${line.line_number}`}
                       </span>
                       {line.availability_conflicts_count > 0 && (
                         <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-[#E4E9EC] text-[#2B3A42] border border-[#7F8A92] before:content-[''] before:inline-block before:w-2 before:h-2 before:rounded-full before:bg-[#C28B47] before:mr-1.5 before:align-middle">
@@ -712,7 +714,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div ref={addDialogRef} role="dialog" aria-modal="true" aria-labelledby="roster-add-staff-title" className="bg-white border border-[#7F8A92] rounded-lg max-w-md w-full p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <h3 id="roster-add-staff-title" className="text-base font-bold text-slate-900">Add New Workforce Associate</h3>
+              <h3 id="roster-add-staff-title" className="text-base font-bold text-slate-900">Add Staff Member</h3>
               <button aria-label="Close"
                 type="button"
                 onClick={() => setShowAddModal(false)}

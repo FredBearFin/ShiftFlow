@@ -31,8 +31,8 @@ class PayrollExportEngine:
 
         for line in roster_lines:
             line_num = line.get("line_number") or line.get("lineNum") or 1
-            emp_id = line.get("assigned_employee_id") or line.get("empId") or f"LINE-{line_num:02d}"
-            name = line.get("assigned_person") or line.get("empName") or f"Rotation Line {line_num}"
+            emp_id = line.get("assigned_employee_id") or line.get("empId") or f"PATTERN-{line_num:02d}"
+            name = line.get("assigned_person") or line.get("empName") or f"Shift Pattern {line_num}"
             role = line.get("qualification_tier") or line.get("role") or "Floor Clerk"
             reg = round(float(line.get("regular_hours", line.get("regHours", 0.0))), 2)
             ot = round(float(line.get("overtime_hours", line.get("otHours", 0.0))), 2)
@@ -49,7 +49,7 @@ class PayrollExportEngine:
                 f"{ot:.2f}",
                 wage,
                 gross,
-                f"ShiftFlow Cyclic Line {line_num}",
+                f"ShiftFlow Pattern {line_num}",
             ])
 
         return output.getvalue()

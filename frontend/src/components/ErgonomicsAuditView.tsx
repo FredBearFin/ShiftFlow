@@ -87,8 +87,11 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           What's pulling the score down
         </h2>
         <p className="text-xs text-slate-500 mt-0.5 mb-3">
-          Each bar is one thing this tool watches for. A longer bar means more of it is happening in
-          this schedule.
+          Each bar is one thing this tool watches for. A longer bar doesn't always mean a bigger
+          problem on its own — some checks (like weekend coverage) are weighted more heavily per
+          occurrence and come up on almost every schedule, so they often show the longest bar even
+          when there's nothing to fix. Check the "How often" and weight columns in the table below
+          to see what's actually driving each bar.
         </p>
         <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto">
           {criteria.map((c, idx) => {
@@ -142,6 +145,7 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
                 <th className="py-3 px-4">Check</th>
                 <th className="py-3 px-3 text-right">How often</th>
+                <th className="py-3 px-3 text-right">Weight</th>
                 <th className="py-3 px-3 text-right">Penalty</th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
@@ -159,6 +163,9 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
                   </td>
                   <td className="py-3 px-3 text-right font-mono-tabular font-semibold text-slate-800">
                     {c.raw_violations_count}×
+                  </td>
+                  <td className="py-3 px-3 text-right font-mono-tabular text-slate-500">
+                    ×{c.base_weight}
                   </td>
                   <td className="py-3 px-3 text-right font-mono-tabular font-bold text-emerald-700">
                     {c.weighted_penalty.toFixed(1)}

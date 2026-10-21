@@ -19,7 +19,7 @@ class EmployeeCreateSchema(BaseModel):
     role: str = Field(default="Frontline Clerk", example="Shift Lead")
     wage: float = Field(default=16.50, ge=7.25, le=150.0, description="Hourly wage rate ($)")
     available_days: List[int] = Field(default=[0, 1, 2, 3, 4, 5, 6], description="Day indices 0=Mon..6=Sun")
-    assigned_line: Optional[int] = Field(default=None, description="Assigned cyclic rotation line (1..N)")
+    assigned_line: Optional[int] = Field(default=None, description="Assigned shift pattern (1..N)")
     accommodation_type: AccommodationType = Field(
         default="none",
         description="Statutory accommodation protection: none, religious (Title VII), medical (ADA), academic",

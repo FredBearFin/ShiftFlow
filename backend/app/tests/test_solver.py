@@ -361,7 +361,7 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
 
         r_csv = self.client.post("/api/v1/schedules/export-csv", json=payload)
         self.assertEqual(r_csv.status_code, 200)
-        self.assertIn("Rotation Line,Cohort ID", r_csv.text)
+        self.assertIn("Shift Pattern,Pattern ID", r_csv.text)
 
 
 if __name__ == "__main__":

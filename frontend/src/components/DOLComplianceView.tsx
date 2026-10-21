@@ -53,7 +53,7 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
           What this schedule actually does, checked against common labor rules
         </h2>
         <p className="text-xs text-slate-500 mt-0.5">
-          These checks use the same schedule shown in Roster and Ergonomics — nothing new is
+          These checks use the same schedule shown in Weekly Schedule and Ergonomics — nothing new is
           calculated here, it's the same numbers viewed as compliance checks instead of comfort scores.
         </p>
       </div>

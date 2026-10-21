@@ -53,6 +53,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               Every point below is a real, complete schedule — not a theory
             </h2>
             <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              Use this when you want to see what it'd cost to give your team an easier schedule.
               Moving right costs more in payroll. Moving down means less of the stuff that burns
               people out — long stretches without a day off, back-to-back closing-then-opening
               shifts, lost weekends. Click any point on the curve or table below to switch your
@@ -268,8 +269,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                 <th className="py-3 px-3 text-right">
                   <Term explanation="A rough score of how much scheduling strain is in this version — long stretches without a day off, back-to-back closing-then-opening shifts, and similar. Lower is better.">Staff strain</Term>
                 </th>
-                <th className="py-3 px-3 text-right">Headcount</th>
-                <th className="py-3 px-3 text-right">Full weekends off</th>
+                <th className="py-3 px-3 text-right">
+                  <Term explanation="Number of shift patterns this option builds. These are schedule slots, not a requirement to hire that many people — real staff get assigned to them afterward.">Headcount</Term>
+                </th>
+                <th className="py-3 px-3 text-right">
+                  <Term explanation="Share of shift patterns that get both Saturday and Sunday off together in a given week.">Full weekends off</Term>
+                </th>
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>

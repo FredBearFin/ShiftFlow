@@ -7,7 +7,7 @@ interface CompletionNoteProps {
 
 function coverageLine(solution: SolveResponse): string {
   if (solution.roster_lines.length === 0) {
-    return 'There are no roster lines to show yet.';
+    return 'There is no schedule to show yet.';
   }
   const anyUnderstaffed = solution.interval_coverage.some((cell) => cell.understaffing > 0);
   return anyUnderstaffed
@@ -36,7 +36,7 @@ function restLine(rosterLines: RosterLine[], clopeningViolations: number): strin
       line.fair_workweek_predictability_warning === true
   ).length;
   if (flagged > 0) {
-    return 'Some roster lines have warnings to review';
+    return 'Some shift patterns have warnings to review';
   }
   if (clopeningViolations > 0) {
     return 'Some shifts are clopenings (closing then opening with too little rest); review them';

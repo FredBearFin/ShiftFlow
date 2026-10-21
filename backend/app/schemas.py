@@ -101,9 +101,9 @@ class EmployeeRecord(BaseModel):
 
 
 class StaffMemberAssignment(BaseModel):
-    """Optional mapping of a workforce employee or crew cohort to a rotation line."""
-    line_id: int = Field(..., ge=1, description="1-indexed Rotation Line ID")
-    cohort_label: str = Field(..., description="Standardized Rotation Line label (e.g., Line 1)")
+    """Optional mapping of a staff member to a shift pattern."""
+    line_id: int = Field(..., ge=1, description="1-indexed shift pattern ID")
+    cohort_label: str = Field(..., description="Standardized shift pattern label (e.g., Pattern 1)")
     assigned_staff_name: Optional[str] = Field(default=None, description="Optional mapped employee name")
     qualification_tier: str = Field(default="Frontline Associate", description="Employee operational role")
     hourly_wage: float = Field(..., description="Hourly wage rate for labor economics ($)")
@@ -151,7 +151,7 @@ class MultigraphNodeSchema(BaseModel):
 
 
 class RosterCellSchema(BaseModel):
-    """Individual cell in the cyclic roster grid."""
+    """Individual cell in the weekly schedule grid."""
     day_index: int
     day_name: str
     is_weekend: bool
@@ -167,7 +167,7 @@ class RosterCellSchema(BaseModel):
 
 
 class RosterLineSchema(BaseModel):
-    """A single row (Rotation Line / Cohort) in the cyclic master roster."""
+    """A single row (one shift pattern) in the weekly schedule."""
     line_number: int
     cohort_id: str
     display_label: str
@@ -288,7 +288,7 @@ class SolveRequestSchema(BaseModel):
         le=75.0,
         description="How much extra payroll cost you're willing to accept in exchange for a less demanding schedule",
     )
-    rotation_week_offset: int = Field(default=0, ge=0, description="Weekly cyclic offset for advancing lines")
+    rotation_week_offset: int = Field(default=0, ge=0, description="Which week of the rotation to display")
     staff_assignments: Optional[List[StaffMemberAssignment]] = None
     employees: Optional[List[EmployeeRecord]] = None
 

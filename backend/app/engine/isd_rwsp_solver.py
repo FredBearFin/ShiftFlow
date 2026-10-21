@@ -838,7 +838,7 @@ class ISDRWSPSolver:
             roster_lines.append(
                 RosterLineSchema(
                     line_number=line_num,
-                    cohort_id=f"LINE-{line_num:02d}",
+                    cohort_id=f"PATTERN-{line_num:02d}",
                     display_label=display_label,
                     assigned_person=assigned_person,
                     assigned_employee_id=assigned_emp_id,

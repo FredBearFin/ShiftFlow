@@ -212,7 +212,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               {labor.total_scheduled_hours} hrs
             </span>
             <span className="text-xs font-mono-tabular text-slate-500">
-              {solution.employee_count} Lines
+              {solution.employee_count} Shift Patterns
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -341,14 +341,14 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
         </div>
       </div>
 
-      {/* Rotation Line Payroll Table */}
+      {/* Shift Pattern Payroll Table */}
       <div className="card overflow-hidden">
         <div className="p-4 sm:px-6 border-b border-slate-200 bg-white">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-            Rotation Line Payroll & Overtime Breakdown
+            Payroll & Overtime Breakdown
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">
-            Individual line hours, wage rates, and estimated weekly earnings across all cohorts.
+            Hours, wage rates, and estimated weekly earnings for each shift pattern.
           </p>
         </div>
 
@@ -356,7 +356,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
-                <th className="py-3 px-4">Line</th>
+                <th className="py-3 px-4">Pattern</th>
                 <th className="py-3 px-4">Assigned Personnel</th>
                 <th className="py-3 px-3">Role / Tier</th>
                 <th className="py-3 px-3 text-right">Wage Rate</th>
@@ -375,7 +375,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                   <td className="py-3 px-4 font-sans font-semibold text-slate-900">
                     {line.assigned_person || (
                       <span className="text-slate-500 italic font-normal">
-                        Pure Rotation Line (Unassigned)
+                        Unassigned shift pattern
                       </span>
                     )}
                   </td>

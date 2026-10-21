@@ -50,7 +50,7 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
     description:
       'Fallback preset used when the server cannot list presets. Opening (6a–2p), Midday Rush (11a–7p) and Closing (4p–12a) shifts form a continuous forward rotation.',
     operating_hours_label: '06:00–12:00 AM Daily (126 hrs/wk)',
-    typical_crew_size: '6–8 Rotation Lines',
+    typical_crew_size: '6–8 Shift Patterns',
     default_leeway_pct: 10.0,
     demand_matrix: Array.from({ length: 7 }, (_, g) =>
       Array.from({ length: 24 }, (__, hr) =>
@@ -84,7 +84,7 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
     tagline: 'Patient-ratio compliant 24/7 clinical telemetry & acute care staffing',
     description: 'Continuous 24-hour hospital ward coverage with Morning, Mid, Evening, and Night templates.',
     operating_hours_label: '24/7 Continuous (168 hrs/wk)',
-    typical_crew_size: '12–18 Rotation Lines',
+    typical_crew_size: '12–18 Shift Patterns',
     default_leeway_pct: 5.0,
     demand_matrix: build24x7Demand(2, 4, 5, 3, -1),
     templates: [
@@ -114,7 +114,7 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
     tagline: '3-shift 24/7 plant line rotation with union-grade weekend equity',
     description: 'Continuous plant line operations with 3-shift 8-hour rotations.',
     operating_hours_label: '24/7 Three-Shift Plant (168 hrs/wk)',
-    typical_crew_size: '14–20 Rotation Lines',
+    typical_crew_size: '14–20 Shift Patterns',
     default_leeway_pct: 5.0,
     demand_matrix: build24x7Demand(3, 4, 4, 4, -1),
     templates: [
@@ -144,7 +144,7 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
     tagline: 'High-vigilance 24/7 emergency response with strict fatigue caps',
     description: '24/7 mission critical public safety response with strict fatigue limits.',
     operating_hours_label: '24/7 Mission Critical (168 hrs/wk)',
-    typical_crew_size: '10–16 Rotation Lines',
+    typical_crew_size: '10–16 Shift Patterns',
     default_leeway_pct: 5.0,
     demand_matrix: build24x7Demand(3, 3, 4, 4, 0),
     templates: [
@@ -203,10 +203,10 @@ const DEFAULT_PRESET = DEFAULT_ARCHETYPES[0];
 export const DEFAULT_TEMPLATES: ShiftTemplate[] = DEFAULT_PRESET.templates;
 export const DEFAULT_GUARDRAILS: ErgonomicGuardrails = DEFAULT_PRESET.guardrails;
 
-/** Serialises the roster grid (one row per rotation line, one column per day). */
+/** Serialises the weekly schedule grid (one row per shift pattern, one column per day). */
 export function exportRosterToCsvString(solution: SolveResponse): string {
   const dayHeaders = DAYS_OF_WEEK.map((d) => `${d} Shift`);
-  const header = ['Line', 'Cohort', 'Assigned Person', 'Qualification', 'Hourly Wage', 'Weekly Hours', 'Overtime Hours', 'Weekly Payroll', ...dayHeaders];
+  const header = ['Pattern', 'Pattern ID', 'Assigned Person', 'Qualification', 'Hourly Wage', 'Weekly Hours', 'Overtime Hours', 'Weekly Payroll', ...dayHeaders];
   const escape = (v: string | number | null) => {
     const s = v === null ? '' : String(v);
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

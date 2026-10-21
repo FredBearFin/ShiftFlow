@@ -21,37 +21,36 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
   const shortcutGroups = [
     {
-      category: 'Roster & Cycle Navigation',
+      category: 'Week Navigation',
       items: [
-        { keys: ['Space', 'or', '→'], desc: 'Advance Roster Cycle +1 Week (Simulates next Monday rollover)' },
-        { keys: ['←'], desc: 'Previous Roster Cycle -1 Week (Audits prior week assignments)' },
+        { keys: ['Space', 'or', '→'], desc: 'Advance 1 week (simulates next Monday rollover)' },
+        { keys: ['←'], desc: 'Go back 1 week' },
       ],
     },
     {
-      category: 'Direct Tab Navigation',
+      category: 'Jump to a Tab',
       items: [
-        { keys: ['1'], desc: 'Master Cyclic Roster View' },
-        { keys: ['2'], desc: 'Labor & Payroll Analysis View' },
-        { keys: ['3'], desc: 'CFO Financial & Valuation Model' },
-        { keys: ['4'], desc: '24h Coverage Heatmap View' },
-        { keys: ['5'], desc: 'Flexibility & Rest Optimizer' },
-        { keys: ['6'], desc: 'Ergonomics Health Audit View' },
-        { keys: ['7'], desc: 'DOL Wage & Hour Audit (29 CFR § 785.48 rounding & FLSA records)' },
+        { keys: ['1'], desc: 'Weekly Schedule' },
+        { keys: ['2'], desc: 'Labor & Payroll' },
+        { keys: ['3'], desc: '24h Coverage Heatmap' },
+        { keys: ['4'], desc: 'Cost vs. Rest Trade-off' },
+        { keys: ['5'], desc: 'Ergonomics Health Audit' },
+        { keys: ['6'], desc: 'DOL Compliance' },
       ],
     },
     {
-      category: 'Frontline Floor Operations',
+      category: 'Staff & Printing',
       items: [
-        { keys: ['D'], desc: 'Toggle Staff Roster & Availability Directory' },
-        { keys: ['A'], desc: 'Add New Workforce Associate Modal' },
-        { keys: ['P'], desc: 'Print Wall Board / Export High-Contrast Breakroom PDF' },
+        { keys: ['D'], desc: 'Toggle Staff Directory & Availability' },
+        { keys: ['A'], desc: 'Add Staff Member' },
+        { keys: ['P'], desc: 'Print the schedule' },
       ],
     },
     {
       category: 'System & Dialog Controls',
       items: [
-        { keys: ['?'], desc: 'Open / Close this Keyboard Navigation Cheatsheet' },
-        { keys: ['Esc'], desc: 'Universal Dialog & Modal Dismissal' },
+        { keys: ['?'], desc: 'Open / close this shortcuts list' },
+        { keys: ['Esc'], desc: 'Close any open dialog' },
       ],
     },
   ];

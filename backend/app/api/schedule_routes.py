@@ -75,13 +75,13 @@ def compute_pareto_frontier(request: SolveRequestSchema) -> List[ParetoPointSche
 
 @router.post("/export-csv")
 def export_roster_csv(request: SolveRequestSchema) -> StreamingResponse:
-    """Export the solved Master Cyclic Roster as a downloadable RFC-4180 CSV file."""
+    """Export the solved weekly schedule as a downloadable RFC-4180 CSV file."""
     solution = ISDRWSPSolver(request).solve()
     output = io.StringIO()
     writer = csv.writer(output)
     header = [
-        "Rotation Line",
-        "Cohort ID",
+        "Shift Pattern",
+        "Pattern ID",
         "Assigned Staff",
         "Qualification Tier",
         "Current Cycle Week",
@@ -100,9 +100,9 @@ def export_roster_csv(request: SolveRequestSchema) -> StreamingResponse:
         ]
         writer.writerow(
             [
-                f"Line {line.line_number}",
+                f"Pattern {line.line_number}",
                 line.cohort_id,
-                line.assigned_person or "Unassigned (Pure Line Roster)",
+                line.assigned_person or "Unassigned shift pattern",
                 line.qualification_tier,
                 f"Week {line.current_cycle_week}",
                 *day_cells,
@@ -118,6 +118,6 @@ def export_roster_csv(request: SolveRequestSchema) -> StreamingResponse:
         iter([output.getvalue()]),
         media_type="text/csv",
         headers={
-            "Content-Disposition": "attachment; filename=shiftflow_master_cyclic_roster.csv"
+            "Content-Disposition": "attachment; filename=shiftflow_weekly_schedule.csv"
         },
     )
