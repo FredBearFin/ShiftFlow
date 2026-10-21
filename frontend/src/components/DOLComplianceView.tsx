@@ -48,14 +48,15 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
     <div className="space-y-5">
       <div className="enterprise-card p-5 bg-white">
         <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
-          Compliance
+          Fairness &amp; Fatigue Check
         </span>
         <h2 className="text-base font-bold text-slate-900 mt-0.5">
-          What this schedule actually does, checked against common labor rules
+          A quick gut-check on burnout, before it costs you a good employee
         </h2>
         <p className="text-xs text-slate-500 mt-0.5">
-          These checks use the same schedule shown in Weekly Schedule and Ergonomics — nothing new is
-          calculated here, it's the same numbers viewed as compliance checks instead of{' '}
+          Tired, burnt-out staff are the ones who quit, call out, or make mistakes on the register. These
+          checks use the same schedule shown in Weekly Schedule and Ergonomics — nothing new is
+          calculated here, it's the same numbers viewed as a fairness check instead of{' '}
           <Term explanation="How tiring the week looks for the people working it, counted in penalty points. Lower is better. The Ergonomics tab shows the same schedule scored this way.">
             comfort scores
           </Term>
@@ -96,16 +97,17 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
           title="Overtime (over 40 hours/week)"
           detail={
             otHours > 0
-              ? `${otHours.toFixed(1)} overtime hours this week, costing $${labor.overtime_payroll_cost.toFixed(0)} at the 1.5× rate. Overtime isn't illegal by itself — just budget for the premium pay.`
+              ? `${otHours.toFixed(1)} overtime hours this week, costing $${labor.overtime_payroll_cost.toFixed(0)} at the 1.5× rate. Worth knowing before payroll runs, so it doesn't surprise you.`
               : 'No one is scheduled over 40 hours this week, so no overtime pay applies.'
           }
         />
       </div>
 
       <div className="enterprise-card p-4 text-xs text-slate-500">
-        This page checks scheduling mechanics it can actually compute from the shifts shown. It is
-        not legal advice and does not check state-specific rules, meal/rest breaks, predictive
-        scheduling ordinances, or minor labor law — check those separately for your location.
+        This page checks scheduling mechanics it can actually compute from the shifts shown — rest
+        between shifts, clopenings, and runs of consecutive days — the things that wear a crew down
+        and lead to turnover. It isn't legal advice and doesn't check state or local labor rules;
+        check those separately if you're unsure.
       </div>
     </div>
   );

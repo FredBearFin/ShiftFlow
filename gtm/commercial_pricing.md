@@ -1,24 +1,38 @@
-# ShiftFlow Studio: Commercial Pricing & Packaging Strategy
+# ShiftFlow: Commercial Pricing & Packaging Strategy
 
-## 1. Value-Based SaaS Pricing Tiers
+ShiftFlow has two tiers, matching the two funnels in the GTM model: a self-serve **personal tier** for the individual shift manager (the primary funnel), and an upsell **business tier** for the owner of the location (the secondary funnel, only reached after a manager has proven savings). There is no enterprise or multi-location-chain tier — ShiftFlow is deliberately not selling into hospitals, manufacturing, large chains, or enterprise accounts.
 
-ShiftFlow Studio monetizes on a per-location recurring SaaS model, aligning software cost directly with store-level labor savings and turnover reduction.
+## 1. Pricing Tiers
 
-| Tier Name | Target Customer | Monthly Price | Annual Price (20% Off) | Core Capabilities Included |
+| Tier Name | Who Buys It | Target Customer | Monthly Price | How It's Sold |
 | :--- | :--- | :--- | :--- | :--- |
-| **Store Starter** | Single-store independent retail, liquor stores, vape/smoke shops, specialty grocers (up to 12 staff). | **$79 / month** | **$758 / year** ($63.20/mo; annual-prepay option, not the ROI input) | • 5-Step Setup Wizard<br>• Master Cyclic Roster (Line 1..N)<br>• Zero-Clopening Check<br>• 1-Click Monday Rollover<br>• Staff Directory & Availability Controls<br>• Wall Bulletin Print & CSV Export |
-| **Growth Multi-Unit** | Regional operators running 2 to 9 store locations (up to 60 staff). | **$199 / month** (up to 3 stores; +$49/mo per additional store, stores 4 to 9) | **$1,910 / year** ($159.20/mo; annual-prepay option, 20% off the $2,388 list; not the ROI input) | • Everything in Starter<br>• Real-Time Labor Cost & Overtime Analytics<br>• 24-Hour Coverage Heatmap (168 intervals)<br>• Becker Pareto Frontier Calibration<br>• Multi-store line bidding & staff borrowing<br>• Priority Email & Chat Support |
-| **Enterprise Fleet** | Multi-unit retail chains, franchise groups, and commercial networks (10+ locations). | **$39 / store / month** (minimum 10 stores) | **Custom Annual Contract** | • Everything in Growth<br>• Roster audit log (flags rest under 16 h and closing-to-opening shifts).<br>• POS sales by CSV upload; Gusto/ADP CSV export.<br>• Custom union rule configuration<br>• Dedicated Account Manager |
+| **Personal** | The individual shift manager, for themselves. | A shift manager at a single-location convenience store, liquor store, smoke shop, bar, or restaurant with extended or odd hours. | **$9–15/month** (self-serve) | No sales process. Credit card signup, cancel anytime. This is the primary funnel. |
+| **Business** | The business owner, for the location. | The same kind of location, once a manager using the Personal tier has a concrete savings number to show. | **$20–50/month per location** | Upsell only — triggered by a manager showing the owner a real number from the Labor Analysis view (see `sales_pitch_deck.md`). Never the first pitch. |
 
----
+**What each tier includes:**
+- **Personal** ($9–15/mo): fair rotating schedule generation, fatigue/rest-gap checks between closing and opening shifts, labor cost and overtime visibility, crew availability tracking, print/CSV export. Single manager, single location.
+- **Business** ($20–50/mo per location): everything in Personal, plus multiple manager seats at the same location, the schedule and crew setup living on the business account instead of one person's login, and billing/ownership continuity if the manager who originally set it up leaves.
 
-## 2. Unit Economics & Customer Lifetime Value (LTV)
+There is intentionally no per-seat enterprise tier, no multi-location rollup pricing, and no custom contract tier at this stage. If a multi-location chain or enterprise account inquires, that is out of scope for the current wedge, not a product gap to fill.
 
-* **Average Revenue Per User (ARPU)**: $139 / month (assumed; see saas_financial_model.md).
-* **Customer Acquisition Cost (CAC)**: $95 (fully loaded Month 12 acquisition spend of $3,895 ÷ 41 new stores; direct digital outreach, local retail trade associations, Word of Mouth).
-* **Target Churn Rate**: 2.66% (saas model, M13-M24) monthly (cyclic schedules create extremely high operational stickiness; once a store runs on a 6-week rotation, switching costs are high).
-* **Customer Lifetime (Months)**: ~37.6 months.
-* **Estimated LTV**: $4,620 (ARPU x gross margin x lifetime).
-* **LTV / CAC Ratio**: **48.6x** (exceptionally strong capital efficiency).
-* **Payback Period**: **0.8 months**.
+## 2. Why the Price Is Where It Is
 
+The Personal tier price is capped low on purpose: it is a personal-productivity purchase, not a business-ROI purchase, and $9–15/month is roughly where an individual is willing to pay out of pocket for a tool that saves them a few hours a week. We are not trying to price Personal against enterprise scheduling software's value — that comparison doesn't apply to this buyer.
+
+The Business tier is priced higher ($20–50/location/month) because it is being justified against a company expense budget using a real, in-app labor-savings number, not against personal willingness-to-pay. It only works as a pitch once that number exists — pricing it this way before a manager has usage data would be the enterprise-SaaS mistake we're deliberately avoiding.
+
+## 3. Known Risks & Honest Considerations
+
+These are real risks to the model, stated plainly rather than smoothed over:
+
+- **The real competitive substitute is free, not funded competitors.** The businesses in this wedge — true single-location convenience stores, liquor stores, smoke shops, bars, and restaurants — are mostly scheduling on paper, group texts, or a spreadsheet today, not on Homebase, 7shifts, or Deputy. Those funded competitors have not saturated this segment, but "free and already working well enough" is a harder sell than switching from a paid competitor, and our pricing and messaging need to compete against "nothing," not against another SaaS tool.
+- **Personal willingness-to-pay caps the Personal tier price.** Because an individual manager is paying out of pocket, there's a real ceiling — likely not much above $15/month — on what this tier can charge regardless of how much time or labor cost it actually saves. We should not expect to raise this tier's price without changing who pays.
+- **Manager turnover is a real retention risk for Personal, and the reason Business exists.** Industry-reported estimates put annual shift-manager turnover in retail and food service at roughly 28–47% a year, depending on the specific segment — this is an estimate, not a precise figure we've verified ourselves. A Personal-tier subscription is tied to one person's card and login, so it is at real risk of churning the moment that manager leaves the job. A Business-tier account, billed to and owned by the location, survives a manager departure; a personal one does not. This is the main retention argument for pushing the upsell, not just the revenue argument.
+- **We are not leading with legal compliance, and that's deliberate.** Most Fair Workweek / predictable-scheduling laws bind large chains (commonly 30+ locations), not true single-location independents. Pitching compliance risk to this audience would be misleading. Our pitch leads with time saved, fewer scheduling mistakes, and fairness/turnover instead.
+
+## 4. Unit Economics (Indicative, Needs Validation)
+
+* **Personal tier ARPU**: ~$11/month (midpoint of $9–15 range).
+* **Business tier ARPU**: ~$32/month per location (midpoint of $20–50 range), reached only via upsell, not direct acquisition.
+* **Primary-funnel CAC** should be evaluated against self-serve digital channels (search, app-store-style discovery, word of mouth) appropriate to a $9–15/month personal purchase — not against an enterprise sales-driven CAC model.
+* **Business-tier conversion rate** (Personal → Business) is the number to track most closely; it is currently an assumption, not a measured figure, until we have real usage data from the Labor Analysis view feeding real upsell attempts.

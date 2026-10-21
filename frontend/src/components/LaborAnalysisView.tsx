@@ -4,6 +4,7 @@ import { DAYS_OF_WEEK } from '../services/api';
 import { Button } from './ui/Button';
 import { Term } from './ui/Term';
 import { POSIntegrationView } from './POSIntegrationView';
+import { buildOwnerShareSummary } from './laborShareSummary';
 
 interface LaborAnalysisViewProps {
   solution: SolveResponse;
@@ -22,6 +23,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
   const maxDayCost = Math.max(...labor.cost_per_day, 100);
   const [downloadMsg, setDownloadMsg] = useState<string | null>(null);
   const [showPosUpload, setShowPosUpload] = useState(false);
+  const [shareMsg, setShareMsg] = useState<string | null>(null);
 
   // A line is priced when it carries a numeric estimated payroll and a numeric hours value.
   const pricedLines = solution.roster_lines.filter(
@@ -133,6 +135,20 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
     setTimeout(() => setDownloadMsg(null), 3000);
   };
 
+  // "Share with owner": copy the key numbers already on screen as plain text, so a
+  // manager can hand them to the business owner (email, text, Slack, whatever they use).
+  // Pure client-side formatting over existing props — nothing new is fetched or stored.
+  const handleCopyOwnerSummary = async () => {
+    const summary = buildOwnerShareSummary(solution);
+    try {
+      await navigator.clipboard.writeText(summary);
+      setShareMsg('Summary copied — paste it to your owner.');
+    } catch {
+      setShareMsg('Could not copy automatically. Try "Print Audit" instead.');
+    }
+    setTimeout(() => setShareMsg(null), 3000);
+  };
+
   // The solver echoes back the staffing table it was given as interval_coverage's
   // required_staff, so the POS view can show what an import would replace.
   const currentDemandMatrix = React.useMemo(() => {
@@ -167,6 +183,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
               ✓ {downloadMsg}
             </span>
           )}
+          {shareMsg && (
+            <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">
+              ✓ {shareMsg}
+            </span>
+          )}
           <Button
             variant="primary"
             onClick={handleDownloadGusto}
@@ -180,6 +201,12 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
             className="font-bold"
           >
             <span>↓ ADP CSV</span>
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={handleCopyOwnerSummary}
+          >
+            Copy summary for owner
           </Button>
           <Button
             variant="secondary"

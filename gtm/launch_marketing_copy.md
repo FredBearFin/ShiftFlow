@@ -1,53 +1,72 @@
-# ShiftFlow Studio: Launch Marketing Copy & Cold Outreach Sequences
+# ShiftFlow: Launch Marketing Copy & Self-Serve Outreach
+
+ShiftFlow is sold the way the person who actually uses it buys software: self-serve, by credit card, to one shift manager at a time. There is no sales call in the primary funnel. The copy below is written to a **shift manager at a convenience store, liquor store, smoke shop, bar, or restaurant** — not to a franchise owner, not to an enterprise buyer, and not to a hospital or manufacturing scheduler. Section 4 is the one secondary-funnel asset: a nudge the manager can hand to their owner *after* ShiftFlow has already proven savings.
 
 ## 1. Product Hunt Launch Copy
 
-* **Tagline**: The self-driving workforce OS for retail & shift work — fewer clopenings, by design.
-* **Short Description**: Stop building schedules on spreadsheets every Sunday. ShiftFlow coordinates shift design and cyclic rotation into a fair schedule. Schedules at least 16 hours of rest after every close where it can; the roster audit flags any shorter gap.
+* **Tagline**: Build next week's schedule in 10 minutes, not 2 hours.
+* **Short Description**: If you manage shifts at a convenience store, liquor store, smoke shop, bar, or restaurant, you know the Sunday-night ritual: a blank grid, a group text, and someone always mad about the schedule. ShiftFlow builds a fair rotating schedule for you — so closes and opens rotate evenly, nobody's "always" stuck with the bad shifts, and you get your evening back. $9–15/month. No contract, no sales call, cancel anytime.
 * **Maker Comment**:
 > Hey Product Hunt! 👋
-> 
-> If you've ever worked retail, grocery, or food service, you know the feeling of the "clopening": closing the store at midnight, getting home at 1:00 AM, and having to be back at 6:00 AM to unlock the doors. It's the #1 reason frontline workers burn out and quit.
-> 
-> We built **ShiftFlow Studio** to solve this mathematically. Powered by recent operational research (Tristan Becker, EJOR 2026), ShiftFlow unifies shift design with rotating schedules. You plug in your store hours and register needs once, and our engine extracts a continuous, forward-rotating Eulerian cycle across your team lines.
-> 
+>
+> I built this because I was a shift manager at a 24-hour convenience store, and building the weekly schedule by hand — on paper, in a group chat, in a spreadsheet, whatever was handy — ate two to three hours every week. Worse than the time: it's really hard to be *fair* by hand. You lose track of who closed last, who always gets Friday night, who's owed a weekend off, and people notice. That's how a schedule starts fights.
+>
+> **ShiftFlow** is built for odd-hours, short-staffed crews — convenience stores, liquor stores, smoke shops, bars, restaurants — not hospital or factory scheduling, and not big chains with a corporate scheduling team. You enter your hours and your crew once, and ShiftFlow rotates everyone through shifts automatically, tracks rest between closes and opens, and flags it when a rotation would leave someone too little recovery time.
+>
 > **Key Features**:
-> • **1-Click Autopilot Rollover**: Every Monday morning, everyone advances down one line automatically. Zero manual drag-and-drop.
-> • **Fewer Clopenings**: Schedules at least 16 hours of rest after every close where it can; the roster audit flags any shorter gap.
-> • **Labor & Overtime Analytics**: Live payroll calculations with 1.5× overtime risk warnings.
-> • **Staff Availability & Add/Fire**: Easily manage who can work which days and instantly reassign lines.
-> 
-> Check out the live demo and let us know what you think! 🚀
+> • **Automatic Fair Rotation**: The schedule rolls forward every week with one click — no manual drag-and-drop, and no one person always stuck with the shifts nobody wants.
+> • **Fatigue-Aware Scheduling**: The engine checks rest time between a closing shift and the next opening shift and flags short turnarounds instead of silently scheduling them.
+> • **Labor Cost at a Glance**: See your payroll total and overtime risk before you publish the schedule, not after.
+> • **Built for One Location**: No enterprise setup, no corporate account, no IT — it's priced and built for a single manager running a single location.
+>
+> This is a $9–15/month personal tool, not an enterprise platform. Try it and tell me what's missing. 🚀
 
 ---
 
-## 2. 90-Second Product Video Demo Script
+## 2. 75-Second Product Demo Script
 
-* **[0:00–0:15] Hook**: (Camera on manager staring at whiteboard with sticky notes). *"It's 9:00 PM on Sunday. You're exhausted, staring at a spreadsheet, trying to figure out who's working Friday night close — and dreading the angry texts from your cashiers tomorrow morning."*
-* **[0:15–0:35] The Problem**: *"Traditional scheduling apps are just digital whiteboards. You still have to drag every box yourself, and if you accidentally schedule someone to close late and open early, they burn out and quit. Replacing a single retail clerk costs over $4,000."*
-* **[0:35–1:05] The Solution**: (Screen recording of ShiftFlow 5-step wizard). *"Meet ShiftFlow Studio. You enter your store hours and register needs once. Our mathematical engine generates a perpetual rotating wheel. Every Monday, your entire team rolls forward automatically. Openings lead to Mids, Mids lead to Closes, and Closes lead to 2 full days off. Fewer clopenings. Everyone follows the same rotation order."*
-* **[1:05–1:25] Labor Control**: (Cut to Labor Analysis & Heatmap). *"See your exact weekly payroll down to the cent, catch overtime before it happens, and verify that all 18 store hours have full register coverage."*
-* **[1:25–1:30] Call to Action**: *"Take your Sunday nights back. Visit ShiftFlowStudio.com and start your free pilot today."*
+* **[0:00–0:12] Hook**: *(Manager on their phone, late, scrolling a group chat full of "can you cover Friday?" texts.)* "It's Sunday night, and you're building next week's schedule the same way you always do — by hand, from scratch, hoping nobody complains."
+* **[0:12–0:30] The Problem**: *"Whether you're running a convenience store, a liquor store, a smoke shop, a bar, or a restaurant, the schedule is the same fight every week: who closes, who opens, who's stuck with both back-to-back. Doing it by hand takes hours, and it's almost impossible to keep it fair — so somebody always feels cheated, and eventually they quit over it."*
+* **[0:30–0:55] The Solution**: *(Screen recording of the ShiftFlow setup wizard.)* "ShiftFlow takes your hours and your crew, and builds a rotating schedule automatically. Everyone cycles through open, mid, and close shifts in the same fair order — so no one person is always the one closing and opening back to back. It checks rest time between shifts for you, so you're not the one who has to remember."
+* **[0:55–1:10] Labor Visibility**: *(Cut to Labor Analysis view.)* "And you can see your labor cost and overtime risk before you publish — not after you get the paycheck surprise."
+* **[1:10–1:15] Call to Action**: *"Get your two hours back. ShiftFlow is $9 to $15 a month, self-serve, no sales call. Start free at shiftflow.app."*
 
 ---
 
-## 3. High-Converting Cold Email for Independent Store Owners
+## 3. Self-Serve Landing Page & Search Ad Copy (for Shift Managers)
 
-**Subject**: Quick question about Friday night closes at {{store_name}}
+**Headline**: Stop building your schedule by hand.
 
-Hi {{first_name}},
+**Subhead**: ShiftFlow is a $9–15/month scheduling tool built for shift managers at convenience stores, liquor stores, smoke shops, bars, and restaurants — the odd-hours, short-staffed places other scheduling apps don't really serve. No sales call, no contract. Sign up, enter your crew, and get a fair rotating schedule in minutes.
 
-Are you still spending 3 hours every Sunday night manually building the weekly schedule for {{store_name}}?
+**Body**:
+- **Get your two hours back.** Most managers spend 2–3 hours a week building the schedule by hand — on paper, in a group text, or in a spreadsheet. ShiftFlow does it in minutes.
+- **Make it fair, automatically.** A rotating schedule means closes and opens cycle through the crew evenly instead of landing on whoever the manager remembers last. Fewer arguments, fewer "why do I always get the bad shifts" conversations.
+- **Catch mistakes before you publish.** See labor cost and overtime risk, and get flagged when a rotation would leave someone too little rest between a close and the next open.
+- **Built for your business, not a hospital.** ShiftFlow is sized and priced for a single location with a handful of employees — not enterprise workforce software you don't need and can't afford.
 
-Most store owners I talk to tell me their biggest headache isn't customer traffic — it's the constant schedule drama: staff complaining about weekend closes, cashiers quitting after getting hit with back-to-back late closes and early opens, and unintended overtime eating up profit.
+**CTA button**: Start free — $9/month after trial, cancel anytime.
 
-We built **ShiftFlow Studio** to run store schedules on complete autopilot:
-1. **Zero Sunday Work**: You enter your register needs once; the system rotates staff through a fair forward wheel that rolls over with 1 click every Monday.
-2. **Fewer Clopenings**: Schedules at least 16 hours of rest after every close where it can; the roster audit flags any shorter gap, cutting frontline turnover by an assumed 35%.
-3. **Live Labor Tracking**: Calculates your exact payroll and warns you of overtime before you publish.
+**Ad variant (search)**:
+> Scheduling for convenience stores, bars & restaurants. Stop doing it by hand. $9–15/mo. No sales call. Try ShiftFlow free.
 
-Would you be open to a 10-minute demo this Thursday at 11:00 AM to see what {{store_name}}'s schedule looks like on an automated rotation?
+---
 
-Best,  
-[Your Name]  
-ShiftFlow Studio | shiftflowstudio.com
+## 4. The Owner Upsell Nudge (Secondary Funnel — Use Only After Savings Are Proven)
+
+This is not the first message a prospect sees. It's an in-app prompt and short email sent to a manager **only after they've used ShiftFlow long enough to have a real number in the Labor Analysis view** — e.g., a measurable drop in overtime or a concrete reduction in extra hours worked. It gives the manager something to hand to the owner.
+
+**In-app prompt** (shown once a manager has at least a few weeks of Labor Analysis data):
+> You've saved an estimated **{{labor_savings_amount}}** this month on overtime and extra hours. Want help showing this to the owner? We'll generate a one-page summary you can share — and if they want to put ShiftFlow on the business account, it covers every manager at this location.
+
+**Short email the manager can forward to the owner**:
+
+**Subject**: I've been using a $12/mo scheduling tool — it's already saved us {{labor_savings_amount}}
+
+Hi {{owner_name}},
+
+I started using a tool called ShiftFlow to build our schedule — it rotates shifts fairly and flags overtime risk before I publish. I've been paying for it myself, and over the last month it's shown a real {{labor_savings_amount}} drop in {{overtime_or_extra_hours}} compared to before.
+
+Would you be open to putting it on the business account instead? It's {{business_tier_price}}/month for the location and covers every manager here, not just me.
+
+{{manager_name}}

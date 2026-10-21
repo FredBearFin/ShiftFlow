@@ -38,34 +38,34 @@ export const Header: React.FC<HeaderProps> = ({
     },
     {
       id: 'staff',
-      label: 'Staff Directory & Availability',
-      badge: solution ? `${solution.employees.length} Associates` : undefined,
+      label: 'Staff & Availability',
+      badge: solution ? `${solution.employees.length} People` : undefined,
     },
     {
       id: 'labor',
-      label: 'Labor & Payroll Economics',
+      label: 'Payroll & Hours',
       badge: solution
         ? `$${Math.round(solution.labor_analysis.total_payroll_cost).toLocaleString()}`
         : undefined,
     },
     {
       id: 'coverage',
-      label: '24h Coverage Heatmap',
-      badge: '168 Intervals',
+      label: 'Hourly Coverage',
+      badge: '168 Hours',
     },
     {
       id: 'pareto',
-      label: 'Cost vs. Rest Trade-off',
-      badge: `+${leewayPct}% Leeway`,
+      label: 'Cost vs. Fairness',
+      badge: `+${leewayPct}% Extra Cost`,
     },
     {
       id: 'ergonomics',
-      label: 'Ergonomics Health Audit',
+      label: 'Burnout Check',
       badge: solution ? `${solution.ergonomics_audit.health_index_score}/100` : undefined,
     },
     {
       id: 'compliance',
-      label: 'DOL Compliance',
+      label: 'Fairness & Fatigue Check',
     },
   ];
 

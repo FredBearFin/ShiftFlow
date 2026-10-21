@@ -5,8 +5,12 @@
  */
 export const PRESET_LABELS: Record<string, { label: string; description?: string }> = {
   downtown_foodmart_omaha: {
-    label: 'Retail and food service',
-    description: 'Stores and food counters that sell groceries, prepared meals and everyday goods to walk-in customers. Staffing follows daily sales peaks.',
+    label: 'Convenience store or smoke shop',
+    description: 'A single store open long or odd hours — early mornings, late nights, or both. Covers opening, midday rush, and closing shifts.',
+  },
+  retail_grocery: {
+    label: 'Liquor store, bar, or restaurant',
+    description: 'A single location with a busy evening or weekend rush, plus opening prep and closing cleanup. Built for extended and late-night hours.',
   },
   healthcare_24_7: {
     label: 'Hospital and clinical care',

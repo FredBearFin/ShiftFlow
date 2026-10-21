@@ -1,51 +1,53 @@
-# ShiftFlow Studio: 10-Slide B2B Sales Pitch Deck Outline
+# ShiftFlow: The Owner Upgrade Deck (Secondary-Funnel Pitch Outline)
 
-## Slide 1: The Title Slide
-* **Headline**: ShiftFlow Studio
-* **Sub-headline**: The Self-Driving Workforce OS for Extended-Hours Retail & Specialty Stores.
-* **Presenter**: ShiftFlow Commercial Team
+**Context — when this deck gets used at all.** ShiftFlow's primary motion is self-serve: an individual shift manager at a convenience store, liquor store, smoke shop, bar, or restaurant signs up on their own for $9–15/month, with no sales process. There is no cold outbound deck for that motion — the marketing copy in `launch_marketing_copy.md` carries it.
 
-## Slide 2: The Sunday Night Nightmare
-* **Problem**: Store owners and managers lose 3+ hours every Sunday night playing Tetris with spreadsheets.
-* **Pain**: Texting workers, dodging time-off excuses, and getting blamed for giving friends the "good shifts."
-* **Cost**: Modeled: about $6,370 a year of manager scheduling time (assumed 3.5 h/week at $35/h).
+This deck exists for the one point in the funnel where a short pitch is useful: **after a manager has already been using ShiftFlow and has a real labor-savings number from the Labor Analysis view**, this outline is what a manager (or, occasionally, a founder on a quick call) uses to get the business owner to move billing onto a business account at a higher tier. It is an upgrade pitch to an already-warm, proven lead — not a cold enterprise sales deck, and it should never be used as one.
 
-## Slide 3: The Hidden Profit Killer — Turnover & Clopenings
-* **Assumption**: Assumed: 65% annual clerk turnover.
-* **Root Cause**: Erratic schedules and "clopenings" (locking the store at midnight, unlocking at 6:00 AM).
-* **The Impact**: Every lost cashier costs $4,129 to recruit, onboard, and train.
+## Slide 1: Title
+* **Headline**: ShiftFlow for {{business_name}}
+* **Sub-headline**: Your manager has already been using this. Here's what it's saved you.
+* **Presenter**: {{manager_name}} (or ShiftFlow, on a short intro call)
 
-## Slide 4: Why Current Apps Fail
-* **The Digital Whiteboard Trap**: When I Work, Homebase, and 7shifts are just pretty calendars — the manager still has to manually place every shift.
-* **Dumb Auto-Scheduling**: Existing tools match headcount but ignore sleep cycles, creating short rest gaps and exhausted workers.
+## Slide 2: What's Already Happening Here
+* {{manager_name}} has been using ShiftFlow for {{duration}} to build the schedule.
+* It's a personal tool — {{manager_name}} has been paying for it out of pocket.
+* This isn't a pitch for something new. It's a proposal to take over paying for something that's already working.
 
-## Slide 5: Introducing ShiftFlow Studio
-* **Value Prop**: The Self-Driving Roster.
-* **Core Philosophy**: Configure your operating hours and register headcount once. ShiftFlow generates a fair rotating schedule that advances one click every Monday.
+## Slide 3: The Problem It Solved
+* Building the schedule by hand for a {{business_type}} (convenience store / liquor store / smoke shop / bar / restaurant) with odd or extended hours takes real time every week — estimated at 2–3 hours for most managers — and it's hard to keep fair without software, which shows up as complaints and, eventually, turnover.
+* We are not pitching this on legal risk or compliance. Most predictable-scheduling and Fair Workweek laws only apply to large chains (30+ locations); that's not the case here, and we're not going to pretend otherwise.
+* The case is simpler and more honest: time saved, fewer scheduling mistakes, and a fairer rotation for the crew.
 
-## Slide 6: The Forward Rotation Wheel
-* **How It Works**: Workers move through a continuous loop: **Open (6a–2p) → Mid (11a–7p) → Close (4p–12a) → 2–3 Days Rest**.
-* **Same Sequence for Everyone**: Every employee works the same rotation order over the cycle.
-* **Fewer Clopenings**: Schedules at least 16 hours of rest after every close where it can; the roster audit flags any shorter gap.
+## Slide 4: The Number That Matters
+* Labor Analysis for {{business_name}} shows an estimated {{labor_savings_amount}} over the last {{period}} in {{overtime_or_extra_hours}} avoided, compared to the schedules before ShiftFlow.
+* This is pulled directly from the app's own Labor Analysis view — it's {{business_name}}'s own data, not a projection.
 
-## Slide 7: Real-Time Labor & Payroll Control
-* **Labor Analysis**: Live visibility into total weekly payroll, regular vs. overtime hours, and cost per day.
-* **Overtime Control**: 5% shift boundary flexibility covers rush hours while reducing unintended overtime (modeled at 85%).
-* **Availability Matching**: Staff enter their available days; ShiftFlow flags conflicts instantly.
+## Slide 5: What Changes on the Business Tier
+* **Personal tier (what {{manager_name}} is on today)**: $9–15/month, one manager, billed personally.
+* **Business tier (the proposal)**: roughly $20–50/month per location, billed to the business.
+* Covers every manager and assistant manager at this location, not just one person.
+* Schedules and crew data live on the business account — if {{manager_name}} ever leaves, the schedule and the setup stay with the business instead of walking out the door.
 
-## Slide 8: Measurable Business Case (The Numbers)
-* **Turnover Reduction**: Modeled: about $5,636 per store a year in avoided quits (assumes 65% turnover, 35% fewer quits, $4,129 per quit).
-* **Overtime Avoidance**: Modeled: about $2,005 per store a year in overtime premium avoided (assumes 5.5 hrs/week, 85% reduction).
-* **Time Saved**: Modeled: about 3.25 hours a week of manager time recovered (assumed).
-* **Net ROI**: **13.3× annual return on investment** ($12,608 net savings ÷ $948 per year).
+## Slide 6: Why This Matters Beyond the Dollar Number
+* Shift-manager turnover in retail and food service is reported industry-wide in roughly the 28–47%/year range depending on the segment — high enough that most locations will eventually lose the manager who set this up.
+* A personal account disappears when the manager does. A business account doesn't. That continuity, not a new feature, is most of what the business tier is actually selling.
 
-## Slide 9: 5-Minute Onboarding
-* **Step 1**: Choose your store operating hours (e.g. 6:00 AM to midnight).
-* **Step 2**: Set register demand for peak rush hours.
-* **Step 3**: Add your crew and their availability.
-* **Step 4**: Hit "Solve & Launch Roster." Print for the backroom or share via CSV.
+## Slide 7: What This Pitch Is Not
+* We're not asking you to switch away from a competitor — most businesses this size are scheduling on paper, a group chat, or a spreadsheet, not on Homebase, 7shifts, or Deputy. The honest comparison is "the way you do it now," not a rival product.
+* We're not pitching enterprise features, API integrations, or multi-location rollups unless {{business_name}} actually operates more than one location.
 
-## Slide 10: Call to Action & Pricing
-* **Starter Plan**: $79 / month per store (cancel anytime).
-* **Offer**: 14-day free pilot on your current schedule — we'll convert your whiteboard roster into an automated wheel for free.
-* **Contact**: sales@shiftflowstudio.com | shiftflowstudio.com
+## Slide 8: The Ask
+* Move billing from {{manager_name}}'s personal card to {{business_name}}'s business account.
+* {{manager_name}} keeps using it exactly the same way — nothing changes for day-to-day scheduling.
+* No contract; it's still a monthly subscription, cancel anytime.
+
+## Slide 9: Proof Points to Leave Behind
+* A one-page printout of the Labor Analysis savings number.
+* The current schedule, so the owner can see what it actually looks like.
+* {{manager_name}}'s own account of what it replaced (time, or specific scheduling disputes it resolved).
+
+## Slide 10: Pricing & Contact
+* **Personal tier**: $9–15/month (self-serve, no change needed if the owner declines).
+* **Business tier**: $20–50/month per location (exact tier depends on crew size — see `commercial_pricing.md`).
+* **Contact**: support@shiftflow.app | shiftflow.app
