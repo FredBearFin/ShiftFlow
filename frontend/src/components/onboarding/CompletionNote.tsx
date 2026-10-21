@@ -29,19 +29,21 @@ function overtimeLine(rosterLines: RosterLine[]): string {
     : `About ${hours} hours of overtime are planned each week`;
 }
 
-function restLine(rosterLines: RosterLine[], clopeningViolations: number): string {
-  const flagged = rosterLines.filter(
-    (line) =>
-      line.statutory_accommodation_violation === true ||
-      line.fair_workweek_predictability_warning === true
-  ).length;
-  if (flagged > 0) {
-    return 'Some shift patterns have warnings to review';
-  }
+/**
+ * Clopenings are the one rest rule the engine checks per line, so this line speaks only
+ * about them and no longer claims to cover fairness in general.
+ *
+ * It used to open with "Some shift patterns have warnings to review", fed by
+ * statutory_accommodation_violation and fair_workweek_predictability_warning. Both are
+ * gone from here: the engine fixes the predictability warning at False, and the
+ * accommodation flag is never presented as a compliance alert - it only ever restates an
+ * availability conflict, which the roster shows directly as an Avail Alert.
+ */
+function clopeningLine(clopeningViolations: number): string {
   if (clopeningViolations > 0) {
     return 'Some shifts are clopenings (closing then opening with too little rest); review them';
   }
-  return 'No rest or fairness warnings';
+  return 'No closing shift is followed by an opening shift the next day';
 }
 
 export function CompletionNote({ solution }: CompletionNoteProps) {
@@ -62,7 +64,7 @@ export function CompletionNote({ solution }: CompletionNoteProps) {
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>{coverageLine(solution)}</li>
         <li>{overtimeLine(rosterLines)}</li>
-        <li>{restLine(rosterLines, solution.ergonomics_audit.clopening_violations)}</li>
+        <li>{clopeningLine(solution.ergonomics_audit.clopening_violations)}</li>
       </ul>
     </section>
   );

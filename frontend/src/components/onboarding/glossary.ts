@@ -33,6 +33,11 @@ export const GLOSSARY: GlossaryEntry[] = [
     example: 'A rule of at most 5 days in a row means no one is scheduled for a sixth day straight.',
   },
   {
+    term: 'staffing flexibility',
+    plain: 'How far above the leanest possible shift count the schedule may go. A higher setting buys shorter work stretches and more rest by using more shifts, and it is not a money budget.',
+    example: 'At 10 percent, the schedule may build about a tenth more shifts than the bare minimum. Whether that costs more depends on who you put on them.',
+  },
+  {
     term: 'extra cost',
     plain: 'The additional money you allow the schedule to spend beyond the lowest possible cost.',
     example: 'Allowing 5 percent extra cost lets the schedule add a little more staff time to make shifts kinder.',
