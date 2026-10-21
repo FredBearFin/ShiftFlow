@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useDialogFocus } from './ui/useDialogFocus';
 import { AccommodationType, EmployeeRecord, RosterLine, SeparationCategory } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import { formatHourlyRate } from '../utils/format';
 
 const DAY_FULL_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -188,7 +189,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
 
                 <div className="mt-3 flex items-center justify-between text-xs font-mono-tabular">
                   <span className="text-slate-500">Hourly Wage:</span>
-                  <span className="font-bold text-slate-900">${emp.hourly_wage.toFixed(2)}/hr</span>
+                  <span className="font-bold text-slate-900">{formatHourlyRate(emp.hourly_wage)}</span>
                 </div>
 
                 <div className="mt-1 flex items-center justify-between text-xs">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SolveResponse } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import { formatCurrency, formatHourlyRate } from '../utils/format';
 import { Button } from './ui/Button';
 import { POSIntegrationView } from './POSIntegrationView';
 
@@ -194,11 +195,11 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-slate-900">
-              ${labor.total_payroll_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {formatCurrency(labor.total_payroll_cost)}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Est. base: ${labor.regular_payroll_cost.toFixed(2)}
+            Est. base: {formatCurrency(labor.regular_payroll_cost)}
           </p>
           {unpricedBadge && <div className="mt-1.5">{unpricedBadge}</div>}
         </div>
@@ -226,7 +227,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className={`text-2xl font-bold font-mono-tabular ${labor.total_overtime_hours > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
-              ${labor.overtime_payroll_cost.toFixed(2)}
+              {formatCurrency(labor.overtime_payroll_cost)}
             </span>
             <span className={`px-2 py-0.5 rounded text-xs font-semibold ${labor.overtime_lines_count > 0 ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
               {labor.overtime_lines_count > 0 ? `${labor.overtime_lines_count} OT Lines` : '0 OT Risk'}
@@ -237,7 +238,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </p>
           {overtimePremiumByLine.size > 0 && (
             <p className="text-xs text-slate-500 mt-0.5">
-              Overtime premium (extra 0.5x): ${overtimePremiumTotal.toFixed(2)}
+              Overtime premium (extra 0.5x): {formatCurrency(overtimePremiumTotal)}
             </p>
           )}
         </div>
@@ -248,7 +249,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-slate-900">
-              {avgWage === null ? '' : `$${avgWage.toFixed(2)}/hr`}
+              {formatHourlyRate(avgWage)}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
@@ -289,7 +290,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
           <div className="flex items-center gap-2">
             {unpricedBadge}
             <span className="text-xs font-mono-tabular text-slate-600 bg-slate-100 px-3 py-1 rounded-md">
-              Est. Weekly Spend: ${labor.total_payroll_cost.toFixed(2)}
+              Est. Weekly Spend: {formatCurrency(labor.total_payroll_cost)}
             </span>
           </div>
         </div>
@@ -318,7 +319,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                   </div>
                   <span className="text-xs text-slate-500 block mt-1">Allocated daily spend</span>
                   <div className="text-base font-bold font-mono-tabular text-slate-900">
-                    ${cost.toFixed(2)}
+                    {formatCurrency(cost)}
                   </div>
                 </div>
 
@@ -332,7 +333,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                     />
                   </div>
                   <span className="text-xs text-slate-500 mt-1 block text-right font-mono-tabular">
-                    {hours > 0 ? `$${(cost / hours).toFixed(2)}/hr` : '—'}
+                    {hours > 0 ? formatHourlyRate(cost / hours) : '—'}
                   </span>
                 </div>
               </div>
@@ -383,7 +384,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                     {line.qualification_tier}
                   </td>
                   <td className="py-3 px-3 text-right text-slate-700">
-                    {line.hourly_wage === null ? '' : `$${line.hourly_wage.toFixed(2)}/hr`}
+                    {formatHourlyRate(line.hourly_wage)}
                   </td>
                   <td className="py-3 px-3 text-right font-bold text-slate-900">
                     {line.weekly_hours}h
@@ -399,7 +400,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                         </span>
                         {overtimePremiumByLine.has(line.cohort_id) && (
                           <span className="block text-xs text-amber-800 mt-0.5">
-                            premium +${overtimePremiumByLine.get(line.cohort_id)!.toFixed(2)}
+                            premium +{formatCurrency(overtimePremiumByLine.get(line.cohort_id))}
                           </span>
                         )}
                       </>
@@ -408,7 +409,7 @@ export const LaborAnalysisView: React.FC<LaborAnalysisViewProps> = ({
                     )}
                   </td>
                   <td className="py-3 px-4 text-right font-bold text-slate-900">
-                    {line.estimated_weekly_payroll === null ? '' : `$${line.estimated_weekly_payroll.toFixed(2)}`}
+                    {formatCurrency(line.estimated_weekly_payroll)}
                   </td>
                 </tr>
               ))}

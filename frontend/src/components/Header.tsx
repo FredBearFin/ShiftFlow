@@ -1,5 +1,6 @@
 import React from 'react';
 import { ActiveTabId, SolveResponse } from '../types';
+import { formatCurrency } from '../utils/format';
 
 // Number keys bound in App.tsx keyboard handler; tabs without a key show no badge.
 const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
@@ -45,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
       id: 'labor',
       label: 'Labor & Payroll Economics',
       badge: solution
-        ? `$${Math.round(solution.labor_analysis.total_payroll_cost).toLocaleString()}`
+        ? formatCurrency(solution.labor_analysis.total_payroll_cost)
         : undefined,
     },
     {
@@ -88,7 +89,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {solution
-                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll`
+                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • ${formatCurrency(solution.labor_analysis.total_payroll_cost)} Weekly Payroll`
                   : 'Automated weekly schedule builder'}
               </p>
             </div>
@@ -100,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <div>
                   <span className="text-slate-500">Payroll:</span>
                   <span className="ml-1 font-mono-tabular font-bold text-slate-900">
-                    ${solution.labor_analysis.total_payroll_cost.toFixed(0)}
+                    {formatCurrency(solution.labor_analysis.total_payroll_cost)}
                   </span>
                 </div>
                 <div className="h-3.5 w-px bg-slate-200" />

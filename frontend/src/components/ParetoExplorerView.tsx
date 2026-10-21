@@ -2,6 +2,7 @@ import React from 'react';
 import { ParetoPoint, SolveResponse } from '../types';
 import { Term } from './ui/Term';
 import { Button } from './ui/Button';
+import { formatCurrency } from '../utils/format';
 
 interface ParetoExplorerViewProps {
   solution: SolveResponse;
@@ -82,7 +83,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  {knee.leeway_pct}% is the sweet spot (${Math.round(knee.estimated_weekly_payroll).toLocaleString()}/wk)
+                  {knee.leeway_pct}% is the sweet spot ({formatCurrency(knee.estimated_weekly_payroll)}/wk)
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
@@ -191,7 +192,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         y={cy - 8}
                         className="text-xs font-mono-tabular font-bold fill-slate-800"
                       >
-                        +{pt.leeway_pct}% cost · ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
+                        +{pt.leeway_pct}% cost · {formatCurrency(pt.estimated_weekly_payroll)}/wk
                       </text>
                     )}
                   </g>
@@ -242,7 +243,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       </span>
                     </div>
                     <span className="font-mono-tabular font-bold text-[#2B3A42]">
-                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
+                      {formatCurrency(pt.estimated_weekly_payroll)}/wk
                     </span>
                   </div>
                 );
@@ -296,7 +297,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     </td>
                     <td className="py-2.5 px-3 text-right">+{pt.leeway_pct}%</td>
                     <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}
+                      {formatCurrency(pt.estimated_weekly_payroll)}
                     </td>
                     <td className="py-2.5 px-3 text-right font-bold text-[#2B3A42]">
                       {pt.obj_ergo.toFixed(1)}

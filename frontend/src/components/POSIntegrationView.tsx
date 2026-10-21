@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { uploadPosCsvApi, PosUploadResult } from '../services/api';
 import { Term } from './ui/Term';
+import { formatCurrency } from '../utils/format';
 
 interface POSIntegrationViewProps {
   facilityId: string;
@@ -127,7 +128,7 @@ export const POSIntegrationView: React.FC<POSIntegrationViewProps> = ({
 
         {result && (
           <div className="p-3 bg-[#FFFFFF] border border-[#7F8A92] rounded-lg text-xs text-[#2B3A42] font-semibold space-y-1">
-            <div>Weekly sales in file: ${result.weekly_sales.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+            <div>Weekly sales in file: {formatCurrency(result.weekly_sales)}</div>
             <div>Weekly transactions in file: {result.weekly_transactions.toLocaleString()}</div>
             <div>The demand table for this facility has been updated.</div>
           </div>

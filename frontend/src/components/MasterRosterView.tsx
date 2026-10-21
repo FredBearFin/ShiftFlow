@@ -9,6 +9,7 @@ import {
   StaffMemberAssignment,
 } from '../types';
 import { DAYS_OF_WEEK } from '../services/api';
+import { formatCurrency, formatHourlyRate } from '../utils/format';
 
 const WAGE_MIN = 7.25;
 const WAGE_MAX = 100;
@@ -175,14 +176,14 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
           </span>
           <div className="flex items-baseline justify-between mt-1">
             <span className="text-2xl font-bold font-mono-tabular text-slate-900">
-              ${solution.labor_analysis.total_payroll_cost.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              {formatCurrency(solution.labor_analysis.total_payroll_cost)}
             </span>
             <span className="text-xs font-mono-tabular text-slate-500">
-              {solution.labor_analysis.avg_hourly_wage === null ? '' : `$${solution.labor_analysis.avg_hourly_wage.toFixed(2)}/hr`}
+              {formatHourlyRate(solution.labor_analysis.avg_hourly_wage)}
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            OT: ${solution.labor_analysis.overtime_payroll_cost.toFixed(2)}
+            OT: {formatCurrency(solution.labor_analysis.overtime_payroll_cost)}
           </p>
         </div>
 
@@ -645,7 +646,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                     <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-2">
                       <span>{line.qualification_tier}</span>
                       <span>•</span>
-                      <span className="font-mono-tabular">{line.hourly_wage === null ? '' : `$${line.hourly_wage.toFixed(2)}/hr`}</span>
+                      <span className="font-mono-tabular">{formatHourlyRate(line.hourly_wage)}</span>
                       <span>•</span>
                       <span>Next Mon → Line {line.next_week_line_number}</span>
                     </div>
@@ -700,7 +701,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                   </td>
 
                   <td className="py-3 px-4 text-right font-mono-tabular font-bold text-slate-900">
-                    {line.estimated_weekly_payroll === null ? '' : `$${line.estimated_weekly_payroll.toFixed(2)}`}
+                    {formatCurrency(line.estimated_weekly_payroll)}
                   </td>
                 </tr>
               ))}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { SolveResponse } from '../types';
+import { formatCurrency } from '../utils/format';
 
 interface DOLComplianceViewProps {
   solution: SolveResponse | null;
@@ -91,7 +92,7 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
           title="Overtime (over 40 hours/week)"
           detail={
             otHours > 0
-              ? `${otHours.toFixed(1)} overtime hours this week, costing $${labor.overtime_payroll_cost.toFixed(0)} at the 1.5× rate. Overtime isn't illegal by itself — just budget for the premium pay.`
+              ? `${otHours.toFixed(1)} overtime hours this week, costing ${formatCurrency(labor.overtime_payroll_cost)} at the 1.5× rate. Overtime isn't illegal by itself — just budget for the premium pay.`
               : 'No one is scheduled over 40 hours this week, so no overtime pay applies.'
           }
         />
