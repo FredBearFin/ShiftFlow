@@ -7,7 +7,6 @@ so each must answer 501 rather than return a fixed roster or verdict.
 import unittest
 from fastapi.testclient import TestClient
 
-from app.tests import TEST_HEADERS
 
 from app.main import app
 
@@ -19,7 +18,7 @@ class TestEmergencyWorkflows(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app, headers=TEST_HEADERS)
+        cls.client = TestClient(app)
 
     def test_01_callout_returns_501_without_stored_data(self):
         """Saturday evening callout returns 501 and names no fixed candidate."""

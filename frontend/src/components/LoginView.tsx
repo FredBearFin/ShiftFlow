@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 interface LoginViewProps {
   onLogin: (email: string, password: string) => Promise<string | null>;
   onSignup: (email: string, password: string) => Promise<string | null>;
+  /** When false the server has closed public sign-up, so only Sign In is offered. */
+  signupAllowed?: boolean;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup, signupAllowed = true }) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +18,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup }) => {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const err = mode === 'login' ? await onLogin(email, password) : await onSignup(email, password);
+    const err = mode === 'login' || !signupAllowed ? await onLogin(email, password) : await onSignup(email, password);
     setSubmitting(false);
     if (err) setError(err);
   };
@@ -34,32 +36,34 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSignup }) => {
       </div>
 
       <form onSubmit={handleSubmit} className="w-full max-w-sm enterprise-card p-6 space-y-4">
-        <div className="flex rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => {
-              setMode('login');
-              setError(null);
-            }}
-            className={`flex-1 rounded-md py-1.5 transition-colors ${
-              mode === 'login' ? 'bg-white shadow-sm text-[#2B3A42]' : 'text-slate-500'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode('signup');
-              setError(null);
-            }}
-            className={`flex-1 rounded-md py-1.5 transition-colors ${
-              mode === 'signup' ? 'bg-white shadow-sm text-[#2B3A42]' : 'text-slate-500'
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
+        {signupAllowed && (
+          <div className="flex rounded-lg border border-slate-200 p-0.5 bg-slate-50 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('login');
+                setError(null);
+              }}
+              className={`flex-1 rounded-md py-1.5 transition-colors ${
+                mode === 'login' ? 'bg-white shadow-sm text-[#2B3A42]' : 'text-slate-500'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('signup');
+                setError(null);
+              }}
+              className={`flex-1 rounded-md py-1.5 transition-colors ${
+                mode === 'signup' ? 'bg-white shadow-sm text-[#2B3A42]' : 'text-slate-500'
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+        )}
 
         <div>
           <label htmlFor="email" className="block text-xs font-semibold text-slate-600 mb-1.5">

@@ -3,9 +3,9 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
-import sqlite3
 
-from app.database import get_db, ShiftFlowRepository
+from app.database import ShiftFlowRepository
+from app.deps import get_repo
 from app.engine.pos_sync import POSDemandForecaster
 from app.engine.payroll_export import PayrollExportEngine
 from app.engine.isd_rwsp_solver import ISDRWSPSolver
@@ -31,12 +31,11 @@ async def upload_pos_csv(
     facility_id: str = Query(default="FAC-OMAHA-01", max_length=64),
     open_hour: int = Query(default=6, ge=0, le=23),
     close_hour: int = Query(default=24, ge=1, le=24),
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
     if open_hour >= close_hour:
         raise HTTPException(status_code=422, detail="open_hour must be earlier than close_hour.")
 
-    repo = ShiftFlowRepository(db)
     fac = repo.get_facility(facility_id)
     if not fac:
         raise HTTPException(status_code=404, detail=f"Facility '{facility_id}' not found. Nothing was saved.")
@@ -155,9 +154,8 @@ def _get_default_templates() -> List[ShiftTemplateSchema]:
 @router.get("/payroll/export/gusto", summary="Export Gusto-formatted payroll CSV")
 def export_gusto_payroll(
     facility_id: str = "FAC-OMAHA-01",
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
     fac = _require_payroll_inputs(repo, facility_id)
 
     staff, excluded = _solver_staff(repo, facility_id)
@@ -187,9 +185,8 @@ def export_gusto_payroll(
 @router.get("/payroll/export/adp", summary="Export ADP Workforce Now-formatted payroll CSV")
 def export_adp_payroll(
     facility_id: str = "FAC-OMAHA-01",
-    db: sqlite3.Connection = Depends(get_db),
+    repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    repo = ShiftFlowRepository(db)
     fac = _require_payroll_inputs(repo, facility_id)
 
     staff, excluded = _solver_staff(repo, facility_id)

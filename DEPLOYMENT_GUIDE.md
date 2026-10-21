@@ -44,8 +44,9 @@ pip install -r requirements.txt -r requirements-dev.txt
 # Run automated test suite
 python run_all_tests.py
 
-# Launch development server with hot reload
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Launch development server with hot reload. Login is on by default; for local work only,
+# SHIFTFLOW_AUTH_DISABLED=1 skips it. Otherwise set SHIFTFLOW_SESSION_SECRET (see section 3).
+SHIFTFLOW_AUTH_DISABLED=1 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### Frontend (Node 18+ / Vite / React / TypeScript)
@@ -66,12 +67,18 @@ npm run build
 
 ## 3. Environment Variables Reference (`.env`)
 
+Accounts and data: every signed-in user only sees their own facilities, staff, audit records and rosters. Two accounts can both use the facility id `FAC-OMAHA-01` without ever seeing each other's rows.
+
+**Upgrading an existing database:** data saved before per-user accounts has no owner, so no account can see it. Assign it once to the account that should own it: `python -m app.claim_legacy_data EMAIL` from `backend/` (or `docker compose exec backend python -m app.claim_legacy_data EMAIL`). Running it again moves nothing.
+
 | Variable | Default Value | Description |
 | :--- | :--- | :--- |
-| `SHIFTFLOW_API_KEY` | none (required) | Key that every write request must send in `X-API-Key`. Writes are refused with 503 while it is unset. |
+| `SHIFTFLOW_SESSION_SECRET` | none (required) | Signs login session cookies. Random, at least 32 characters, kept private. The backend refuses to start without it, and every protected request returns 503 if it is somehow missing. |
+| `SHIFTFLOW_ALLOW_SIGNUP` | `true` | Set to `false` to close public sign-up; create accounts with `python -m app.create_user EMAIL` from `backend/` (or `docker compose exec backend python -m app.create_user EMAIL`). |
+| `SHIFTFLOW_COOKIE_SECURE` | `true` | The session cookie is https-only. Set to `false` only for a plain-http address you control. |
+| `SHIFTFLOW_AUTH_DISABLED` | unset | Local development only: `1` runs the backend with no login and unscoped data. Never set it on a reachable server. |
 | `SHIFTFLOW_CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Comma-separated origins allowed to call the API from a browser |
 | `SHIFTFLOW_DB_PATH` | `data/shiftflow.db` | SQLite file. In Docker it sits on the `shiftflow-data` volume. |
-| `VITE_API_KEY` | empty | Build-time key compiled into the frontend. It is visible to anyone who loads the page. |
 | `BACKEND_PORT` | `8000` | Host port for the backend container |
 | `FRONTEND_PORT` | `5173` | Host port for the frontend container (nginx on port 80 inside) |
 

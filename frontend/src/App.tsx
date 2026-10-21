@@ -107,9 +107,11 @@ export function App() {
   });
 
   const [authState, setAuthState] = useState<'checking' | 'needs-login' | 'ready'>('checking');
+  const [signupAllowed, setSignupAllowed] = useState(true);
 
   useEffect(() => {
-    authStatusApi().then(({ login_required, logged_in }) => {
+    authStatusApi().then(({ login_required, logged_in, signup_allowed }) => {
+      setSignupAllowed(signup_allowed);
       setAuthState(login_required && !logged_in ? 'needs-login' : 'ready');
     });
   }, []);
@@ -404,7 +406,7 @@ export function App() {
     return <div className="min-h-screen bg-[#F4F1EA]" />;
   }
   if (authState === 'needs-login') {
-    return <LoginView onLogin={handleLogin} onSignup={handleSignup} />;
+    return <LoginView onLogin={handleLogin} onSignup={handleSignup} signupAllowed={signupAllowed} />;
   }
 
   return (

@@ -8,7 +8,6 @@ Verifies:
 import unittest
 from fastapi.testclient import TestClient
 
-from app.tests import TEST_HEADERS
 
 from app.database import init_db
 from app.main import app
@@ -21,7 +20,7 @@ class TestIdempotency(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         init_db()
-        cls.client = TestClient(app, headers=TEST_HEADERS)
+        cls.client = TestClient(app)
 
     def setUp(self):
         IdempotencyStore.clear_all()

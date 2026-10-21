@@ -18,7 +18,6 @@ Tests:
 import unittest
 from fastapi.testclient import TestClient
 
-from app.tests import TEST_HEADERS
 
 from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.engine.ergonomics import (
@@ -42,7 +41,7 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
     """Comprehensive verification of the Becker (2026) mathematical framework and Labor Analytics."""
 
     def setUp(self) -> None:
-        self.client = TestClient(app, headers=TEST_HEADERS)
+        self.client = TestClient(app)
 
     def test_01_shift_type_penalties_table4(self) -> None:
         """Verify Criteria 1 (W^SL_t) and 2 (W^MS_t) from Becker Table 4."""

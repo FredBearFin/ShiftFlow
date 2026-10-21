@@ -172,6 +172,11 @@ class IdempotencyMiddleware:
             await resp(scope, receive, send)
             return
 
+        # With login on, each user's keys live in their own namespace, so one user can never
+        # replay (or collide with) another user's stored response by reusing a key.
+        owner_id = scope.get("state", {}).get("user_id")
+        store_key = f"{owner_id}:{idempotency_key}" if owner_id else idempotency_key
+
         # Buffer the incoming request body and hash it, so a replay can be checked against the stored request
         body_messages = []
         request_body = b""
@@ -185,7 +190,7 @@ class IdempotencyMiddleware:
         body_hash = hashlib.sha256(request_body).hexdigest()
 
         # Check existing record in persistence store
-        record = IdempotencyStore.get_record(idempotency_key)
+        record = IdempotencyStore.get_record(store_key)
         if record:
             if (
                 record["request_hash"] != body_hash
@@ -228,7 +233,7 @@ class IdempotencyMiddleware:
             return
 
         started = IdempotencyStore.start_request(
-            key=idempotency_key,
+            key=store_key,
             method=method,
             path=scope.get("path", ""),
             request_hash=body_hash,
@@ -280,18 +285,18 @@ class IdempotencyMiddleware:
                         header_dict.pop("idempotency-key", None)
                         header_dict.pop("Idempotency-Key", None)
                         IdempotencyStore.complete_request(
-                            key=idempotency_key,
+                            key=store_key,
                             status_code=response_status,
                             response_headers=header_dict,
                             response_body=response_body.decode("utf-8", errors="replace"),
                         )
                     else:
-                        IdempotencyStore.clear_failed_request(idempotency_key)
+                        IdempotencyStore.clear_failed_request(store_key)
             else:
                 await send(message)
 
         try:
             await self.app(scope, custom_receive, custom_send)
         except Exception:
-            IdempotencyStore.clear_failed_request(idempotency_key)
+            IdempotencyStore.clear_failed_request(store_key)
             raise

@@ -128,6 +128,13 @@ def init_db() -> None:
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
+    CREATE TABLE IF NOT EXISTS login_failures (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        throttle_key TEXT NOT NULL,
+        failed_at REAL NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_login_failures_key ON login_failures (throttle_key, failed_at);
+
     CREATE TABLE IF NOT EXISTS idempotency_records (
         key TEXT PRIMARY KEY,
         method TEXT NOT NULL,
@@ -168,22 +175,49 @@ class SeparationAuditExistsError(Exception):
 
 
 class ShiftFlowRepository:
-    """Repository handling CRUD operations for facilities, staff, rosters, and POS data."""
+    """Repository handling CRUD operations for facilities, staff, rosters, and POS data.
 
-    def __init__(self, conn: sqlite3.Connection):
+    With owner_id set, the repository is scoped to one signed-in user. Facility ids that
+    callers pass in and read back are the user's own ("FAC-OMAHA-01"); they are stored
+    under an owner prefix so two accounts can use the same facility id without ever
+    seeing each other's rows, and an employee id that belongs to another account behaves
+    exactly like one that does not exist. With owner_id None (login explicitly disabled
+    for local development) ids are stored as given.
+    """
+
+    def __init__(self, conn: sqlite3.Connection, owner_id: Optional[str] = None):
         self.conn = conn
+        self.owner_id = owner_id
+
+    # -------------------------------------------------------------
+    # Owner scoping
+    # -------------------------------------------------------------
+    def _stored_facility_id(self, facility_id: str) -> str:
+        return f"{self.owner_id}:{facility_id}" if self.owner_id else facility_id
+
+    def _caller_facility_id(self, stored_facility_id: str) -> str:
+        if self.owner_id:
+            prefix = f"{self.owner_id}:"
+            if stored_facility_id.startswith(prefix):
+                return stored_facility_id[len(prefix):]
+        return stored_facility_id
+
+    def _owns_stored_facility(self, stored_facility_id: str) -> bool:
+        if not self.owner_id:
+            return True
+        return stored_facility_id.startswith(f"{self.owner_id}:")
 
     # -------------------------------------------------------------
     # Facility Operations
     # -------------------------------------------------------------
     def get_facility(self, facility_id: str) -> Optional[Dict[str, Any]]:
         cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM facilities WHERE id = ?", (facility_id,))
+        cursor.execute("SELECT * FROM facilities WHERE id = ?", (self._stored_facility_id(facility_id),))
         row = cursor.fetchone()
         if not row:
             return None
         return {
-            "id": row["id"],
+            "id": self._caller_facility_id(row["id"]),
             "name": row["name"],
             "location": row["location"],
             "operating_hours": row["operating_hours"],
@@ -216,7 +250,7 @@ class ShiftFlowRepository:
                 updated_at = CURRENT_TIMESTAMP;
             """,
             (
-                facility_id,
+                self._stored_facility_id(facility_id),
                 name,
                 location,
                 operating_hours,
@@ -230,65 +264,54 @@ class ShiftFlowRepository:
     # -------------------------------------------------------------
     # Employee Operations (with Title VII/ADA Accommodations & Audit)
     # -------------------------------------------------------------
-    def list_employees(self, facility_id: str, active_only: bool = False) -> List[Dict[str, Any]]:
-        cursor = self.conn.cursor()
-        if active_only:
-            cursor.execute(
-                "SELECT * FROM employees WHERE facility_id = ? AND active = 1 ORDER BY assigned_line ASC, name ASC",
-                (facility_id,),
-            )
-        else:
-            cursor.execute(
-                "SELECT * FROM employees WHERE facility_id = ? ORDER BY active DESC, assigned_line ASC, name ASC",
-                (facility_id,),
-            )
-        rows = cursor.fetchall()
-        return [
-            {
-                "id": r["id"],
-                "facility_id": r["facility_id"],
-                "name": r["name"],
-                "role": r["role"],
-                "wage": float(r["wage"]),
-                "active": bool(r["active"]),
-                "available_days": json.loads(r["available_days_json"]),
-                "assigned_line": r["assigned_line"],
-                "accommodation_type": r["accommodation_type"] if "accommodation_type" in r.keys() else "none",
-                "statutory_notes": r["statutory_notes"] if "statutory_notes" in r.keys() else None,
-                "separation_category": r["separation_category"] if "separation_category" in r.keys() else None,
-                "separation_reason": r["separation_reason"] if "separation_reason" in r.keys() else None,
-                "separation_timestamp": r["separation_timestamp"] if "separation_timestamp" in r.keys() else None,
-                "recorded_by": r["recorded_by"] if "recorded_by" in r.keys() else None,
-                "created_at": r["created_at"],
-                "updated_at": r["updated_at"],
-            }
-            for r in rows
-        ]
-
-    def get_employee(self, employee_id: str) -> Optional[Dict[str, Any]]:
-        cursor = self.conn.cursor()
-        cursor.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
-        r = cursor.fetchone()
-        if not r:
-            return None
+    def _employee_dict(self, r: sqlite3.Row) -> Dict[str, Any]:
+        keys = r.keys()
         return {
             "id": r["id"],
-            "facility_id": r["facility_id"],
+            "facility_id": self._caller_facility_id(r["facility_id"]),
             "name": r["name"],
             "role": r["role"],
             "wage": float(r["wage"]),
             "active": bool(r["active"]),
             "available_days": json.loads(r["available_days_json"]),
             "assigned_line": r["assigned_line"],
-            "accommodation_type": r["accommodation_type"] if "accommodation_type" in r.keys() else "none",
-            "statutory_notes": r["statutory_notes"] if "statutory_notes" in r.keys() else None,
-            "separation_category": r["separation_category"] if "separation_category" in r.keys() else None,
-            "separation_reason": r["separation_reason"] if "separation_reason" in r.keys() else None,
-            "separation_timestamp": r["separation_timestamp"] if "separation_timestamp" in r.keys() else None,
-            "recorded_by": r["recorded_by"] if "recorded_by" in r.keys() else None,
+            "accommodation_type": r["accommodation_type"] if "accommodation_type" in keys else "none",
+            "statutory_notes": r["statutory_notes"] if "statutory_notes" in keys else None,
+            "separation_category": r["separation_category"] if "separation_category" in keys else None,
+            "separation_reason": r["separation_reason"] if "separation_reason" in keys else None,
+            "separation_timestamp": r["separation_timestamp"] if "separation_timestamp" in keys else None,
+            "recorded_by": r["recorded_by"] if "recorded_by" in keys else None,
             "created_at": r["created_at"],
             "updated_at": r["updated_at"],
         }
+
+    def _employee_row(self, employee_id: str) -> Optional[sqlite3.Row]:
+        """The raw employee row, or None when it does not exist or belongs to another account."""
+        cursor = self.conn.cursor()
+        cursor.execute("SELECT * FROM employees WHERE id = ?", (employee_id,))
+        r = cursor.fetchone()
+        if r is None or not self._owns_stored_facility(r["facility_id"]):
+            return None
+        return r
+
+    def list_employees(self, facility_id: str, active_only: bool = False) -> List[Dict[str, Any]]:
+        cursor = self.conn.cursor()
+        stored_facility_id = self._stored_facility_id(facility_id)
+        if active_only:
+            cursor.execute(
+                "SELECT * FROM employees WHERE facility_id = ? AND active = 1 ORDER BY assigned_line ASC, name ASC",
+                (stored_facility_id,),
+            )
+        else:
+            cursor.execute(
+                "SELECT * FROM employees WHERE facility_id = ? ORDER BY active DESC, assigned_line ASC, name ASC",
+                (stored_facility_id,),
+            )
+        return [self._employee_dict(r) for r in cursor.fetchall()]
+
+    def get_employee(self, employee_id: str) -> Optional[Dict[str, Any]]:
+        r = self._employee_row(employee_id)
+        return self._employee_dict(r) if r is not None else None
 
     def create_employee(
         self,
@@ -309,7 +332,17 @@ class ShiftFlowRepository:
             INSERT INTO employees (id, facility_id, name, role, wage, active, available_days_json, assigned_line, accommodation_type, statutory_notes)
             VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?);
             """,
-            (emp_id, facility_id, name, role, wage, json.dumps(available_days), assigned_line, accommodation_type, statutory_notes),
+            (
+                emp_id,
+                self._stored_facility_id(facility_id),
+                name,
+                role,
+                wage,
+                json.dumps(available_days),
+                assigned_line,
+                accommodation_type,
+                statutory_notes,
+            ),
         )
         self.conn.commit()
         return self.get_employee(emp_id)  # type: ignore
@@ -366,9 +399,10 @@ class ShiftFlowRepository:
         recorded_by: str,
     ) -> Optional[Dict[str, Any]]:
         """Deactivates employee, unassigns line, and records contemporaneous legal separation audit."""
-        emp = self.get_employee(employee_id)
-        if not emp:
+        row = self._employee_row(employee_id)
+        if row is None:
             return None
+        emp = self._employee_dict(row)
         if not emp["active"]:
             # Already separated: no second audit row and no overwrite of the first record.
             return emp
@@ -384,14 +418,14 @@ class ShiftFlowRepository:
             (separation_category, separation_reason, recorded_by, employee_id),
         )
 
-        # 2. Log immutable separation audit
+        # 2. Log immutable separation audit (stored under the same owner-scoped facility id as the employee)
         audit_id = f"SEP-{uuid.uuid4().hex[:8].upper()}"
         cursor.execute(
             """
             INSERT INTO separation_audits (id, employee_id, facility_id, employee_name, separation_category, separation_reason, recorded_by)
             VALUES (?, ?, ?, ?, ?, ?, ?);
             """,
-            (audit_id, employee_id, emp["facility_id"], emp["name"], separation_category, separation_reason, recorded_by),
+            (audit_id, employee_id, row["facility_id"], emp["name"], separation_category, separation_reason, recorded_by),
         )
 
         self.conn.commit()
@@ -402,14 +436,14 @@ class ShiftFlowRepository:
         cursor = self.conn.cursor()
         cursor.execute(
             "SELECT * FROM separation_audits WHERE facility_id = ? ORDER BY timestamp DESC",
-            (facility_id,),
+            (self._stored_facility_id(facility_id),),
         )
         rows = cursor.fetchall()
         return [
             {
                 "id": r["id"],
                 "employee_id": r["employee_id"],
-                "facility_id": r["facility_id"],
+                "facility_id": self._caller_facility_id(r["facility_id"]),
                 "employee_name": r["employee_name"],
                 "separation_category": r["separation_category"],
                 "separation_reason": r["separation_reason"],
@@ -421,6 +455,8 @@ class ShiftFlowRepository:
 
     def delete_employee(self, employee_id: str) -> bool:
         """Deletes an employee record. Refused while separation audits exist (FLSA/Title VII retention)."""
+        if self._employee_row(employee_id) is None:
+            return False
         cursor = self.conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM separation_audits WHERE employee_id = ?", (employee_id,))
         if cursor.fetchone()[0] > 0:
@@ -457,6 +493,32 @@ class ShiftFlowRepository:
         return dict(row) if row else None
 
     # -------------------------------------------------------------
+    # Login throttling (failed sign-ins per email)
+    # -------------------------------------------------------------
+    def count_login_failures(self, throttle_key: str, since: float) -> int:
+        cursor = self.conn.cursor()
+        cursor.execute(
+            "SELECT COUNT(*) FROM login_failures WHERE throttle_key = ? AND failed_at > ?",
+            (throttle_key, since),
+        )
+        return int(cursor.fetchone()[0])
+
+    def record_login_failure(self, throttle_key: str, now: float, prune_before: float) -> None:
+        """Records one failed sign-in and drops failures older than prune_before, so the table stays small."""
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM login_failures WHERE failed_at <= ?", (prune_before,))
+        cursor.execute(
+            "INSERT INTO login_failures (throttle_key, failed_at) VALUES (?, ?);",
+            (throttle_key, now),
+        )
+        self.conn.commit()
+
+    def clear_login_failures(self, throttle_key: str) -> None:
+        cursor = self.conn.cursor()
+        cursor.execute("DELETE FROM login_failures WHERE throttle_key = ?", (throttle_key,))
+        self.conn.commit()
+
+    # -------------------------------------------------------------
     # Roster Snapshots & Labor Audits (3-Year FLSA Retention)
     # -------------------------------------------------------------
     def save_roster_snapshot(
@@ -473,7 +535,7 @@ class ShiftFlowRepository:
             INSERT INTO roster_snapshots (id, facility_id, week_number, rotation_offset, schedule_data_json)
             VALUES (?, ?, ?, ?, ?);
             """,
-            (snapshot_id, facility_id, week_number, rotation_offset, json.dumps(schedule_data)),
+            (snapshot_id, self._stored_facility_id(facility_id), week_number, rotation_offset, json.dumps(schedule_data)),
         )
         self.conn.commit()
         return snapshot_id
@@ -482,10 +544,13 @@ class ShiftFlowRepository:
         cursor = self.conn.cursor()
         cursor.execute(
             "SELECT id, facility_id, week_number, rotation_offset, created_at FROM roster_snapshots WHERE facility_id = ? ORDER BY created_at DESC",
-            (facility_id,),
+            (self._stored_facility_id(facility_id),),
         )
         rows = cursor.fetchall()
-        return [dict(r) for r in rows]
+        snapshots = [dict(r) for r in rows]
+        for snap in snapshots:
+            snap["facility_id"] = self._caller_facility_id(snap["facility_id"])
+        return snapshots
 
     def save_labor_analysis(
         self,
@@ -505,7 +570,7 @@ class ShiftFlowRepository:
             """,
             (
                 analysis_id,
-                facility_id,
+                self._stored_facility_id(facility_id),
                 week_number,
                 total_regular_hours,
                 total_overtime_hours,

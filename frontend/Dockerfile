@@ -6,8 +6,6 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
 COPY . .
-ARG VITE_API_KEY=""
-ENV VITE_API_KEY=$VITE_API_KEY
 RUN npm run build
 
 FROM nginx:stable-alpine
