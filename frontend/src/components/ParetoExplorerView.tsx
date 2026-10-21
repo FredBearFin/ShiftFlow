@@ -93,7 +93,11 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
           </div>
 
           <div className="w-full overflow-x-auto">
+            {/* Decorative: a screen reader read the axis and point labels as
+                loose unstructured text. The frontier list beside it and the
+                table below are the keyboard- and reader-accessible versions. */}
             <svg
+              aria-hidden="true"
               viewBox={`0 0 ${svgW} ${svgH}`}
               className="w-full h-auto bg-slate-50/60 rounded-lg border border-[#7F8A92]"
             >

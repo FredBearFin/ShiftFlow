@@ -93,7 +93,10 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           when there's nothing to fix. Check the "How often" and weight columns in the table below
           to see what's actually driving each bar.
         </p>
-        <svg viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto">
+        {/* Decorative: the bar labels and point values read as loose
+            unstructured text. The breakdown table below carries the same
+            figures with real row and column headers. */}
+        <svg aria-hidden="true" viewBox={`0 0 ${chartW} ${chartH}`} className="w-full h-auto">
           {criteria.map((c, idx) => {
             const barW = (c.weighted_penalty / maxPenalty) * barAreaW;
             const y = idx * rowH;
