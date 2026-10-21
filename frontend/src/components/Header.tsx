@@ -172,6 +172,7 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 key={tab.id}
                 type="button"
+                aria-current={isActive ? 'page' : undefined}
                 onClick={() => onSelectTab(tab.id)}
                 className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 whitespace-nowrap ${
                   isActive
@@ -206,6 +207,11 @@ export const Header: React.FC<HeaderProps> = ({
             );
           })}
         </nav>
+
+        {/* A number-key jump leaves focus where it was, so the active tab's own
+            aria-current change is never read out. This says which view is up. */}
+        <div role="status" aria-live="polite" className="sr-only">
+          {navTabs.find((tab) => tab.id === activeTab)?.label} view</div>
       </div>
     </header>
   );
