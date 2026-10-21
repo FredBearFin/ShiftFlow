@@ -1,23 +1,26 @@
-# LEGAL & REGULATORY COMPLIANCE MEMORANDUM
-**CONFIDENTIAL DRAFT ANALYSIS / REGULATORY REVIEW**
+# Compliance Research Notes: Legal Topics Relevant to ShiftFlow's Scheduling Logic
+**INFORMAL RESEARCH NOTES — NOT LEGAL ADVICE**
 
-**TO:** Executive Leadership, Product Engineering, & General Counsel  
-**FROM:** Employment, Labor & Regulatory Technology Practice Group  
+**TO:** Founder (product/engineering planning notes)  
+**PREPARED USING:** General employment-law research, not a retained law firm or in-house counsel — ShiftFlow is a solo-founder, self-serve product with no legal department. Nothing in this document is legal advice, and before relying on any of it for a real compliance claim to customers, it should be reviewed by an actual employment attorney.  
 **DATE:** October 19, 2026  
-**SUBJECT:** Comprehensive Legal Risk Audit & Statutory Architecture for ShiftFlow Studio (I-SD-RWSP Workforce OS)
+**SUBJECT:** Legal/regulatory topics worth keeping in mind for ShiftFlow's scheduling and rotation logic
 
 ---
 
-### EXECUTIVE SUMMARY
+### WHY THIS DOCUMENT EXISTS, AND ITS LIMITS
 
-Retail workforce scheduling is no longer a mere operational convenience; it is an active regulatory minefield governed by strict federal, state, and municipal statutory regimes. While legacy scheduling software (e.g., 7shifts, Deputy, When I Work) treats schedules as administrative calendars, ShiftFlow Studio’s algorithmic engine introduces direct legal exposure—and unprecedented statutory safe-harbor opportunities.
+The topics below (wage/hour law, accommodation law, retaliation risk, recordkeeping) are real and apply to scheduling software in general, regardless of company size — they're worth having written down. But two things in the original draft of this document overstated the situation and have been corrected:
 
-This memorandum provides a rigorous legal analysis of ShiftFlow Studio across five core statutory domains:
+1. **Audience/tone**: the original was framed as a formal memo to "Executive Leadership, Product Engineering, & General Counsel" from an "Employment, Labor & Regulatory Technology Practice Group." ShiftFlow has none of those — it's a solo-founder product sold self-serve to individual shift managers. This is now framed as what it actually is: informal research notes for the founder's own product decisions.
+2. **Audience risk**: per `commercial_pricing.md` §3, most Fair Workweek / predictable-scheduling laws bind large chains (commonly 30+ locations), not the true single-location independents ShiftFlow actually sells to. We deliberately do **not** lead with compliance in marketing or sales messaging, because pitching compliance risk to this audience would often be misleading — most of our actual customers aren't the chains these laws target. The legal topics below are still real and still worth tracking (a customer could grow, laws could change, or a given city's threshold could be lower than 30 locations), but they should not be read as "this is why our customers need us," because for most of them today, it isn't.
+
+This document covers five legal/statutory topics relevant to scheduling software generally:
 1. **Municipal & State "Fair Workweek" (Predictive Scheduling) Laws**
 2. **Fair Labor Standards Act (FLSA) Overtime & Workweek Standalone Rules**
 3. **Title VII & ADA Failure-to-Accommodate & Disparate Impact Risks**
 4. **Wrongful Termination, Retaliation, & Constructive Discharge Traps in UI Workflows**
-5. **Statutory Recordkeeping (29 C.F.R. § 516.5) & SaaS Contractual Protections**
+5. **Statutory Recordkeeping (29 C.F.R. § 516.5) & Terms-of-Service Protections**
 
 ---
 
@@ -52,7 +55,7 @@ Under 29 U.S.C. § 207(a)(1), non-exempt employees must receive overtime compens
 
 ### 2.2 Shift Leeway & Buffer Economics
 - In Tristan Becker's (2026) formulation, a 5% to 10% shift design leeway adjusts start and end windows (e.g., 30–45 minutes).
-- **FLSA Rule**: Every minute an employee is suffered or permitted to work is compensable working time under 29 C.F.R. § 785.11. Shift leeway must never mean unrecorded early arrival or late departure. ShiftFlow’s Gusto/ADP export must tie strictly to recorded time windows.
+- **FLSA Rule**: Every minute an employee is suffered or permitted to work is compensable working time under 29 C.F.R. § 785.11. Shift leeway must never mean unrecorded early arrival or late departure. Where the (currently off-by-default — see `api_integration_guide.md`) Gusto/ADP export is enabled, it must tie strictly to recorded time windows.
 
 ---
 
@@ -84,17 +87,17 @@ Under state common law and federal retaliation statutes (Title VII § 704(a), FL
 
 ---
 
-## 5. STATUTORY RECORDKEEPING & B2B SAAS CONTRACTUAL PROTECTIONS
+## 5. STATUTORY RECORDKEEPING & TERMS-OF-SERVICE PROTECTIONS
 
 ### 5.1 FLSA 3-Year Recordkeeping Mandate (29 C.F.R. § 516.5)
 - Federal law mandates that employers retain all basic payroll records for **3 years**, and all work schedules, wage rate tables, and order records for **2 years**.
 - ShiftFlow’s database architecture must maintain immutable, append-only historical roster snapshots (`roster_snapshots` table) to serve as verified evidence during federal DOL wage audits.
 
-### 5.2 SaaS Master Services Agreement (MSA) Safe Harbors
-To insulate ShiftFlow Inc. from direct vicarious liability for managerial labor infractions, the B2B MSA (`terms_and_privacy.md`) must incorporate:
+### 5.2 Terms-of-Service Safe Harbors
+To insulate ShiftFlow Inc. from direct vicarious liability for managerial labor infractions, the terms of service (`terms_and_privacy.md`) should incorporate:
 1. **Disclaimer of Legal & Tax Advice**: Explicit disclaimer that ShiftFlow provides mathematical optimization algorithms, not certified employment law counsel.
-2. **Customer Compliance Indemnification**: Customer warrants that final published rosters comply with local collective bargaining agreements (CBAs) and Fair Workweek ordinances, holding ShiftFlow harmless against wage claims.
-3. **Limitation of Liability**: Consequential damages waiver capping SaaS provider liability at 12 months of subscription fees paid.
+2. **Customer Compliance Responsibility**: Customer (the manager or business signing up) is responsible for ensuring final published rosters comply with applicable labor laws and any collective bargaining agreements (CBAs), holding ShiftFlow harmless against wage claims. "Indemnification" language sized for a B2B enterprise contract is probably overkill for a $9–15/month self-serve consumer-style agreement — plain responsibility language is more appropriate and more enforceable against an individual subscriber.
+3. **Limitation of Liability**: Consequential damages waiver capping liability at a reasonable multiple of subscription fees paid — 12 months was the original figure, but for a $9–15/mo or $20–50/mo subscription that's a small absolute dollar amount either way, so the exact multiple is a minor drafting detail, not a meaningful business risk.
 
 ---
 

@@ -1,8 +1,10 @@
-# ShiftFlow Studio: 30-Day Customer Success & Onboarding Playbook
+# ShiftFlow Studio: 30-Day Onboarding Playbook
 
-## 1. The 30-Day Client Retention Framework
+**Context — who runs this, and how.** ShiftFlow is sold self-serve: there is no customer success team or onboarding call in the primary funnel. The "steps" below are things the shift manager does themselves after signing up (via in-app prompts, checklists, or automated emails, not a human rep), the same way `launch_marketing_copy.md` frames the rest of the self-serve motion. The primary audience is the individual shift manager on the Personal tier; the owner only enters the picture at Day 30, and only as the target of an upsell nudge the manager sends themselves (see `sales_pitch_deck.md`) — not as someone ShiftFlow is running an "executive" sales process against.
 
-Retail store owners and general managers are constantly interrupted by deliveries, customer line surges, and staff callouts. An onboarding process that requires more than 15 minutes of initial setup will fail.
+## 1. The 30-Day Self-Serve Retention Framework
+
+Shift managers at independent convenience stores, liquor stores, smoke shops, bars, and restaurants are constantly interrupted by deliveries, customer line surges, and staff callouts. An onboarding process that requires more than 15 minutes of initial setup will fail.
 
 The ShiftFlow onboarding framework is structured around three critical milestones:
 - **T-Zero (Day 0)**: Initial 3-minute facility wizard setup.
@@ -33,10 +35,10 @@ The ShiftFlow onboarding framework is structured around three critical milestone
   ├── Verify zero overtime exposure across all lines
   └── Audit any callout swaps directly in the roster
 
-[Day 30: Executive ROI Review]
-  ├── Export Gusto / ADP payroll CSV
-  ├── Review net labor savings ($1,095/mo average value delivered)
-  └── Convert from 30-day beta to paid annual contract
+[Day 30: Labor Analysis Review]
+  ├── Open the in-app Labor Analysis view for the real savings number (export to Gusto/ADP CSV only if that optional, off-by-default integration is enabled — see `api_integration_guide.md`)
+  ├── Decide whether to continue the Personal-tier subscription (monthly, self-serve, cancel anytime — no contract)
+  └── If there's a real savings number to show, the manager can use it to start the owner-upgrade conversation (see `sales_pitch_deck.md`) toward a Business-tier account — this is an upsell nudge the manager sends, not a sales call ShiftFlow runs
 ```
 
 ---
