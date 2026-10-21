@@ -1259,7 +1259,10 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                                 </span>
                               )}
                               {cell.availability_conflict && (
-                                <span className="text-[9px] font-bold uppercase tracking-wide text-status-watch-ink mt-0.5">
+                                // Carries its own background: the pill under it now runs from
+                                // 91% to 8% luminance, and no single text colour clears 4.5:1
+                                // across that whole range.
+                                <span className="text-[9px] font-bold uppercase tracking-wide bg-status-watch-strong text-card rounded px-1 mt-0.5">
                                   ! Conflict
                                 </span>
                               )}
@@ -1270,8 +1273,7 @@ export const MasterRosterView: React.FC<MasterRosterViewProps> = ({
                                 />
                               )}
                             </div>
-                          </button>
-                        )}
+                          </button>                        )}
                       </td>
                     );
                   })}

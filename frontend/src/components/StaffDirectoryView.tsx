@@ -138,8 +138,11 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
         </div>
       </div>
 
-      {/* Staff Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Staff Grid. auto-rows-fr with h-full cards: a long role title or an
+          assigned pattern chip used to make one card taller than its
+          neighbours, so the availability rows — the thing being compared
+          across people — sat at a different height in every card. */}
+      <div className="grid auto-rows-fr grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {displayedEmployees.map((emp) => {
           const assignedLine = rosterLines.find(
             (l) => l.assigned_employee_id === emp.employee_id || l.line_number === emp.assigned_line_id
@@ -148,7 +151,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
           return (
             <div
               key={emp.employee_id}
-              className={`card p-4 flex flex-col justify-between transition-all ${
+              className={`card h-full p-4 flex flex-col justify-between transition-all ${
                 emp.is_active
                   ? 'bg-white border-border-control'
                   : 'bg-surface-subtle border-border-control opacity-60'
@@ -241,7 +244,7 @@ export const StaffDirectoryView: React.FC<StaffDirectoryViewProps> = ({
                 <span className="text-xs font-mono-tabular text-muted">{emp.employee_id}</span>
                 {emp.is_active ? (
                   <Button
-                    variant="danger"
+                    variant="danger-quiet"
                     size="sm"
                     onClick={() => {
                       setSeparatingEmp(emp);

@@ -1,6 +1,12 @@
 import React from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'accent';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'danger'
+  | 'danger-quiet'
+  | 'accent';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps
@@ -18,6 +24,12 @@ const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   secondary: 'border border-border-control bg-card text-ink hover:bg-canvas font-semibold',
   ghost: 'text-ink hover:bg-canvas font-semibold',
   danger: `bg-[var(--danger)] text-card hover:bg-danger-strong ${BUTTON_SHADOW} font-semibold`,
+  // For a destructive action that repeats down a list. Twelve filled red
+  // buttons in a staff grid read as twelve warnings rather than as twelve
+  // rarely-used controls, and drown the availability the grid exists to show.
+  // No shadow: only the filled variants carry one.
+  // --danger on --card measures 6.72:1, and 5.73:1 on the --danger-soft hover.
+  'danger-quiet': 'border border-border-control bg-card text-danger hover:bg-danger-soft font-semibold',
   // Accent is for one key action per view. It carries its own padding (py-2.5), so it skips the size classes below.
   accent: `bg-accent text-card hover:bg-accent-strong ${BUTTON_SHADOW} font-bold px-5 py-2.5 text-xs`,
 };

@@ -47,6 +47,8 @@ import { ErgonomicsAuditView } from './components/ErgonomicsAuditView';
 import { DOLComplianceView } from './components/DOLComplianceView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { Button } from './components/ui/Button';
+import { ResultState } from './components/ui/ResultState';
+import { RosterSkeleton } from './components/ui/RosterSkeleton';
 import { CompletionNote } from './components/onboarding/CompletionNote';
 
 type SolveStatus = 'loading' | 'error' | 'ready';
@@ -178,6 +180,11 @@ export function App() {
   useEffect(() => {
     setErrorBannerDismissed(false);
   }, [solveError]);
+
+  // A re-solve, as opposed to the first solve: a schedule is already on screen
+  // and is about to be replaced. The first solve has nothing to dim and gets
+  // the roster skeleton instead.
+  const isResolving = solveStatus === 'loading' && solution !== null;
 
   useEffect(() => {
     let isMounted = true;
@@ -562,16 +569,14 @@ export function App() {
             {separationError}
           </div>
         )}
-        {solveStatus === 'error' && !errorBannerDismissed && (
-          // While the setup wizard is open its fixed inset-0 z-50 overlay sits on top of
-          // <main>, so an in-flow banner here is invisible. Lift it above the overlay.
+        {/* While the setup wizard is open its fixed inset-0 z-50 overlay sits on top of
+            <main>, so the result state filling the content area is invisible behind it.
+            The banner is kept for exactly that case, lifted above the overlay. With the
+            wizard closed, the result state below carries this instead of a 1px bar. */}
+        {solveStatus === 'error' && !errorBannerDismissed && isWizardOpen && (
           <div
             role="alert"
-            className={`flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger ${
-              isWizardOpen
-                ? 'fixed inset-x-3 top-3 z-[60] mx-auto max-w-3xl sm:inset-x-6'
-                : 'mb-4'
-            }`}
+            className="fixed inset-x-3 top-3 z-[60] mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 rounded-md border border-danger bg-white px-4 py-3 text-sm text-danger sm:inset-x-6"
           >
             <span>
               {solveError} No schedule is shown for these settings — the last one that worked
@@ -593,15 +598,16 @@ export function App() {
           </div>
         )}
         {/* Solve progress is announced on every re-solve, not just the first one. */}
-        <div role="status" aria-live="polite" className={solveStatus === 'loading' && solution ? 'mb-4' : undefined}>
+        <div role="status" aria-live="polite" className={isResolving ? 'mb-4' : undefined}>
           {solveStatus === 'loading' ? (
             solution ? (
+              // Names what the dimming below means, and stays undimmed itself.
               <span className="inline-flex items-center gap-2 rounded-md border border-border-control bg-white px-3 py-1.5 text-xs font-semibold text-ink">
                 <span
                   aria-hidden="true"
                   className="h-3 w-3 animate-spin rounded-full border-2 border-border border-t-slate-600"
                 />
-                Working out the updated schedule…
+                Recalculating — the figures below are from your previous settings
               </span>
             ) : (
               <span className="sr-only">Working out your schedule…</span>
@@ -610,8 +616,16 @@ export function App() {
             <span className="sr-only">Your schedule is ready.</span>
           ) : null}
         </div>
+        {/* A re-solve keeps the previous schedule on screen while the new one
+            is worked out. Dimming it says those figures are being replaced and
+            stops them being clicked mid-flight; the live-region chip above
+            stays at full strength so there is always a readable explanation of
+            why the page looks this way. */}
         {solution ? (
-          <>
+          <div
+            className={isResolving ? 'pointer-events-none opacity-60' : undefined}
+            aria-busy={isResolving ? 'true' : undefined}
+          >
             {activeTab === 'roster' && solution !== null && <CompletionNote solution={solution} />}
             {activeTab === 'roster' && (
               <MasterRosterView
@@ -665,15 +679,35 @@ export function App() {
             )}
             {activeTab === 'ergonomics' && <ErgonomicsAuditView solution={solution} />}
             {activeTab === 'compliance' && <DOLComplianceView solution={solution} />}
-          </>
-        ) : solveStatus === 'loading' ? (
-          <div className="enterprise-card p-12 text-center text-sm text-muted">
-            <span
-              aria-hidden="true"
-              className="mx-auto mb-4 block h-6 w-6 animate-spin rounded-full border-2 border-border border-t-slate-600"
-            />
-            Calculating Optimized Schedule, Coverage & Labor Economics...
           </div>
+        ) : solveStatus === 'loading' ? (
+          <RosterSkeleton />
+        ) : solveStatus === 'error' ? (
+          // The content area used to be left empty here: a 1px red-outlined
+          // bar at the top and roughly 800px of blank cream underneath it.
+          <ResultState
+            role="alert"
+            tone="problem"
+            glyph="!"
+            headline="No schedule could be worked out for these settings"
+            detail={solveError ?? undefined}
+            actions={
+              <>
+                <Button variant="primary" onClick={() => setSolveAttempt((n) => n + 1)}>
+                  Try again
+                </Button>
+                <Button variant="secondary" onClick={() => setIsWizardOpen(true)}>
+                  Open setup
+                </Button>
+              </>
+            }
+          >
+            Nothing is shown here on purpose. The last schedule that worked answered different
+            settings, so it is not displayed, printed or exported as the result for these ones.
+            Try again in case the service was briefly unavailable; if it keeps failing, open setup
+            and check the hours you asked for — a staffing table that needs more people in an hour
+            than your shift types can cover has no answer.
+          </ResultState>
         ) : null}
       </main>
 
