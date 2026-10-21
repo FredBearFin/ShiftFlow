@@ -24,7 +24,7 @@ export const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
 export const TAB_LABELS: { id: ActiveTabId; label: string }[] = [
   { id: 'roster', label: 'Weekly Schedule' },
   { id: 'staff', label: 'Staff Directory & Availability' },
-  { id: 'labor', label: 'Labor & Payroll Economics' },
+  { id: 'labor', label: 'Labor & Payroll' },
   { id: 'coverage', label: '24h Coverage Heatmap' },
   { id: 'pareto', label: 'Flexibility vs. Rest' },
   { id: 'ergonomics', label: 'Ergonomics Health Audit' },

@@ -59,11 +59,14 @@ export const Header: React.FC<HeaderProps> = ({
     },
     {
       id: 'labor',
-      label: 'Labor & Payroll Economics',
+      label: 'Labor & Payroll',
       badge: solution
         ? `${formatCurrency(solution.labor_analysis.total_payroll_cost)} · ${pricedLineCount}/${lineCount} priced`
         : undefined,
-      badgeReserve: formatCurrency(100000),
+      // Reserve the whole badge, money AND the priced fraction beside it; reserving
+      // only the money let the nav reflow when a solve landed, which is the exact
+      // jump badgeReserve exists to prevent.
+      badgeReserve: `${formatCurrency(100000)} \u00b7 00/00 priced`,
     },
     {
       id: 'coverage',
