@@ -138,12 +138,39 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
     });
   };
 
-  // Keep the computed demand matrix and shift templates in sync with the answers live,
-  // the same way every other step in this wizard updates as you type.
+  const [rebuildArmed, setRebuildArmed] = useState(false);
+  const [rebuildNotice, setRebuildNotice] = useState<string | null>(null);
+  const seededRef = useRef(false);
+
+  // Rebuilding throws away every hand-entered figure on steps 2 and 3, so it happens
+  // only when asked for. This used to run on every change to any step-1 answer - and
+  // once on mount, before the user had touched anything - which silently replaced a
+  // hand-built staffing table, custom shift times, or a POS-derived matrix.
+  const rebuildFromAnswers = () => {
+    onChangeDemandMatrix(buildDemandMatrix(answers));
+    onChangeTemplates(buildShiftTemplates(answers));
+    setRebuildArmed(false);
+    setRebuildNotice('Steps 2 and 3 were rebuilt from these answers.');
+  };
+
+  // Seed once, on first entry, and only while there is nothing to lose: an all-zero
+  // staffing table. Anything already in it - a preset, a restored session, a POS
+  // import, typed-in figures - is left alone.
   React.useEffect(() => {
+    if (seededRef.current) return;
+    seededRef.current = true;
+    if (demandMatrix.some((row) => row.some((cell) => cell !== 0))) return;
     onChangeDemandMatrix(buildDemandMatrix(answers));
     onChangeTemplates(buildShiftTemplates(answers));
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // A pending confirmation, and the note about the last rebuild, belong to the answers
+  // they were made against. This effect only touches local UI state - unlike the one it
+  // replaced, it can never discard the user's work.
+  React.useEffect(() => {
+    setRebuildArmed(false);
+    setRebuildNotice(null);
   }, [answers]);
 
   const [staffName, setStaffName] = useState('');
@@ -482,6 +509,40 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     <option value="quieter">Quieter</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900">
+                  Build steps 2 and 3 from these answers
+                </h4>
+                <p className="text-xs text-amber-900">
+                  These answers are a starting point, not the schedule. Use this when you
+                  want them turned into the staffing table on step 2 and the shift times on
+                  step 3. Anything you have already entered on those two steps by hand will
+                  be replaced.
+                </p>
+                {rebuildArmed ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-semibold text-amber-900">
+                      Replace everything on steps 2 and 3?
+                    </span>
+                    <Button variant="secondary" onClick={rebuildFromAnswers}>
+                      Yes, replace it
+                    </Button>
+                    <Button variant="secondary" onClick={() => setRebuildArmed(false)}>
+                      Keep what I have
+                    </Button>
+                  </div>
+                ) : (
+                  <Button variant="secondary" onClick={() => setRebuildArmed(true)}>
+                    Rebuild my staffing table from these answers
+                  </Button>
+                )}
+                {rebuildNotice && (
+                  <p role="status" className="text-xs font-semibold text-amber-900">
+                    {rebuildNotice}
+                  </p>
+                )}
               </div>
 
               <div>

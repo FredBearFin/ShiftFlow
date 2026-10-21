@@ -6,6 +6,7 @@
 import {
   ArchetypePreset,
   ErgonomicGuardrails,
+  PersistedSolveConfig,
   SeparationCategory,
   ShiftTemplate,
   SolveRequest,
@@ -202,6 +203,197 @@ export const DEFAULT_ARCHETYPES: ArchetypePreset[] = [
 const DEFAULT_PRESET = DEFAULT_ARCHETYPES[0];
 export const DEFAULT_TEMPLATES: ShiftTemplate[] = DEFAULT_PRESET.templates;
 export const DEFAULT_GUARDRAILS: ErgonomicGuardrails = DEFAULT_PRESET.guardrails;
+
+/* -------------------------------------------------------------------------
+ * Saving the solve configuration between sessions
+ *
+ * Staff records are stored on the server and survive a reload. The rest of the
+ * setup - the 7x24 staffing table most of all - used to live only in React state,
+ * so a reload silently swapped a manager's work for defaults. Because the staff
+ * survived, onboarding did not reopen and nothing reported the loss: the manager
+ * saw a different schedule and no explanation.
+ *
+ * localStorage matches the pattern already used for this app's other saved choices
+ * (shiftflow.planningOnly, shiftflow.singleKeyShortcuts). It is per-browser rather
+ * than per-account, so App clears it on logout.
+ * ------------------------------------------------------------------------- */
+
+const SOLVE_CONFIG_KEY = 'shiftflow.solveConfig';
+const SOLVE_CONFIG_VERSION = 1;
+
+/**
+ * What came back when the saved configuration was read. A restore that is partial or
+ * that failed outright is reported, with the parts that did not survive named, so the
+ * caller can tell the user instead of quietly presenting a different schedule.
+ */
+export type SolveConfigRestore =
+  | { status: 'none' }
+  | { status: 'ok'; config: PersistedSolveConfig }
+  | { status: 'partial'; config: Partial<PersistedSolveConfig>; missing: string[] }
+  | { status: 'failed'; reason: string };
+
+/** Plain-language names for the saved fields, for telling a shift supervisor what was lost. */
+const SOLVE_CONFIG_FIELD_LABELS: Record<keyof PersistedSolveConfig, string> = {
+  archetype_id: 'the example it started from',
+  facility_name: 'the business name',
+  demand_matrix: 'the staffing table',
+  templates: 'the shift times',
+  guardrails: 'the scheduling rules',
+  pareto_leeway_pct: 'the cost-versus-rest setting',
+  rotation_week_offset: 'the rotation week',
+};
+
+const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/** Accepts only a full 7x24 grid of non-negative counts; a short or ragged grid is not a staffing table. */
+function readDemandMatrix(raw: unknown): number[][] | null {
+  if (!Array.isArray(raw) || raw.length !== 7) return null;
+  const rows: number[][] = [];
+  for (const row of raw) {
+    if (!Array.isArray(row) || row.length !== 24) return null;
+    if (!row.every((cell) => isFiniteNumber(cell) && cell >= 0)) return null;
+    rows.push(row.map((cell) => Math.round(cell as number)));
+  }
+  return rows;
+}
+
+const TEMPLATE_NUMERIC_FIELDS = [
+  'earliest_start',
+  'latest_end',
+  'min_duration',
+  'max_duration',
+  'preferred_start',
+  'preferred_duration',
+] as const;
+
+function readTemplates(raw: unknown): ShiftTemplate[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  for (const tpl of raw) {
+    if (!tpl || typeof tpl !== 'object') return null;
+    const rec = tpl as Record<string, unknown>;
+    if (!['M', 'D', 'E', 'N'].includes(rec.code as string)) return null;
+    if (typeof rec.name !== 'string' || typeof rec.enabled !== 'boolean') return null;
+    if (!TEMPLATE_NUMERIC_FIELDS.every((field) => isFiniteNumber(rec[field]))) return null;
+  }
+  return raw as ShiftTemplate[];
+}
+
+const GUARDRAIL_NUMERIC_FIELDS = [
+  'min_consecutive_work_days',
+  'max_consecutive_work_days',
+  'min_consecutive_rest_days',
+  'max_consecutive_rest_days',
+  'max_consecutive_nights',
+  'max_consecutive_evenings',
+] as const;
+
+const GUARDRAIL_FLAG_FIELDS = [
+  'enforce_forward_rotation',
+  'enforce_zero_clopening',
+  'avoid_single_rest_days',
+  'avoid_single_night_shifts',
+  'prioritize_free_weekends',
+] as const;
+
+function readGuardrails(raw: unknown): ErgonomicGuardrails | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const rec = raw as Record<string, unknown>;
+  if (!GUARDRAIL_NUMERIC_FIELDS.every((field) => isFiniteNumber(rec[field]))) return null;
+  if (!GUARDRAIL_FLAG_FIELDS.every((field) => typeof rec[field] === 'boolean')) return null;
+  return raw as ErgonomicGuardrails;
+}
+
+/** Saves the whole solve configuration. Returns false when the browser refuses to store it. */
+export function saveSolveConfig(config: PersistedSolveConfig): boolean {
+  try {
+    window.localStorage.setItem(
+      SOLVE_CONFIG_KEY,
+      JSON.stringify({ version: SOLVE_CONFIG_VERSION, ...config })
+    );
+    return true;
+  } catch {
+    // Storage can be blocked or full. The caller surfaces this rather than hiding it.
+    return false;
+  }
+}
+
+/** Forgets the saved configuration. Called on logout, since the key is per-browser. */
+export function clearSolveConfig(): void {
+  try {
+    window.localStorage.removeItem(SOLVE_CONFIG_KEY);
+  } catch {
+    // Nothing to clear if storage is unavailable.
+  }
+}
+
+/**
+ * Reads the saved configuration back. Every field is validated on the way in; a field
+ * that is missing or unusable is left out of `config` (so the caller applies its own
+ * default) and named in `missing`, never silently replaced.
+ */
+export function loadSolveConfig(): SolveConfigRestore {
+  let raw: string | null;
+  try {
+    raw = window.localStorage.getItem(SOLVE_CONFIG_KEY);
+  } catch {
+    return { status: 'failed', reason: 'this browser is blocking saved data' };
+  }
+  if (raw === null) return { status: 'none' };
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return { status: 'failed', reason: 'the saved copy could not be read' };
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { status: 'failed', reason: 'the saved copy could not be read' };
+  }
+
+  const rec = parsed as Record<string, unknown>;
+  if (rec.version !== SOLVE_CONFIG_VERSION) {
+    return { status: 'failed', reason: 'it was saved by a different version of this app' };
+  }
+
+  const config: Partial<PersistedSolveConfig> = {};
+  const missing: (keyof PersistedSolveConfig)[] = [];
+
+  const demandMatrix = readDemandMatrix(rec.demand_matrix);
+  if (demandMatrix) config.demand_matrix = demandMatrix;
+  else missing.push('demand_matrix');
+
+  const templates = readTemplates(rec.templates);
+  if (templates) config.templates = templates;
+  else missing.push('templates');
+
+  const guardrails = readGuardrails(rec.guardrails);
+  if (guardrails) config.guardrails = guardrails;
+  else missing.push('guardrails');
+
+  if (typeof rec.archetype_id === 'string') config.archetype_id = rec.archetype_id;
+  else missing.push('archetype_id');
+
+  if (typeof rec.facility_name === 'string') config.facility_name = rec.facility_name;
+  else missing.push('facility_name');
+
+  if (isFiniteNumber(rec.pareto_leeway_pct)) config.pareto_leeway_pct = rec.pareto_leeway_pct;
+  else missing.push('pareto_leeway_pct');
+
+  if (isFiniteNumber(rec.rotation_week_offset)) {
+    config.rotation_week_offset = Math.round(rec.rotation_week_offset);
+  } else {
+    missing.push('rotation_week_offset');
+  }
+
+  if (missing.length === 0) return { status: 'ok', config: config as PersistedSolveConfig };
+  return {
+    status: 'partial',
+    config,
+    missing: missing.map((field) => SOLVE_CONFIG_FIELD_LABELS[field]),
+  };
+}
+
+/** Serialises the roster grid (one row per rotation line, one column per day). */
 
 /** Serialises the weekly schedule grid (one row per shift pattern, one column per day). */
 export function exportRosterToCsvString(solution: SolveResponse): string {

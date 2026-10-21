@@ -26,6 +26,10 @@ import {
   loginApi,
   signupApi,
   logoutApi,
+  loadSolveConfig,
+  saveSolveConfig,
+  clearSolveConfig,
+  SolveConfigRestore,
 } from './services/api';
 
 import { Header } from './components/Header';
@@ -70,13 +74,25 @@ function mapApiEmployee(rec: EmployeeApiRecord): EmployeeRecord {
 
 export function App() {
   const [archetypes, setArchetypes] = useState<ArchetypePreset[]>([]);
-  const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>('custom');
-  const [facilityName, setFacilityName] = useState<string>('');
-  const [demandMatrix, setDemandMatrix] = useState<number[][]>(FLAT_DEMAND_MATRIX);
-  const [templates, setTemplates] = useState<ShiftTemplate[]>(DEFAULT_TEMPLATES);
-  const [guardrails, setGuardrails] = useState<ErgonomicGuardrails>(DEFAULT_GUARDRAILS);
-  const [leewayPct, setLeewayPct] = useState<number>(10.0);
-  const [rotationWeekOffset, setRotationWeekOffset] = useState<number>(0);
+
+  // Read the last session's setup once, before the fields below take their initial
+  // values. Staff records come back from the server, so until this existed a reload
+  // left the staff in place and quietly reset everything else to defaults - a
+  // different schedule, with no wizard and no notice.
+  const [configRestore] = useState<SolveConfigRestore>(() => loadSolveConfig());
+  const restored =
+    configRestore.status === 'ok' || configRestore.status === 'partial'
+      ? configRestore.config
+      : undefined;
+  const [configSaveFailed, setConfigSaveFailed] = useState<boolean>(false);
+
+  const [selectedArchetypeId, setSelectedArchetypeId] = useState<string>(restored?.archetype_id ?? 'custom');
+  const [facilityName, setFacilityName] = useState<string>(restored?.facility_name ?? '');
+  const [demandMatrix, setDemandMatrix] = useState<number[][]>(restored?.demand_matrix ?? FLAT_DEMAND_MATRIX);
+  const [templates, setTemplates] = useState<ShiftTemplate[]>(restored?.templates ?? DEFAULT_TEMPLATES);
+  const [guardrails, setGuardrails] = useState<ErgonomicGuardrails>(restored?.guardrails ?? DEFAULT_GUARDRAILS);
+  const [leewayPct, setLeewayPct] = useState<number>(restored?.pareto_leeway_pct ?? 10.0);
+  const [rotationWeekOffset, setRotationWeekOffset] = useState<number>(restored?.rotation_week_offset ?? 0);
 
   const [staffAssignments, setStaffAssignments] = useState<StaffMemberAssignment[]>([]);
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
@@ -130,6 +146,9 @@ export function App() {
 
   const handleLogout = async () => {
     await logoutApi();
+    // The saved setup is per-browser, not per-account, so it must not be left behind
+    // for whoever signs in next on this machine.
+    clearSolveConfig();
     setAuthState('needs-login');
   };
 
@@ -170,6 +189,30 @@ export function App() {
       if (list && list.length > 0) setArchetypes(list);
     });
   }, []);
+
+  // Save the manager's setup on every change, so the next load re-solves the same
+  // schedule instead of a default one. A refused write is surfaced below, not swallowed.
+  useEffect(() => {
+    setConfigSaveFailed(
+      !saveSolveConfig({
+        archetype_id: selectedArchetypeId,
+        facility_name: facilityName,
+        demand_matrix: demandMatrix,
+        templates,
+        guardrails,
+        pareto_leeway_pct: leewayPct,
+        rotation_week_offset: rotationWeekOffset,
+      })
+    );
+  }, [
+    selectedArchetypeId,
+    facilityName,
+    demandMatrix,
+    templates,
+    guardrails,
+    leewayPct,
+    rotationWeekOffset,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -448,6 +491,26 @@ export function App() {
                 ✕
               </button>
             </div>
+          </div>
+        )}
+        {configRestore.status === 'failed' && (
+          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+            Your saved setup could not be restored because {configRestore.reason}. This
+            schedule was built from the default staffing table, not yours — open "Set up
+            your schedule" and check it before you rely on it.
+          </div>
+        )}
+        {configRestore.status === 'partial' && (
+          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+            Part of your saved setup could not be restored: {configRestore.missing.join(', ')}.
+            Those parts fell back to defaults, so this schedule is not entirely yours — check
+            them in "Set up your schedule".
+          </div>
+        )}
+        {configSaveFailed && (
+          <div role="alert" className="mb-4 rounded-md border border-[#9F3A32] bg-white px-4 py-3 text-sm text-[#9F3A32]">
+            This browser is refusing to save your setup, so the staffing table and shift
+            times will be lost when you reload. Export the roster before you close the tab.
           </div>
         )}
         {staffError && (
