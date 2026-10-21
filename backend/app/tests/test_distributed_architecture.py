@@ -7,6 +7,7 @@ Verifies:
 """
 
 import concurrent.futures
+import tempfile
 import time
 import unittest
 from fastapi.testclient import TestClient
@@ -102,6 +103,61 @@ class TestDistributedArchitecture(unittest.TestCase):
         self.assertGreaterEqual(db_check["latency_ms"], 0)
         self.assertEqual(data_ready["checks"]["solver_engine"]["status"], "healthy")
         self.assertEqual(data_ready["checks"]["idempotency_store"]["status"], "healthy")
+
+    def test_03b_readiness_reports_whether_the_database_is_durable(self):
+        """Reachable is not durable, and readiness must not conflate the two.
+
+        The serverless default puts the database under /tmp, which is local to one
+        function instance and lost on a cold start. A readiness probe that reports only
+        "healthy" lets that go unnoticed, so it reports the path and a durable flag.
+        """
+        import app.database as shiftflow_db
+
+        db_check = self.client.get("/health/readiness").json()["checks"]["database"]
+        self.assertIn("durable", db_check)
+        self.assertIn("path", db_check)
+        self.assertEqual(db_check["path"], shiftflow_db.DB_FILE)
+
+        # The suite runs each module against a temp file, which is itself under /tmp, so
+        # assert the classification directly rather than against the ambient path.
+        previous = shiftflow_db.DB_FILE
+        try:
+            shiftflow_db.DB_FILE = "/tmp/shiftflow-ephemeral.db"
+            self.assertTrue(shiftflow_db.db_is_ephemeral())
+            self.assertIs(
+                self.client.get("/health/readiness").json()["checks"]["database"]["durable"],
+                False,
+            )
+
+            shiftflow_db.DB_FILE = "/var/lib/shiftflow/shiftflow.db"
+            self.assertFalse(shiftflow_db.db_is_ephemeral())
+            self.assertIs(
+                self.client.get("/health/readiness").json()["checks"]["database"]["durable"],
+                True,
+            )
+
+            # A path merely starting with the letters "/tmp" is not under /tmp.
+            shiftflow_db.DB_FILE = "/tmpdata/shiftflow.db"
+            self.assertFalse(shiftflow_db.db_is_ephemeral())
+        finally:
+            shiftflow_db.DB_FILE = previous
+
+    def test_03c_startup_warns_when_the_database_cannot_survive_a_restart(self):
+        """An operator must be told, not left to find out when the records are gone."""
+        import app.database as shiftflow_db
+
+        previous = shiftflow_db.DB_FILE
+        try:
+            with tempfile.NamedTemporaryFile(prefix="shiftflow-warn-", suffix=".db", dir="/tmp") as handle:
+                shiftflow_db.DB_FILE = handle.name
+                with self.assertLogs("shiftflow.database", level="WARNING") as captured:
+                    shiftflow_db.init_db()
+            joined = "\n".join(captured.output)
+            self.assertIn(handle.name, joined)
+            self.assertIn("cold start", joined)
+            self.assertIn("SHIFTFLOW_DB_PATH", joined)
+        finally:
+            shiftflow_db.DB_FILE = previous
 
     def test_04_monday_rollover_concurrency_and_ring_buffer(self):
         """Verify concurrent multi-store Monday rollovers maintain mathematical state consistency."""

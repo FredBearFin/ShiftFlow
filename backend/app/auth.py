@@ -15,6 +15,15 @@ Each signed-in user only sees their own facilities, staff, audits and
 rosters: see ShiftFlowRepository(owner_id=...) in app/database.py and
 get_owner_id below.
 
+Deployment limit. The session cookie needs no server-side session store, but
+login is NOT stateless: create_session_cookie_value signs a user id, and every
+request then checks that user still exists in the database (_user_exists). So
+login is only as shared as the database is. On a serverless platform using the
+default SQLite file under /tmp, each function instance has its own copy, an
+account created on one instance is unknown to another, and that user's valid,
+correctly signed cookie is rejected there. Running this way needs a shared
+database, not a change here; see DEPLOYMENT_GUIDE.md section 5.
+
 Other settings:
   SHIFTFLOW_ALLOW_SIGNUP   "false" closes public sign-up (default: open).
   SHIFTFLOW_COOKIE_SECURE  "false" lets the session cookie travel over plain

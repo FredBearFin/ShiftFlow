@@ -16,7 +16,8 @@ from app.api.handover_routes import router as handover_router
 from app.api.auth_routes import router as auth_router
 from app.auth import require_login, validate_auth_config
 from app.config import settings
-from app.database import init_db, get_db_connection
+import app.database as shiftflow_db
+from app.database import db_is_ephemeral, init_db, get_db_connection
 from fastapi.responses import JSONResponse
 from app.engine.isd_rwsp_solver import SolverInfeasibleError
 from app.middleware import IdempotencyMiddleware
@@ -181,6 +182,13 @@ def kubernetes_readiness():
         "database": {
             "status": "healthy" if db_ok else "unhealthy",
             "latency_ms": db_latency_ms,
+            # Reachable is not the same as durable. On the serverless default the file
+            # lives under /tmp, is local to one function instance and is lost on a cold
+            # start, so readiness says so instead of reporting a clean bill of health.
+            "durable": not db_is_ephemeral(),
+            # Read through the module, not a from-import: the configured path can be
+            # rebound (the test runner gives each module its own file).
+            "path": shiftflow_db.DB_FILE,
         },
         "solver_engine": solver_check,
         "idempotency_store": idempotency_check,
