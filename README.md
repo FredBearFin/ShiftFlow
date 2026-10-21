@@ -4,6 +4,8 @@
 
 Under the hood, ShiftFlow runs on the same rigorous scheduling math used in large-scale workforce systems — detailed below for anyone curious how the sausage is made — but you never have to see any of it. You just get a schedule.
 
+**How it's actually sold:** self-serve, no sales process. A manager signs up on the pricing page and pays personally (Personal tier, $9-15/mo). Once the schedule is showing real savings, that manager can invite the business owner, who gets their own login with full access to the same facility — real continuity if the manager ever leaves, not just a read-only summary. A separate, higher Business tier exists for when the owner takes over paying, but it's priced the same way today, not yet a different account structure — see `gtm/commercial_pricing.md` for the honest version of what's built versus intended, and `gtm/demo_script.md` for the exact click-by-click walkthrough.
+
 ---
 
 ## 1. Mathematical Architecture (Becker, EJOR 2026)
@@ -68,7 +70,10 @@ shiftflow-enterprise/
 │       ├── api/
 │       │   ├── __init__.py
 │       │   ├── schedule_routes.py
-│       │   └── archetype_routes.py
+│       │   ├── archetype_routes.py
+│       │   ├── billing_routes.py     # self-serve signup/checkout (stub - no real Stripe call yet)
+│       │   ├── owner_routes.py       # owner-invite: full facility access, not just a summary
+│       │   └── facility_config_routes.py  # syncs wizard config server-side per facility
 │       └── tests/
 │           ├── __init__.py
 │           └── test_solver.py
@@ -85,11 +90,15 @@ shiftflow-enterprise/
         ├── types.ts
         ├── components/
         │   ├── Header.tsx
+        │   ├── PricingView.tsx       # self-serve signup/checkout page
         │   ├── OnboardingWizard.tsx
         │   ├── MasterRosterView.tsx
         │   ├── CoverageHeatmapView.tsx
         │   ├── ParetoExplorerView.tsx
-        │   └── ErgonomicsAuditView.tsx
+        │   ├── ErgonomicsAuditView.tsx
+        │   ├── OwnerAccessPanel.tsx   # manager invites an owner
+        │   ├── OwnerAcceptView.tsx    # owner accepts the invite
+        │   └── OwnerSummaryView.tsx   # owner's view of the facility
         └── services/
             └── api.ts
 ```
