@@ -607,6 +607,43 @@ class ShiftFlowRepository:
             snap["facility_id"] = self._caller_facility_id(snap["facility_id"])
         return snapshots
 
+    def get_latest_roster_snapshot(self, facility_id: str) -> Optional[Dict[str, Any]]:
+        """Returns the most recently saved roster snapshot for a facility, or None.
+
+        Read-only companion to save_roster_snapshot, for exports that must describe
+        the schedule the manager saved rather than a fresh re-solve. Scoped through
+        _stored_facility_id like every other read here, so one owner's snapshot is
+        never visible to another.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """
+            SELECT id, facility_id, week_number, rotation_offset, schedule_data_json, created_at
+            FROM roster_snapshots
+            WHERE facility_id = ?
+            ORDER BY created_at DESC, rowid DESC
+            LIMIT 1
+            """,
+            (self._stored_facility_id(facility_id),),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        try:
+            schedule_data = json.loads(row["schedule_data_json"])
+        except (json.JSONDecodeError, TypeError):
+            # A snapshot we cannot parse is not a schedule. Report none rather
+            # than let a caller treat corrupt JSON as the saved roster.
+            return None
+        return {
+            "id": row["id"],
+            "facility_id": self._caller_facility_id(row["facility_id"]),
+            "week_number": row["week_number"],
+            "rotation_offset": row["rotation_offset"],
+            "schedule_data": schedule_data,
+            "created_at": row["created_at"],
+        }
+
     def save_labor_analysis(
         self,
         facility_id: str,

@@ -168,34 +168,120 @@ def _get_default_templates() -> List[ShiftTemplateSchema]:
     ]
 
 
+def _facility_templates(fac: Dict[str, Any]) -> tuple[List[ShiftTemplateSchema], bool]:
+    """Returns the facility's own stored shift templates, falling back to the built-in set.
+
+    Both payroll routes used to call _get_default_templates() unconditionally, so a
+    facility that had configured its own shifts got a CSV priced against three
+    hardcoded 8-hour shifts it does not run. The second return value says whether the
+    fallback was used, so the response can admit it rather than let the numbers pass
+    for the facility's own.
+    """
+    stored = fac.get("shift_templates") or []
+    templates: List[ShiftTemplateSchema] = []
+    for raw in stored:
+        try:
+            templates.append(ShiftTemplateSchema.model_validate(raw))
+        except Exception:
+            # A stored template we cannot read is skipped rather than guessed at.
+            continue
+    if templates:
+        return templates, False
+    return _get_default_templates(), True
+
+
+def _payroll_rows(
+    repo: ShiftFlowRepository, facility_id: str
+) -> tuple[List[Dict[str, Any]], List[str], Dict[str, str]]:
+    """Builds the payroll rows for a facility, from its saved schedule where there is one.
+
+    Shared by both export routes, which were near-duplicates of each other.
+
+    Source of the figures, in order:
+      1. The newest saved roster snapshot — the schedule the manager actually built.
+      2. Failing that, a solve over the facility's *stored* templates and demand.
+
+    Returns the rows, the employee IDs excluded for a null wage, and provenance
+    headers so the caller can tell which of the two it got.
+    """
+    fac = _require_payroll_inputs(repo, facility_id)
+    staff, excluded = _solver_staff(repo, facility_id)
+
+    snapshot = repo.get_latest_roster_snapshot(facility_id)
+    snapshot_lines = []
+    if snapshot:
+        data = snapshot.get("schedule_data") or {}
+        if isinstance(data, dict):
+            candidate = data.get("roster_lines") or data.get("lines") or []
+            if isinstance(candidate, list):
+                snapshot_lines = [line for line in candidate if isinstance(line, dict)]
+
+    if snapshot_lines:
+        rows = snapshot_lines
+        headers = {
+            "X-Payroll-Source": "saved-roster-snapshot",
+            "X-Payroll-Snapshot-Id": str(snapshot["id"]),
+            "X-Payroll-Basis": (
+                "Scheduled hours from the roster saved on "
+                f"{snapshot.get('created_at')}. Projection, not hours worked."
+            ),
+        }
+    else:
+        templates, used_defaults = _facility_templates(fac)
+        result = ISDRWSPSolver(
+            SolveRequestSchema(
+                demand_matrix=fac["demand_matrix"],
+                templates=templates,
+                facility_name=fac["name"],
+                employees=staff,
+            )
+        ).solve()
+        rows = [line.model_dump() for line in result.roster_lines]
+        headers = {
+            "X-Payroll-Source": "resolved-from-stored-templates",
+            "X-Payroll-Basis": (
+                "No saved roster for this facility; figures are a fresh solve over the "
+                "facility's stored shift templates and demand. Projection, not hours worked."
+            ),
+        }
+        if used_defaults:
+            headers["X-Payroll-Source"] = "resolved-from-built-in-templates"
+            headers["X-Payroll-Basis"] = (
+                "No saved roster and no shift templates stored for this facility; figures "
+                "are a fresh solve over ShiftFlow's built-in 8-hour shifts, which may not "
+                "be the shifts this facility runs. Projection, not hours worked."
+            )
+
+    # A rotation line nobody is assigned to is not a payable person. Left in, the
+    # export engine labels it "Associate 3" / "Shift Pattern 3" and gives it a
+    # fabricated employee ID, so a row of invented hours reads as a real paycheck.
+    payable = [r for r in rows if (r.get("assigned_person") or "").strip()]
+    return payable, excluded, headers
+
+
+def _payroll_response(csv_data: str, filename: str, excluded: List[str], provenance: Dict[str, str]) -> Response:
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "X-Excluded-Staff": ",".join(excluded),
+            **provenance,
+        },
+    )
+
+
 @router.get("/payroll/export/gusto", summary="Export Gusto-formatted payroll CSV")
 def export_gusto_payroll(
     facility_id: str = "FAC-OMAHA-01",
     repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    fac = _require_payroll_inputs(repo, facility_id)
-
-    staff, excluded = _solver_staff(repo, facility_id)
-    templates = _get_default_templates()
-    solver = ISDRWSPSolver(
-        SolveRequestSchema(
-            demand_matrix=fac["demand_matrix"],
-            templates=templates,
-            facility_name=fac["name"],
-            employees=staff,
-        )
-    )
-    result = solver.solve()
-    roster_lines = [line.model_dump() for line in result.roster_lines]
-
-    csv_data = PayrollExportEngine.export_gusto_csv(roster_lines)
-    return Response(
-        content=csv_data,
-        media_type="text/csv",
-        headers={
-            "Content-Disposition": "attachment; filename=shiftflow_gusto_payroll.csv",
-            "X-Excluded-Staff": ",".join(excluded),
-        },
+    rows, excluded, provenance = _payroll_rows(repo, facility_id)
+    return _payroll_response(
+        PayrollExportEngine.export_gusto_csv(rows),
+        "shiftflow_gusto_payroll.csv",
+        excluded,
+        provenance,
     )
 
 
@@ -204,27 +290,10 @@ def export_adp_payroll(
     facility_id: str = "FAC-OMAHA-01",
     repo: ShiftFlowRepository = Depends(get_repo),
 ):
-    fac = _require_payroll_inputs(repo, facility_id)
-
-    staff, excluded = _solver_staff(repo, facility_id)
-    templates = _get_default_templates()
-    solver = ISDRWSPSolver(
-        SolveRequestSchema(
-            demand_matrix=fac["demand_matrix"],
-            templates=templates,
-            facility_name=fac["name"],
-            employees=staff,
-        )
-    )
-    result = solver.solve()
-    roster_lines = [line.model_dump() for line in result.roster_lines]
-
-    csv_data = PayrollExportEngine.export_adp_workforce_csv(roster_lines)
-    return Response(
-        content=csv_data,
-        media_type="text/csv",
-        headers={
-            "Content-Disposition": "attachment; filename=shiftflow_adp_payroll.csv",
-            "X-Excluded-Staff": ",".join(excluded),
-        },
+    rows, excluded, provenance = _payroll_rows(repo, facility_id)
+    return _payroll_response(
+        PayrollExportEngine.export_adp_workforce_csv(rows),
+        "shiftflow_adp_payroll.csv",
+        excluded,
+        provenance,
     )
