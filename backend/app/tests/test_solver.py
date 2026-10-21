@@ -1,18 +1,23 @@
-"""Automated Unit & Integration Tests for ShiftFlow Studio (Becker, EJOR 2026 I-SD-RWSP).
+"""Unit and integration tests for the ShiftFlow Studio schedule engine.
 
 Compatible with both `pytest` and `python3 -m unittest`.
 Tests:
-1. Theorem 1 Directed Multigraph G = (V, E) Eulerian degree balance & strong connectivity
-2. Hierholzer's (1873) O(|E|) Eulerian cycle extraction & subtour splicing
-3. Coverage equation (Constraint 3): sum xi_{gt} == R_{gi} + tau_{gi} - omega_{gi}
-4. All 8 Nurmi et al. (2024) / Becker (2026) Table 4 ergonomics penalty functions
-5. Zero-Clopening (>= 16h rest) & Forward Circadian Rotation (M -> D -> E -> N)
-6. Bi-Objective Pareto Frontier & Becker Table 7 calibration (1%->8.37%, 5%->27.34%, 10%->39.46%)
-7. Rotation Cohorts (Line 1..N), weekly cyclic offset advancement, and optional staff mapping
-8. Employee availability constraint verification & conflict detection
-9. Employee add/fire deactivation handling & line reassignment
-10. Labor economics & payroll analysis (regular vs overtime hours at 1.5x, total spend, daily cost)
-11. FastAPI REST endpoints (/health, /archetypes, /schedules/solve, /pareto-frontier, /export-csv)
+1. Rotation multigraph: in/out degree balance, work/rest alternation, reachability
+2. Hierholzer Eulerian cycle extraction, linear in the arc count, and subtour splicing
+3. Coverage identity: scheduled staff == required + overstaffing - understaffing
+4. All 8 workload/fatigue penalty functions in app/engine/ergonomics.py
+5. The 16-hour rest rule and forward rotation (M -> D -> E -> N)
+6. The cost-vs-rest frontier, every point of which must be a real independent re-solve
+7. Roster lines, weekly cyclic offset advancement, and optional staff mapping
+8. Employee availability constraint verification and conflict detection
+9. Employee add/deactivate handling and line reassignment
+10. Labor economics: regular vs overtime hours at 1.5x, total spend, daily cost
+11. FastAPI routes (/health, /archetypes, /schedules/solve, /pareto-frontier, /export-csv)
+
+Note on item 6: the engine reports whatever improvement a re-solve actually produces. It
+is not calibrated against any published table of leeway-to-improvement figures, and the
+figures that a previous version of this docstring quoted (1% -> 8.37%, 5% -> 27.34%,
+10% -> 39.46%) were never computed anywhere in this repository. See README section 1.
 """
 
 import unittest
