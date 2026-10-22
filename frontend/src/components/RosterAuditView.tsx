@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import type { SolveRequest } from '../types';
 import { Button } from './ui/Button';
+import { AuditReport, AuditResults, buildFindingsCsv, fmt } from './AuditReport';
 import {
   AuditRequest,
   AuditResponse,
   AuditShiftKind,
+  AuditShiftDef,
   AuditThresholds,
   CompareResponse,
   DEFAULT_AUDIT_THRESHOLDS,
@@ -45,22 +47,6 @@ const THRESHOLD_FIELDS: { key: keyof AuditThresholds; label: string; unit: strin
   { key: 'reference_avg_weekly_hours', label: 'Average weekly hours to note', unit: 'hours', step: 1 },
 ];
 
-const RULE_NAMES: Record<string, string> = {
-  SHORT_REST: 'Short rest',
-  LONG_WORK_STREAK: 'Long work run',
-  NIGHT_STREAK: 'Night run',
-  LONG_SHIFT_STREAK: 'Long-shift run',
-  WEEK_HOURS_HIGH: 'Hours in 7 days',
-  AVG_WEEKLY_HOURS: 'Average weekly hours',
-  ISOLATED_NIGHT: 'Lone night shift',
-  ISOLATED_REST_DAY: 'Lone day off',
-  BACKWARD_ROTATION: 'Backward rotation',
-  WEEKEND_EXPOSURE: 'Weekend exposure',
-  LONG_NIGHT_SHIFT: 'Long night shift',
-  FAIRNESS_SPREAD: 'Uneven load',
-  EMPTY_LINE: 'Empty line',
-};
-
 const DEFAULT_SHIFT_ROWS: ShiftRow[] = [
   { code: 'D', name: 'Day', start: '07:00', hours: '12', kind: 'day' },
   { code: 'N', name: 'Night', start: '19:00', hours: '12', kind: 'night' },
@@ -70,14 +56,12 @@ const inputClass =
   'w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-sm font-mono-tabular';
 const labelClass = 'block text-xs font-medium text-slate-600 mb-1';
 
-function fmt(n: number | null | undefined, digits = 1): string {
-  return n === null || n === undefined ? '—' : String(Number(n.toFixed(digits)));
-}
-
 interface RunState {
   request: AuditRequest;
   response: AuditResponse;
 }
+
+export type { AuditShiftDef };
 
 export const RosterAuditView: React.FC<RosterAuditViewProps> = ({ solveRequest = null }) => {
   const [patterns, setPatterns] = useState<PatternListItem[]>([]);
@@ -227,8 +211,22 @@ export const RosterAuditView: React.FC<RosterAuditViewProps> = ({ solveRequest =
 
   const response = run?.response ?? null;
 
+  const downloadCsv = () => {
+    if (!response) return;
+    const blob = new Blob([buildFindingsCsv(response)], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'roster_audit_findings.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="space-y-5">
+    <>
+    <div className="space-y-5 no-print">
       <div className="enterprise-card p-5 bg-white">
         <span className="text-xs font-bold uppercase tracking-wider text-[#5C6770] block">
           Audit a Roster
@@ -470,6 +468,14 @@ export const RosterAuditView: React.FC<RosterAuditViewProps> = ({ solveRequest =
           response={response}
           compareControls={
             <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={() => window.print()}>
+                  Print report
+                </Button>
+                <Button type="button" onClick={downloadCsv}>
+                  Download findings as CSV
+                </Button>
+              </div>
               <Button type="button" onClick={runCompare} disabled={!solveRequest || comparing}>
                 {solveRequest ? 'Compare with a ShiftFlow schedule' : 'Build a schedule in the setup first'}
               </Button>
@@ -479,118 +485,20 @@ export const RosterAuditView: React.FC<RosterAuditViewProps> = ({ solveRequest =
         />
       )}
     </div>
-  );
-};
-
-const SummaryStrip: React.FC<{ response: AuditResponse }> = ({ response }) => {
-  const s = response.summary;
-  const items: [string, string][] = [
-    ['Flags', String(s.flag_count)],
-    ['Smallest rest', s.overall_min_rest_hours === null ? '—' : `${fmt(s.overall_min_rest_hours)} h`],
-    ['Longest work run', `${s.overall_longest_work_run_days} days`],
-    ['Most hours in 7 days', `${fmt(s.overall_max_hours_in_7_days)} h`],
-  ];
-  return (
-    <dl className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      {items.map(([name, value]) => (
-        <div key={name} className="p-3 rounded-lg border border-slate-200 bg-slate-50">
-          <dt className="text-xs text-slate-500">{name}</dt>
-          <dd className="text-lg font-bold font-mono-tabular text-slate-900">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
-};
-
-export const AuditResults: React.FC<{ response: AuditResponse; compareControls?: React.ReactNode }> = ({
-  response,
-  compareControls,
-}) => (
-  <div className="enterprise-card p-5 bg-white space-y-4">
-    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">Results</h3>
-    <SummaryStrip response={response} />
-
-    <div className="w-full overflow-x-auto">
-      <table className="w-full text-xs" aria-label="Findings">
-        <caption className="sr-only">Findings</caption>
-        <thead>
-          <tr className="text-left text-slate-500 border-b border-slate-200">
-            <th className="py-1.5 pr-3 font-medium">Rule</th>
-            <th className="py-1.5 pr-3 font-medium">Line</th>
-            <th className="py-1.5 pr-3 font-medium">Day</th>
-            <th className="py-1.5 pr-3 font-medium">Value</th>
-            <th className="py-1.5 pr-3 font-medium">Limit</th>
-            <th className="py-1.5 font-medium">What it means</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {response.findings.length === 0 && (
-            <tr>
-              <td colSpan={6} className="py-2 text-slate-500">
-                Nothing was found against the limits you set.
-              </td>
-            </tr>
-          )}
-          {response.findings.map((f, i) => (
-            <tr key={i} className={f.severity === 'flag' ? 'bg-amber-50/60' : ''}>
-              <td className="py-1.5 pr-3 font-semibold text-slate-900">
-                {RULE_NAMES[f.rule_id] ?? f.rule_id}
-                <span className="ml-1.5 font-normal text-slate-500">{f.severity === 'flag' ? 'flag' : 'info'}</span>
-              </td>
-              <td className="py-1.5 pr-3">{f.line_label ?? '—'}</td>
-              <td className="py-1.5 pr-3 font-mono-tabular">{f.day_index === null ? '—' : f.day_index + 1}</td>
-              <td className="py-1.5 pr-3 font-mono-tabular">{fmt(f.value, 2)}</td>
-              <td className="py-1.5 pr-3 font-mono-tabular">{f.threshold === null ? '—' : fmt(f.threshold, 2)}</td>
-              <td className="py-1.5">{f.message}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-
-    <div className="w-full overflow-x-auto">
-      <table className="w-full text-xs" aria-label="Per-line measures">
-        <caption className="sr-only">Per-line measures</caption>
-        <thead>
-          <tr className="text-left text-slate-500 border-b border-slate-200">
-            <th className="py-1.5 pr-3 font-medium">Line</th>
-            <th className="py-1.5 pr-3 font-medium">Shifts</th>
-            <th className="py-1.5 pr-3 font-medium">Avg hours/week</th>
-            <th className="py-1.5 pr-3 font-medium">Smallest rest (h)</th>
-            <th className="py-1.5 pr-3 font-medium">Longest work run</th>
-            <th className="py-1.5 pr-3 font-medium">Longest night run</th>
-            <th className="py-1.5 pr-3 font-medium">Most hours in 7 days</th>
-            <th className="py-1.5 font-medium">Weekends fully off</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100 font-mono-tabular">
-          {response.lines.map((m) => (
-            <tr key={m.label}>
-              <td className="py-1.5 pr-3 font-sans font-semibold text-slate-900">{m.label}</td>
-              <td className="py-1.5 pr-3">{m.shifts_per_cycle}</td>
-              <td className="py-1.5 pr-3">{fmt(m.avg_weekly_hours)}</td>
-              <td className="py-1.5 pr-3">{fmt(m.min_rest_hours)}</td>
-              <td className="py-1.5 pr-3">{m.longest_work_run_days}</td>
-              <td className="py-1.5 pr-3">{m.longest_night_run}</td>
-              <td className="py-1.5 pr-3">{fmt(m.max_hours_in_7_days)}</td>
-              <td className="py-1.5">{fmt(m.weekends_fully_off_pct, 0)}%</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-
-    {response.coverage && (
-      <p className="text-xs text-slate-600">
-        Against the demand supplied: {fmt(response.coverage.understaffed_hours_per_week)} hours a week
-        short and {fmt(response.coverage.overstaffed_hours_per_week)} hours a week over.
-      </p>
+    {run && (
+      <div className="hidden print:block">
+        <AuditReport
+          response={run.response}
+          shifts={run.request.shifts}
+          cycleDays={run.request.cycle_days}
+          startWeekday={run.request.start_weekday}
+          thresholds={run.response.thresholds_used}
+        />
+      </div>
     )}
-
-    <p className="text-xs text-slate-500">{response.disclaimer}</p>
-    {compareControls}
-  </div>
-);
+    </>
+  );
+};
 
 const CompareResults: React.FC<{ data: CompareResponse }> = ({ data }) => {
   const rows: [string, AuditResponse][] = [

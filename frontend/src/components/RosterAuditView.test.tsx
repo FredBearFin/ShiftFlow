@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { RosterAuditView } from './RosterAuditView';
+import { buildFindingsCsv } from './AuditReport';
 import type { AuditRequest, AuditResponse, PatternListItem } from '../services/auditApi';
 import { DEFAULT_AUDIT_THRESHOLDS } from '../services/auditApi';
 
@@ -132,9 +133,10 @@ describe('RosterAuditView', () => {
     render(<RosterAuditView solveRequest={null} />);
     fillGrid();
     fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
-    expect(await screen.findByText(/only 8 hours between/)).toBeTruthy();
-    expect(screen.getByText(DISCLAIMER)).toBeTruthy();
-    expect(screen.getByText('Short rest')).toBeTruthy();
+    expect((await screen.findAllByText(/only 8 hours between/)).length).toBeGreaterThanOrEqual(1);
+    // The on-screen results and the print-only report both carry the disclaimer.
+    expect(screen.getAllByText(DISCLAIMER).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Short rest').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows a readable error in an alert when the service says no', async () => {
@@ -163,5 +165,52 @@ describe('RosterAuditView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
     const button = await screen.findByRole('button', { name: 'Build a schedule in the setup first' });
     expect((button as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('printable report and CSV export', () => {
+  it('renders the report with the disclaimer and the not-legal-advice line after a run', async () => {
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    const report = await screen.findByRole('article', { name: 'Roster risk report' });
+    expect(report.textContent).toContain(DISCLAIMER);
+    expect(report.textContent).toContain('Generated from the pattern entered by the user. Not legal advice.');
+    expect(screen.getByRole('button', { name: 'Print report' }).getAttribute('type')).toBe('button');
+  });
+
+  it('prints through the browser print dialog', async () => {
+    const print = vi.fn();
+    vi.stubGlobal('print', print);
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Print report' }));
+    expect(print).toHaveBeenCalledTimes(1);
+  });
+
+  it('neutralizes a formula-shaped line label in the findings CSV', () => {
+    const response: AuditResponse = {
+      ...RESPONSE,
+      findings: [{ ...RESPONSE.findings[0], line_label: '=HYPERLINK("http://x","y")' }],
+    };
+    const csv = buildFindingsCsv(response);
+    const dataLine = csv.split('\n')[1];
+    expect(dataLine).toContain("'=HYPERLINK");
+    expect(dataLine).not.toContain(',=HYPERLINK');
+    expect(csv.split('\n').every((line) => !/^[=+\-@]/.test(line))).toBe(true);
+  });
+
+  it('downloads the findings as a CSV file', async () => {
+    const createObjectURL = vi.fn(() => 'blob:test');
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL: vi.fn() });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Download findings as CSV' }));
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(click).toHaveBeenCalledTimes(1);
+    click.mockRestore();
   });
 });
