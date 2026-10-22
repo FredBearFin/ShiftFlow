@@ -110,5 +110,17 @@ class CompareRouteTests(unittest.TestCase):
         self.assertEqual(self.client.post("/api/v1/schedules/audit/compare", json=body).status_code, 422)
 
 
+class CompareRouteLimitTests(unittest.TestCase):
+    def test_compare_shares_the_solve_concurrency_limit(self):
+        """The compare route runs a solve, so it is limited per caller like the other solve routes;
+        the plain audit route, which does no solve, is not."""
+        from app.config import settings
+        from app.middleware import SolveConcurrencyLimitMiddleware
+
+        prefix = settings.api_prefix
+        self.assertTrue(SolveConcurrencyLimitMiddleware._is_solve_path(f"{prefix}/schedules/audit/compare"))
+        self.assertFalse(SolveConcurrencyLimitMiddleware._is_solve_path(f"{prefix}/schedules/audit"))
+
+
 if __name__ == "__main__":
     unittest.main()
