@@ -320,7 +320,6 @@ class ParetoPointSchema(BaseModel):
     obj_shift: float
     obj_ergo: float
     ergo_improvement_pct: float
-    becker_theoretical_improvement_pct: float
     employee_count: int
     active_shift_types_count: int
     total_understaffing_hours: int

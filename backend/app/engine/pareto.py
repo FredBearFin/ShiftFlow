@@ -53,7 +53,6 @@ def generate_pareto_frontier(
                 obj_shift=sol_i.obj_shift,
                 obj_ergo=sol_i.ergonomics_audit.total_ergo_objective,
                 ergo_improvement_pct=sol_i.ergonomics_audit.ergo_improvement_pct,
-                becker_theoretical_improvement_pct=sol_i.ergonomics_audit.ergo_improvement_pct,
                 employee_count=sol_i.employee_count,
                 active_shift_types_count=sol_i.active_shift_types_count,
                 total_understaffing_hours=int(total_under),

@@ -225,7 +225,6 @@ export interface ParetoPoint {
   obj_shift: number;
   obj_ergo: number;
   ergo_improvement_pct: number;
-  becker_theoretical_improvement_pct: number;
   employee_count: number;
   active_shift_types_count: number;
   total_understaffing_hours: number;
