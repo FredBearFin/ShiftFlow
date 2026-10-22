@@ -60,12 +60,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `roster_compliance_${solution.archetype_id}.csv`);
+    link.setAttribute('download', `roster_fairness_${solution.archetype_id}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    setExportMsg('Roster & compliance CSV downloaded.');
+    setExportMsg('Roster & fairness CSV downloaded.');
     setTimeout(() => setExportMsg(null), 3000);
   };
 
@@ -388,7 +388,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         </div>
       </div>
 
-      {/* Scenario save/compare + roster & compliance export */}
+      {/* Scenario save/compare + roster & fairness export */}
       <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div className="max-w-2xl">
@@ -419,7 +419,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               </Button>
             </div>
             <Button size="sm" variant="secondary" onClick={handleExportCsv}>
-              ↓ Export roster & compliance CSV
+              ↓ Export roster & fairness CSV
             </Button>
             {(scenarioMsg || exportMsg) && (
               <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">

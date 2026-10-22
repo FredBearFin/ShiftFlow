@@ -241,7 +241,7 @@ describe('exporting the roster + compliance summary', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Export roster & compliance CSV/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Export roster & fairness CSV/ }));
 
     await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
     const text = blobParts[0];
@@ -261,7 +261,7 @@ describe('exporting the roster + compliance summary', () => {
       <ParetoExplorerView solution={solution} selectedLeewayPct={10} onSelectLeewayPct={() => {}} />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Export roster & compliance CSV/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Export roster & fairness CSV/ }));
 
     await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
     const text = blobParts[0];
