@@ -48,6 +48,7 @@ _modules = [
     "test_rotation_patterns",
     "test_solver_to_audit",
     "test_pareto_dominance",
+    "test_benchmarks",
 ]
 
 for _mod in _modules:
