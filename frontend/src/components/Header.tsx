@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {solution
-                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll`
+                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs${solution.labor_analysis.total_payroll_cost > 0 ? ` • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll` : ''}`
                   : 'Automated weekly schedule builder'}
               </p>
             </div>
