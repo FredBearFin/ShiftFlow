@@ -23,6 +23,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   onSelectLeewayPct,
 }) => {
   const points = solution.pareto_frontier;
+  const hasWages = points.some((p) => p.estimated_weekly_payroll > 0);
+  // Without wages the payroll estimate is always $0, so cost is shown as staffing level instead.
+  const costLabel = (pt: ParetoPoint, perWeek: boolean) =>
+    hasWages
+      ? `$${Math.round(pt.estimated_weekly_payroll).toLocaleString()}${perWeek ? '/wk' : ''}`
+      : `${pt.employee_count} shift patterns`;
   const [savedScenarios, setSavedScenarios] = useState<ScenarioSnapshot[]>(() => loadSavedScenarios());
   const [scenarioLabel, setScenarioLabel] = useState('');
   const [scenarioMsg, setScenarioMsg] = useState<string | null>(null);
@@ -60,12 +66,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `roster_compliance_${solution.archetype_id}.csv`);
+    link.setAttribute('download', `roster_fairness_${solution.archetype_id}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    setExportMsg('Roster & compliance CSV downloaded.');
+    setExportMsg('Roster & fairness CSV downloaded.');
     setTimeout(() => setExportMsg(null), 3000);
   };
 
@@ -142,7 +148,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               {knee && (
                 <span className="inline-flex items-center gap-1.5 text-slate-600">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  {knee.leeway_pct}% is the sweet spot (${Math.round(knee.estimated_weekly_payroll).toLocaleString()}/wk)
+                  {knee.leeway_pct}% is the sweet spot ({costLabel(knee, true)})
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
@@ -151,6 +157,11 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               </span>
             </div>
           </div>
+          {!hasWages && (
+            <p className="text-xs text-slate-500 mb-3">
+              No wages are entered, so cost here means staffing level (how many shift patterns). Add wages in Staff &amp; Availability to see dollars.
+            </p>
+          )}
 
           <div className="w-full overflow-x-auto">
             <svg
@@ -259,7 +270,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                         y={cy - 8 - labelStackIndex * 13}
                         className="text-xs font-mono-tabular font-bold fill-slate-800"
                       >
-                        +{pt.leeway_pct}% cost · ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
+                        +{pt.leeway_pct}% cost · {costLabel(pt, true)}
                       </text>
                     )}
                   </g>
@@ -310,7 +321,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       </span>
                     </div>
                     <span className="font-mono-tabular font-bold text-[#2B3A42]">
-                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}/wk
+                      {costLabel(pt, true)}
                     </span>
                   </div>
                 );
@@ -364,7 +375,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                     </td>
                     <td className="py-2.5 px-3 text-right">+{pt.leeway_pct}%</td>
                     <td className="py-2.5 px-3 text-right font-bold text-slate-900">
-                      ${Math.round(pt.estimated_weekly_payroll).toLocaleString()}
+                      {costLabel(pt, false)}
                     </td>
                     <td className="py-2.5 px-3 text-right font-bold text-[#2B3A42]">
                       {pt.obj_ergo.toFixed(1)}
@@ -388,7 +399,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
         </div>
       </div>
 
-      {/* Scenario save/compare + roster & compliance export */}
+      {/* Scenario save/compare + roster & fairness export */}
       <div className="card p-5">
         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div className="max-w-2xl">
@@ -419,7 +430,7 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
               </Button>
             </div>
             <Button size="sm" variant="secondary" onClick={handleExportCsv}>
-              ↓ Export roster & compliance CSV
+              ↓ Export roster & fairness CSV
             </Button>
             {(scenarioMsg || exportMsg) && (
               <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg">

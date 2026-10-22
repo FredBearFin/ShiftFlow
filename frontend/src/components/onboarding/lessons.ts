@@ -49,11 +49,11 @@ export const LESSONS: Lesson[] = [
     stepId: 4,
     title: 'Set the scheduling rules',
     explanation:
-      'Hear now the rules that set the limits the schedule must keep for staff comfort, such as the rule against a closing shift followed by an opening shift. And the clopening rule stops a closing shift being followed by an opening shift the next day. Then tighter rules add extra cost, so begin with the starting values.',
+      'Hear now the rules that set the limits the schedule must keep for staff comfort, such as the minimum rest between shifts. And the rest rule keeps at least that many hours between the end of one shift and the start of the next. Then tighter rules add extra cost, so begin with the starting values.',
     example:
-      'And when the clopening rule is on, it stops the schedule from giving one person a closing shift ending at hour 22 on Monday and an opening shift starting at hour 6 on Tuesday, so the Tuesday opening shift goes to someone else.',
+      'And when the rest rule is on with 16 hours, the schedule cannot give one person a closing shift ending at hour 22 on Monday and an opening shift starting at hour 6 on Tuesday, since that leaves only 8 hours, so the Tuesday opening shift goes to someone else.',
     whyItMatters:
-      'Hear that the rest rule stops a closing shift being followed by an opening shift the next day.',
+      'Hear that the rest rule keeps the minimum number of hours you set between one shift and the next.',
   },
   {
     stepId: 5,

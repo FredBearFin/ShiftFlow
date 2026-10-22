@@ -6,9 +6,6 @@ interface DOLComplianceViewProps {
   solution: SolveResponse | null;
 }
 
-// The backend builds every schedule to keep at least this many hours of rest between shifts.
-const MIN_REST_HOURS = 16;
-
 type RowStatus = 'pass' | 'warn' | 'fail';
 
 const ROW_STYLES: Record<RowStatus, string> = {
@@ -36,7 +33,8 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
   const audit = solution.ergonomics_audit;
   const labor = solution.labor_analysis;
 
-  const restPasses = audit.min_rest_hours_observed >= MIN_REST_HOURS;
+  const minRest = audit.min_rest_hours_required ?? 16;
+  const restPasses = audit.min_rest_hours_observed >= minRest;
   const clopeningPasses = audit.clopening_violations === 0;
   const consecutiveDaysCriterion = audit.criteria_breakdown.find((c) =>
     c.name.toLowerCase().includes('consecutive days')
@@ -70,8 +68,8 @@ export const DOLComplianceView: React.FC<DOLComplianceViewProps> = ({ solution }
           title="Rest between shifts"
           detail={
             restPasses
-              ? `Every shift has at least ${audit.min_rest_hours_observed.toFixed(1)} hours of rest before the next one, meeting the ${MIN_REST_HOURS}-hour minimum this schedule is built to enforce.`
-              : `The shortest rest between two shifts is ${audit.min_rest_hours_observed.toFixed(1)} hours — under the ${MIN_REST_HOURS}-hour minimum this schedule is supposed to enforce.`
+              ? `Every shift has at least ${audit.min_rest_hours_observed.toFixed(1)} hours of rest before the next one, meeting the ${minRest}-hour minimum you set.`
+              : `The shortest rest between two shifts is ${audit.min_rest_hours_observed.toFixed(1)} hours — under the ${minRest}-hour minimum you set.`
           }
         />
         <ComplianceRow

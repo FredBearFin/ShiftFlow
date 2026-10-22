@@ -66,7 +66,22 @@ class ErgonomicGuardrailsSchema(BaseModel):
     max_consecutive_nights: int = Field(default=2, ge=1, le=4)
     max_consecutive_evenings: int = Field(default=3, ge=1, le=5)
     enforce_forward_rotation: bool = Field(default=True, description="Ensure M -> D -> E -> N progression")
-    enforce_zero_clopening: bool = Field(default=True, description="Enforce >= 16h rest between shifts")
+    min_rest_hours: int = Field(
+        default=16,  # matches settings.min_rest_hours_between_shifts (config.py); not imported here to avoid a cycle
+        ge=8,
+        le=24,
+        description=(
+            "Minimum hours between the end of one shift and the start of the next. Used to generate "
+            "the schedule when enforce_zero_clopening is on, and always used to flag short gaps in the audit."
+        ),
+    )
+    enforce_zero_clopening: bool = Field(
+        default=True,
+        description=(
+            "When on, the generator never places two shifts closer together than min_rest_hours. "
+            "When off, short gaps are allowed but still flagged."
+        ),
+    )
     avoid_single_rest_days: bool = Field(default=True, description="Penalize isolated 1-day rest blocks")
     avoid_single_night_shifts: bool = Field(default=True, description="Penalize isolated 1-day night shifts")
     prioritize_free_weekends: bool = Field(default=True, description="Maximize consolidated Sat+Sun off")
@@ -226,6 +241,7 @@ class ErgonomicsAuditSchema(BaseModel):
     clopening_violations: int
     backward_rotation_violations: int
     min_rest_hours_observed: float
+    min_rest_hours_required: int = 16
     full_weekends_off_count: int
     full_weekends_off_pct: float
     consolidated_rest_blocks_pct: float
@@ -320,7 +336,6 @@ class ParetoPointSchema(BaseModel):
     obj_shift: float
     obj_ergo: float
     ergo_improvement_pct: float
-    becker_theoretical_improvement_pct: float
     employee_count: int
     active_shift_types_count: int
     total_understaffing_hours: int

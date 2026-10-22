@@ -1,3 +1,5 @@
+> STATUS: hypothesis document written for a small-business pitch. Figures are planning estimates, not validated. Do not quote externally. See docs/PLAN_V2.md.
+
 # Compliance Research Notes: Legal Topics Relevant to ShiftFlow's Scheduling Logic
 **INFORMAL RESEARCH NOTES — NOT LEGAL ADVICE**
 
@@ -33,12 +35,12 @@ A rapidly expanding bloc of jurisdictions (Oregon statewide, Chicago, Seattle, N
   1. The employee explicitly consents in writing; AND
   2. The employer pays a statutory premium of **1.25× to 1.5× regular pay** for all hours worked during the rest interval.
 - **ShiftFlow Legal Architecture**: ShiftFlow Studio enforces a mathematical constraint of **$\ge 16$ hours of rest** ($M \preceq D \preceq E \preceq N$). 
-  - *Legal Benefit*: By establishing a 16-hour mandatory buffer, ShiftFlow exceeds the 10-to-11-hour thresholds above. Retail operators eliminate 100% of municipal clopening premium liabilities, preventing private rights of action and state labor bureau civil penalties ($500–$1,000 per violation).
+  - *Legal Benefit*: By establishing a 16-hour mandatory buffer, ShiftFlow exceeds the 10-to-11-hour thresholds above. The generator keeps at least 16 hours between shifts by default (a house rule, not a legal standard) and the audit flags any shorter gap. Whether that avoids municipal premiums or penalties ($500–$1,000 per violation in some jurisdictions) is a question for counsel.
   - *Required Product Hardening*: The solver must treat $\ge 16$h as a non-negotiable hard constraint ($\mathcal{E}_{\text{forbidden}}$), preventing managerial overrides from triggering unindemnified municipal fines.
 
 ### 1.2 Mandatory Advance Notice & Predictability Pay
 - **The Statutory Rule**: Jurisdictions mandate publishing final employee rosters **14 days in advance** of the first scheduled shift. Any employer-initiated shift modification, cancellation, or addition triggers statutory "Predictability Pay" (typically 1 to 4 hours of wages at the regular rate).
-- **Cyclic Line Safe Harbor**: The cyclic line model (`Line 1` to `Line N`) is fundamentally predictive. Because rotation sequences are mathematically determined across the multi-week cycle, employers can legally publish 4- to 8-week roster schedules in advance.
+- **Cyclic Line Advance Publication (no safe harbor is claimed)**: The cyclic line model (`Line 1` to `Line N`) is fundamentally predictive. Because rotation sequences are mathematically determined across the multi-week cycle, employers may be able to publish 4- to 8-week roster schedules in advance. This is not legal advice and does not assess Fair Workweek or any other statute.
 - **Statutory Risk**: If a store manager advances a week or rebinds lines with less than 14 days' notice, the software could inadvertently expose the employer to predictability pay claims.
 - **Remediation**: The software must lock published schedules inside the 14-day statutory window and display a **Predictability Pay Liability Counter** if managerial modifications are attempted.
 
@@ -93,7 +95,7 @@ Under state common law and federal retaliation statutes (Title VII § 704(a), FL
 - Federal law mandates that employers retain all basic payroll records for **3 years**, and all work schedules, wage rate tables, and order records for **2 years**.
 - ShiftFlow’s database architecture must maintain immutable, append-only historical roster snapshots (`roster_snapshots` table) to serve as verified evidence during federal DOL wage audits.
 
-### 5.2 Terms-of-Service Safe Harbors
+### 5.2 Terms-of-Service Disclaimers (no safe harbor is claimed)
 To insulate ShiftFlow Inc. from direct vicarious liability for managerial labor infractions, the terms of service (`terms_and_privacy.md`) should incorporate:
 1. **Disclaimer of Legal & Tax Advice**: Explicit disclaimer that ShiftFlow provides mathematical optimization algorithms, not certified employment law counsel.
 2. **Customer Compliance Responsibility**: Customer (the manager or business signing up) is responsible for ensuring final published rosters comply with applicable labor laws and any collective bargaining agreements (CBAs), holding ShiftFlow harmless against wage claims. "Indemnification" language sized for a B2B enterprise contract is probably overkill for a $9–15/month self-serve consumer-style agreement — plain responsibility language is more appropriate and more enforceable against an individual subscriber.

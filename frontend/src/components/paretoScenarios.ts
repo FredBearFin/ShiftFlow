@@ -5,7 +5,7 @@ import { neutralizeCsvFormula } from '../csvSafety';
  * Lets a manager pin a handful of solved schedules (e.g. different leeway
  * settings tried in the Pareto explorer, or before/after a wizard change) and
  * compare their key numbers side by side, plus export the currently-displayed
- * roster + compliance summary as a CSV.
+ * roster + fairness summary as a CSV.
  *
  * Pure client-side capture over data `ParetoExplorerView` already receives as
  * props (`SolveResponse`) — no new backend endpoint, no new fields invented.
@@ -109,7 +109,7 @@ const csvCell = (v: string | number) => {
 };
 
 /**
- * Builds a CSV of the currently-displayed roster plus a compliance/fairness summary,
+ * Builds a CSV of the currently-displayed roster plus a fairness summary,
  * for a manager to download or hand off. Follows the same client-side CSV pattern as
  * LaborAnalysisView's Gusto/ADP export — two tables in one file, separated by a blank
  * line, since both are small and read fine stacked in a spreadsheet.
@@ -163,7 +163,7 @@ export function buildRosterComplianceCsv(solution: SolveResponse): string {
     complianceRows.push(['Mandatory rest violations', ergo.mandatory_rest_violations]);
   }
   if (typeof ergo.fair_workweek_compliant === 'boolean') {
-    complianceRows.push(['Fair workweek compliant', ergo.fair_workweek_compliant ? 'Yes' : 'No']);
+    complianceRows.push(['Fair Workweek check', ergo.fair_workweek_compliant ? 'Yes' : 'No']);
   }
 
   const rosterCsv = [rosterHeaders.map(csvCell).join(','), ...rosterRows.map((r) => r.join(','))].join('\n');

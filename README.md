@@ -1,16 +1,23 @@
 # ShiftFlow
 
-**ShiftFlow** builds your weekly staff schedule for you, in minutes instead of hours. It's built for the shift manager at a convenience store, liquor store, smoke shop, bar, or restaurant — the kind of independent, single-location business that's open long or odd hours and still schedules with a spreadsheet or a notepad. Punch in your hours, your crew, and your coverage needs, and ShiftFlow hands back a fair, workable schedule — one that spreads the late nights and weekends around instead of burning out the same two people every week.
+> Status: research prototype. Nothing here has been validated against published benchmarks or reviewed by counsel.
 
-Under the hood, ShiftFlow runs on the same rigorous scheduling math used in large-scale workforce systems — detailed below for anyone curious how the sausage is made — but you never have to see any of it. You just get a schedule.
+**What it does today.** ShiftFlow has two parts that share one set of rules:
 
-**How it's actually sold:** self-serve, no sales process. A manager signs up on the pricing page and pays personally (Personal tier, $9-15/mo). Once the schedule is showing real savings, that manager can invite the business owner, who gets their own login with full access to the same facility — real continuity if the manager ever leaves, not just a read-only summary. A separate, higher Business tier exists for when the owner takes over paying, but it's priced the same way today, not yet a different account structure — see `gtm/commercial_pricing.md` for the honest version of what's built versus intended, and `gtm/demo_script.md` for the exact click-by-click walkthrough.
+1. **Audit a roster you already run.** Paste a repeating rotation (7 to 56 days, for example a 2-2-3, a 4-on-4-off or a 28-day pattern with 12-hour shifts). It reports short rest between shifts, long runs of work days, nights and long shifts, hours in any 7 days, weekend exposure and uneven load, against limits you set. You can print the result as a one-page report or download the findings as CSV, and compare the roster with a schedule ShiftFlow generates for the same demand.
+2. **Generate and compare schedules.** From hourly demand, shift templates and fairness rules, it builds a weekly rotating schedule and shows how strain changes as you allow more staffing.
+
+**Who it is for.** People who run or redesign rosters for 24/7 operations (plants, utilities, control rooms, hospital units, dispatch), and consultants who do that work for them.
+
+**What it does not do.** It is not a legal compliance tool and does not assess any statute: the default limits are house settings, not legal limits. It does not do time clocks, shift swapping or payroll. The generator has not been validated against the benchmark instances in the cited paper, and its coverage is imperfect (see Known limitations).
+
+**Where the rules are defined.** The audit rules, their definitions and default thresholds are in [`docs/audit_rules.md`](docs/audit_rules.md). The audit stores nothing.
 
 ---
 
 ## 1. Mathematical Architecture (Becker, EJOR 2026)
 
-Traditional workforce systems decompose **Shift Design (SDP)** and **Rotating Workforce Scheduling (RWSP)** into separate sequential stages, frequently resulting in suboptimal ergonomics or infeasible rosters. ShiftFlow Studio solves the **Integrated Shift Design and Rotating Workforce Scheduling Problem (I-SD-RWSP)** jointly:
+Traditional workforce systems decompose **Shift Design (SDP)** and **Rotating Workforce Scheduling (RWSP)** into separate sequential stages, frequently resulting in suboptimal ergonomics or infeasible rosters. ShiftFlow Studio follows the structure of the **Integrated Shift Design and Rotating Workforce Scheduling Problem (I-SD-RWSP)** from that paper. The generator is a greedy, backtracking heuristic, not an exact solver, and its results have not been compared with the paper's:
 
 ### A. Shift Design & Interval Coverage (Constraints 3–5)
 Given a cyclic 7-day planning horizon $g \in G = \{0, \dots, 6\}$ and 24 hourly intervals $i \in I = \{0, \dots, 23\}$ per day with staffing requirements $R_{gi}$, the engine selects concrete shift types $t \in T$ derived from shift templates $s \in S = \{M, D, E, N\}$:
@@ -39,11 +46,8 @@ where $\xi_{gt} \in \mathbb{Z}_{\ge 0}$ is the number of shifts of type $t$ star
    - $W^{SN}_b$: Isolated single night shifts (Weight: $4 \times [0..1]$)
    - $W^{WW}_{gb}, W^{WR}_{gh}$: Weekend work duties / split weekends (Weight: $4 \times [0..1]$)
    - $W^{SR}_h$: Single-day split rest periods (Weight: $1 \times [0..1]$)
-   - **Zero-Clopening Hard Guardrail**: Enforces $\ge 16$ hours rest between consecutive shifts and strict circadian forward rotation ($M \to D \to E \to N$).
-3. **Pareto Trade-Off Law (Becker 2026, Table 7)**:
-   - **+1% leeway** in $obj^{\text{shift}}$ yields an **8.37%** ergonomic improvement.
-   - **+5% leeway** yields a **27.34%** ergonomic improvement (**Critical Knee Point**).
-   - **+10% leeway** captures **39.46%** of all ergonomic gains with **$0 extra payroll**.
+   - **Rest and rotation rules**: the generator keeps a fixed minimum rest between consecutive shifts (currently 16 hours; this is a house rule, not a legal standard) and rotates forward ($M \to D \to E \to N$). A configurable minimum is planned (WP-2.1).
+3. **Cost versus strain trade-off.** For each facility the engine re-solves the schedule at several staffing-cost levels and reports the measured strain score at each level. These are results for your inputs, not published figures. The engine has not been validated against the benchmark instances in the cited paper; see the benchmark harness (WP-2.5) for status.
 
 ---
 
@@ -66,11 +70,15 @@ shiftflow-enterprise/
 │       │   ├── __init__.py
 │       │   ├── isd_rwsp_solver.py    # Becker Eulerian multigraph & Hierholzer solver
 │       │   ├── ergonomics.py         # Full 8 Nurmi/Becker ergonomics evaluation
-│       │   └── pareto.py             # Epsilon-constraint Pareto frontier generator
+│       │   ├── pareto.py             # Epsilon-constraint Pareto frontier generator
+│       │   ├── roster_audit.py       # Rule-based audit of a repeating roster
+│       │   ├── rotation_patterns.py  # Verified 12-hour rotation examples
+│       │   └── solver_to_audit.py    # Solver output as an audit request
 │       ├── api/
 │       │   ├── __init__.py
 │       │   ├── schedule_routes.py
 │       │   ├── archetype_routes.py
+│       │   ├── audit_routes.py       # POST /api/v1/schedules/audit and example patterns
 │       │   ├── billing_routes.py     # self-serve signup/checkout (stub - no real Stripe call yet)
 │       │   ├── owner_routes.py       # owner-invite: full facility access, not just a summary
 │       │   └── facility_config_routes.py  # syncs wizard config server-side per facility
@@ -96,6 +104,8 @@ shiftflow-enterprise/
         │   ├── CoverageHeatmapView.tsx
         │   ├── ParetoExplorerView.tsx
         │   ├── ErgonomicsAuditView.tsx
+        │   ├── RosterAuditView.tsx    # Audit a Roster tab
+        │   ├── AuditReport.tsx        # printable report and CSV
         │   ├── OwnerAccessPanel.tsx   # manager invites an owner
         │   ├── OwnerAcceptView.tsx    # owner accepts the invite
         │   └── OwnerSummaryView.tsx   # owner's view of the facility
@@ -105,17 +115,40 @@ shiftflow-enterprise/
 
 ---
 
-## 3. Quick Start & Verification
+## 3. Running it
 
-### Run Automated Unit & Integration Tests
+### Tests
 ```bash
-cd backend && python run_all_tests.py
+cd backend && pip install -r requirements.txt && python run_all_tests.py
+cd frontend && npm install && npm run build
+cd frontend && npm test
 ```
+Backend tests run each module against its own temporary SQLite file.
 
-### Launch Full Stack with Docker Compose
+### Run locally (backend and frontend separately)
 ```bash
-cp .env.example .env
+# terminal 1: API on http://localhost:8000
+cd backend && pip install -r requirements.txt
+SHIFTFLOW_AUTH_DISABLED=1 python -m uvicorn app.main:app --port 8000   # login off: local development only
+
+# terminal 2: web app on http://localhost:5173 (proxies /api to port 8000)
+cd frontend && npm install && npm run dev
+```
+`GET http://localhost:8000/health` reports the service state. The interactive API documentation is off by default.
+
+### Run with Docker Compose
+```bash
+cp .env.example .env          # set SHIFTFLOW_SESSION_SECRET to a random value of 32+ characters
 docker compose up --build
 ```
-- **Frontend Web UI**: `http://localhost:5173`
-- **FastAPI Backend & OpenAPI Docs**: `http://localhost:8000/docs`
+Frontend at `http://localhost:5173`, API at `http://localhost:8000`. See `DEPLOYMENT_GUIDE.md` for production notes.
+
+## 4. Known limitations
+
+- **Coverage is imperfect.** On flat demand the generator builds about the right number of shift patterns, but 20% to 24% of staff-hours land on the wrong hours, because work stretches start on the same weekday. See [`docs/forensics/coverage_20261022.md`](docs/forensics/coverage_20261022.md). A fix is proposed there and has not been applied.
+- **Not validated against published benchmarks.** The benchmark harness described in the plan has not been built yet, and no published figures have been reproduced. Do not cite this engine as reproducing a paper's results.
+- **The 0.65 quantile used to set daily shift counts** is a value the author chose; it has no source.
+- **The health score** (0 to 100) is a display heuristic that stays between 55 and 99.5. It is not a medical or validated measure.
+- **Cost axis.** With no wages entered, cost means staffing level (number of shift patterns).
+- **Minimum rest** defaults to 16 hours in the generator and 11 hours in the audit. Both are editable house settings.
+- **Modules that exist but are switched off by default** (POS import, emergency workflows, shift handover) are not part of the product described here.

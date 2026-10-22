@@ -45,7 +45,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   {
     term: 'rest between shifts',
     plain: 'The minimum number of hours a person must have off between the end of one shift and the start of the next.',
-    example: 'With 16 hours of rest, a person who finishes a late shift at 23:00 cannot start before 15:00 the next day.',
+    example: 'With 12 hours of rest, a person who finishes a late shift at 23:00 cannot start before 11:00 the next day.',
   },
   {
     term: 'consecutive days',
@@ -104,7 +104,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   },
   {
     term: 'workload score',
-    plain: 'How tiring the week looks for the people working it, counted in penalty points. Lower is better.',
+    plain: 'How tiring the week looks for the people working it, counted in penalty points. Lower is better. It is a rough comfort score, not a medical or validated measure.',
     example: 'A week scoring 40 penalty points is kinder to work than one scoring 90.',
   },
 ];

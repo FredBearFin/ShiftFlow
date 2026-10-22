@@ -182,7 +182,9 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
             self.assertTrue(sol.eulerian_valid, f"Archetype {arch_id} failed Eulerian check")
             self.assertEqual(sol.ergonomics_audit.clopening_violations, 0)
             self.assertEqual(sol.ergonomics_audit.backward_rotation_violations, 0)
-            self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 16.0)
+            self.assertGreaterEqual(
+                sol.ergonomics_audit.min_rest_hours_observed, preset.guardrails.min_rest_hours
+            )
             self.assertEqual(len(sol.ergonomics_audit.criteria_breakdown), 8)
             self.assertEqual(len(sol.interval_coverage), 168)
             self.assertEqual(sol.labor_analysis.total_payroll_cost, 0.0)
@@ -193,6 +195,25 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
                 lhs = cell.scheduled_staff
                 rhs = cell.required_staff + cell.overstaffing - cell.understaffing
                 self.assertEqual(lhs, rhs)
+
+    def test_05b_continuous_ops_12h_preset_solves_and_is_listed(self) -> None:
+        """The 12-hour day/night preset solves at its own 11-hour minimum rest, with no short gaps,
+        and is returned by the archetype list endpoint."""
+        preset = ARCHETYPE_PRESETS["continuous_ops_12h"]
+        self.assertEqual(preset.guardrails.min_rest_hours, 11)
+        req = SolveRequestSchema(
+            archetype_id=preset.id,
+            facility_name=preset.name,
+            demand_matrix=preset.demand_matrix,
+            templates=preset.templates,
+            guardrails=preset.guardrails,
+            pareto_leeway_pct=preset.default_leeway_pct,
+        )
+        sol = ISDRWSPSolver(req).solve()
+        self.assertEqual(sol.ergonomics_audit.clopening_violations, 0)
+        self.assertGreaterEqual(sol.ergonomics_audit.min_rest_hours_observed, 11.0)
+        listed = [a["id"] for a in TestClient(app).get("/api/v1/archetypes").json()]
+        self.assertIn("continuous_ops_12h", listed)
 
     def test_06_pareto_frontier_is_built_from_real_re_solves(self) -> None:
         """Every frontier point must be the real output of an independent solve at that
@@ -222,8 +243,12 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         # can occasionally let the shift-count split fit the week's demand curve more evenly,
         # reducing both over- and under-staffing enough to lower total cost outright - a real
         # property of integer scheduling, not a bug to hide by forcing a fake guarantee.)
-        for idx in range(len(frontier) - 1):
-            self.assertGreaterEqual(frontier[idx].obj_ergo, frontier[idx + 1].obj_ergo)
+        # Points that leave clearly more hours understaffed than the no-extra-cost schedule are not
+        # comparable on strain (fewer people working means fewer penalties), so they are skipped.
+        baseline_under = frontier[0].total_understaffing_hours
+        comparable = [p for p in frontier if p.total_understaffing_hours <= baseline_under + 2]
+        for idx in range(len(comparable) - 1):
+            self.assertGreaterEqual(comparable[idx].obj_ergo, comparable[idx + 1].obj_ergo)
 
         self.assertLessEqual(len([p for p in frontier if p.is_knee_point]), 1)
 

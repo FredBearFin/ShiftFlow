@@ -9,6 +9,7 @@ const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
   pareto: 4,
   ergonomics: 5,
   compliance: 6,
+  audit: 7,
 };
 
 interface HeaderProps {
@@ -68,11 +69,15 @@ export const Header: React.FC<HeaderProps> = ({
     {
       id: 'ergonomics',
       label: 'Burnout Check',
-      badge: solution ? `${solution.ergonomics_audit.health_index_score}/100` : undefined,
+      badge: solution ? `${solution.ergonomics_audit.health_index_score}/100 (rough)` : undefined,
     },
     {
       id: 'compliance',
       label: 'Fairness & Fatigue Check',
+    },
+    {
+      id: 'audit',
+      label: 'Audit a Roster',
     },
   ];
 
@@ -95,7 +100,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
               <p className="text-xs text-slate-500 font-medium mt-0.5">
                 {solution
-                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll`
+                  ? `${solution.instance_name}${solution.instance_name ? ' • ' : ''}${solution.total_weekly_staffing_hours} Scheduled Hrs${solution.labor_analysis.total_payroll_cost > 0 ? ` • $${solution.labor_analysis.total_payroll_cost.toFixed(0)} Weekly Payroll` : ''}`
                   : 'Automated weekly schedule builder'}
               </p>
             </div>

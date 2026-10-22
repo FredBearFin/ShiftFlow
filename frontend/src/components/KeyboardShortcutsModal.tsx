@@ -36,6 +36,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         { keys: ['4'], desc: 'Cost vs. Rest Trade-off' },
         { keys: ['5'], desc: 'Ergonomics Health Audit' },
         { keys: ['6'], desc: 'DOL Compliance' },
+        { keys: ['7'], desc: 'Audit a Roster' },
       ],
     },
     {

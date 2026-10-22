@@ -1032,6 +1032,26 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                         className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-mono-tabular"
                       />
                     </div>
+                    <div>
+                      <label htmlFor="rule-min-rest-hours" className="block text-slate-600 mb-1 font-medium">
+                        Minimum rest between shifts (hours)
+                      </label>
+                      <input
+                        id="rule-min-rest-hours"
+                        type="number"
+                        min={8}
+                        max={24}
+                        step={1}
+                        value={guardrails.min_rest_hours ?? 16}
+                        onChange={(e) =>
+                          updateGuardrailField(
+                            'min_rest_hours',
+                            parseInt(e.target.value || '16', 10)
+                          )
+                        }
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-mono-tabular"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1047,8 +1067,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     },
                     {
                       field: 'enforce_zero_clopening' as const,
-                      label: 'No closing shift followed by an opening shift the next day',
-                      desc: 'The solver checks this one rule. It does not check other rest periods.',
+                      label: 'Keep the minimum rest between shifts',
+                      desc: 'When on, no two shifts are placed closer together than the minimum below. When off, shorter gaps can appear and are flagged.',
                     },
                     {
                       field: 'avoid_single_rest_days' as const,

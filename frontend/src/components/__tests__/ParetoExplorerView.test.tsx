@@ -6,7 +6,7 @@
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { ParetoExplorerView } from '../ParetoExplorerView';
-import { SolveResponse } from '../../types';
+import { ParetoPoint, SolveResponse } from '../../types';
 
 afterEach(() => {
   cleanup();
@@ -241,7 +241,7 @@ describe('exporting the roster + compliance summary', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Export roster & compliance CSV/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Export roster & fairness CSV/ }));
 
     await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
     const text = blobParts[0];
@@ -261,7 +261,7 @@ describe('exporting the roster + compliance summary', () => {
       <ParetoExplorerView solution={solution} selectedLeewayPct={10} onSelectLeewayPct={() => {}} />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /Export roster & compliance CSV/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Export roster & fairness CSV/ }));
 
     await waitFor(() => expect(createObjectURL).toHaveBeenCalledTimes(1));
     const text = blobParts[0];
@@ -270,5 +270,43 @@ describe('exporting the roster + compliance summary', () => {
     // formula cell a spreadsheet would run on open.
     expect(text).toContain('"\'=HYPERLINK');
     expect(text).not.toMatch(/,=HYPERLINK/);
+  });
+});
+
+describe('cost axis without wages', () => {
+  const point = (i: number, leeway: number, payroll: number): ParetoPoint => ({
+    point_index: i,
+    leeway_pct: leeway,
+    obj_shift: 10 + i,
+    obj_ergo: 12 - i,
+    ergo_improvement_pct: i * 10,
+    employee_count: 5 + i,
+    active_shift_types_count: 3,
+    total_understaffing_hours: 0,
+    total_overstaffing_hours: 0,
+    full_weekends_off_pct: 50,
+    estimated_weekly_payroll: payroll,
+    is_knee_point: false,
+    is_selected: i === 0,
+    label: `Option ${i}`,
+  });
+
+  it('shows staffing level instead of $0 when no wages are entered', () => {
+    const solution = baseSolution({ pareto_frontier: [point(0, 0, 0), point(1, 5, 0)] });
+    const { container } = render(
+      <ParetoExplorerView solution={solution} selectedLeewayPct={0} onSelectLeewayPct={() => {}} />
+    );
+    expect(screen.getByText(/No wages are entered/)).toBeTruthy();
+    expect(container.textContent).toContain('shift patterns');
+    expect(container.textContent).not.toMatch(/\$0(?![.\d,])/);
+  });
+
+  it('shows dollars when wages are present', () => {
+    const solution = baseSolution({ pareto_frontier: [point(0, 0, 1800), point(1, 5, 1900)] });
+    const { container } = render(
+      <ParetoExplorerView solution={solution} selectedLeewayPct={0} onSelectLeewayPct={() => {}} />
+    );
+    expect(screen.queryByText(/No wages are entered/)).toBeNull();
+    expect(container.textContent).toContain('$1,800');
   });
 });

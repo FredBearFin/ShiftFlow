@@ -1,3 +1,5 @@
+> STATUS: hypothesis document written for a small-business pitch. Figures are planning estimates, not validated. Do not quote externally. See docs/PLAN_V2.md.
+
 # ShiftFlow Studio: 30-Day Onboarding Playbook
 
 **Context — who runs this, and how.** ShiftFlow is sold self-serve: there is no customer success team or onboarding call in the primary funnel. The "steps" below are things the shift manager does themselves after signing up (via in-app prompts, checklists, or automated emails, not a human rep), the same way `launch_marketing_copy.md` frames the rest of the self-serve motion. The primary audience is the individual shift manager on the Personal tier; the owner only enters the picture at Day 30, and only as the target of an upsell nudge the manager sends themselves (see `sales_pitch_deck.md`) — not as someone ShiftFlow is running an "executive" sales process against.
@@ -52,8 +54,8 @@ The ShiftFlow onboarding framework is structured around three critical milestone
 > Starting this Monday, we are switching to **ShiftFlow** for our store schedule.
 >
 > **What this means for you:**
-> 1. **No More Clopenings**: You will *never* be scheduled to close at 11 PM and open at 8 AM the next morning. ShiftFlow schedules to a target of at least 16 hours of rest between shifts and flags any shift that falls short.
-> 2. **100% Fair Weekends**: We use standardized rotation lines (`Line 1` to `Line 6`). Every Monday, everyone advances one line down. Everyone gets regular full weekends off—zero favoritism.
+> 1. **No More Clopenings**: ShiftFlow schedules to a target of at least 16 hours of rest between shifts (a house rule, not a legal standard) and flags any shift that falls short.
+> 2. **Rotating Weekends**: We use standardized rotation lines (`Line 1` to `Line 6`). Every Monday, everyone advances one line down, so weekends off are spread around by the rotation rather than by favoritism.
 > 3. **Predictable Schedules Months in Advance**: You can now look at the wall board and know exactly what weekends and shifts you work next month, so you can plan your life without waiting for a last-minute schedule text on Sunday night.
 >
 > Check your line on the breakroom wall board! Let me know if you have any questions.

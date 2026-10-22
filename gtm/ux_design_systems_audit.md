@@ -1,3 +1,5 @@
+> STATUS: hypothesis document written for a small-business pitch. Figures are planning estimates, not validated. Do not quote externally. See docs/PLAN_V2.md.
+
 # PRINCIPAL UX & DESIGN SYSTEMS LEAD AUDIT MEMORANDUM
 **CONFIDENTIAL PRODUCT DESIGN SPECIFICATION / BACKROOM COGNITIVE ERGONOMICS AUDIT**
 
@@ -40,7 +42,7 @@ Lighting & Glare         | Overhead flickering fluorescent tubes    | High-contr
 Cognitive Focus Window   | 47 seconds average before interruption   | "3-Second Scan Rule"; instant state
 Input Hardware           | Sticky membrane keyboard, dirty optical  | Complete "hands-on-keyboard" engine;
                          | mouse with no mousepad                   | hotkeys for 100% of workflows
-User Mental Fatigue      | High (managing callouts at 8:00 PM)      | Guardrails prevent illegal choices
+User Mental Fatigue      | High (managing callouts at 8:00 PM)      | Guardrails flag risky choices
 ===================================================================================================
 ```
 
@@ -62,7 +64,7 @@ ShiftFlow Studio enforces an uncompromising spatial rule: **The entire 7-day sch
 | VIEW TABS (32px): [1] Master Roster | [2] Labor | [3] CFO Model | [4] Heatmap | [5] Rest | [6] Ergo   |
 +---------------------------------------------------------------------------------------------------+
 | TOP KPI TILES (72px): 4 Scannable Glance Cards                                                    |
-| [Rotation Cohorts: 6] | [Payroll: $5,412] | [Zero-Clopening Shield: 100%] | [Weekends Off: 33%]   |
+| [Rotation Cohorts: 6] | [Payroll: $5,412] | [Short-Rest Gaps: 0] | [Weekends Off: 33%]   |
 +---------------------------------------------------------------------------------------------------+
 | MASTER ROTATION ROSTER TABLE (Compact, High-Contrast 44px Row Height):                            |
 | Line / Associate     | Wk | Mon  | Tue  | Wed  | Thu  | Fri  | Sat  | Sun  | Hours | Weekly Pay    |
@@ -150,7 +152,7 @@ Key Binding      | Target Action                     | Operational Store Flow
 [ 3 ]            | CFO Financial & EBITDA Model      | Board audit & valuation return
 [ 4 ]            | 24h Coverage Heatmap View         | Hourly register staffing vs. demand
 [ 5 ]            | Flexibility & Rest Optimizer      | Shift leeway & grouped days off
-[ 6 ]            | Ergonomics Health Audit View      | Clopening shield & circadian audit
+[ 6 ]            | Ergonomics Health Audit View      | Short-rest check & circadian audit
 --------------------------------------------------------------------------------------------------------
 [ C ]            | Saturday Callout Crisis Dispatch  | Opens emergency replacement modal immediately
 [ S ]            | Shift Trade Validator             | Tests cashier shift swap for clopening risks
@@ -185,7 +187,7 @@ Time to advance routine week    | 45–90 minutes        | 15–25 minutes      
 Keystrokes / Clicks to Rollover | 120+ clicks & keystr.| 35+ mouse drags       | 1 keystroke ([Space])
 --------------------------------------------------------------------------------------------------------
 Illegal Clopening Detection     | Zero (Human error)   | Soft warning only     | Mathematically blocked
-(Closing Fri -> Opening Sat)    | (Frequent fines)     | (easy to ignore)      | (100% prevented)
+(Closing Fri -> Opening Sat)    | (Frequent fines)     | (easy to ignore)      | (flagged by audit)
 --------------------------------------------------------------------------------------------------------
 Time to Resolve Sat 8PM Callout | 15–30 minutes        | 8–12 minutes          | 4.2 seconds
 (Elena callout replacement)     | (frantic text msgs)  | (blast open shifts)   | (Tap [C] -> Assign)
@@ -221,7 +223,7 @@ ShiftFlow adheres to a strict design tokens specification designed for rapid ren
 - **Canvas Neutral**: `#f8fafc` (Slate 50) — Reduces eye strain compared to harsh `#ffffff` paper white.
 - **Card Background**: `#ffffff` (Pure White) with 1px border `#e2e8f0` (Slate 200).
 - **Primary Action**: `#4f46e5` (Indigo 600) — High-contrast interactive focal point.
-- **Success / Safe**: `#047857` (Emerald 700) on `#ecfdf5` — Certified clopening shield and 100% coverage.
+- **Success / Safe**: `#047857` (Emerald 700) on `#ecfdf5` — Short-rest check passed and coverage met.
 - **Emergency / Floor Crisis**: `#d97706` (Amber 600) on `#fffbeb` — Callout warnings and availability alerts.
 - **Danger / Blocked**: `#dc2626` (Red 600) on `#fef2f2` — Labor law violations and illegal shift trades.
 
