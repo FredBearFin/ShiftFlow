@@ -1,3 +1,5 @@
+> STATUS: hypothesis document written for a small-business pitch. Figures are planning estimates, not validated. Do not quote externally. See docs/PLAN_V2.md.
+
 # SITE RELIABILITY ENGINEERING (SRE) & CHAOS AUDIT MEMORANDUM
 **CONFIDENTIAL INFRASTRUCTURE SPECIFICATION / FAULT INJECTION & DISASTER RECOVERY AUDIT**
 
@@ -72,7 +74,7 @@ Because ShiftFlow's I-SD-RWSP formulation establishes that rotating shift roster
 1. Every store has a validated **pre-computed Eulerian master cycle** stored in persistent memory.
 2. If a customized Pareto re-solve worker process is killed or exceeds the timeout limit (`SOLVER_TIME_LIMIT_SECONDS`), the SRE watchdog intercepts the crash:
    Fallback behavior: **not measured**.
-3. **Store Outcome**: The store manager receives a 100% feasible, zero-clopening, Fair Workweek-compliant schedule instantly (**not measured**). Store floor operations continue without interruption.
+3. **Store Outcome**: The store manager receives a schedule instantly (**not measured**). The generator keeps at least 16 hours between shifts by default (a house rule, not a legal standard) and the audit flags any shorter gap. Store floor operations continue without interruption.
 
 ---
 

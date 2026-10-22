@@ -1,5 +1,7 @@
 # ShiftFlow
 
+> Status: research prototype. The small-business positioning below is a hypothesis that market research did not support. The strongest use found so far is auditing an existing 24/7 roster. See docs/PLAN_V2.md.
+
 **ShiftFlow** builds your weekly staff schedule for you, in minutes instead of hours. It's built for the shift manager at a convenience store, liquor store, smoke shop, bar, or restaurant — the kind of independent, single-location business that's open long or odd hours and still schedules with a spreadsheet or a notepad. Punch in your hours, your crew, and your coverage needs, and ShiftFlow hands back a fair, workable schedule — one that spreads the late nights and weekends around instead of burning out the same two people every week.
 
 Under the hood, ShiftFlow runs on the same rigorous scheduling math used in large-scale workforce systems — detailed below for anyone curious how the sausage is made — but you never have to see any of it. You just get a schedule.
@@ -39,11 +41,8 @@ where $\xi_{gt} \in \mathbb{Z}_{\ge 0}$ is the number of shifts of type $t$ star
    - $W^{SN}_b$: Isolated single night shifts (Weight: $4 \times [0..1]$)
    - $W^{WW}_{gb}, W^{WR}_{gh}$: Weekend work duties / split weekends (Weight: $4 \times [0..1]$)
    - $W^{SR}_h$: Single-day split rest periods (Weight: $1 \times [0..1]$)
-   - **Zero-Clopening Hard Guardrail**: Enforces $\ge 16$ hours rest between consecutive shifts and strict circadian forward rotation ($M \to D \to E \to N$).
-3. **Pareto Trade-Off Law (Becker 2026, Table 7)**:
-   - **+1% leeway** in $obj^{\text{shift}}$ yields an **8.37%** ergonomic improvement.
-   - **+5% leeway** yields a **27.34%** ergonomic improvement (**Critical Knee Point**).
-   - **+10% leeway** captures **39.46%** of all ergonomic gains with **$0 extra payroll**.
+   - **Rest and rotation rules**: the generator keeps a fixed minimum rest between consecutive shifts (currently 16 hours; this is a house rule, not a legal standard) and rotates forward ($M \to D \to E \to N$). A configurable minimum is planned (WP-2.1).
+3. **Cost versus strain trade-off.** For each facility the engine re-solves the schedule at several staffing-cost levels and reports the measured strain score at each level. These are results for your inputs, not published figures. The engine has not been validated against the benchmark instances in the cited paper; see the benchmark harness (WP-2.5) for status.
 
 ---
 

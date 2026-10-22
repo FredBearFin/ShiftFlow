@@ -1,3 +1,5 @@
+> STATUS: hypothesis document written for a small-business pitch. Figures are planning estimates, not validated. Do not quote externally. See docs/PLAN_V2.md.
+
 # ShiftFlow Studio: Commercial SaaS Agreement & Privacy Terms
 
 ## 1. Master Software-as-a-Service (SaaS) Agreement
@@ -23,7 +25,7 @@ Customer acknowledges that ShiftFlow Studio provides mathematical scheduling opt
 ShiftFlow Studio adheres to strict data minimization principles regarding workforce personally identifiable information (PII).
 
 ### 2.1 Information Collected & Processed
-To generate compliant workforce rosters, ShiftFlow Studio processes:
+To generate workforce rosters, ShiftFlow Studio processes:
 - **Associate Identifiers**: Associate Name, Internal Staff ID, and Job Title/Role.
 - **Compensation Metadata**: Hourly base wage rate and overtime rate multiplier (used for in-app labor spend analytics; also used for Gusto/ADP export generation if Customer has that optional integration enabled — see note below).
 - **Scheduling Parameters**: Day-of-week availability (Mon–Sun), shift preferences, and assigned cyclic rotation lines.
