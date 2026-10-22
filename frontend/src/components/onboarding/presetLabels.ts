@@ -5,11 +5,11 @@
  */
 export const PRESET_LABELS: Record<string, { label: string; description?: string }> = {
   downtown_foodmart_omaha: {
-    label: 'Convenience store or smoke shop',
-    description: 'A single store open long or odd hours — early mornings, late nights, or both. Covers opening, midday rush, and closing shifts.',
+    label: 'Retail store with long hours',
+    description: 'A single location open long or odd hours — early mornings, late nights, or both. Covers opening, midday rush, and closing shifts.',
   },
   retail_grocery: {
-    label: 'Liquor store, bar, or restaurant',
+    label: 'Restaurant or bar with an evening rush',
     description: 'A single location with a busy evening or weekend rush, plus opening prep and closing cleanup. Built for extended and late-night hours.',
   },
   continuous_ops_12h: {
