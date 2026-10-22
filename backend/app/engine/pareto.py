@@ -81,6 +81,7 @@ def generate_pareto_frontier(
                 total_overstaffing_hours=int(total_over),
                 full_weekends_off_pct=sol_i.ergonomics_audit.full_weekends_off_pct,
                 estimated_weekly_payroll=sol_i.labor_analysis.total_payroll_cost,
+                scheduled_hours=sol_i.labor_analysis.total_scheduled_hours,
                 is_knee_point=False,
                 is_selected=is_sel,
                 label=label,

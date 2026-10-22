@@ -25,10 +25,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
   const points = solution.pareto_frontier;
   const hasWages = points.some((p) => p.estimated_weekly_payroll > 0);
   // Without wages the payroll estimate is always $0, so cost is shown as staffing level instead.
-  const costLabel = (pt: ParetoPoint, perWeek: boolean) =>
-    hasWages
-      ? `$${Math.round(pt.estimated_weekly_payroll).toLocaleString()}${perWeek ? '/wk' : ''}`
-      : `${pt.employee_count} shift patterns`;
+  const costLabel = (pt: ParetoPoint, perWeek: boolean) => {
+    const hours = `${pt.scheduled_hours ?? 0} paid hours/wk`;
+    return hasWages
+      ? `$${Math.round(pt.estimated_weekly_payroll).toLocaleString()}${perWeek ? '/wk' : ''}${perWeek ? ` · ${hours}` : ''}`
+      : `${hours} · ${pt.employee_count} shift patterns`;
+  };
   const [savedScenarios, setSavedScenarios] = useState<ScenarioSnapshot[]>(() => loadSavedScenarios());
   const [scenarioLabel, setScenarioLabel] = useState('');
   const [scenarioMsg, setScenarioMsg] = useState<string | null>(null);

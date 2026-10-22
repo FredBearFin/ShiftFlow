@@ -106,5 +106,18 @@ class FrontierTests(unittest.TestCase):
         self.assertFalse(sol.ergonomics_audit.improvement_coverage_adjusted)
 
 
+
+class ScheduledHoursTests(unittest.TestCase):
+    def test_scheduled_hours_match_each_points_own_solve(self):
+        """Each frontier point's scheduled_hours equals the paid hours of a direct solve at its leeway."""
+        frontier = generate_pareto_frontier(request("manufacturing_24_7", 5.0), 5.0)
+        for p in frontier:
+            with self.subTest(leeway=p.leeway_pct):
+                direct = ISDRWSPSolver(
+                    request("manufacturing_24_7", p.leeway_pct), include_pareto_frontier=False
+                ).solve()
+                self.assertGreater(p.scheduled_hours, 0)
+                self.assertEqual(p.scheduled_hours, direct.labor_analysis.total_scheduled_hours)
+
 if __name__ == "__main__":
     unittest.main()

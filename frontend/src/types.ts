@@ -239,6 +239,7 @@ export interface ParetoPoint {
   label: string;
   non_dominated?: boolean;
   coverage_comparable?: boolean;
+  scheduled_hours?: number;
 }
 
 export interface SolveRequest {

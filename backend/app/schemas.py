@@ -343,6 +343,7 @@ class ParetoPointSchema(BaseModel):
     total_overstaffing_hours: int
     full_weekends_off_pct: float
     estimated_weekly_payroll: float = 0.0
+    scheduled_hours: int = 0
     is_knee_point: bool
     is_selected: bool
     label: str
