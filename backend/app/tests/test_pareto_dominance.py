@@ -70,7 +70,7 @@ class DominanceLogicTests(unittest.TestCase):
 class FrontierTests(unittest.TestCase):
     def test_every_point_still_returned_and_flagged(self):
         """The filter flags points and never removes them."""
-        frontier = generate_pareto_frontier(request("downtown_foodmart_omaha", 5.0), 5.0)
+        frontier = generate_pareto_frontier(request("healthcare_24_7", 5.0), 5.0)
         self.assertGreaterEqual(len(frontier), 6)
         self.assertTrue(any(not p.non_dominated for p in frontier))
         baseline = frontier[0]

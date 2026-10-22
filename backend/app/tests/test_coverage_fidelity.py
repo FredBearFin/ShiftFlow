@@ -126,10 +126,10 @@ class CoverageFidelityTests(unittest.TestCase):
     def test_gap_at_most_8h_morning_evening_night(self):
         """8-hour M/E/N on flat demand: lines and an upper bound on understaffed hours.
 
-        Bound = measured value plus 10%. Measured after the pair-order placement (WP-2.3b):
-        64, 56, 136, 104, 128 understaffed hours for demand 2 to 6.
+        Bound = measured value plus 10%. Measured after the placement search:
+        64, 32, 48, 40, 64 understaffed hours for demand 2 to 6.
         """
-        measured = {2: (9, 64), 3: (14, 56), 4: (18, 136), 5: (23, 104), 6: (27, 128)}
+        measured = {2: (9, 64), 3: (14, 32), 4: (18, 48), 5: (23, 40), 6: (27, 64)}
         for level, (lines, under) in measured.items():
             with self.subTest(level=level):
                 _, sol = solve(MORNING_EVENING_NIGHT, flat_demand(level))
@@ -140,9 +140,9 @@ class CoverageFidelityTests(unittest.TestCase):
     def test_gap_at_most_12h_day_night(self):
         """12-hour D/N at 11 hours rest on flat demand; bound = measured plus 10%.
 
-        Measured: 108, 120, 108, 228, 276 understaffed hours for demand 2 to 6.
+        Measured: 108, 120, 108, 156, 168 understaffed hours for demand 2 to 6.
         """
-        measured = {2: (6, 108), 3: (9, 120), 4: (12, 108), 5: (15, 228), 6: (18, 276)}
+        measured = {2: (6, 108), 3: (9, 120), 4: (12, 108), 5: (15, 156), 6: (18, 168)}
         for level, (lines, under) in measured.items():
             with self.subTest(level=level):
                 _, sol = solve(DAY_NIGHT_12H, flat_demand(level), ErgonomicGuardrailsSchema(min_rest_hours=11))
@@ -150,24 +150,25 @@ class CoverageFidelityTests(unittest.TestCase):
                 self.assertLessEqual(coverage_gap(sol)[0], under * 1.1)
 
     def test_understaffing_share_on_flat_demand_8h(self):
-        """The plan's target was at most 10% of required hours understaffed. It is NOT reached:
-        the worst measured case is 20.2% (demand 4), the best 11.1% (demand 3). The bound below
-        is the measured worst case plus 10%, not the target."""
+        """The plan's target is at most 10% of required hours understaffed. It is met for demand 3 to 6
+        (4.8% to 7.1%) and NOT for demand 2, which is 19.0% (64 of 336 hours). The bound is 10%
+        for 3 to 6 and the measured 19.0% plus 10% for demand 2."""
         for level in (2, 3, 4, 5, 6):
             with self.subTest(level=level):
                 _, sol = solve(MORNING_EVENING_NIGHT, flat_demand(level))
                 required = 7 * 24 * level
-                self.assertLessEqual(coverage_gap(sol)[0] / required, 0.202 * 1.1)
+                limit = 0.19 * 1.1 if level == 2 else 0.10
+                self.assertLessEqual(coverage_gap(sol)[0] / required, limit)
 
     def test_gap_shipped_presets_at_most(self):
         """Understaffed and overstaffed hours of each shipped preset at 0% leeway; bound = measured plus 10%."""
         measured = {
             "custom": (56, 96),
-            "downtown_foodmart_omaha": (102, 122),
-            "retail_grocery": (102, 122),
-            "healthcare_24_7": (32, 156),
-            "manufacturing_24_7": (64, 64),
-            "emergency_services": (96, 180),
+            "downtown_foodmart_omaha": (88, 108),
+            "retail_grocery": (88, 108),
+            "healthcare_24_7": (12, 136),
+            "manufacturing_24_7": (32, 32),
+            "emergency_services": (36, 120),
             "continuous_ops_12h": (108, 108),
         }
         for key, (under, over) in measured.items():
@@ -192,13 +193,13 @@ class CoverageFidelityTests(unittest.TestCase):
                 )
                 self.assertEqual(sol.ergonomics_audit.full_weekends_off_count, recount)
 
-    def test_rotation_descent_bound_8h_flat4(self):
-        """Rotating whole lines on the output grid would still beat the placement (and break continuity)."""
+    def test_rotating_whole_lines_no_longer_helps_8h_flat4(self):
+        """After the placement search, rotating individual lines on the output grid cannot lower the gap
+        (it could before: 320 down to 128 on the first placement). Such rotations would break continuity anyway."""
         demand = flat_demand(4)
         _, sol = solve(MORNING_EVENING_NIGHT, demand)
-        self.assertEqual(sum(coverage_gap(sol)), 272)
-        self.assertEqual(rotation_descent(sol, demand), 96)
-
+        self.assertEqual(sum(coverage_gap(sol)), 96)
+        self.assertGreaterEqual(rotation_descent(sol, demand), 96)
 
 
 if __name__ == "__main__":

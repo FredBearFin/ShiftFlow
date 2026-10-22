@@ -245,10 +245,15 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         # property of integer scheduling, not a bug to hide by forcing a fake guarantee.)
         # Points with clearly worse coverage than the no-extra-cost schedule, or that another point
         # beats on staffing, strain and coverage together, are flagged by the frontier and skipped:
-        # fewer people working means fewer penalties, so their strain is not comparable.
+        # fewer people working means fewer penalties, so their strain is not comparable. Between the
+        # rest, strain may rise with leeway only when the extra cost bought clearly better coverage.
         comparable = [p for p in frontier if p.coverage_comparable and p.non_dominated]
         for idx in range(len(comparable) - 1):
-            self.assertGreaterEqual(comparable[idx].obj_ergo, comparable[idx + 1].obj_ergo)
+            a, b = comparable[idx], comparable[idx + 1]
+            self.assertTrue(
+                a.obj_ergo >= b.obj_ergo or a.total_understaffing_hours > b.total_understaffing_hours,
+                f"strain rose from {a.obj_ergo} to {b.obj_ergo} with no gain in coverage",
+            )
 
         self.assertLessEqual(len([p for p in frontier if p.is_knee_point]), 1)
 

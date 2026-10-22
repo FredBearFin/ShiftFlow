@@ -181,8 +181,8 @@ class SolverInfeasibleError(Exception):
     """Raised when the generator cannot satisfy a hard constraint, or the cycle is incomplete."""
 
 
-# How many cyclic orders of the work/rest pairs solve() tries before keeping the best one.
-MAX_PAIR_ORDERS = 30
+# The most placements solve() tries when searching for the pair order that best matches demand.
+MAX_PLACEMENT_EVALS = 150
 
 
 class ISDRWSPSolver:
@@ -707,6 +707,78 @@ class ISDRWSPSolver:
                     actual_daily_counts[(d, st_by_code[sc]["type_id"])] += 1
         return eulerian_valid, multigraph_nodes, multigraph_arcs, aligned_shifts, actual_daily_counts
 
+    def _search_placements(
+        self,
+        seq_pairs: List[Tuple[int, int]],
+        daily_template_pool: Dict[Tuple[int, str], int],
+        available_codes: List[str],
+        st_by_code: Dict[str, Dict],
+        employee_count: int,
+        shift_types_raw: List[Dict],
+    ):
+        """Finds the placement of the (work, rest) pairs whose daily counts miss demand by the least.
+
+        The order of the pairs decides which weekday each work stretch starts on, and stretches that
+        all start on the same weekday pile their opening shifts onto it. Placing a rotation costs
+        under a millisecond, so this tries each cyclic order, then improves the best one by swapping
+        two pairs, or two rest lengths, whenever that lowers the miss. Moves are tried in a fixed
+        order and a move is kept only when strictly better, so the result is deterministic and the
+        original order is kept on ties. At most MAX_PLACEMENT_EVALS placements are tried. This is an
+        extra placement step added by this repo; it is not part of the cited paper.
+        """
+        evals = 0
+        first_error: Optional[SolverInfeasibleError] = None
+
+        def attempt(pairs: List[Tuple[int, int]]):
+            nonlocal evals, first_error
+            evals += 1
+            try:
+                placed = self._place_pairs(
+                    pairs, daily_template_pool, available_codes, st_by_code, employee_count
+                )
+            except SolverInfeasibleError as exc:
+                first_error = first_error or exc
+                return None
+            return self._evaluate_coverage_deviation(shift_types_raw, placed[4]), placed
+
+        best = None
+        best_dev = float("inf")
+        best_pairs = list(seq_pairs)
+        count = len(seq_pairs)
+        for rot in range(count):
+            if evals >= MAX_PLACEMENT_EVALS:
+                break
+            pairs = seq_pairs[rot:] + seq_pairs[:rot]
+            result = attempt(pairs)
+            if result and result[0] < best_dev:
+                best_dev, best, best_pairs = result[0], result[1], pairs
+        if best is None:
+            raise first_error or SolverInfeasibleError("No placement of the work and rest blocks was found.")
+
+        improved = True
+        while improved and evals < MAX_PLACEMENT_EVALS:
+            improved = False
+            for i in range(count):
+                for j in range(i + 1, count):
+                    for mode in ("pair", "rest"):
+                        if evals >= MAX_PLACEMENT_EVALS:
+                            break
+                        if best_pairs[i] == best_pairs[j]:
+                            continue
+                        trial = list(best_pairs)
+                        if mode == "pair":
+                            trial[i], trial[j] = trial[j], trial[i]
+                        else:
+                            if best_pairs[i][1] == best_pairs[j][1]:
+                                continue
+                            trial[i] = (best_pairs[i][0], best_pairs[j][1])
+                            trial[j] = (best_pairs[j][0], best_pairs[i][1])
+                        result = attempt(trial)
+                        if result and result[0] < best_dev:
+                            best_dev, best, best_pairs = result[0], result[1], trial
+                            improved = True
+        return best
+
     def solve(self) -> SolveResponseSchema:
         t0 = time.perf_counter()
 
@@ -733,29 +805,9 @@ class ISDRWSPSolver:
             total_work_shifts
         )
         available_codes = [st["template_code"] for st in shift_types_raw]
-        # The order of the (work, rest) pairs decides which weekday each work stretch starts on, and
-        # stretches that all start on the same weekday pile their opening shifts onto it. Placing the
-        # rotation is cheap, so try each cyclic order of the pairs (up to MAX_PAIR_ORDERS) and keep the
-        # one whose daily counts miss the demand by the least. Order 0 is the original behaviour, a
-        # later order only wins by being strictly better, so ties keep the earlier one. This is an
-        # extra placement step added by this repo; it is not part of the cited paper.
-        best = None
-        best_dev = float("inf")
-        first_error: Optional[SolverInfeasibleError] = None
-        for rot in range(min(len(seq_pairs), MAX_PAIR_ORDERS)):
-            rotated = seq_pairs[rot:] + seq_pairs[:rot]
-            try:
-                placed = self._place_pairs(
-                    rotated, daily_template_pool, available_codes, st_by_code, employee_count
-                )
-            except SolverInfeasibleError as exc:
-                first_error = first_error or exc
-                continue
-            deviation = self._evaluate_coverage_deviation(shift_types_raw, placed[4])
-            if deviation < best_dev:
-                best, best_dev = placed, deviation
-        if best is None:
-            raise first_error or SolverInfeasibleError("No placement of the work and rest blocks was found.")
+        best = self._search_placements(
+            seq_pairs, daily_template_pool, available_codes, st_by_code, employee_count, shift_types_raw
+        )
         eulerian_valid, multigraph_nodes, multigraph_arcs, aligned_shifts, actual_daily_counts = best
 
         shift_type_results: List[ShiftTypeResultSchema] = []
