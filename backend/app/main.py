@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.archetype_routes import ARCHETYPE_PRESETS
 from app.api.archetype_routes import router as archetype_router
 from app.api.schedule_routes import router as schedule_router
+from app.api.audit_routes import router as audit_router
 from app.api.employee_routes import router as employee_router
 from app.api.facility_config_routes import router as facility_config_router
 from app.api.pos_payroll_routes import router as pos_payroll_router
@@ -116,6 +117,7 @@ def _feature_flag_guard(flag_name: str, feature_label: str):
 
 app.include_router(archetype_router, prefix=settings.api_prefix)
 app.include_router(schedule_router, prefix=settings.api_prefix)
+app.include_router(audit_router, prefix=settings.api_prefix)
 app.include_router(employee_router)
 app.include_router(facility_config_router)
 

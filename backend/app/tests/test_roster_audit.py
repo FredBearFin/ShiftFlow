@@ -237,3 +237,45 @@ class RosterAuditValidationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RosterAuditApiTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from fastapi.testclient import TestClient
+
+        from app.main import app
+
+        cls.app = app
+        cls.client = TestClient(app)
+
+    def test_valid_request_returns_audit_response(self):
+        """The Pitman fixture returns 200, validates as AuditResponse, and has no flags."""
+        from app.audit_schemas import AuditResponse
+
+        body = pitman_request().model_dump()
+        response = self.client.post("/api/v1/schedules/audit", json=body)
+        self.assertEqual(response.status_code, 200)
+        parsed = AuditResponse(**response.json())
+        self.assertEqual(parsed.summary.flag_count, 0)
+        self.assertEqual(parsed.disclaimer, AUDIT_DISCLAIMER)
+
+    def test_invalid_cell_returns_422_naming_line_and_day(self):
+        """A cell that is not a defined shift is rejected with a message naming the line and day."""
+        body = pitman_request().model_dump()
+        body["lines"][1]["cells"][3] = "ZZ"
+        response = self.client.post("/api/v1/schedules/audit", json=body)
+        self.assertEqual(response.status_code, 422)
+        self.assertIn('Line \\"Day B\\", day 4', response.text)
+
+    def test_requires_login_when_login_is_on(self):
+        """With login switched on, the endpoint answers 401 without a session."""
+        import os
+        from unittest import mock
+
+        from fastapi.testclient import TestClient
+
+        with mock.patch.dict(os.environ, {"SHIFTFLOW_SESSION_SECRET": "test-session-secret"}):
+            client = TestClient(self.app, base_url="https://testserver")
+            response = client.post("/api/v1/schedules/audit", json=pitman_request().model_dump())
+        self.assertEqual(response.status_code, 401)
