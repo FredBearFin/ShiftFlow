@@ -158,3 +158,43 @@ describe('OnboardingWizard accessible names', () => {
     expect(named(container)).toHaveLength(0);
   });
 });
+
+describe('OnboardingWizard minimum rest input', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('shows a labelled minimum-rest input on the rules step and writes the value', () => {
+    const noop = vi.fn();
+    const onChangeGuardrails = vi.fn();
+    const { container } = render(
+      <OnboardingWizard
+        isOpen={true}
+        archetypes={[archetype]}
+        selectedArchetypeId={archetype.id}
+        facilityName="Test Facility"
+        demandMatrix={demandMatrix}
+        templates={templates}
+        guardrails={guardrails}
+        leewayPct={10}
+        onSelectArchetype={noop}
+        onChangeFacilityName={noop}
+        onChangeDemandMatrix={noop}
+        onChangeTemplates={noop}
+        onChangeGuardrails={onChangeGuardrails}
+        onChangeLeewayPct={noop}
+        onCompleteWizard={noop}
+        onClose={noop}
+        employees={[]}
+        onAddEmployee={noop}
+      />
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Scheduling rules/ }));
+    const input = container.querySelector<HTMLInputElement>('#rule-min-rest-hours');
+    expect(input).not.toBeNull();
+    expect(accessibleName(input as HTMLElement)).toBe('Minimum rest between shifts (hours)');
+    expect(input?.value).toBe('16');
+    fireEvent.change(input as HTMLInputElement, { target: { value: '11' } });
+    expect(onChangeGuardrails).toHaveBeenCalledWith(expect.objectContaining({ min_rest_hours: 11 }));
+  });
+});

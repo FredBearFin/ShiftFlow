@@ -68,7 +68,8 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
             Shortest gap between the end of one shift and the start of the next, anywhere in the
-            schedule. This tool never schedules less than 16 hours of rest between shifts.
+            schedule. The schedule was built to keep at least {audit.min_rest_hours_required ?? 16} hours
+            between shifts when the rest rule is on; any shorter gap is counted as too-short above.
           </p>
         </div>
 

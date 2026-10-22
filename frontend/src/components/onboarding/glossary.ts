@@ -45,7 +45,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   {
     term: 'rest between shifts',
     plain: 'The minimum number of hours a person must have off between the end of one shift and the start of the next.',
-    example: 'With 16 hours of rest, a person who finishes a late shift at 23:00 cannot start before 15:00 the next day.',
+    example: 'With 12 hours of rest, a person who finishes a late shift at 23:00 cannot start before 11:00 the next day.',
   },
   {
     term: 'consecutive days',
