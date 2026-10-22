@@ -54,6 +54,7 @@ import { CoverageHeatmapView } from './components/CoverageHeatmapView';
 import { ParetoExplorerView } from './components/ParetoExplorerView';
 import { ErgonomicsAuditView } from './components/ErgonomicsAuditView';
 import { DOLComplianceView } from './components/DOLComplianceView';
+import { RosterAuditView } from './components/RosterAuditView';
 import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { CompletionNote } from './components/onboarding/CompletionNote';
 
@@ -498,6 +499,8 @@ export function App() {
         setActiveTab('ergonomics');
       } else if (e.key === '6') {
         setActiveTab('compliance');
+      } else if (e.key === '7') {
+        setActiveTab('audit');
       } else if (e.key.toLowerCase() === 'd') {
         setIsDirectoryOpen((prev) => !prev);
       } else if (e.key.toLowerCase() === 'a') {
@@ -822,6 +825,19 @@ export function App() {
             )}
             {activeTab === 'ergonomics' && <ErgonomicsAuditView solution={solution} />}
             {activeTab === 'compliance' && <DOLComplianceView solution={solution} />}
+            {activeTab === 'audit' && (
+              <RosterAuditView
+                solveRequest={{
+                  archetype_id: selectedArchetypeId,
+                  facility_name: facilityName,
+                  demand_matrix: demandMatrix,
+                  templates,
+                  guardrails,
+                  pareto_leeway_pct: leewayPct,
+                  rotation_week_offset: rotationWeekOffset,
+                }}
+              />
+            )}
           </>
         ) : solveStatus === 'loading' ? (
           <div className="enterprise-card p-12 text-center text-sm text-slate-500">

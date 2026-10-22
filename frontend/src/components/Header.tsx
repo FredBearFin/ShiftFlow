@@ -9,6 +9,7 @@ const TAB_KEY_NUMBERS: Partial<Record<ActiveTabId, number>> = {
   pareto: 4,
   ergonomics: 5,
   compliance: 6,
+  audit: 7,
 };
 
 interface HeaderProps {
@@ -73,6 +74,10 @@ export const Header: React.FC<HeaderProps> = ({
     {
       id: 'compliance',
       label: 'Fairness & Fatigue Check',
+    },
+    {
+      id: 'audit',
+      label: 'Audit a Roster',
     },
   ];
 
