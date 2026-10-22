@@ -310,3 +310,47 @@ describe('cost axis without wages', () => {
     expect(container.textContent).toContain('$1,800');
   });
 });
+
+describe('dominance and coverage flags', () => {
+  const flagged = (i: number, over: Partial<ParetoPoint>): ParetoPoint => ({
+    point_index: i,
+    leeway_pct: i * 5,
+    obj_shift: 10 + i,
+    obj_ergo: 12 - i,
+    ergo_improvement_pct: 0,
+    employee_count: 5 + i,
+    active_shift_types_count: 3,
+    total_understaffing_hours: 0,
+    total_overstaffing_hours: 0,
+    full_weekends_off_pct: 50,
+    estimated_weekly_payroll: 1800,
+    is_knee_point: false,
+    is_selected: false,
+    label: `Option ${i}`,
+    ...over,
+  });
+
+  it('explains hollow points and notes a coverage-worse point', () => {
+    const solution = baseSolution({
+      pareto_frontier: [
+        flagged(0, {}),
+        flagged(1, { non_dominated: false }),
+        flagged(2, { coverage_comparable: false }),
+      ],
+    });
+    const { container } = render(
+      <ParetoExplorerView solution={solution} selectedLeewayPct={0} onSelectLeewayPct={() => {}} />
+    );
+    expect(container.textContent).toContain('Hollow points are worse on cost, strain and coverage than another point.');
+    expect(container.textContent).toContain('coverage worse than the no-extra-cost schedule; improvement not counted');
+  });
+
+  it('treats saved points without the new fields as normal', () => {
+    const solution = baseSolution({ pareto_frontier: [flagged(0, {}), flagged(1, {})] });
+    const { container } = render(
+      <ParetoExplorerView solution={solution} selectedLeewayPct={0} onSelectLeewayPct={() => {}} />
+    );
+    expect(container.textContent).not.toContain('Hollow points');
+    expect(container.textContent).not.toContain('improvement not counted');
+  });
+});

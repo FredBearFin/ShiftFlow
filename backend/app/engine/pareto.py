@@ -8,9 +8,31 @@ coverage, and weekends-off directly from each resulting schedule.
 
 from typing import List
 
+from app.config import settings
 from app.schemas import ParetoPointSchema, SolveRequestSchema
 
 LEEWAY_ANCHORS = [0.0, 1.0, 5.0, 10.0, 20.0, 50.0, 75.0]
+
+
+def mark_dominance(points: List[ParetoPointSchema]) -> None:
+    """Flags points that another point beats or ties on every axis and strictly beats on one.
+
+    Axes, all lower-is-better: staffing level, strain score, and total coverage gap (understaffed
+    plus overstaffed hours). Points are flagged, not removed. Identical points are both kept.
+    """
+
+    def axes(p: ParetoPointSchema):
+        return (p.employee_count, p.obj_ergo, p.total_understaffing_hours + p.total_overstaffing_hours)
+
+    for q in points:
+        q.non_dominated = True
+        for p in points:
+            if p is q:
+                continue
+            a, b = axes(p), axes(q)
+            if all(x <= y for x, y in zip(a, b)) and any(x < y for x, y in zip(a, b)):
+                q.non_dominated = False
+                break
 
 
 def generate_pareto_frontier(
@@ -67,7 +89,19 @@ def generate_pareto_frontier(
 
     # The real "best value" point: among the options that cost more than the cheapest,
     # whichever buys the most workload-strain reduction per percent of extra cost spent.
-    paid_points = [p for p in points if p.leeway_pct > 0]
+    if points:
+        baseline = min(points, key=lambda p: p.leeway_pct)
+        for p in points:
+            p.coverage_comparable = (
+                p.total_understaffing_hours
+                <= baseline.total_understaffing_hours + settings.coverage_tolerance_hours
+            )
+    mark_dominance(points)
+
+    # Only points that are not beaten on every axis and keep comparable coverage can be the best value.
+    paid_points = [
+        p for p in points if p.leeway_pct > 0 and p.non_dominated and p.coverage_comparable
+    ]
     if paid_points:
         best = max(paid_points, key=lambda p: p.ergo_improvement_pct / p.leeway_pct)
         best.is_knee_point = True

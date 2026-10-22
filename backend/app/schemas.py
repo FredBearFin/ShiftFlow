@@ -242,6 +242,7 @@ class ErgonomicsAuditSchema(BaseModel):
     backward_rotation_violations: int
     min_rest_hours_observed: float
     min_rest_hours_required: int = 16
+    improvement_coverage_adjusted: bool = False
     full_weekends_off_count: int
     full_weekends_off_pct: float
     consolidated_rest_blocks_pct: float
@@ -345,6 +346,8 @@ class ParetoPointSchema(BaseModel):
     is_knee_point: bool
     is_selected: bool
     label: str
+    non_dominated: bool = True
+    coverage_comparable: bool = True
 
 
 class SolveRequestSchema(BaseModel):

@@ -151,6 +151,12 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                   {knee.leeway_pct}% is the sweet spot ({costLabel(knee, true)})
                 </span>
               )}
+              {points.some((p) => p.non_dominated === false) && (
+                <span className="inline-flex items-center gap-1.5 text-slate-600">
+                  <span className="w-2.5 h-2.5 rounded-full border border-dashed border-indigo-600 bg-white" />
+                  Hollow points are worse on cost, strain and coverage than another point.
+                </span>
+              )}
               <span className="inline-flex items-center gap-1.5 text-indigo-700 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-indigo-600" />
                 Currently applied
@@ -259,10 +265,13 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                           ? '#4f46e5'
                           : pt.is_knee_point
                           ? '#f59e0b'
-                          : '#ffffff'
+                          : pt.non_dominated === false
+                          ? '#ffffff'
+                          : '#c7d2fe'
                       }
                       stroke={pt.is_knee_point ? '#b45309' : '#4f46e5'}
                       strokeWidth="2"
+                      strokeDasharray={pt.non_dominated === false && !isSel ? '2 2' : undefined}
                     />
                     {shouldLabel && (
                       <text
@@ -318,6 +327,9 @@ export const ParetoExplorerView: React.FC<ParetoExplorerViewProps> = ({
                       <span className="block text-xs text-slate-500">
                         {pt.label}
                         {pt.is_knee_point ? ' (sweet spot)' : ''}
+                        {pt.coverage_comparable === false
+                          ? ' (coverage worse than the no-extra-cost schedule; improvement not counted)'
+                          : ''}
                       </span>
                     </div>
                     <span className="font-mono-tabular font-bold text-[#2B3A42]">

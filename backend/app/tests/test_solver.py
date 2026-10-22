@@ -243,14 +243,10 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         # can occasionally let the shift-count split fit the week's demand curve more evenly,
         # reducing both over- and under-staffing enough to lower total cost outright - a real
         # property of integer scheduling, not a bug to hide by forcing a fake guarantee.)
-        # Points that leave clearly more hours understaffed than the no-extra-cost schedule are not
-        # comparable on strain (fewer people working means fewer penalties), so they are skipped.
-        baseline_under = frontier[0].total_understaffing_hours
-        # Only points up to 20% extra cost are compared here; the far end of the frontier can trade
-        # strain back up, which the dominance flags added with the frontier filter handle.
-        comparable = [
-            p for p in frontier if p.total_understaffing_hours <= baseline_under + 2 and p.leeway_pct <= 20
-        ]
+        # Points with clearly worse coverage than the no-extra-cost schedule, or that another point
+        # beats on staffing, strain and coverage together, are flagged by the frontier and skipped:
+        # fewer people working means fewer penalties, so their strain is not comparable.
+        comparable = [p for p in frontier if p.coverage_comparable and p.non_dominated]
         for idx in range(len(comparable) - 1):
             self.assertGreaterEqual(comparable[idx].obj_ergo, comparable[idx + 1].obj_ergo)
 

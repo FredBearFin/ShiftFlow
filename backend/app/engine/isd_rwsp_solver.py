@@ -1043,6 +1043,14 @@ class ISDRWSPSolver:
             guardrails=self.guardrails,
             baseline_audit=baseline_audit,
         )
+        # A schedule that leaves clearly more hours understaffed than the no-extra-cost schedule has
+        # fewer people working, so a lower strain score is not an improvement. Count none.
+        if baseline_solution is not None:
+            baseline_under = sum(c.understaffing for c in baseline_solution.interval_coverage)
+            if total_under > baseline_under + settings.coverage_tolerance_hours:
+                ergonomics_audit = ergonomics_audit.model_copy(
+                    update={"ergo_improvement_pct": 0.0, "improvement_coverage_adjusted": True}
+                )
 
         # Build LaborAnalysisSchema
         tot_sched_hours = total_reg_hours + total_ot_hours

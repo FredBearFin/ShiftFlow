@@ -45,6 +45,9 @@ class AppConfig(BaseModel):
     planning_days: int = 7
     intervals_per_day: int = 24
     min_rest_hours_between_shifts: int = 16
+    # A schedule counts as having comparable coverage when its understaffed hours are at most the
+    # no-extra-cost schedule's plus this many hours.
+    coverage_tolerance_hours: int = 2
     shift_weights: ShiftDesignWeights = ShiftDesignWeights()
     ergo_weights: ErgonomicsWeights = ErgonomicsWeights()
 
