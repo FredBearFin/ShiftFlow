@@ -43,6 +43,7 @@ _modules = [
     "test_pos_payroll_routes",
     "test_golden_snapshots",
     "test_min_rest_guardrail",
+    "test_coverage_fidelity",
 ]
 
 for _mod in _modules:
