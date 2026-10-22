@@ -4,37 +4,37 @@
       [
         0.0,
         16,
-        48.0,
-        112,
-        112
+        36.0,
+        64,
+        64
       ],
       [
         1.0,
         16,
-        48.0,
-        112,
-        112
+        36.0,
+        64,
+        64
       ],
       [
         5.0,
         16,
-        48.0,
-        112,
-        112
+        36.0,
+        64,
+        64
       ],
       [
         10.0,
         16,
-        48.0,
-        112,
-        112
+        36.0,
+        64,
+        64
       ],
       [
         20.0,
         17,
-        52.0,
-        112,
-        112
+        28.0,
+        88,
+        88
       ],
       [
         50.0,
@@ -59,8 +59,8 @@
         "clopening_violations": 0,
         "employee_count": 12,
         "min_rest_hours_observed": 12.0,
-        "obj_shift": 444.0,
-        "overstaffing_hours": 132,
+        "obj_shift": 396.0,
+        "overstaffing_hours": 108,
         "roster": [
           [
             "D",
@@ -92,61 +92,25 @@
           [
             "OFF",
             "OFF",
-            "OFF",
             "D",
             "D",
             "D",
-            "D"
-          ],
-          [
-            "D",
-            "OFF",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
             "N",
-            "N",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "N",
-            "N",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "N",
-            "N",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "D",
-            "D",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
             "N"
           ],
           [
-            "N",
             "OFF",
             "OFF",
+            "D",
+            "D",
+            "D",
+            "D",
+            "D"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "D",
             "D",
             "D",
             "N",
@@ -167,20 +131,56 @@
             "D",
             "N",
             "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "D"
+          ],
+          [
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "D",
+            "D"
+          ],
+          [
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
+            "D"
+          ],
+          [
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 208.0,
-        "understaffing_hours": 132
+        "total_ergo_objective": 204.0,
+        "understaffing_hours": 108
       },
       "20.0": {
         "active_shift_types_count": 2,
         "clopening_violations": 0,
         "employee_count": 13,
         "min_rest_hours_observed": 12.0,
-        "obj_shift": 497.0,
-        "overstaffing_hours": 156,
+        "obj_shift": 473.0,
+        "overstaffing_hours": 144,
         "roster": [
           [
             "D",
@@ -198,6 +198,51 @@
             "D",
             "D",
             "D",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "D",
+            "D",
+            "D",
+            "D",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "D",
+            "D",
+            "D",
+            "D",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "D",
+            "D",
+            "D",
+            "N",
+            "N",
             "OFF"
           ],
           [
@@ -253,63 +298,18 @@
             "OFF",
             "OFF",
             "OFF"
-          ],
-          [
-            "D",
-            "D",
-            "D",
-            "N",
-            "N",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "N",
-            "N",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "D",
-            "D",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "N",
-            "N",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "D",
-            "D",
-            "OFF",
-            "OFF"
           ]
         ],
-        "total_ergo_objective": 192.0,
-        "understaffing_hours": 156
+        "total_ergo_objective": 212.0,
+        "understaffing_hours": 144
       },
       "5.0": {
         "active_shift_types_count": 2,
         "clopening_violations": 0,
         "employee_count": 12,
         "min_rest_hours_observed": 12.0,
-        "obj_shift": 444.0,
-        "overstaffing_hours": 132,
+        "obj_shift": 396.0,
+        "overstaffing_hours": 108,
         "roster": [
           [
             "D",
@@ -341,61 +341,25 @@
           [
             "OFF",
             "OFF",
-            "OFF",
             "D",
             "D",
             "D",
-            "D"
-          ],
-          [
-            "D",
-            "OFF",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
             "N",
-            "N",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "N",
-            "N",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "N",
-            "N",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "D",
-            "D",
-            "OFF",
-            "OFF",
-            "D",
-            "D",
             "N"
           ],
           [
-            "N",
             "OFF",
             "OFF",
+            "D",
+            "D",
+            "D",
+            "D",
+            "D"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "D",
             "D",
             "D",
             "N",
@@ -416,12 +380,48 @@
             "D",
             "N",
             "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "D"
+          ],
+          [
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "D",
+            "D"
+          ],
+          [
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
+            "D"
+          ],
+          [
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 208.0,
-        "understaffing_hours": 132
+        "total_ergo_objective": 204.0,
+        "understaffing_hours": 108
       }
     },
     "custom": {
@@ -430,8 +430,8 @@
         "clopening_violations": 0,
         "employee_count": 9,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 469.0,
-        "overstaffing_hours": 112,
+        "obj_shift": 437.0,
+        "overstaffing_hours": 96,
         "roster": [
           [
             "M",
@@ -443,88 +443,88 @@
             "OFF"
           ],
           [
+            "M",
+            "M",
+            "E",
+            "E",
+            "E",
             "OFF",
-            "M",
-            "M",
-            "E",
-            "E",
-            "E",
             "OFF"
           ],
           [
-            "OFF",
-            "OFF",
             "E",
             "E",
             "E",
             "N",
-            "N"
+            "N",
+            "OFF",
+            "OFF"
           ],
           [
+            "M",
+            "D",
+            "D",
+            "E",
             "OFF",
             "OFF",
-            "M",
-            "M",
-            "M",
+            "M"
+          ],
+          [
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF",
             "M",
             "M"
           ],
           [
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D",
             "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
             "E"
           ],
           [
-            "OFF",
-            "OFF",
-            "E",
             "E",
             "E",
             "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "M",
-            "M"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "D",
-            "D",
             "N",
-            "N",
+            "OFF",
+            "OFF",
             "OFF"
           ],
           [
+            "M",
+            "M",
+            "M",
+            "M",
+            "M",
             "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "D",
+            "D",
+            "D",
             "E",
-            "E",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 28.0,
-        "understaffing_hours": 72
+        "total_ergo_objective": 12.0,
+        "understaffing_hours": 56
       },
       "20.0": {
         "active_shift_types_count": 4,
         "clopening_violations": 0,
         "employee_count": 10,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 394.0,
-        "overstaffing_hours": 72,
+        "obj_shift": 378.0,
+        "overstaffing_hours": 64,
         "roster": [
           [
             "M",
@@ -549,31 +549,49 @@
             "OFF",
             "E",
             "E",
-            "E",
             "N",
-            "N"
+            "N",
+            "OFF"
           ],
           [
             "OFF",
             "OFF",
-            "OFF",
             "M",
             "M",
             "M",
-            "M"
+            "M",
+            "OFF"
           ],
           [
+            "OFF",
+            "OFF",
+            "D",
+            "D",
+            "D",
             "E",
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
             "E"
           ],
           [
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "M",
+            "M"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
             "E",
             "E",
+            "E"
+          ],
+          [
+            "N",
+            "N",
             "OFF",
             "OFF",
             "OFF",
@@ -594,39 +612,21 @@
             "D",
             "N",
             "N",
-            "OFF",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "M",
-            "M",
-            "D",
-            "D",
-            "OFF",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "M",
-            "D",
-            "E",
-            "E",
             "OFF",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 24.0,
-        "understaffing_hours": 32
+        "total_ergo_objective": 32.0,
+        "understaffing_hours": 24
       },
       "5.0": {
         "active_shift_types_count": 4,
         "clopening_violations": 0,
         "employee_count": 9,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 469.0,
-        "overstaffing_hours": 112,
+        "obj_shift": 437.0,
+        "overstaffing_hours": 96,
         "roster": [
           [
             "M",
@@ -638,80 +638,80 @@
             "OFF"
           ],
           [
+            "M",
+            "M",
+            "E",
+            "E",
+            "E",
             "OFF",
-            "M",
-            "M",
-            "E",
-            "E",
-            "E",
             "OFF"
           ],
           [
-            "OFF",
-            "OFF",
             "E",
             "E",
             "E",
             "N",
-            "N"
+            "N",
+            "OFF",
+            "OFF"
           ],
           [
+            "M",
+            "D",
+            "D",
+            "E",
             "OFF",
             "OFF",
-            "M",
-            "M",
-            "M",
+            "M"
+          ],
+          [
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF",
             "M",
             "M"
           ],
           [
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D",
             "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
             "E"
           ],
           [
-            "OFF",
-            "OFF",
-            "E",
             "E",
             "E",
             "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "M",
-            "M"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "D",
-            "D",
             "N",
-            "N",
+            "OFF",
+            "OFF",
             "OFF"
           ],
           [
+            "M",
+            "M",
+            "M",
+            "M",
+            "M",
             "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "D",
+            "D",
+            "D",
             "E",
-            "E",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 28.0,
-        "understaffing_hours": 72
+        "total_ergo_objective": 12.0,
+        "understaffing_hours": 56
       }
     },
     "downtown_foodmart_omaha": {
@@ -831,8 +831,8 @@
         "clopening_violations": 0,
         "employee_count": 12,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 380.0,
-        "overstaffing_hours": 80,
+        "obj_shift": 336.0,
+        "overstaffing_hours": 58,
         "roster": [
           [
             "M",
@@ -890,6 +890,42 @@
           ],
           [
             "D",
+            "E",
+            "OFF",
+            "OFF",
+            "D",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "M",
+            "E",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "M"
+          ],
+          [
+            "M",
+            "M",
+            "OFF",
+            "OFF",
+            "OFF",
+            "D",
+            "D"
+          ],
+          [
+            "D",
             "D",
             "E",
             "OFF",
@@ -905,54 +941,18 @@
             "OFF",
             "OFF",
             "OFF"
-          ],
-          [
-            "M",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "D",
-            "D",
-            "D",
-            "OFF",
-            "OFF"
           ]
         ],
-        "total_ergo_objective": 36.0,
-        "understaffing_hours": 60
+        "total_ergo_objective": 43.0,
+        "understaffing_hours": 38
       },
       "5.0": {
         "active_shift_types_count": 3,
         "clopening_violations": 0,
         "employee_count": 12,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 380.0,
-        "overstaffing_hours": 80,
+        "obj_shift": 336.0,
+        "overstaffing_hours": 58,
         "roster": [
           [
             "M",
@@ -1010,6 +1010,42 @@
           ],
           [
             "D",
+            "E",
+            "OFF",
+            "OFF",
+            "D",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "M",
+            "E",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "M"
+          ],
+          [
+            "M",
+            "M",
+            "OFF",
+            "OFF",
+            "OFF",
+            "D",
+            "D"
+          ],
+          [
+            "D",
             "D",
             "E",
             "OFF",
@@ -1025,46 +1061,10 @@
             "OFF",
             "OFF",
             "OFF"
-          ],
-          [
-            "M",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "D",
-            "D",
-            "D",
-            "OFF",
-            "OFF"
           ]
         ],
-        "total_ergo_objective": 36.0,
-        "understaffing_hours": 60
+        "total_ergo_objective": 43.0,
+        "understaffing_hours": 38
       }
     },
     "emergency_services": {
@@ -1073,8 +1073,8 @@
         "clopening_violations": 0,
         "employee_count": 18,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 646.0,
-        "overstaffing_hours": 200,
+        "obj_shift": 606.0,
+        "overstaffing_hours": 180,
         "roster": [
           [
             "E",
@@ -1086,62 +1086,143 @@
             "OFF"
           ],
           [
+            "M",
+            "M",
+            "E",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "D",
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "M",
+            "M",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "E"
+          ],
+          [
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
             "OFF",
             "M",
-            "M",
-            "E",
-            "E",
+            "D",
+            "D",
+            "D",
             "E",
             "OFF"
           ],
           [
             "OFF",
             "OFF",
+            "M",
+            "M",
+            "M",
             "E",
-            "E",
-            "E",
-            "N",
+            "E"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "D",
+            "D",
             "N"
           ],
           [
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "E",
-            "E"
-          ],
-          [
-            "E",
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "E"
-          ],
-          [
-            "N",
             "N",
             "OFF",
             "OFF",
             "OFF",
+            "M",
             "M",
             "M"
           ],
           [
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
             "M",
-            "E",
-            "E",
+            "D"
+          ],
+          [
+            "D",
+            "N",
+            "N",
             "OFF",
             "OFF",
             "OFF",
             "M"
           ],
           [
-            "D",
-            "D",
+            "E",
+            "E",
             "N",
             "N",
             "OFF",
@@ -1150,105 +1231,24 @@
           ],
           [
             "M",
-            "M",
-            "D",
-            "E",
-            "E",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "M",
-            "D",
-            "D",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
             "D",
             "D",
             "E",
             "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "D",
-            "D",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "D",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "M",
-            "D",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 56.0,
-        "understaffing_hours": 116
+        "total_ergo_objective": 28.0,
+        "understaffing_hours": 96
       },
       "20.0": {
         "active_shift_types_count": 4,
         "clopening_violations": 0,
         "employee_count": 19,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 491.0,
-        "overstaffing_hours": 120,
+        "obj_shift": 467.0,
+        "overstaffing_hours": 108,
         "roster": [
           [
             "E",
@@ -1332,6 +1332,33 @@
             "OFF"
           ],
           [
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "D"
+          ],
+          [
+            "D",
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "D",
+            "D",
+            "OFF",
+            "OFF"
+          ],
+          [
             "OFF",
             "E",
             "E",
@@ -1344,7 +1371,7 @@
             "OFF",
             "OFF",
             "M",
-            "D",
+            "M",
             "D",
             "E",
             "E"
@@ -1354,7 +1381,7 @@
             "OFF",
             "OFF",
             "M",
-            "D",
+            "M",
             "D",
             "N"
           ],
@@ -1363,21 +1390,21 @@
             "OFF",
             "OFF",
             "OFF",
+            "E",
+            "E",
+            "E"
+          ],
+          [
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
             "M",
-            "D",
             "D"
           ],
           [
             "E",
-            "E",
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "D"
-          ],
-          [
-            "D",
             "N",
             "N",
             "OFF",
@@ -1386,52 +1413,25 @@
             "M"
           ],
           [
-            "M",
-            "D",
-            "N",
-            "N",
-            "OFF",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
             "D",
             "D",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
+            "D",
+            "D",
             "OFF",
-            "M",
-            "M",
-            "M",
-            "E",
             "OFF",
             "OFF"
           ]
         ],
         "total_ergo_objective": 52.0,
-        "understaffing_hours": 36
+        "understaffing_hours": 24
       },
       "5.0": {
         "active_shift_types_count": 4,
         "clopening_violations": 0,
         "employee_count": 18,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 646.0,
-        "overstaffing_hours": 200,
+        "obj_shift": 606.0,
+        "overstaffing_hours": 180,
         "roster": [
           [
             "E",
@@ -1443,62 +1443,143 @@
             "OFF"
           ],
           [
+            "M",
+            "M",
+            "E",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "D",
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "M",
+            "M",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "D",
+            "D",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "E"
+          ],
+          [
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
             "OFF",
             "M",
-            "M",
-            "E",
-            "E",
+            "D",
+            "D",
+            "D",
             "E",
             "OFF"
           ],
           [
             "OFF",
             "OFF",
+            "M",
+            "M",
+            "M",
             "E",
-            "E",
-            "E",
-            "N",
+            "E"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "D",
+            "D",
             "N"
           ],
           [
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "E",
-            "E"
-          ],
-          [
-            "E",
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "E"
-          ],
-          [
-            "N",
             "N",
             "OFF",
             "OFF",
             "OFF",
+            "M",
             "M",
             "M"
           ],
           [
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
             "M",
-            "E",
-            "E",
+            "D"
+          ],
+          [
+            "D",
+            "N",
+            "N",
             "OFF",
             "OFF",
             "OFF",
             "M"
           ],
           [
-            "D",
-            "D",
+            "E",
+            "E",
             "N",
             "N",
             "OFF",
@@ -1507,97 +1588,16 @@
           ],
           [
             "M",
-            "M",
-            "D",
-            "E",
-            "E",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "M",
-            "D",
-            "D",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
             "D",
             "D",
             "E",
             "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "D",
-            "D",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "D",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "M",
-            "D",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "D",
-            "D",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 56.0,
-        "understaffing_hours": 116
+        "total_ergo_objective": 28.0,
+        "understaffing_hours": 96
       }
     },
     "healthcare_24_7": {
@@ -1606,8 +1606,8 @@
         "clopening_violations": 0,
         "employee_count": 17,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 601.0,
-        "overstaffing_hours": 200,
+        "obj_shift": 513.0,
+        "overstaffing_hours": 156,
         "roster": [
           [
             "M",
@@ -1619,61 +1619,61 @@
             "OFF"
           ],
           [
-            "OFF",
             "M",
             "D",
             "D",
             "E",
             "E",
+            "OFF",
             "OFF"
           ],
           [
+            "D",
+            "E",
+            "E",
+            "N",
+            "N",
             "OFF",
+            "OFF"
+          ],
+          [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
             "OFF",
+            "OFF"
+          ],
+          [
+            "M",
             "M",
             "M",
             "D",
-            "N",
-            "N"
-          ],
-          [
             "OFF",
             "OFF",
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N"
-          ],
-          [
-            "N",
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
             "M"
           ],
           [
-            "E",
-            "E",
-            "OFF",
+            "D",
+            "D",
+            "D",
             "OFF",
             "OFF",
             "M",
             "D"
           ],
           [
-            "D",
-            "D",
             "E",
+            "N",
+            "N",
             "OFF",
             "OFF",
             "OFF",
             "M"
           ],
           [
-            "M",
+            "D",
             "D",
             "E",
             "E",
@@ -1684,95 +1684,95 @@
           [
             "M",
             "M",
+            "M",
+            "M",
             "D",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ],
           [
             "OFF",
+            "M",
+            "D",
+            "D",
             "E",
             "E",
-            "E",
-            "N",
-            "N",
             "OFF"
           ],
           [
             "OFF",
             "OFF",
             "M",
-            "D",
-            "D",
-            "D",
-            "E"
-          ],
-          [
-            "OFF",
-            "OFF",
             "M",
             "M",
-            "M",
-            "D",
-            "E"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D",
-            "E",
-            "E"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "E",
             "N",
             "N"
           ],
           [
             "OFF",
             "OFF",
-            "D",
-            "D",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
             "OFF",
             "M",
             "D",
+            "D",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "D"
+          ],
+          [
             "N",
             "N",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M"
+          ],
+          [
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "E"
+          ],
+          [
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "D",
+            "D",
+            "E",
+            "E",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 52.0,
-        "understaffing_hours": 76
+        "total_ergo_objective": 36.0,
+        "understaffing_hours": 32
       },
       "20.0": {
         "active_shift_types_count": 4,
         "clopening_violations": 0,
         "employee_count": 18,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 510.0,
-        "overstaffing_hours": 152,
+        "obj_shift": 486.0,
+        "overstaffing_hours": 140,
         "roster": [
           [
             "M",
@@ -1839,46 +1839,64 @@
           ],
           [
             "M",
-            "D",
             "E",
             "E",
             "OFF",
             "OFF",
-            "OFF"
-          ],
-          [
-            "M",
-            "M",
-            "D",
-            "N",
-            "N",
             "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "D",
-            "D",
-            "D",
             "E"
           ],
           [
+            "E",
+            "N",
+            "N",
             "OFF",
+            "OFF",
+            "OFF",
+            "M"
+          ],
+          [
+            "D",
+            "D",
+            "D",
+            "E",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "M",
+            "D",
+            "D",
+            "D",
+            "D",
+            "OFF"
+          ],
+          [
             "OFF",
             "OFF",
             "M",
             "M",
+            "M",
+            "N",
+            "N"
+          ],
+          [
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "D",
             "D",
             "E"
           ],
@@ -1892,61 +1910,43 @@
             "D"
           ],
           [
-            "D",
-            "E",
+            "N",
+            "N",
             "OFF",
             "OFF",
             "OFF",
             "M",
+            "D"
+          ],
+          [
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
             "M"
           ],
           [
-            "D",
-            "N",
-            "N",
-            "OFF",
-            "OFF",
-            "OFF",
-            "M"
-          ],
-          [
             "M",
             "D",
             "N",
             "N",
-            "OFF",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "M",
-            "M",
-            "D",
-            "D",
             "OFF",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 48.0,
-        "understaffing_hours": 28
+        "total_ergo_objective": 56.0,
+        "understaffing_hours": 16
       },
       "5.0": {
         "active_shift_types_count": 4,
         "clopening_violations": 0,
         "employee_count": 17,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 601.0,
-        "overstaffing_hours": 200,
+        "obj_shift": 513.0,
+        "overstaffing_hours": 156,
         "roster": [
           [
             "M",
@@ -1958,61 +1958,61 @@
             "OFF"
           ],
           [
-            "OFF",
             "M",
             "D",
             "D",
             "E",
             "E",
+            "OFF",
             "OFF"
           ],
           [
+            "D",
+            "E",
+            "E",
+            "N",
+            "N",
             "OFF",
+            "OFF"
+          ],
+          [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
             "OFF",
+            "OFF"
+          ],
+          [
+            "M",
             "M",
             "M",
             "D",
-            "N",
-            "N"
-          ],
-          [
             "OFF",
             "OFF",
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N"
-          ],
-          [
-            "N",
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
             "M"
           ],
           [
-            "E",
-            "E",
-            "OFF",
+            "D",
+            "D",
+            "D",
             "OFF",
             "OFF",
             "M",
             "D"
           ],
           [
-            "D",
-            "D",
             "E",
+            "N",
+            "N",
             "OFF",
             "OFF",
             "OFF",
             "M"
           ],
           [
-            "M",
+            "D",
             "D",
             "E",
             "E",
@@ -2023,87 +2023,87 @@
           [
             "M",
             "M",
+            "M",
+            "M",
             "D",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ],
           [
             "OFF",
+            "M",
+            "D",
+            "D",
             "E",
             "E",
-            "E",
-            "N",
-            "N",
             "OFF"
           ],
           [
             "OFF",
             "OFF",
             "M",
-            "D",
-            "D",
-            "D",
-            "E"
-          ],
-          [
-            "OFF",
-            "OFF",
             "M",
             "M",
-            "M",
-            "D",
-            "E"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "D",
-            "D",
-            "D",
-            "E",
-            "E"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "E",
             "N",
             "N"
           ],
           [
             "OFF",
             "OFF",
-            "D",
-            "D",
-            "D",
-            "D",
-            "D"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
             "OFF",
             "M",
             "D",
+            "D",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "D"
+          ],
+          [
             "N",
             "N",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M"
+          ],
+          [
+            "D",
+            "E",
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "E"
+          ],
+          [
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "D",
+            "D",
+            "E",
+            "E",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 52.0,
-        "understaffing_hours": 76
+        "total_ergo_objective": 36.0,
+        "understaffing_hours": 32
       }
     },
     "manufacturing_24_7": {
@@ -2112,8 +2112,8 @@
         "clopening_violations": 0,
         "employee_count": 16,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 484.0,
-        "overstaffing_hours": 112,
+        "obj_shift": 388.0,
+        "overstaffing_hours": 64,
         "roster": [
           [
             "M",
@@ -2125,6 +2125,60 @@
             "OFF"
           ],
           [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "M"
+          ],
+          [
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "M",
+            "E"
+          ],
+          [
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "M",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
             "OFF",
             "E",
             "E",
@@ -2148,7 +2202,7 @@
             "OFF",
             "M",
             "M",
-            "M",
+            "E",
             "N"
           ],
           [
@@ -2156,8 +2210,8 @@
             "OFF",
             "OFF",
             "OFF",
-            "E",
-            "E",
+            "M",
+            "M",
             "E"
           ],
           [
@@ -2181,8 +2235,8 @@
           [
             "M",
             "M",
-            "N",
-            "N",
+            "M",
+            "E",
             "OFF",
             "OFF",
             "OFF"
@@ -2197,82 +2251,28 @@
             "OFF"
           ],
           [
-            "OFF",
             "M",
             "M",
-            "E",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
             "M",
             "M",
             "E",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "E",
-            "E",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "E",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 48.0,
-        "understaffing_hours": 112
+        "total_ergo_objective": 36.0,
+        "understaffing_hours": 64
       },
       "20.0": {
         "active_shift_types_count": 3,
         "clopening_violations": 0,
         "employee_count": 17,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 489.0,
-        "overstaffing_hours": 112,
+        "obj_shift": 441.0,
+        "overstaffing_hours": 88,
         "roster": [
           [
-            "M",
+            "OFF",
             "M",
             "E",
             "E",
@@ -2284,9 +2284,81 @@
             "OFF",
             "E",
             "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "M",
+            "M",
+            "M",
+            "M",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "E",
             "E",
             "N",
             "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "M",
+            "M",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "M"
+          ],
+          [
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "M",
+            "M",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "OFF",
+            "M",
+            "M",
+            "E",
+            "E",
+            "E",
             "OFF"
           ],
           [
@@ -2295,20 +2367,20 @@
             "M",
             "M",
             "M",
-            "E",
-            "E"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "M",
+            "N",
             "N"
           ],
           [
-            "N",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "M",
+            "E"
+          ],
+          [
+            "E",
             "OFF",
             "OFF",
             "OFF",
@@ -2327,8 +2399,8 @@
           ],
           [
             "E",
-            "E",
-            "E",
+            "N",
+            "N",
             "OFF",
             "OFF",
             "OFF",
@@ -2336,105 +2408,33 @@
           ],
           [
             "M",
-            "M",
-            "N",
-            "N",
+            "E",
+            "E",
+            "E",
             "OFF",
             "OFF",
             "OFF"
           ],
           [
-            "E",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
             "M",
             "M",
             "E",
             "E",
             "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "M",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "E",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "M",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "E",
-            "E",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "E",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 52.0,
-        "understaffing_hours": 112
+        "total_ergo_objective": 28.0,
+        "understaffing_hours": 88
       },
       "5.0": {
         "active_shift_types_count": 3,
         "clopening_violations": 0,
         "employee_count": 16,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 484.0,
-        "overstaffing_hours": 112,
+        "obj_shift": 388.0,
+        "overstaffing_hours": 64,
         "roster": [
           [
             "M",
@@ -2446,6 +2446,60 @@
             "OFF"
           ],
           [
+            "E",
+            "E",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "M"
+          ],
+          [
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "M",
+            "E"
+          ],
+          [
+            "E",
+            "N",
+            "N",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "M",
+            "OFF",
+            "OFF",
+            "OFF"
+          ],
+          [
+            "M",
+            "M",
+            "M",
+            "E",
+            "E",
+            "OFF",
+            "OFF"
+          ],
+          [
             "OFF",
             "E",
             "E",
@@ -2469,7 +2523,7 @@
             "OFF",
             "M",
             "M",
-            "M",
+            "E",
             "N"
           ],
           [
@@ -2477,8 +2531,8 @@
             "OFF",
             "OFF",
             "OFF",
-            "E",
-            "E",
+            "M",
+            "M",
             "E"
           ],
           [
@@ -2502,8 +2556,8 @@
           [
             "M",
             "M",
-            "N",
-            "N",
+            "M",
+            "E",
             "OFF",
             "OFF",
             "OFF"
@@ -2518,71 +2572,17 @@
             "OFF"
           ],
           [
-            "OFF",
             "M",
             "M",
-            "E",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "M",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
             "M",
             "M",
             "E",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "E",
-            "E",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "N",
-            "N"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "N",
-            "N",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "E",
-            "N",
-            "N",
             "OFF",
             "OFF"
           ]
         ],
-        "total_ergo_objective": 48.0,
-        "understaffing_hours": 112
+        "total_ergo_objective": 36.0,
+        "understaffing_hours": 64
       }
     },
     "retail_grocery": {
@@ -2702,8 +2702,8 @@
         "clopening_violations": 0,
         "employee_count": 12,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 380.0,
-        "overstaffing_hours": 80,
+        "obj_shift": 336.0,
+        "overstaffing_hours": 58,
         "roster": [
           [
             "M",
@@ -2761,6 +2761,42 @@
           ],
           [
             "D",
+            "E",
+            "OFF",
+            "OFF",
+            "D",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "M",
+            "E",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "M"
+          ],
+          [
+            "M",
+            "M",
+            "OFF",
+            "OFF",
+            "OFF",
+            "D",
+            "D"
+          ],
+          [
+            "D",
             "D",
             "E",
             "OFF",
@@ -2776,54 +2812,18 @@
             "OFF",
             "OFF",
             "OFF"
-          ],
-          [
-            "M",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "D",
-            "D",
-            "D",
-            "OFF",
-            "OFF"
           ]
         ],
-        "total_ergo_objective": 36.0,
-        "understaffing_hours": 60
+        "total_ergo_objective": 43.0,
+        "understaffing_hours": 38
       },
       "5.0": {
         "active_shift_types_count": 3,
         "clopening_violations": 0,
         "employee_count": 12,
         "min_rest_hours_observed": 16.0,
-        "obj_shift": 380.0,
-        "overstaffing_hours": 80,
+        "obj_shift": 336.0,
+        "overstaffing_hours": 58,
         "roster": [
           [
             "M",
@@ -2881,6 +2881,42 @@
           ],
           [
             "D",
+            "E",
+            "OFF",
+            "OFF",
+            "D",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "M",
+            "E",
+            "E",
+            "E"
+          ],
+          [
+            "E",
+            "OFF",
+            "OFF",
+            "OFF",
+            "M",
+            "M",
+            "M"
+          ],
+          [
+            "M",
+            "M",
+            "OFF",
+            "OFF",
+            "OFF",
+            "D",
+            "D"
+          ],
+          [
+            "D",
             "D",
             "E",
             "OFF",
@@ -2896,46 +2932,10 @@
             "OFF",
             "OFF",
             "OFF"
-          ],
-          [
-            "M",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "E",
-            "E",
-            "E",
-            "E",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "OFF",
-            "M",
-            "M",
-            "D",
-            "E",
-            "OFF"
-          ],
-          [
-            "OFF",
-            "M",
-            "D",
-            "D",
-            "D",
-            "OFF",
-            "OFF"
           ]
         ],
-        "total_ergo_objective": 36.0,
-        "understaffing_hours": 60
+        "total_ergo_objective": 43.0,
+        "understaffing_hours": 38
       }
     }
   }

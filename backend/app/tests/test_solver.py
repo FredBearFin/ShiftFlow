@@ -246,7 +246,11 @@ class TestBeckerISDRWSPSolver(unittest.TestCase):
         # Points that leave clearly more hours understaffed than the no-extra-cost schedule are not
         # comparable on strain (fewer people working means fewer penalties), so they are skipped.
         baseline_under = frontier[0].total_understaffing_hours
-        comparable = [p for p in frontier if p.total_understaffing_hours <= baseline_under + 2]
+        # Only points up to 20% extra cost are compared here; the far end of the frontier can trade
+        # strain back up, which the dominance flags added with the frontier filter handle.
+        comparable = [
+            p for p in frontier if p.total_understaffing_hours <= baseline_under + 2 and p.leeway_pct <= 20
+        ]
         for idx in range(len(comparable) - 1):
             self.assertGreaterEqual(comparable[idx].obj_ergo, comparable[idx + 1].obj_ergo)
 

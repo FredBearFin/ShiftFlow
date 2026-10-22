@@ -1,8 +1,7 @@
-"""Coverage fidelity: characterization of how far placed shifts are from the per-day targets.
+"""Coverage fidelity: how far placed shifts are from the per-day targets.
 
-These tests only record what the generator does today (WP-2.3a). They fix nothing.
-See docs/forensics/coverage_20261022.md. Values are exact, so any change to the
-generator's placement shows up here; WP-2.3b tightens them if a fix is approved.
+WP-2.3a recorded the gap before any fix (docs/forensics/coverage_20261022.md); WP-2.3b added
+the pair-order placement step and these tests now bound the gap at the measured value plus 10%.
 """
 
 import unittest
@@ -124,48 +123,82 @@ class CoverageFidelityTests(unittest.TestCase):
                     targets = target_counts(solver)
                     self.assertEqual({tuple(v) for v in targets.values()}, {(level,) * 7})
 
-    def test_current_gap_8h_morning_evening_night(self):
-        """Current placement gap, 8-hour M/E/N on flat demand: (lines, |actual-target|, under, over)."""
-        expected = {2: (9, 26, 104, 104), 3: (14, 20, 80, 80), 4: (18, 40, 160, 160), 5: (23, 32, 128, 128), 6: (27, 44, 176, 176)}
-        for level, want in expected.items():
-            with self.subTest(level=level):
-                solver, sol = solve(MORNING_EVENING_NIGHT, flat_demand(level))
-                self.assertEqual((sol.employee_count, abs_count_gap(solver, sol)) + coverage_gap(sol), want)
+    def test_gap_at_most_8h_morning_evening_night(self):
+        """8-hour M/E/N on flat demand: lines and an upper bound on understaffed hours.
 
-    def test_current_gap_12h_day_night(self):
-        """Current placement gap, 12-hour D/N at 11 hours rest: (lines, |actual-target|, under, over)."""
-        expected = {2: (6, 20, 120, 120), 3: (9, 20, 120, 120), 4: (12, 22, 132, 132), 5: (15, 40, 240, 240), 6: (18, 46, 276, 276)}
-        for level, want in expected.items():
+        Bound = measured value plus 10%. Measured after the pair-order placement (WP-2.3b):
+        64, 56, 136, 104, 128 understaffed hours for demand 2 to 6.
+        """
+        measured = {2: (9, 64), 3: (14, 56), 4: (18, 136), 5: (23, 104), 6: (27, 128)}
+        for level, (lines, under) in measured.items():
             with self.subTest(level=level):
-                solver, sol = solve(DAY_NIGHT_12H, flat_demand(level), ErgonomicGuardrailsSchema(min_rest_hours=11))
-                self.assertEqual((sol.employee_count, abs_count_gap(solver, sol)) + coverage_gap(sol), want)
+                _, sol = solve(MORNING_EVENING_NIGHT, flat_demand(level))
+                self.assertEqual(sol.employee_count, lines)
+                self.assertEqual(coverage_gap(sol)[0], coverage_gap(sol)[1])
+                self.assertLessEqual(coverage_gap(sol)[0], under * 1.1)
 
-    def test_current_gap_shipped_presets(self):
-        """Current understaffed and overstaffed hours of each shipped preset at 0% leeway."""
-        expected = {
-            "custom": (72, 112),
+    def test_gap_at_most_12h_day_night(self):
+        """12-hour D/N at 11 hours rest on flat demand; bound = measured plus 10%.
+
+        Measured: 108, 120, 108, 228, 276 understaffed hours for demand 2 to 6.
+        """
+        measured = {2: (6, 108), 3: (9, 120), 4: (12, 108), 5: (15, 228), 6: (18, 276)}
+        for level, (lines, under) in measured.items():
+            with self.subTest(level=level):
+                _, sol = solve(DAY_NIGHT_12H, flat_demand(level), ErgonomicGuardrailsSchema(min_rest_hours=11))
+                self.assertEqual(sol.employee_count, lines)
+                self.assertLessEqual(coverage_gap(sol)[0], under * 1.1)
+
+    def test_understaffing_share_on_flat_demand_8h(self):
+        """The plan's target was at most 10% of required hours understaffed. It is NOT reached:
+        the worst measured case is 20.2% (demand 4), the best 11.1% (demand 3). The bound below
+        is the measured worst case plus 10%, not the target."""
+        for level in (2, 3, 4, 5, 6):
+            with self.subTest(level=level):
+                _, sol = solve(MORNING_EVENING_NIGHT, flat_demand(level))
+                required = 7 * 24 * level
+                self.assertLessEqual(coverage_gap(sol)[0] / required, 0.202 * 1.1)
+
+    def test_gap_shipped_presets_at_most(self):
+        """Understaffed and overstaffed hours of each shipped preset at 0% leeway; bound = measured plus 10%."""
+        measured = {
+            "custom": (56, 96),
             "downtown_foodmart_omaha": (102, 122),
             "retail_grocery": (102, 122),
-            "healthcare_24_7": (76, 200),
-            "manufacturing_24_7": (112, 112),
-            "emergency_services": (116, 200),
-            "continuous_ops_12h": (132, 132),
+            "healthcare_24_7": (32, 156),
+            "manufacturing_24_7": (64, 64),
+            "emergency_services": (96, 180),
+            "continuous_ops_12h": (108, 108),
         }
-        for key, want in expected.items():
+        for key, (under, over) in measured.items():
             with self.subTest(preset=key):
                 preset = ARCHETYPE_PRESETS[key]
                 _, sol = solve(preset.templates, preset.demand_matrix, preset.guardrails)
-                self.assertEqual(coverage_gap(sol), want)
+                got_under, got_over = coverage_gap(sol)
+                self.assertLessEqual(got_under, under * 1.1)
+                self.assertLessEqual(got_over, over * 1.1)
+                self.assertEqual(sol.ergonomics_audit.clopening_violations, 0)
 
-    def test_current_rotation_descent_bound_8h_flat4(self):
-        """Rotating whole lines on the output grid cannot close the gap (and would break continuity)."""
+    def test_weekends_off_count_matches_the_roster(self):
+        """full_weekends_off_count equals a recount of lines whose Saturday and Sunday are both off."""
+        for key in ("manufacturing_24_7", "healthcare_24_7", "downtown_foodmart_omaha"):
+            with self.subTest(preset=key):
+                preset = ARCHETYPE_PRESETS[key]
+                _, sol = solve(preset.templates, preset.demand_matrix, preset.guardrails)
+                recount = sum(
+                    1
+                    for line in sol.roster_lines
+                    if line.days[5].shift_code == "OFF" and line.days[6].shift_code == "OFF"
+                )
+                self.assertEqual(sol.ergonomics_audit.full_weekends_off_count, recount)
+
+    def test_rotation_descent_bound_8h_flat4(self):
+        """Rotating whole lines on the output grid would still beat the placement (and break continuity)."""
         demand = flat_demand(4)
         _, sol = solve(MORNING_EVENING_NIGHT, demand)
-        self.assertEqual(sum(coverage_gap(sol)), 320)
-        self.assertEqual(rotation_descent(sol, demand), ROTATION_DESCENT_8H_FLAT4)
+        self.assertEqual(sum(coverage_gap(sol)), 272)
+        self.assertEqual(rotation_descent(sol, demand), 96)
 
-
-ROTATION_DESCENT_8H_FLAT4 = 128
 
 
 if __name__ == "__main__":

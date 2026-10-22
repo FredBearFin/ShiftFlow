@@ -181,6 +181,10 @@ class SolverInfeasibleError(Exception):
     """Raised when the generator cannot satisfy a hard constraint, or the cycle is incomplete."""
 
 
+# How many cyclic orders of the work/rest pairs solve() tries before keeping the best one.
+MAX_PAIR_ORDERS = 30
+
+
 class ISDRWSPSolver:
     """Builds a rotating weekly staff schedule from shift templates and hourly demand."""
 
@@ -622,32 +626,19 @@ class ISDRWSPSolver:
 
         return raw_arcs
 
-    def solve(self) -> SolveResponseSchema:
-        t0 = time.perf_counter()
+    def _place_pairs(
+        self,
+        seq_pairs: List[Tuple[int, int]],
+        daily_template_pool: Dict[Tuple[int, str], int],
+        available_codes: List[str],
+        st_by_code: Dict[str, Dict],
+        employee_count: int,
+    ):
+        """Turns one ordering of the (work, rest) pairs into a placed rotation.
 
-        shift_types_raw = self._build_shift_types()
-        st_by_code: Dict[str, Dict] = {
-            st["template_code"]: st for st in shift_types_raw
-        }
-        daily_counts = self._solve_daily_shift_counts(shift_types_raw)
-
-        daily_template_pool: Dict[Tuple[int, str], int] = defaultdict(int)
-        total_work_shifts = 0
-        for g in range(7):
-            for st in shift_types_raw:
-                cnt = daily_counts.get((g, st["type_id"]), 0)
-                daily_template_pool[(g, st["template_code"])] += cnt
-                total_work_shifts += cnt
-
-        if total_work_shifts < 14:
-            raise SolverInfeasibleError(
-                "The demand gives fewer than 14 work shifts a week, so no valid rotation exists."
-            )
-
-        employee_count, seq_pairs = self._partition_into_alternating_sequences(
-            total_work_shifts
-        )
-        available_codes = [st["template_code"] for st in shift_types_raw]
+        Returns (eulerian_valid, multigraph_nodes, multigraph_arcs, aligned_shifts,
+        actual_daily_counts). Raises SolverInfeasibleError when this ordering cannot be placed.
+        """
         raw_arcs = self._assign_forward_rotating_shifts_to_work_sequences(
             seq_pairs, daily_template_pool, available_codes, st_by_code
         )
@@ -714,6 +705,58 @@ class ISDRWSPSolver:
                 sc = aligned_shifts[line_idx * 7 + d]
                 if sc != "OFF" and sc in st_by_code:
                     actual_daily_counts[(d, st_by_code[sc]["type_id"])] += 1
+        return eulerian_valid, multigraph_nodes, multigraph_arcs, aligned_shifts, actual_daily_counts
+
+    def solve(self) -> SolveResponseSchema:
+        t0 = time.perf_counter()
+
+        shift_types_raw = self._build_shift_types()
+        st_by_code: Dict[str, Dict] = {
+            st["template_code"]: st for st in shift_types_raw
+        }
+        daily_counts = self._solve_daily_shift_counts(shift_types_raw)
+
+        daily_template_pool: Dict[Tuple[int, str], int] = defaultdict(int)
+        total_work_shifts = 0
+        for g in range(7):
+            for st in shift_types_raw:
+                cnt = daily_counts.get((g, st["type_id"]), 0)
+                daily_template_pool[(g, st["template_code"])] += cnt
+                total_work_shifts += cnt
+
+        if total_work_shifts < 14:
+            raise SolverInfeasibleError(
+                "The demand gives fewer than 14 work shifts a week, so no valid rotation exists."
+            )
+
+        employee_count, seq_pairs = self._partition_into_alternating_sequences(
+            total_work_shifts
+        )
+        available_codes = [st["template_code"] for st in shift_types_raw]
+        # The order of the (work, rest) pairs decides which weekday each work stretch starts on, and
+        # stretches that all start on the same weekday pile their opening shifts onto it. Placing the
+        # rotation is cheap, so try each cyclic order of the pairs (up to MAX_PAIR_ORDERS) and keep the
+        # one whose daily counts miss the demand by the least. Order 0 is the original behaviour, a
+        # later order only wins by being strictly better, so ties keep the earlier one. This is an
+        # extra placement step added by this repo; it is not part of the cited paper.
+        best = None
+        best_dev = float("inf")
+        first_error: Optional[SolverInfeasibleError] = None
+        for rot in range(min(len(seq_pairs), MAX_PAIR_ORDERS)):
+            rotated = seq_pairs[rot:] + seq_pairs[:rot]
+            try:
+                placed = self._place_pairs(
+                    rotated, daily_template_pool, available_codes, st_by_code, employee_count
+                )
+            except SolverInfeasibleError as exc:
+                first_error = first_error or exc
+                continue
+            deviation = self._evaluate_coverage_deviation(shift_types_raw, placed[4])
+            if deviation < best_dev:
+                best, best_dev = placed, deviation
+        if best is None:
+            raise first_error or SolverInfeasibleError("No placement of the work and rest blocks was found.")
+        eulerian_valid, multigraph_nodes, multigraph_arcs, aligned_shifts, actual_daily_counts = best
 
         shift_type_results: List[ShiftTypeResultSchema] = []
         active_shift_types_count = 0
