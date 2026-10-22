@@ -45,6 +45,7 @@ _modules = [
     "test_min_rest_guardrail",
     "test_coverage_fidelity",
     "test_roster_audit",
+    "test_rotation_patterns",
 ]
 
 for _mod in _modules:
