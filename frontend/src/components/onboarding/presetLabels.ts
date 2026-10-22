@@ -12,6 +12,10 @@ export const PRESET_LABELS: Record<string, { label: string; description?: string
     label: 'Liquor store, bar, or restaurant',
     description: 'A single location with a busy evening or weekend rush, plus opening prep and closing cleanup. Built for extended and late-night hours.',
   },
+  continuous_ops_12h: {
+    label: 'Continuous operations (12-hour days and nights)',
+    description: 'Plants, utilities and control rooms that run one 12-hour day crew and one 12-hour night crew around the clock.',
+  },
   healthcare_24_7: {
     label: 'Hospital and clinical care',
     description: 'Morning, midday, evening and night shifts, covering care around the clock.',

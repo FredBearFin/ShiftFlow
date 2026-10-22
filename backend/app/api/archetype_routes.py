@@ -147,6 +147,23 @@ ARCHETYPE_PRESETS: Dict[str, ArchetypePresetSchema] = {
         ],
         guardrails=ErgonomicGuardrailsSchema(),
     ),
+    "continuous_ops_12h": ArchetypePresetSchema(
+        id="continuous_ops_12h",
+        name="Continuous Operations (12-hour days and nights)",
+        sector="Continuous Operations",
+        tagline="Plants, utilities and control rooms that run 12-hour day and night crews",
+        description="Round-the-clock coverage with one 12-hour day shift and one 12-hour night shift, and an 11-hour minimum rest between shifts.",
+        operating_hours_label="24/7 Continuous (168 hrs/wk)",
+        typical_crew_size="10–14 Rotation Lines",
+        default_leeway_pct=5.0,
+        demand_matrix=_build_24_7_demand(4, 4, 4, 4, 0),
+        templates=[
+            ShiftTemplateSchema(code="D", name="12-Hour Day (D)", earliest_start=6, latest_end=20, min_duration=12, max_duration=12, preferred_start=7, preferred_duration=12, enabled=True),
+            ShiftTemplateSchema(code="N", name="12-Hour Night (N)", earliest_start=18, latest_end=31, min_duration=12, max_duration=12, preferred_start=19, preferred_duration=12, enabled=True),
+        ],
+        # 11 hours, not the default 16: a repeated 12-hour shift leaves exactly 12 hours of rest.
+        guardrails=ErgonomicGuardrailsSchema(min_rest_hours=11),
+    ),
     "emergency_services": ArchetypePresetSchema(
         id="emergency_services",
         name="Emergency Dispatch, EMS & Public Safety",
