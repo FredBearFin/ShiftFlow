@@ -155,6 +155,67 @@ export function parseGrid(text: string, cycleDays: number, shiftCodes: string[])
   return { lines, errors };
 }
 
+export const DEMAND_DAYS = 7;
+export const DEMAND_HOURS = 24;
+export const MAX_DEMAND = 500;
+
+export interface ParsedDemand {
+  matrix: number[][] | null;
+  errors: string[];
+}
+
+/**
+ * Reads a pasted demand grid: 7 rows (Monday first) of 24 whole numbers from 0 to 500,
+ * separated by tabs, commas or spaces. Blank lines are ignored.
+ */
+export function parseDemandGrid(text: string): ParsedDemand {
+  const errors: string[] = [];
+  const matrix: number[][] = [];
+  const rows = text
+    .split(/\r?\n/)
+    .map((r) => r.trim())
+    .filter((r) => r !== '');
+  if (rows.length !== DEMAND_DAYS) {
+    errors.push(
+      `The grid has ${rows.length} row${rows.length === 1 ? '' : 's'} but it needs ${DEMAND_DAYS}, one for each day from Monday to Sunday.`
+    );
+  }
+  rows.slice(0, DEMAND_DAYS).forEach((row, i) => {
+    const cells = row.split(/[\s,]+/).filter((c) => c !== '');
+    if (cells.length !== DEMAND_HOURS) {
+      errors.push(
+        `Row ${i + 1}: has ${cells.length} number${cells.length === 1 ? '' : 's'} but it needs ${DEMAND_HOURS}, one for each hour.`
+      );
+      return;
+    }
+    const out: number[] = [];
+    cells.forEach((cell, h) => {
+      const value = /^\d{1,6}$/.test(cell) ? Number(cell) : NaN;
+      if (!Number.isInteger(value) || value > MAX_DEMAND) {
+        errors.push(`Row ${i + 1}, hour ${h}: "${cell}" is not a whole number from 0 to ${MAX_DEMAND}.`);
+        return;
+      }
+      out.push(value);
+    });
+    matrix.push(out);
+  });
+  if (errors.length > 0) return { matrix: null, errors };
+  return { matrix, errors };
+}
+
+/** One number for every hour of every day, as a 7 by 24 matrix. */
+export function parseFlatDemand(text: string): ParsedDemand {
+  const value = text.trim();
+  if (!/^\d{1,6}$/.test(value) || Number(value) > MAX_DEMAND) {
+    return {
+      matrix: null,
+      errors: [`People needed in every hour: "${value}" is not a whole number from 0 to ${MAX_DEMAND}.`],
+    };
+  }
+  const n = Number(value);
+  return { matrix: Array.from({ length: DEMAND_DAYS }, () => new Array<number>(DEMAND_HOURS).fill(n)), errors: [] };
+}
+
 /** Turns lines back into the pasteable text the grid box takes. */
 export function gridToText(lines: AuditLine[]): string {
   return lines.map((l) => [l.label, ...l.cells.map((c) => (c === 'OFF' ? '-' : c))].join('\t')).join('\n');

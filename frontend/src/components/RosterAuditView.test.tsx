@@ -168,6 +168,99 @@ describe('RosterAuditView', () => {
   });
 });
 
+function auditCalls(): { url: string; body: Record<string, unknown> }[] {
+  const mock = fetch as unknown as { mock: { calls: [string, RequestInit | undefined][] } };
+  return mock.mock.calls
+    .filter(([url]) => url.endsWith('/audit'))
+    .map(([url, init]) => ({ url, body: JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown> }));
+}
+
+function openDemand() {
+  fireEvent.click(screen.getByRole('button', { name: /Staff needed \(optional\)/ }));
+}
+
+describe('demand input', () => {
+  it('renders the section collapsed by default', () => {
+    render(<RosterAuditView solveRequest={null} />);
+    const toggle = screen.getByRole('button', { name: /Staff needed \(optional\)/ });
+    expect(toggle.getAttribute('type')).toBe('button');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById('audit-demand-panel')?.hasAttribute('hidden')).toBe(true);
+    openDemand();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByLabelText('People needed in every hour of every day')).toBeTruthy();
+    expect(screen.getByLabelText('Or paste a 7 by 24 grid (Monday first)')).toBeTruthy();
+  });
+
+  it('sends no demand_matrix when none was entered', async () => {
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    await screen.findAllByText(/only 8 hours between/);
+    expect('demand_matrix' in auditCalls()[0].body).toBe(false);
+  });
+
+  it('sends a 7 by 24 demand_matrix from a flat number', async () => {
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    openDemand();
+    fireEvent.change(screen.getByLabelText('People needed in every hour of every day'), { target: { value: '3' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    await screen.findAllByText(/only 8 hours between/);
+    const matrix = auditCalls()[0].body.demand_matrix as number[][];
+    expect(matrix).toHaveLength(7);
+    expect(matrix.every((r) => r.length === 24 && r.every((v) => v === 3))).toBe(true);
+  });
+
+  it('lets the pasted grid win over the flat number', async () => {
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    openDemand();
+    fireEvent.change(screen.getByLabelText('People needed in every hour of every day'), { target: { value: '3' } });
+    const row = new Array(24).fill('5').join('\t');
+    fireEvent.change(screen.getByLabelText('Or paste a 7 by 24 grid (Monday first)'), {
+      target: { value: new Array(7).fill(row).join('\n') },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    await screen.findAllByText(/only 8 hours between/);
+    expect((auditCalls()[0].body.demand_matrix as number[][])[6][23]).toBe(5);
+  });
+
+  it('shows the coverage summary and worst cells from the response', async () => {
+    auditBody = {
+      ...RESPONSE,
+      coverage: {
+        super_period_days: 14,
+        understaffed_hours_per_week: 12.5,
+        overstaffed_hours_per_week: 4,
+        worst_cells: [{ day_index: 2, weekday: 2, hour: 7, required: 6, scheduled: 2 }],
+      },
+    };
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    const tables = await screen.findAllByRole('table', { name: 'Worst hours' });
+    expect(tables.length).toBeGreaterThanOrEqual(1);
+    const cells = Array.from(tables[0].querySelectorAll('tbody td')).map((td) => td.textContent);
+    expect(cells).toEqual(['Wednesday', '07:00', '6', '2']);
+    expect(screen.getAllByText(/12\.5 hours a week short/).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows an alert and sends nothing for a bad pasted grid', async () => {
+    render(<RosterAuditView solveRequest={null} />);
+    fillGrid();
+    openDemand();
+    const bad = Array.from({ length: 7 }, (_, r) =>
+      new Array(24).fill('1').map((c, h) => (r === 2 && h === 14 ? 'x' : c)).join(' ')
+    ).join('\n');
+    fireEvent.change(screen.getByLabelText('Or paste a 7 by 24 grid (Monday first)'), { target: { value: bad } });
+    fireEvent.click(screen.getByRole('button', { name: 'Run audit' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('Row 3, hour 14: "x" is not a whole number from 0 to 500.');
+    expect(auditCalls()).toHaveLength(0);
+  });
+});
+
 describe('printable report and CSV export', () => {
   it('renders the report with the disclaimer and the not-legal-advice line after a run', async () => {
     render(<RosterAuditView solveRequest={null} />);

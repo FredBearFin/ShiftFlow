@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseGrid, parseShifts, gridToText, MAX_AUDIT_CELLS } from './auditParse';
+import { parseDemandGrid, parseFlatDemand, parseGrid, parseShifts, gridToText, MAX_AUDIT_CELLS } from './auditParse';
 
 const CODES = ['D', 'N'];
 const cycle7 = 'D D D - - N N';
@@ -61,6 +61,65 @@ describe('parseGrid', () => {
     const first = parseGrid(`Crew1 ${cycle7}`, 7, CODES);
     const second = parseGrid(gridToText(first.lines), 7, CODES);
     expect(second.lines).toEqual(first.lines);
+  });
+});
+
+describe('parseDemandGrid', () => {
+  const row = (n: number) => new Array(24).fill(String(n)).join('\t');
+  const grid = (rows: string[]) => rows.join('\n');
+  const seven = Array.from({ length: 7 }, (_, i) => row(i));
+
+  it('reads a valid 7 by 24 grid', () => {
+    const { matrix, errors } = parseDemandGrid(grid(seven));
+    expect(errors).toEqual([]);
+    expect(matrix).toHaveLength(7);
+    expect(matrix?.[3]).toEqual(new Array(24).fill(3));
+  });
+
+  it('accepts commas and spaces and ignores blank lines', () => {
+    const rows = [seven[0].replace(/\t/g, ','), '', seven[1].replace(/\t/g, ' '), ...seven.slice(2), '  '];
+    const { matrix, errors } = parseDemandGrid(grid(rows));
+    expect(errors).toEqual([]);
+    expect(matrix?.[1][0]).toBe(1);
+  });
+
+  it('rejects the wrong number of rows', () => {
+    const { matrix, errors } = parseDemandGrid(grid(seven.slice(0, 6)));
+    expect(matrix).toBeNull();
+    expect(errors[0]).toContain('6 rows but it needs 7');
+  });
+
+  it('rejects the wrong number of columns, naming the row', () => {
+    const rows = [...seven];
+    rows[4] = new Array(23).fill('1').join(' ');
+    const { errors } = parseDemandGrid(grid(rows));
+    expect(errors).toEqual(['Row 5: has 23 numbers but it needs 24, one for each hour.']);
+  });
+
+  it('names the row and hour of a value that is not a number', () => {
+    const rows = [...seven];
+    rows[2] = rows[2].split('\t').map((c, i) => (i === 14 ? 'x' : c)).join('\t');
+    const { errors } = parseDemandGrid(grid(rows));
+    expect(errors).toEqual(['Row 3, hour 14: "x" is not a whole number from 0 to 500.']);
+  });
+
+  it('rejects values out of range, negatives and decimals', () => {
+    const rows = [...seven];
+    rows[0] = ['501', '-1', '2.5', ...new Array(21).fill('1')].join(' ');
+    const { errors, matrix } = parseDemandGrid(grid(rows));
+    expect(matrix).toBeNull();
+    expect(errors).toHaveLength(3);
+    expect(errors[0]).toContain('Row 1, hour 0: "501"');
+  });
+});
+
+describe('parseFlatDemand', () => {
+  it('fills every cell and rejects bad values', () => {
+    const ok = parseFlatDemand('4');
+    expect(ok.matrix).toHaveLength(7);
+    expect(ok.matrix?.every((r) => r.length === 24 && r.every((v) => v === 4))).toBe(true);
+    expect(parseFlatDemand('501').matrix).toBeNull();
+    expect(parseFlatDemand('1.5').errors).toHaveLength(1);
   });
 });
 
