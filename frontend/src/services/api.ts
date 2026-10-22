@@ -303,7 +303,7 @@ function readGuardrails(raw: unknown): ErgonomicGuardrails | null {
   const rec = raw as Record<string, unknown>;
   if (!GUARDRAIL_NUMERIC_FIELDS.every((field) => isFiniteNumber(rec[field]))) return null;
   if (!GUARDRAIL_FLAG_FIELDS.every((field) => typeof rec[field] === 'boolean')) return null;
-  return raw as ErgonomicGuardrails;
+  return { min_rest_hours: 16, ...(raw as ErgonomicGuardrails) };
 }
 
 /** Saves the whole solve configuration. Returns false when the browser refuses to store it. */

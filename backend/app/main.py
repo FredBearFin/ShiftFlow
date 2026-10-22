@@ -148,8 +148,8 @@ def health_check() -> dict:
         "version": settings.version,
         "environment": "production",
         "supported_archetypes": list(ARCHETYPE_PRESETS.keys()),
-        "default_safe_rest_hours": 16.0,
-        "clopening_forbidden": True,
+        "default_min_rest_hours": float(settings.min_rest_hours_between_shifts),
+        "clopening_forbidden_by_default": True,
     }
 
 

@@ -465,11 +465,15 @@ class ISDRWSPSolver:
                         "N",
                         n_st["start_hour"],
                     )
-                    if forced_rest_hrs < settings.min_rest_hours_between_shifts:
+                    if (
+                        self.guardrails.enforce_zero_clopening
+                        and forced_rest_hrs < self.guardrails.min_rest_hours
+                    ):
                         raise SolverInfeasibleError(
                             "A night shift cannot be followed by another night shift "
-                            "with the required rest between them. "
-                            "Shorten the night template or relax the rest rule."
+                            f"with the required {self.guardrails.min_rest_hours} hours of rest between them "
+                            f"(this shift pair gives {forced_rest_hrs:g} hours). "
+                            "Shorten the night template or lower the minimum rest."
                         )
                     history.append({"code": "N", "choice": False})
                     rem_pool[(day_g, "N")] = rem_pool.get((day_g, "N"), 0) - 1
@@ -497,7 +501,10 @@ class ISDRWSPSolver:
                             cand,
                             c_st["start_hour"],
                         )
-                        if rest_hrs < settings.min_rest_hours_between_shifts:
+                        if (
+                            self.guardrails.enforce_zero_clopening
+                            and rest_hrs < self.guardrails.min_rest_hours
+                        ):
                             continue
 
                     if cand == "N":
@@ -677,15 +684,29 @@ class ISDRWSPSolver:
             aligned_shifts[aligned_pos] = s_code
 
         if self.guardrails.enforce_zero_clopening:
-            for line_idx in range(employee_count):
-                for d in range(7):
-                    today = aligned_shifts[line_idx * 7 + d]
-                    tomorrow = aligned_shifts[line_idx * 7 + (d + 1) % 7]
-                    if today == "E" and tomorrow == "M":
-                        raise SolverInfeasibleError(
-                            "The rotation has a closing shift followed by an opening shift, "
-                            "which zero-clopening forbids."
-                        )
+            # Consecutive slots in the aligned cycle are consecutive days for a person, and the
+            # last day of one line is followed by the first day of the next (the same pairing the
+            # audit below uses for each line's day 0), so check every slot against the one after it.
+            for slot in range(total_slots):
+                today = aligned_shifts[slot]
+                tomorrow = aligned_shifts[(slot + 1) % total_slots]
+                if today == "OFF" or tomorrow == "OFF":
+                    continue
+                if today not in st_by_code or tomorrow not in st_by_code:
+                    continue
+                wrap_rest = compute_rest_hours_between(
+                    today,
+                    st_by_code[today]["start_hour"],
+                    st_by_code[today]["duration_hours"],
+                    tomorrow,
+                    st_by_code[tomorrow]["start_hour"],
+                )
+                if wrap_rest < self.guardrails.min_rest_hours:
+                    raise SolverInfeasibleError(
+                        f"The rotation puts a {today} shift before a {tomorrow} shift "
+                        f"with only {wrap_rest:g} hours of rest, below the "
+                        f"{self.guardrails.min_rest_hours} hours required."
+                    )
 
         actual_daily_counts: Dict[Tuple[int, str], int] = defaultdict(int)
         for line_idx in range(employee_count):
@@ -815,7 +836,7 @@ class ISDRWSPSolver:
                 clopen_viol = (
                     curr_code != "OFF"
                     and prev_code != "OFF"
-                    and rest_before < settings.min_rest_hours_between_shifts
+                    and rest_before < self.guardrails.min_rest_hours
                 )
                 backward_viol = is_backward_rotation(prev_code, curr_code)
 

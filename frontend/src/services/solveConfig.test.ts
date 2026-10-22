@@ -50,7 +50,11 @@ describe('solve configuration round-trip', () => {
 
     // The whole solve input is identical, so the solver must return the same schedule
     // and the header the same scheduled-hours figure.
-    expect(restored.config).toEqual(configured);
+    // Saved setups that predate the minimum-rest setting come back with its default (16) filled in.
+    expect(restored.config).toEqual({
+      ...configured,
+      guardrails: { min_rest_hours: 16, ...configured.guardrails },
+    });
     expect(totalPersonHours(restored.config.demand_matrix)).toBe(totalPersonHours(configured.demand_matrix));
     expect(restored.config.facility_name).toBe('Riverside Pharmacy');
     expect(restored.config.pareto_leeway_pct).toBe(22.5);

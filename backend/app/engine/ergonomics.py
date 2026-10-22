@@ -300,7 +300,7 @@ def evaluate_ergonomics_audit(
             else 0.0
         )
 
-    # Inspect cells for Clopening (< 16h rest) and Backward Rotation
+    # Inspect cells for Clopening (< min_rest_hours) and Backward Rotation
     clopening_violations = 0
     backward_violations = 0
     min_rest_observed = 24.0
@@ -467,6 +467,7 @@ def evaluate_ergonomics_audit(
         clopening_violations=clopening_violations,
         backward_rotation_violations=backward_violations,
         min_rest_hours_observed=round(min_rest_observed, 1),
+        min_rest_hours_required=guardrails.min_rest_hours,
         full_weekends_off_count=full_weekends_off_count,
         full_weekends_off_pct=full_weekends_off_pct,
         consolidated_rest_blocks_pct=consolidated_rest_pct,

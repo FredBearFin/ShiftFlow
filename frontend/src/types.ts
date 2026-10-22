@@ -29,6 +29,7 @@ export interface ErgonomicGuardrails {
   max_consecutive_evenings: number;
   enforce_forward_rotation: boolean;
   enforce_zero_clopening: boolean;
+  min_rest_hours?: number;
   avoid_single_rest_days: boolean;
   avoid_single_night_shifts: boolean;
   prioritize_free_weekends: boolean;
@@ -170,6 +171,7 @@ export interface ErgonomicsAudit {
   clopening_violations: number;
   backward_rotation_violations: number;
   min_rest_hours_observed: number;
+  min_rest_hours_required?: number;
   full_weekends_off_count: number;
   full_weekends_off_pct: number;
   consolidated_rest_blocks_pct: number;
