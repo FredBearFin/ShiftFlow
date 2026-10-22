@@ -40,6 +40,9 @@ export const ErgonomicsAuditView: React.FC<ErgonomicsAuditViewProps> = ({
               {audit.health_index_score}/100
             </span>
           </div>
+          <p className="text-xs text-slate-500 mt-1.5">
+            A rough comfort score built from the strain points below. It is not a medical or validated measure and always falls between 55 and 99.5.
+          </p>
           <p className="text-xs text-slate-600 mt-1.5">
             Lower is better here, measured in penalty points — {audit.total_ergo_objective.toFixed(1)}{' '}
             points total across the 8 checks below, versus {audit.sequential_baseline_ergo.toFixed(1)}{' '}

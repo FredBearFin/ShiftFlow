@@ -68,7 +68,7 @@ export const Header: React.FC<HeaderProps> = ({
     {
       id: 'ergonomics',
       label: 'Burnout Check',
-      badge: solution ? `${solution.ergonomics_audit.health_index_score}/100` : undefined,
+      badge: solution ? `${solution.ergonomics_audit.health_index_score}/100 (rough)` : undefined,
     },
     {
       id: 'compliance',

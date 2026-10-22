@@ -104,7 +104,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   },
   {
     term: 'workload score',
-    plain: 'How tiring the week looks for the people working it, counted in penalty points. Lower is better.',
+    plain: 'How tiring the week looks for the people working it, counted in penalty points. Lower is better. It is a rough comfort score, not a medical or validated measure.',
     example: 'A week scoring 40 penalty points is kinder to work than one scoring 90.',
   },
 ];
