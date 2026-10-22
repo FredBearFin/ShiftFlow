@@ -75,10 +75,10 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
             <span className="text-lg">⌨️</span>
             <div>
               <h2 id="shortcuts-title" className="text-base font-bold text-white">
-                ShiftFlow Studio — Store Manager Keyboard Shortcuts
+                ShiftFlow Studio — Keyboard Shortcuts
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Engineered for hands-on-keyboard operation in loud, high-distraction retail backrooms.
+                Engineered for hands-on-keyboard operation in loud, high-distraction control rooms and back offices.
               </p>
               <label className="mt-2 flex items-center gap-2 text-xs text-slate-200">
                 <input

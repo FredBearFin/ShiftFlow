@@ -354,7 +354,7 @@ class ParetoPointSchema(BaseModel):
 class SolveRequestSchema(BaseModel):
     """Full input specification for solving a weekly schedule."""
     archetype_id: str = Field(default="downtown_foodmart_omaha")
-    facility_name: str = Field(default="Downtown Foodmart — 16th & Farnam (Omaha, NE)", max_length=200)
+    facility_name: str = Field(default="Your facility", max_length=200)
     demand_matrix: List[List[int]] = Field(
         ...,
         description="7x24 matrix of staff needed per hour: row = day (0=Mon..6=Sun), column = hour (0..23)",

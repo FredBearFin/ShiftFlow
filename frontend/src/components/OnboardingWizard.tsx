@@ -274,7 +274,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                 6 quick steps
               </span>
               <span className="text-xs text-slate-400">
-                Tell us how your store runs. We'll build the schedule.
+                Tell us how your operation runs. We'll build the schedule.
               </span>
             </div>
             <h2 id="onboarding-wizard-title" className="text-lg font-bold tracking-tight mt-1">
@@ -374,7 +374,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                     value={facilityName}
                     onChange={(e) => onChangeFacilityName(e.target.value)}
                     className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 focus:border-indigo-600 focus:outline-none font-medium text-slate-900"
-                    placeholder="e.g., Main Street Store"
+                    placeholder="e.g., Riverside Plant"
                   />
                 </div>
               </div>
@@ -787,7 +787,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({
                   Shift times
                 </h3>
                 <p className="text-xs text-slate-600 mt-0.5">
-                  Fill in the start hour and length for each shift your store runs, and untick any shift it does not use.
+                  Fill in the start hour and length for each shift your operation runs, and untick any shift it does not use.
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Set when each shift starts and how long it runs. Morning (M), Midday (D), Evening (E) and Night (N).

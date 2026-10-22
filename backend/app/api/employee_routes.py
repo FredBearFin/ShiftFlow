@@ -14,7 +14,7 @@ SeparationCategory = Literal["voluntary_resignation", "mutual_agreement", "invol
 
 
 class EmployeeCreateSchema(BaseModel):
-    facility_id: str = Field(default="FAC-OMAHA-01", max_length=64, description="Store facility ID")
+    facility_id: str = Field(default="FAC-OMAHA-01", max_length=64, description="Facility ID")
     name: str = Field(..., min_length=1, max_length=200, example="Marcus Vance")
     role: str = Field(default="Frontline Clerk", max_length=200, example="Shift Lead")
     wage: float = Field(default=16.50, ge=7.25, le=150.0, description="Hourly wage rate ($)")

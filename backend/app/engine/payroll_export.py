@@ -29,7 +29,7 @@ class PayrollExportEngine:
     @staticmethod
     def export_gusto_csv(
         roster_lines: List[Dict[str, Any]],
-        company_name: str = "Downtown Foodmart",
+        company_name: str = "Your facility",
     ) -> str:
         """Generates Gusto-formatted payroll CSV for 1-click import."""
         output = io.StringIO()
