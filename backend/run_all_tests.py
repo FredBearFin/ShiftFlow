@@ -15,6 +15,25 @@ import app.database as shiftflow_db
 from app.tests import _modules
 
 
+class ThrottleResettingResult(unittest.TextTestResult):
+    """Clears the per-IP signup and password-reset throttles before each test.
+
+    app/tests/conftest.py does this for pytest, but this runner uses unittest, where that
+    fixture never runs. Every test client looks like the same IP, so without this the signups
+    made by earlier tests use up the allowance and later tests get a 429.
+    """
+
+    def startTest(self, test):
+        conn = shiftflow_db.get_db_connection()
+        try:
+            conn.execute("DELETE FROM signup_attempts")
+            conn.execute("DELETE FROM login_failures WHERE throttle_key LIKE 'pwreset:%'")
+            conn.commit()
+        finally:
+            conn.close()
+        super().startTest(test)
+
+
 def run_module(name):
     """Runs one test module against a fresh temporary database."""
     module = importlib.import_module(f"app.tests.{name}")
@@ -26,7 +45,7 @@ def run_module(name):
         shiftflow_db.init_db()
         suite = unittest.defaultTestLoader.loadTestsFromModule(module)
         print(f"\n===== {name} (database: {db_path}) =====")
-        return unittest.TextTestRunner(verbosity=2).run(suite)
+        return unittest.TextTestRunner(verbosity=2, resultclass=ThrottleResettingResult).run(suite)
     finally:
         shiftflow_db.DB_FILE = previous_db
         os.remove(db_path)
