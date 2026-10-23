@@ -207,7 +207,15 @@ class SolverContractTests(unittest.TestCase):
                 / sol0.ergonomics_audit.total_ergo_objective * 100.0),
             2,
         )
-        self.assertEqual(expected_pct, sol50.ergonomics_audit.ergo_improvement_pct)
+        under0 = sum(c.understaffing for c in sol0.interval_coverage)
+        under50 = sum(c.understaffing for c in sol50.interval_coverage)
+        if under50 > under0 + 2:
+            # More hours understaffed than the baseline: fewer people working is not an improvement.
+            self.assertEqual(0.0, sol50.ergonomics_audit.ergo_improvement_pct)
+            self.assertTrue(sol50.ergonomics_audit.improvement_coverage_adjusted)
+        else:
+            self.assertEqual(expected_pct, sol50.ergonomics_audit.ergo_improvement_pct)
+            self.assertFalse(sol50.ergonomics_audit.improvement_coverage_adjusted)
 
 
 if __name__ == "__main__":

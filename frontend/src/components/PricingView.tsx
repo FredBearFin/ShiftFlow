@@ -208,7 +208,7 @@ export const PricingView: React.FC<PricingViewProps> = ({ onStartPlan, onSignInI
                     type="text"
                     value={businessName}
                     onChange={(e) => setBusinessName(e.target.value)}
-                    placeholder="e.g. Downtown Foodmart"
+                    placeholder="e.g. Riverside Plant"
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2B3A42]/30"
                   />
                 </div>

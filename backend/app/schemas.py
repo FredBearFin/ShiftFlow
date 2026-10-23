@@ -242,6 +242,7 @@ class ErgonomicsAuditSchema(BaseModel):
     backward_rotation_violations: int
     min_rest_hours_observed: float
     min_rest_hours_required: int = 16
+    improvement_coverage_adjusted: bool = False
     full_weekends_off_count: int
     full_weekends_off_pct: float
     consolidated_rest_blocks_pct: float
@@ -342,15 +343,18 @@ class ParetoPointSchema(BaseModel):
     total_overstaffing_hours: int
     full_weekends_off_pct: float
     estimated_weekly_payroll: float = 0.0
+    scheduled_hours: int = 0
     is_knee_point: bool
     is_selected: bool
     label: str
+    non_dominated: bool = True
+    coverage_comparable: bool = True
 
 
 class SolveRequestSchema(BaseModel):
     """Full input specification for solving a weekly schedule."""
     archetype_id: str = Field(default="downtown_foodmart_omaha")
-    facility_name: str = Field(default="Downtown Foodmart — 16th & Farnam (Omaha, NE)", max_length=200)
+    facility_name: str = Field(default="Your facility", max_length=200)
     demand_matrix: List[List[int]] = Field(
         ...,
         description="7x24 matrix of staff needed per hour: row = day (0=Mon..6=Sun), column = hour (0..23)",

@@ -396,6 +396,7 @@ class SolveConcurrencyLimitMiddleware:
         f"{settings.api_prefix}/schedules/solve",
         f"{settings.api_prefix}/schedules/pareto-frontier",
         f"{settings.api_prefix}/schedules/export-csv",
+        f"{settings.api_prefix}/schedules/audit/compare",  # runs a solve
     }
     _PREFIX_PATH = f"{settings.api_prefix}/schedules/default-solution/"
 

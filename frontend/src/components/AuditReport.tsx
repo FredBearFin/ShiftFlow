@@ -1,6 +1,7 @@
 import React from 'react';
 import { csvSafeCell } from '../csvSafety';
 import type {
+  AuditCoverage,
   AuditResponse,
   AuditShiftDef,
   AuditThresholds,
@@ -58,6 +59,43 @@ const SummaryStrip: React.FC<{ response: AuditResponse }> = ({ response }) => {
     </dl>
   );
 };
+
+const CoverageResults: React.FC<{ coverage: AuditCoverage }> = ({ coverage }) => (
+  <div className="space-y-2">
+    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+      Staff needed compared with the roster
+    </h4>
+    <p className="text-xs text-slate-600">
+      Against the demand supplied: {fmt(coverage.understaffed_hours_per_week)} hours a week short and{' '}
+      {fmt(coverage.overstaffed_hours_per_week)} hours a week over.
+    </p>
+    {coverage.worst_cells.length > 0 && (
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-xs" aria-label="Worst hours">
+          <caption className="sr-only">Worst hours</caption>
+          <thead>
+            <tr className="text-left text-slate-500 border-b border-slate-200">
+              <th className="py-1.5 pr-3 font-medium">Day</th>
+              <th className="py-1.5 pr-3 font-medium">Hour</th>
+              <th className="py-1.5 pr-3 font-medium">Needed</th>
+              <th className="py-1.5 font-medium">Scheduled</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 font-mono-tabular">
+            {coverage.worst_cells.map((c, i) => (
+              <tr key={i}>
+                <td className="py-1.5 pr-3 font-sans">{WEEKDAYS[c.weekday] ?? c.weekday}</td>
+                <td className="py-1.5 pr-3">{String(c.hour).padStart(2, '0')}:00</td>
+                <td className="py-1.5 pr-3">{fmt(c.required)}</td>
+                <td className="py-1.5">{fmt(c.scheduled)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+);
 
 export const AuditResults: React.FC<{ response: AuditResponse; compareControls?: React.ReactNode }> = ({
   response,
@@ -137,12 +175,7 @@ export const AuditResults: React.FC<{ response: AuditResponse; compareControls?:
       </table>
     </div>
 
-    {response.coverage && (
-      <p className="text-xs text-slate-600">
-        Against the demand supplied: {fmt(response.coverage.understaffed_hours_per_week)} hours a week
-        short and {fmt(response.coverage.overstaffed_hours_per_week)} hours a week over.
-      </p>
-    )}
+    {response.coverage && <CoverageResults coverage={response.coverage} />}
 
     <p className="text-xs text-slate-500">{response.disclaimer}</p>
     {compareControls}

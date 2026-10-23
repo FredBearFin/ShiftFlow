@@ -172,6 +172,7 @@ export interface ErgonomicsAudit {
   backward_rotation_violations: number;
   min_rest_hours_observed: number;
   min_rest_hours_required?: number;
+  improvement_coverage_adjusted?: boolean;
   full_weekends_off_count: number;
   full_weekends_off_pct: number;
   consolidated_rest_blocks_pct: number;
@@ -236,6 +237,9 @@ export interface ParetoPoint {
   is_knee_point: boolean;
   is_selected: boolean;
   label: string;
+  non_dominated?: boolean;
+  coverage_comparable?: boolean;
+  scheduled_hours?: number;
 }
 
 export interface SolveRequest {

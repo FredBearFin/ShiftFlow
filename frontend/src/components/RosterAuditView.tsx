@@ -20,6 +20,8 @@ import {
   ShiftRow,
   formatStartTime,
   gridToText,
+  parseDemandGrid,
+  parseFlatDemand,
   parseGrid,
   parseShifts,
 } from '../services/auditParse';
@@ -77,6 +79,9 @@ export const RosterAuditView: React.FC<RosterAuditViewProps> = ({ solveRequest =
         Object.entries(DEFAULT_AUDIT_THRESHOLDS).map(([k, v]) => [k, String(v)])
       ) as Record<keyof AuditThresholds, string>
   );
+  const [demandOpen, setDemandOpen] = useState(false);
+  const [demandFlat, setDemandFlat] = useState('');
+  const [demandText, setDemandText] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
   const [running, setRunning] = useState(false);
   const [run, setRun] = useState<RunState | null>(null);
@@ -163,8 +168,25 @@ export const RosterAuditView: React.FC<RosterAuditViewProps> = ({ solveRequest =
       setErrors(grid.errors);
       return null;
     }
+    let demand: number[][] | null = null;
+    if (demandText.trim() !== '') {
+      const d = parseDemandGrid(demandText);
+      if (d.errors.length > 0) {
+        setErrors(d.errors);
+        return null;
+      }
+      demand = d.matrix;
+    } else if (demandFlat.trim() !== '') {
+      const d = parseFlatDemand(demandFlat);
+      if (d.errors.length > 0) {
+        setErrors(d.errors);
+        return null;
+      }
+      demand = d.matrix;
+    }
     setErrors([]);
     return {
+      ...(demand ? { demand_matrix: demand } : {}),
       cycle_days: cycle,
       start_weekday: Number(startWeekday),
       shifts: parsedShifts.shifts,
@@ -414,6 +436,60 @@ export const RosterAuditView: React.FC<RosterAuditViewProps> = ({ solveRequest =
             for a work day and OFF, a dash, a dot or an empty cell for a day off. Tabs, commas or spaces
             between cells all work, so a block copied from a spreadsheet can be pasted as it is.
           </p>
+        </div>
+      </div>
+
+      <div className="enterprise-card p-5 bg-white space-y-3">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          <button
+            type="button"
+            aria-expanded={demandOpen}
+            aria-controls="audit-demand-panel"
+            onClick={() => setDemandOpen((o) => !o)}
+            className="uppercase tracking-wider font-bold"
+          >
+            {demandOpen ? '▾' : '▸'} Staff needed (optional)
+          </button>
+        </h3>
+        <div id="audit-demand-panel" hidden={!demandOpen} className="space-y-3">
+          <p className="text-xs text-slate-500">
+            Say how many people you need on shift each hour. The results then show the hours where the roster
+            falls short or has more people than needed.
+          </p>
+          <div className="max-w-xs">
+            <label htmlFor="audit-demand-flat" className={labelClass}>
+              People needed in every hour of every day
+            </label>
+            <input
+              id="audit-demand-flat"
+              type="number"
+              min={0}
+              max={500}
+              step={1}
+              value={demandFlat}
+              onChange={(e) => setDemandFlat(e.target.value)}
+              aria-describedby={errors.length ? 'audit-errors' : undefined}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="audit-demand-grid" className={labelClass}>
+              Or paste a 7 by 24 grid (Monday first)
+            </label>
+            <textarea
+              id="audit-demand-grid"
+              rows={7}
+              value={demandText}
+              onChange={(e) => setDemandText(e.target.value)}
+              aria-describedby={errors.length ? 'audit-demand-help audit-errors' : 'audit-demand-help'}
+              className={`${inputClass} font-mono`}
+            />
+            <p id="audit-demand-help" className="text-xs text-slate-500 mt-1">
+              Seven rows, Monday first, each with 24 whole numbers from 0 to 500 for the hours from 00:00 to
+              23:00. Tabs, commas or spaces between numbers all work. If you fill in both boxes, the pasted
+              grid is used.
+            </p>
+          </div>
         </div>
       </div>
 
